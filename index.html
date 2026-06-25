@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tellstream - Big John Live</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background: #121212; color: #fff; display: flex; height: 100vh; overflow: hidden; }
+        .main-content { flex: 1; display: flex; flex-direction: column; padding: 20px; gap: 20px; }
+        .player-card { background: #1e1e1e; padding: 30px; border-radius: 12px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .player-card h1 { color: #ff0055; margin-bottom: 15px; }
+        .fb-feed { flex: 1; background: #1e1e1e; border-radius: 12px; padding: 15px; overflow-y: auto; }
+        .chat-sidebar { width: 380px; background: #181818; border-left: 1px solid #2d2d2d; display: flex; flex-direction: column; }
+        .chat-header { padding: 20px; background: #1e1e1e; border-bottom: 1px solid #2d2d2d; font-weight: bold; font-size: 1.2rem; color: #ff0055; }
+        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+        .msg { background: #242424; padding: 10px 14px; border-radius: 8px; line-height: 1.4; max-width: 90%; }
+        .msg .user { font-weight: bold; color: #00adb5; margin-bottom: 3px; font-size: 0.9rem; }
+        .chat-input-area { padding: 15px; background: #1e1e1e; border-top: 1px solid #2d2d2d; display: flex; gap: 10px; }
+        .chat-input-area input { flex: 1; background: #2d2d2d; border: none; padding: 12px; border-radius: 6px; color: #fff; outline: none; }
+        .chat-input-area button { background: #ff0055; border: none; color: white; padding: 0 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .chat-input-area button:hover { background: #e0004c; }
+    </style>
+</head>
+<body>
+
+    <!-- Left Side: Radio Player & Social Media Bridge -->
+    <div class="main-content">
+        <div class="player-card">
+            <h1>BIG JOHN LIVE</h1>
+            <!-- Shoutcast Audio Player Shell -->
+            <audio controls autoplay style="width: 100%; max-width: 400px;">
+                <source src="http://YOUR_SHOUTCAST_SERVER_IP:PORT/;" type="audio/mpeg">
+                Your browser does not support the audio element.
+            </audio>
+        </div>
+        
+        <div class="fb-feed">
+            <h3>Facebook Activity Bridge</h3>
+            <p style="color: #888; margin-top: 10px;">[Facebook Feed Widget Container Placeholder]</p>
+        </div>
+    </div>
+
+    <!-- Right Side: Zero-Lag Chat Lounge -->
+    <div class="chat-sidebar">
+        <div class="chat-header">🔊 Listener Lounge</div>
+        <div class="chat-messages" id="chatBox"></div>
+        <div class="chat-input-area">
+            <input type="text" id="usernameInput" placeholder="Nickname" style="width: 80px; flex: none;">
+            <input type="text" id="messageInput" placeholder="Type a message...">
+            <button id="sendBtn">Send</button>
+        </div>
+    </div>
+
+    <script>
+        // Connect to your unique Supabase engine
+        const SUPABASE_URL = "https://vegwferwmyuunwvfqpsf.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZ3dmZXJ3bXl1dW53dmZxcHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODU5NDQsImV4cCI6MjA5Nzk2MTk0NH0.7F3HUEY59BGE5phlD9AukhZzRa3Ied_ZT43j8YZeIy8";
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const chatBox = document.getElementById('chatBox');
+        const usernameInput = document.getElementById('usernameInput');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+
+        // Render message cleanly on screen
+        function appendMessage(data) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'msg';
+            msgDiv.innerHTML = `<div class="user">${escapeHTML(data.username)}</div><div>${escapeHTML(data.message)}</div>`;
+            chatBox.appendChild(msgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            
+            // Auto-clear older elements to guarantee 0% mobile lag
+            while (chatBox.children.length > 50) {
+                chatBox.removeChild(chatBox.firstChild);
+            }
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+        }
+
+        // Fetch past logs instantly on load
+        async function loadMessages() {
+            const { data } = await supabase.from('messages').select('*').order('id', { ascending: true }).limit(40);
+            if (data) data.forEach(appendMessage);
+        }
+
+        // Listen for new incoming real-time stream items
+        supabase.channel('public:messages')
+            .on('postgres_changes', { event: 'INSERT', pattern: 'public', table: 'messages' }, payload => {
+                appendMessage(payload.new);
+            }).subscribe();
+
+        // Broadcast a new message to the network
+        async function sendMessage() {
+            const user = usernameInput.value.trim() || 'Listener';
+            const text = messageInput.value.trim();
+            if (!text) return;
+            messageInput.value = '';
+            await supabase.from('messages').insert([{ username: user, message: text }]);
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+        loadMessages();
+    </script>
+</body>
+</html>
