@@ -84,11 +84,24 @@
             audioPlayer.play().catch(err => console.log("Waiting for user interaction to resume audio context."));
         }
 
-        // Render message cleanly on screen
+        // Render message cleanly on screen with image parser
         function appendMessage(data) {
             const msgDiv = document.createElement('div');
             msgDiv.className = 'msg';
-            msgDiv.innerHTML = `<div class="user">${escapeHTML(data.username)}</div><div>${escapeHTML(data.message)}</div>`;
+            
+            // Clean the incoming text to make it safe
+            let messageContent = escapeHTML(data.message);
+
+            // Cloudflare image folder URL
+            const imgBaseUrl = "https://tellstream-emojis.pages.dev/";
+
+            // Turn filenames like "10note.jpg" into actual images in chat
+            const imageRegex = /(\b\S+\.(?:jpg|jpeg|png|gif)\b)/gi;
+            messageContent = messageContent.replace(imageRegex, (match) => {
+                return `<img src="${imgBaseUrl}${match}" alt="${match}" style="max-height: 400px; max-width: 100%; display: block; margin: 5px 0; border-radius: 6px;">`;
+            });
+
+            msgDiv.innerHTML = `<div class="user">${escapeHTML(data.username)}</div><div>${messageContent}</div>`;
             chatBox.appendChild(msgDiv);
             chatBox.scrollTop = chatBox.scrollHeight;
             
