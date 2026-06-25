@@ -16,34 +16,6 @@
         .chat-header { padding: 20px; background: #1e1e1e; border-bottom: 1px solid #2d2d2d; font-weight: bold; font-size: 1.2rem; color: #ff0055; }
         .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
         
-        /* Scrollable Emoji Grid Menu Container */
-        .emoji-panel-container {
-            background: #151515;
-            border-top: 1px solid #2d2d2d;
-            padding: 10px;
-            max-height: 140px;
-            overflow-y: auto;
-        }
-        .emoji-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
-            gap: 8px;
-        }
-        .emoji-grid img {
-            width: 100%;
-            height: 32px;
-            object-fit: contain;
-            cursor: pointer;
-            border-radius: 4px;
-            transition: transform 0.1s ease, background 0.1s;
-        }
-        .emoji-grid img:hover {
-            transform: scale(1.2);
-            background: #2d2d2d;
-        }
-        .emoji-panel-container::-webkit-scrollbar { width: 6px; }
-        .emoji-panel-container::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
-
         .msg { background: #242424; padding: 10px 14px; border-radius: 8px; line-height: 1.4; max-width: 90%; }
         .msg .user { font-weight: bold; color: #00adb5; margin-bottom: 3px; font-size: 0.9rem; }
         .chat-input-area { padding: 15px; background: #1e1e1e; border-top: 1px solid #2d2d2d; display: flex; gap: 10px; }
@@ -73,10 +45,6 @@
         <div class="chat-header">🔊 Listener Lounge</div>
         <div class="chat-messages" id="chatBox"></div>
         
-        <div class="emoji-panel-container">
-            <div class="emoji-grid" id="emojiGrid"></div>
-        </div>
-
         <div class="chat-input-area">
             <input type="text" id="usernameInput" placeholder="Nickname" style="width: 80px; flex: none;">
             <input type="text" id="messageInput" placeholder="Type a message...">
@@ -85,7 +53,6 @@
     </div>
 
     <script>
-        // Connect to your unique Supabase engine
         const SUPABASE_URL = "https://vegwferwmyuunwvfqpsf.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZ3dmZXJ3bXl1dW53dmZxcHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODU5NDQsImV4cCI6MjA5Nzk2MTk0NH0.7F3HUEY59BGE5phlD9AukhZzRa3Ied_ZT43j8YZeIy8";
         const supabase_db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -95,12 +62,9 @@
         const messageInput = document.getElementById('messageInput');
         const sendBtn = document.getElementById('sendBtn');
         const audioPlayer = document.getElementById('radioPlayer');
-        const emojiGrid = document.getElementById('emojiGrid');
 
-        // Cloudflare assets library
         const imgBaseUrl = "https://tellstream-emojis.pages.dev/";
 
-        // Strict lowercase mapped dictionary built cleanly from source logs
         const emojiMapping = {
             "tellawheel": "tellawheel.gif", "sourire": "sourire.gif", "content": "content.gif", "danc1": "danc1.gif",
             "oh-2": "OH-2.gif", "pull_up": "pull_up.gif", "langue": "langue.gif", "selassie": "_lion.gif",
@@ -135,7 +99,7 @@
             "vibes1": "vibes1.gif", "vibes3": "vibes3.gif", "onelove": "onelove.gif", "tgrade": "tgrade.gif",
             "music1": "music1.gif", "raslov": "raslov.gif", "ecross": "ecross.gif", "maddest": "maddest.gif",
             "rasnegus": "rasnegus.gif", "jamerican": "jamerican.gif", "mackab": "mackab.gif", "smokin": "ziggie.gif",
-            "bigjon5": "bj.gif", "banc1": "banc1.gif", "dj_barney": "barc.gif", "bigjohnbc": "bjc1.gif",
+            "bigjon5": "bj.gif", "banton": "banc1.gif", "dj_barney": "barc.gif", "bigjohnbc": "bjc1.gif",
             "mikeybiggz": "mbc.gif", "jrbanton": "jbc1.gif", "gh3ttoflex": "flexc.gif", "dj_cruss": "cc.gif",
             "johnkelly": "jkc1.gif", "radiobot": "radiobot.gif", "pinks": "pinks.gif", "drgp": "468x60.jpg",
             "anika": "anika.gif", "renegadesound": "renegadesound.gif", "tash01": "tash01.gif", "mrbiggz": "mb1_th.gif",
@@ -149,16 +113,4 @@
             "glen": "glen.gif", "mikeyspice": "mikeyspice.gif", "peterh": "peterh.gif", "cocoatea": "cocoatea.gif",
             "shabba": "shabba.gif", "anthonyb": "anthonyb.gif", "maxi": "maxi.gif", "rasshiloh": "rasshiloh.gif",
             "warriorking": "warriorking.gif", "morgans": "morgans.gif", "luciano": "luciano.gif", "waynewonder": "waynewonder.gif",
-            "munga": "munga.gif", "serani": "serani.gif", "terryganzie": "terryganzie.gif", "marsha": "marsha.gif",
-            "1etana": "1etana.gif", "sizla": "sizla.gif", "squingy": "squingy.gif", "sandracross": "sandracross.gif",
-            "konshens": "konshens.gif", "demarco": "demarco.gif", "gyptian": "gyptian.gif", "djfx": "djfx.gif",
-            "tazmania": "tazmania.gif", "djcl": "djcl.gif", "jmt": "jmt.gif", "weedprophet": "weedprophet.gif",
-            "gappy": "gappyranks.gif", "michaelrose": "michaelrose.gif", "nisha": "nisha.gif", "jahvinci": "jahvinci.gif",
-            "terrylinen": "terrylinen.gif", "lukied": "lukied.gif", "happybirthday": "1hb4.gif", "happyholidays": "happyholidays.gif",
-            "zj_strachy_tazmania_sound": "ZJ_Strachy_Tazmania_Sound.gif", "ladylibertone": "libertonec.gif", "sanchez_tella_security": "Sanchez_Tella_Security.gif",
-            "fadab": "fadabc1.gif", "wayneiriebc1": "wayneiriebc1.gif", "conqueringlion": "ConqueringLion.gif",
-            "femaleconnection": "femaleconnection.gif", "jackomelody": "jackomelody.gif", "taharka": "taharka.gif", "dusoutc1": "dusoutc1.gif",
-            "jazzwad": "jazzwad.jpg", "happynewyear": "happynewyear.gif", "fw1": "fw1.gif", "fw2": "fw2.gif",
-            "fw3": "fw3.gif", "fw4": "fw4.gif", "fw5": "fw5.gif", "fw6": "fw6.gif",
-            "fw7": "fw7.gif", "fw8": "fw8.gif", "tfire": "tfire.gif", "stvincent": "stvincent.gif",
-            "antigua": "antigua.gif", "dragitup": "dragitup.gif", "haulitup
+            "munga": "munga.gif", "serani": "serani.gif", "terryganzie": "terryganzie.gif
