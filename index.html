@@ -29,8 +29,8 @@
     <div class="main-content">
         <div class="player-card">
             <h1>BIG JOHN LIVE</h1>
-            <audio id="radioPlayer" controls preload="auto" style="width: 100%; max-width: 400px; margin: 10px auto 0 auto; display: block;">
-                <source src="https://a3.asurahosting.com/listen/tellstream/radio.mp3" type="audio/mpeg">
+            <!-- Fixed: Put src directly on the audio tag so JavaScript can read it -->
+            <audio id="radioPlayer" src="https://a3.asurahosting.com/listen/tellstream/radio.mp3" controls preload="auto" style="width: 100%; max-width: 400px; margin: 10px auto 0 auto; display: block;">
                 Your browser does not support the audio element.
             </audio>
         </div>
@@ -113,4 +113,91 @@
             "glen": "glen.gif", "mikeyspice": "mikeyspice.gif", "peterh": "peterh.gif", "cocoatea": "cocoatea.gif",
             "shabba": "shabba.gif", "anthonyb": "anthonyb.gif", "maxi": "maxi.gif", "rasshiloh": "rasshiloh.gif",
             "warriorking": "warriorking.gif", "morgans": "morgans.gif", "luciano": "luciano.gif", "waynewonder": "waynewonder.gif",
-            "munga": "munga.gif", "serani": "serani.gif", "terryganzie": "terryganzie.gif
+            "munga": "munga.gif", "serani": "serani.gif", "terryganzie": "terryganzie.gif", "marsha": "marsha.gif",
+            "1etana": "1etana.gif", "sizla": "sizla.gif", "squingy": "squingy.gif", "sandracross": "sandracross.gif",
+            "konshens": "konshens.gif", "demarco": "demarco.gif", "gyptian": "gyptian.gif", "djfx": "djfx.gif",
+            "tazmania": "tazmania.gif", "djcl": "djcl.gif", "jmt": "jmt.gif", "weedprophet": "weedprophet.gif",
+            "gappy": "gappyranks.gif", "michaelrose": "michaelrose.gif", "nisha": "nisha.gif", "jahvinci": "jahvinci.gif",
+            "terrylinen": "terrylinen.gif", "lukied": "lukied.gif", "happybirthday": "1hb4.gif", "happyholidays": "happyholidays.gif",
+            "zj_strachy_tazmania_sound": "ZJ_Strachy_Tazmania_Sound.gif", "ladylibertone": "libertonec.gif", "sanchez_tella_security": "Sanchez_Tella_Security.gif",
+            "fadab": "fadabc1.gif", "wayneiriebc1": "wayneiriebc1.gif", "conqueringlion": "ConqueringLion.gif",
+            "femaleconnection": "femaleconnection.gif", "jackomelody": "jackomelody.gif", "taharka": "taharka.gif", "dusoutc1": "dusoutc1.gif",
+            "jazzwad": "jazzwad.jpg", "happynewyear": "happynewyear.gif", "fw1": "fw1.gif", "fw2": "fw2.gif",
+            "fw3": "fw3.gif", "fw4": "fw4.gif", "fw5": "fw5.gif", "fw6": "fw6.gif",
+            "fw7": "fw7.gif", "fw8": "fw8.gif", "tfire": "tfire.gif", "stvincent": "stvincent.gif",
+            "antigua": "antigua.gif", "dragitup": "dragitup.gif", "haulitup": "haulitup.gif", "trinidad": "trinidad.gif",
+            "stkitts": "stkitts.gif", "bahamas": "bahamas.gif", "barbados": "barbados.gif", "bermuda": "bermuda.gif",
+            "grenada": "grenada.gif", "pretty": "everytingpretty.jpg", "welcomehome": "welcomehome.gif", "ttfire": "ttfire.gif",
+            "tsdotcom": "tsdotcom.gif", "mhadto": "mhadtotheting.gif", "mcrs": "mcrs.gif", "futuristic": "futuristic.gif",
+            "tarlll": "tarlll.gif", "awahdoyou": "awahdoyou.gif", "wdfy": "wdfy.gif", "future1": "future1.gif",
+            "future2": "future2.gif", "djchucky": "djchucky.gif", "ttfw": "ttfw.gif", "wgb": "wahgwaanblaad.gif",
+            "madcobra": "madcobra.gif", "djunian": "djunian.gif", "jrebel": "jrebel.gif", "jahlove": "jahlove1.gif",
+            "haiti": "haiti.gif", "10note": "10note.jpg"
+        };
+
+        // Fixed: Isolated Stream Guard Logic
+        audioPlayer.addEventListener('stalled', () => { recoverStream(); });
+        audioPlayer.addEventListener('error', () => { recoverStream(); });
+
+        function recoverStream() {
+            const currentSrc = audioPlayer.src;
+            if (!currentSrc) return; 
+            audioPlayer.src = ""; 
+            audioPlayer.load();
+            audioPlayer.src = currentSrc; 
+            audioPlayer.play().catch(err => console.log(err));
+        }
+
+        function appendMessage(data) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'msg';
+            
+            let messageContent = escapeHTML(data.message);
+
+            const codeRegex = /:([a-zA-Z0-9_-]+):/g;
+            messageContent = messageContent.replace(codeRegex, (match, code) => {
+                const lowerCode = code.toLowerCase();
+                if (emojiMapping[lowerCode]) {
+                    return `<img src="${imgBaseUrl}${emojiMapping[lowerCode]}" alt="${code}" style="max-height: 48px; vertical-align: middle; margin: 2px; border-radius: 4px;">`;
+                }
+                return match; 
+            });
+
+            msgDiv.innerHTML = `<div class="user">${escapeHTML(data.username)}</div><div>${messageContent}</div>`;
+            chatBox.appendChild(msgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            
+            while (chatBox.children.length > 50) {
+                chatBox.removeChild(chatBox.firstChild);
+            }
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+        }
+
+        async function loadMessages() {
+            const { data } = await supabase_db.from('messages').select('*').order('id', { ascending: true }).limit(40);
+            if (data) data.forEach(appendMessage);
+        }
+
+        supabase_db.channel('public:messages')
+            .on('postgres_changes', { event: 'INSERT', pattern: 'public', table: 'messages' }, payload => {
+                appendMessage(payload.new);
+            }).subscribe();
+
+        async function sendMessage() {
+            const user = usernameInput.value.trim() || 'Listener';
+            const text = messageInput.value.trim();
+            if (!text) return;
+            messageInput.value = '';
+            await supabase_db.from('messages').insert([{ username: user, message: text }]);
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+        
+        loadMessages();
+    </script>
+</body>
+</html>
