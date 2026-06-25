@@ -25,10 +25,12 @@
 </head>
 <body>
 
+    <!-- Left Side: Radio Player & Social Media Bridge -->
     <div class="main-content">
         <div class="player-card">
             <h1>BIG JOHN LIVE</h1>
-            <audio controls preload="auto" style="width: 100%; max-width: 400px; margin: 10px auto 0 auto; display: block;">
+            <!-- Live Audio Stream Player -->
+            <audio id="radioPlayer" controls preload="auto" style="width: 100%; max-width: 400px; margin: 10px auto 0 auto; display: block;">
                 <source src="https://a3.asurahosting.com/listen/tellstream/radio.mp3" type="audio/mpeg">
                 Your browser does not support the audio element.
             </audio>
@@ -40,6 +42,7 @@
         </div>
     </div>
 
+    <!-- Right Side: Zero-Lag Chat Lounge -->
     <div class="chat-sidebar">
         <div class="chat-header">🔊 Listener Lounge</div>
         <div class="chat-messages" id="chatBox"></div>
@@ -60,6 +63,26 @@
         const usernameInput = document.getElementById('usernameInput');
         const messageInput = document.getElementById('messageInput');
         const sendBtn = document.getElementById('sendBtn');
+        const audioPlayer = document.getElementById('radioPlayer');
+
+        // STREAM GUARD ENGINE: Force recovery on network timeouts or stalls
+        audioPlayer.addEventListener('stalled', () => {
+            console.log("Stream stalled. Reloading buffer...");
+            recoverStream();
+        });
+
+        audioPlayer.addEventListener('error', () => {
+            console.log("Stream hit a network protocol drop. Re-aligning...");
+            recoverStream();
+        });
+
+        function recoverStream() {
+            const currentSrc = audioPlayer.currentSrc;
+            audioPlayer.src = ""; // Clear out the dead buffer cache
+            audioPlayer.load();
+            audioPlayer.src = currentSrc; // Inject clean fresh network stream
+            audioPlayer.play().catch(err => console.log("Waiting for user interaction to resume audio context."));
+        }
 
         // Render message cleanly on screen
         function appendMessage(data) {
