@@ -25,11 +25,9 @@
 </head>
 <body>
 
-    <!-- Left Side: Radio Player & Social Media Bridge -->
     <div class="main-content">
         <div class="player-card">
             <h1>BIG JOHN LIVE</h1>
-            <!-- Shoutcast Audio Player Shell -->
             <audio controls autoplay style="width: 100%; max-width: 400px;">
                 <source src="http://YOUR_SHOUTCAST_SERVER_IP:PORT/;" type="audio/mpeg">
                 Your browser does not support the audio element.
@@ -42,7 +40,6 @@
         </div>
     </div>
 
-    <!-- Right Side: Zero-Lag Chat Lounge -->
     <div class="chat-sidebar">
         <div class="chat-header">🔊 Listener Lounge</div>
         <div class="chat-messages" id="chatBox"></div>
@@ -57,7 +54,7 @@
         // Connect to your unique Supabase engine
         const SUPABASE_URL = "https://vegwferwmyuunwvfqpsf.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZ3dmZXJ3bXl1dW53dmZxcHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODU5NDQsImV4cCI6MjA5Nzk2MTk0NH0.7F3HUEY59BGE5phlD9AukhZzRa3Ied_ZT43j8YZeIy8";
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabase_db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         const chatBox = document.getElementById('chatBox');
         const usernameInput = document.getElementById('usernameInput');
@@ -84,12 +81,12 @@
 
         // Fetch past logs instantly on load
         async function loadMessages() {
-            const { data } = await supabase.from('messages').select('*').order('id', { ascending: true }).limit(40);
+            const { data } = await supabase_db.from('messages').select('*').order('id', { ascending: true }).limit(40);
             if (data) data.forEach(appendMessage);
         }
 
         // Listen for new incoming real-time stream items
-        supabase.channel('public:messages')
+        supabase_db.channel('public:messages')
             .on('postgres_changes', { event: 'INSERT', pattern: 'public', table: 'messages' }, payload => {
                 appendMessage(payload.new);
             }).subscribe();
@@ -100,7 +97,7 @@
             const text = messageInput.value.trim();
             if (!text) return;
             messageInput.value = '';
-            await supabase.from('messages').insert([{ username: user, message: text }]);
+            await supabase_db.from('messages').insert([{ username: user, message: text }]);
         }
 
         sendBtn.addEventListener('click', sendMessage);
