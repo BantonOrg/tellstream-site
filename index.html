@@ -65,6 +65,9 @@
         const sendBtn = document.getElementById('sendBtn');
         const audioPlayer = document.getElementById('radioPlayer');
 
+        // Cloudflare image folder URL
+        const imgBaseUrl = "https://tellstream-emojis.pages.dev/";
+
         // STREAM GUARD ENGINE: Force recovery on network timeouts or stalls
         audioPlayer.addEventListener('stalled', () => {
             console.log("Stream stalled. Reloading buffer...");
@@ -78,34 +81,38 @@
 
         function recoverStream() {
             const currentSrc = audioPlayer.currentSrc;
-            audioPlayer.src = ""; // Clear out the dead buffer cache
+            audioPlayer.currentSrc = ""; // Clear out the dead buffer cache
             audioPlayer.load();
             audioPlayer.src = currentSrc; // Inject clean fresh network stream
             audioPlayer.play().catch(err => console.log("Waiting for user interaction to resume audio context."));
         }
 
-        // Render message cleanly on screen with image parser
+        // Render message cleanly on screen with shortcode translator
         function appendMessage(data) {
             const msgDiv = document.createElement('div');
             msgDiv.className = 'msg';
             
-            // Clean the incoming text to make it safe
             let messageContent = escapeHTML(data.message);
 
-            // Cloudflare image folder URL
-            const imgBaseUrl = "https://tellstream-emojis.pages.dev/";
+            // Match codes wrapped in colons like :tellawheel: or :pull_up:
+            const codeRegex = /:([a-zA-Z0-9_-]+):/g;
+            messageContent = messageContent.replace(codeRegex, (match, code) => {
+                // Check common formats in your Cloudflare deployment (tries .gif then .jpg)
+                // For a robust system, we fall back cleanly to typical formats
+                const lowerCode = code.toLowerCase();
+                
+                // Specific historical mappings based on original source logs
+                let fileExt = "gif";
+                if (lowerCode === "pretty") fileExt = "jpg";
+                if (lowerCode === "10note") fileExt = "jpg";
 
-            // Turn filenames like "10note.jpg" into actual images in chat
-            const imageRegex = /(\b\S+\.(?:jpg|jpeg|png|gif)\b)/gi;
-            messageContent = messageContent.replace(imageRegex, (match) => {
-                return `<img src="${imgBaseUrl}${match}" alt="${match}" style="max-height: 400px; max-width: 100%; display: block; margin: 5px 0; border-radius: 6px;">`;
+                return `<img src="${imgBaseUrl}${code}.${fileExt}" alt="${code}" style="max-height: 50px; vertical-align: middle; margin: 2px; border-radius: 4px;" onerror="this.onerror=null; this.src='${imgBaseUrl}${code}.jpg';">`;
             });
 
             msgDiv.innerHTML = `<div class="user">${escapeHTML(data.username)}</div><div>${messageContent}</div>`;
             chatBox.appendChild(msgDiv);
             chatBox.scrollTop = chatBox.scrollHeight;
             
-            // Auto-clear older elements to guarantee 0% mobile lag
             while (chatBox.children.length > 50) {
                 chatBox.removeChild(chatBox.firstChild);
             }
