@@ -17,6 +17,28 @@
         .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
         .msg { background: #242424; padding: 10px 14px; border-radius: 8px; line-height: 1.4; max-width: 90%; }
         .msg .user { font-weight: bold; color: #00adb5; margin-bottom: 3px; font-size: 0.9rem; }
+        
+        /* Interactive Emoji Drawer styling */
+        .emoji-drawer { 
+            background: #1a1a1a; 
+            border-top: 1px solid #2d2d2d; 
+            padding: 10px; 
+            display: flex; 
+            gap: 8px; 
+            overflow-x: auto; 
+            white-space: nowrap;
+            max-height: 65px;
+        }
+        .emoji-drawer::-webkit-scrollbar { height: 6px; }
+        .emoji-drawer::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        .emoji-drawer img { 
+            height: 35px; 
+            cursor: pointer; 
+            transition: transform 0.1s ease; 
+            border-radius: 4px;
+        }
+        .emoji-drawer img:hover { transform: scale(1.2); background: #2d2d2d; }
+
         .chat-input-area { padding: 15px; background: #1e1e1e; border-top: 1px solid #2d2d2d; display: flex; gap: 10px; }
         .chat-input-area input { flex: 1; background: #2d2d2d; border: none; padding: 12px; border-radius: 6px; color: #fff; outline: none; }
         .chat-input-area button { background: #ff0055; border: none; color: white; padding: 0 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
@@ -46,6 +68,10 @@
     <div class="chat-sidebar">
         <div class="chat-header">🔊 Listener Lounge</div>
         <div class="chat-messages" id="chatBox"></div>
+        
+        <!-- Interactive Emoji Selector List Bar -->
+        <div class="emoji-drawer" id="emojiDrawer"></div>
+
         <div class="chat-input-area">
             <input type="text" id="usernameInput" placeholder="Nickname" style="width: 80px; flex: none;">
             <input type="text" id="messageInput" placeholder="Type a message...">
@@ -64,9 +90,34 @@
         const messageInput = document.getElementById('messageInput');
         const sendBtn = document.getElementById('sendBtn');
         const audioPlayer = document.getElementById('radioPlayer');
+        const emojiDrawer = document.getElementById('emojiDrawer');
 
         // Cloudflare image folder URL
         const imgBaseUrl = "https://tellstream-emojis.pages.dev/";
+
+        // Standard sample of codes directly from your active roster to show immediately
+        const quickCodes = [
+            { code: "10note", ext: "jpg" },
+            { code: "pull_up", ext: "gif" },
+            { code: "tellawheel", ext: "gif" },
+            { code: "selassie", ext: "gif" },
+            { code: "pretty", ext: "jpg" }
+        ];
+
+        // Dynamically build the scrollable shortcut bar
+        function buildEmojiDrawer() {
+            quickCodes.forEach(item => {
+                const img = document.createElement('img');
+                img.src = `${imgBaseUrl}${item.code}.${item.ext}`;
+                img.alt = `:${item.code}:`;
+                img.title = `Click to add :${item.code}:`;
+                img.addEventListener('click', () => {
+                    messageInput.value += ` :${item.code}: `;
+                    messageInput.focus();
+                });
+                emojiDrawer.appendChild(img);
+            });
+        }
 
         // STREAM GUARD ENGINE: Force recovery on network timeouts or stalls
         audioPlayer.addEventListener('stalled', () => {
@@ -81,9 +132,9 @@
 
         function recoverStream() {
             const currentSrc = audioPlayer.currentSrc;
-            audioPlayer.currentSrc = ""; // Clear out the dead buffer cache
+            audioPlayer.currentSrc = ""; 
             audioPlayer.load();
-            audioPlayer.src = currentSrc; // Inject clean fresh network stream
+            audioPlayer.src = currentSrc; 
             audioPlayer.play().catch(err => console.log("Waiting for user interaction to resume audio context."));
         }
 
@@ -94,17 +145,12 @@
             
             let messageContent = escapeHTML(data.message);
 
-            // Match codes wrapped in colons like :tellawheel: or :pull_up:
+            // Match codes wrapped in colons like :tellawheel: or :10note:
             const codeRegex = /:([a-zA-Z0-9_-]+):/g;
             messageContent = messageContent.replace(codeRegex, (match, code) => {
-                // Check common formats in your Cloudflare deployment (tries .gif then .jpg)
-                // For a robust system, we fall back cleanly to typical formats
                 const lowerCode = code.toLowerCase();
-                
-                // Specific historical mappings based on original source logs
                 let fileExt = "gif";
-                if (lowerCode === "pretty") fileExt = "jpg";
-                if (lowerCode === "10note") fileExt = "jpg";
+                if (lowerCode === "pretty" || lowerCode === "10note") fileExt = "jpg";
 
                 return `<img src="${imgBaseUrl}${code}.${fileExt}" alt="${code}" style="max-height: 50px; vertical-align: middle; margin: 2px; border-radius: 4px;" onerror="this.onerror=null; this.src='${imgBaseUrl}${code}.jpg';">`;
             });
@@ -122,19 +168,16 @@
             return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
         }
 
-        // Fetch past logs instantly on load
         async function loadMessages() {
             const { data } = await supabase_db.from('messages').select('*').order('id', { ascending: true }).limit(40);
             if (data) data.forEach(appendMessage);
         }
 
-        // Listen for new incoming real-time stream items
         supabase_db.channel('public:messages')
             .on('postgres_changes', { event: 'INSERT', pattern: 'public', table: 'messages' }, payload => {
                 appendMessage(payload.new);
             }).subscribe();
 
-        // Broadcast a new message to the network
         async function sendMessage() {
             const user = usernameInput.value.trim() || 'Listener';
             const text = messageInput.value.trim();
@@ -145,7 +188,10 @@
 
         sendBtn.addEventListener('click', sendMessage);
         messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+        
+        // Run initializers
         loadMessages();
+        buildEmojiDrawer();
     </script>
 </body>
 </html>
