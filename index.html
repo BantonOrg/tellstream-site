@@ -15,30 +15,37 @@
         .chat-sidebar { width: 380px; background: #181818; border-left: 1px solid #2d2d2d; display: flex; flex-direction: column; }
         .chat-header { padding: 20px; background: #1e1e1e; border-bottom: 1px solid #2d2d2d; font-weight: bold; font-size: 1.2rem; color: #ff0055; }
         .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+        
+        /* Pro-Grade Custom Scrollable Emoji Grid Menu */
+        .emoji-panel-container {
+            background: #151515;
+            border-top: 1px solid #2d2d2d;
+            padding: 10px;
+            max-height: 140px;
+            overflow-y: auto;
+        }
+        .emoji-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
+            gap: 8px;
+        }
+        .emoji-grid img {
+            width: 100%;
+            height: 32px;
+            object-fit: contain;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: transform 0.1s ease, background 0.1s;
+        }
+        .emoji-grid img:hover {
+            transform: scale(1.2);
+            background: #2d2d2d;
+        }
+        .emoji-panel-container::-webkit-scrollbar { width: 6px; }
+        .emoji-panel-container::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+
         .msg { background: #242424; padding: 10px 14px; border-radius: 8px; line-height: 1.4; max-width: 90%; }
         .msg .user { font-weight: bold; color: #00adb5; margin-bottom: 3px; font-size: 0.9rem; }
-        
-        /* Interactive Emoji Drawer styling */
-        .emoji-drawer { 
-            background: #1a1a1a; 
-            border-top: 1px solid #2d2d2d; 
-            padding: 10px; 
-            display: flex; 
-            gap: 8px; 
-            overflow-x: auto; 
-            white-space: nowrap;
-            max-height: 65px;
-        }
-        .emoji-drawer::-webkit-scrollbar { height: 6px; }
-        .emoji-drawer::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
-        .emoji-drawer img { 
-            height: 35px; 
-            cursor: pointer; 
-            transition: transform 0.1s ease; 
-            border-radius: 4px;
-        }
-        .emoji-drawer img:hover { transform: scale(1.2); background: #2d2d2d; }
-
         .chat-input-area { padding: 15px; background: #1e1e1e; border-top: 1px solid #2d2d2d; display: flex; gap: 10px; }
         .chat-input-area input { flex: 1; background: #2d2d2d; border: none; padding: 12px; border-radius: 6px; color: #fff; outline: none; }
         .chat-input-area button { background: #ff0055; border: none; color: white; padding: 0 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
@@ -47,11 +54,9 @@
 </head>
 <body>
 
-    <!-- Left Side: Radio Player & Social Media Bridge -->
     <div class="main-content">
         <div class="player-card">
             <h1>BIG JOHN LIVE</h1>
-            <!-- Live Audio Stream Player -->
             <audio id="radioPlayer" controls preload="auto" style="width: 100%; max-width: 400px; margin: 10px auto 0 auto; display: block;">
                 <source src="https://a3.asurahosting.com/listen/tellstream/radio.mp3" type="audio/mpeg">
                 Your browser does not support the audio element.
@@ -64,13 +69,13 @@
         </div>
     </div>
 
-    <!-- Right Side: Zero-Lag Chat Lounge -->
     <div class="chat-sidebar">
         <div class="chat-header">🔊 Listener Lounge</div>
         <div class="chat-messages" id="chatBox"></div>
         
-        <!-- Interactive Emoji Selector List Bar -->
-        <div class="emoji-drawer" id="emojiDrawer"></div>
+        <div class="emoji-panel-container">
+            <div class="emoji-grid" id="emojiGrid"></div>
+        </div>
 
         <div class="chat-input-area">
             <input type="text" id="usernameInput" placeholder="Nickname" style="width: 80px; flex: none;">
@@ -90,108 +95,40 @@
         const messageInput = document.getElementById('messageInput');
         const sendBtn = document.getElementById('sendBtn');
         const audioPlayer = document.getElementById('radioPlayer');
-        const emojiDrawer = document.getElementById('emojiDrawer');
+        const emojiGrid = document.getElementById('emojiGrid');
 
-        // Cloudflare image folder URL
+        // Cloudflare assets library
         const imgBaseUrl = "https://tellstream-emojis.pages.dev/";
 
-        // Standard sample of codes directly from your active roster to show immediately
-        const quickCodes = [
-            { code: "10note", ext: "jpg" },
-            { code: "pull_up", ext: "gif" },
-            { code: "tellawheel", ext: "gif" },
-            { code: "selassie", ext: "gif" },
-            { code: "pretty", ext: "jpg" }
-        ];
-
-        // Dynamically build the scrollable shortcut bar
-        function buildEmojiDrawer() {
-            quickCodes.forEach(item => {
-                const img = document.createElement('img');
-                img.src = `${imgBaseUrl}${item.code}.${item.ext}`;
-                img.alt = `:${item.code}:`;
-                img.title = `Click to add :${item.code}:`;
-                img.addEventListener('click', () => {
-                    messageInput.value += ` :${item.code}: `;
-                    messageInput.focus();
-                });
-                emojiDrawer.appendChild(img);
-            });
-        }
-
-        // STREAM GUARD ENGINE: Force recovery on network timeouts or stalls
-        audioPlayer.addEventListener('stalled', () => {
-            console.log("Stream stalled. Reloading buffer...");
-            recoverStream();
-        });
-
-        audioPlayer.addEventListener('error', () => {
-            console.log("Stream hit a network protocol drop. Re-aligning...");
-            recoverStream();
-        });
-
-        function recoverStream() {
-            const currentSrc = audioPlayer.currentSrc;
-            audioPlayer.currentSrc = ""; 
-            audioPlayer.load();
-            audioPlayer.src = currentSrc; 
-            audioPlayer.play().catch(err => console.log("Waiting for user interaction to resume audio context."));
-        }
-
-        // Render message cleanly on screen with shortcode translator
-        function appendMessage(data) {
-            const msgDiv = document.createElement('div');
-            msgDiv.className = 'msg';
-            
-            let messageContent = escapeHTML(data.message);
-
-            // Match codes wrapped in colons like :tellawheel: or :10note:
-            const codeRegex = /:([a-zA-Z0-9_-]+):/g;
-            messageContent = messageContent.replace(codeRegex, (match, code) => {
-                const lowerCode = code.toLowerCase();
-                let fileExt = "gif";
-                if (lowerCode === "pretty" || lowerCode === "10note") fileExt = "jpg";
-
-                return `<img src="${imgBaseUrl}${code}.${fileExt}" alt="${code}" style="max-height: 50px; vertical-align: middle; margin: 2px; border-radius: 4px;" onerror="this.onerror=null; this.src='${imgBaseUrl}${code}.jpg';">`;
-            });
-
-            msgDiv.innerHTML = `<div class="user">${escapeHTML(data.username)}</div><div>${messageContent}</div>`;
-            chatBox.appendChild(msgDiv);
-            chatBox.scrollTop = chatBox.scrollHeight;
-            
-            while (chatBox.children.length > 50) {
-                chatBox.removeChild(chatBox.firstChild);
-            }
-        }
-
-        function escapeHTML(str) {
-            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
-        }
-
-        async function loadMessages() {
-            const { data } = await supabase_db.from('messages').select('*').order('id', { ascending: true }).limit(40);
-            if (data) data.forEach(appendMessage);
-        }
-
-        supabase_db.channel('public:messages')
-            .on('postgres_changes', { event: 'INSERT', pattern: 'public', table: 'messages' }, payload => {
-                appendMessage(payload.new);
-            }).subscribe();
-
-        async function sendMessage() {
-            const user = usernameInput.value.trim() || 'Listener';
-            const text = messageInput.value.trim();
-            if (!text) return;
-            messageInput.value = '';
-            await supabase_db.from('messages').insert([{ username: user, message: text }]);
-        }
-
-        sendBtn.addEventListener('click', sendMessage);
-        messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
-        
-        // Run initializers
-        loadMessages();
-        buildEmojiDrawer();
-    </script>
-</body>
-</html>
+        // 100% Comprehensive Historical Mapping derived straight from original source parameters
+        const emojiMapping = {
+            "tellawheel": "tellawheel.gif", "sourire": "sourire.gif", "content": "content.gif", "danc1": "danc1.gif",
+            "oh-2": "OH-2.gif", "pull_up": "pull_up.gif", "langue": "langue.gif", "selassie": "_lion.gif",
+            "clin-oeuil": "clin-oeuil.gif", "speakaz": "speakaz.gif", "triste": "triste.gif", "ziggie": "ziggie.gif",
+            "oh-3": "OH-3.gif", "cdance": "CarltonDanc.gif", "pleure": "pleure.gif", "bb": "bb.gif",
+            "rouge": "rouge.gif", "cool": "cool.gif", "dance3": "danc3.gif", "enerve1": "enerve1.gif",
+            "dance2": "danc2.gif", "roll-eyes": "roll-eyes.gif", "beers": "beers.gif", "bigjohn": "bigjohn.gif",
+            "cruss": "djc_th.gif", "mikeyb1": "mb_th.gif", "jacko": "jm_th.gif", "jk": "jk_th.gif",
+            "wayneirie": "wi_th.gif", "fadab": "fb_th.gif", "bullett": "b_th.gif", "barney": "djb_th.gif",
+            "butta": "djbu_th.gif", "banton": "bm_th.gif", "jj": "jj_th.gif", "fc": "fc_th.gif",
+            "kimmie": "kimmie.gif", "dettol": "d_th.gif", "fabulous": "fab_th.gif", "tnt": "tnt_th.gif",
+            "shylo": "sf_th.gif", "jb": "jrb_th.gif", "many": "djm_th.gif", "flex": "djf_th.gif",
+            "boom": "explosion.gif", "fire": "fire.gif", "tellafire": "tellafire.gif", "pullup": "pull1.gif",
+            "elly": "elly.gif", "dusout": "dusout.gif", "indy": "indy.gif", "s-a": "sa.gif",
+            "loj": "loj.gif", "jahhh": "jah.gif", "can": "can.gif", "gb": "gb.gif",
+            "usa": "usa.gif", "jf": "jf.gif", "bless": "bless.gif", "daville": "daville.gif",
+            "delly": "delly.gif", "fran": "fran.gif", "rasta": "rastadance.gif", "lc": "lc.gif",
+            "libertone": "libertone.gif", "security": "security.gif", "katz": "katz.gif", "unknown": "unknown.gif",
+            "sk": "sk.gif", "knight": "knight.gif", "cj": "cj.gif", "rev": "rev.gif",
+            "whodat": "whodat.gif", "raydon": "raydon.gif", "tony": "tony.gif", "platinum": "platinum.gif",
+            "goodas": "goodas.gif", "posh": "posh.gif", "rdz": "rdz.gif", "cure": "cure.gif",
+            "richie": "richiespice.gif", "vybz": "vybz.gif", "spanner": "spanner.gif", "bounty": "bounty.gif",
+            "beenie": "beenie.gif", "movado": "movado.gif", "ifrica": "ifrica.gif", "mackad": "macka.gif",
+            "bigjon3": "bigjohn3.gif", "turbulence": "turbulence.gif", "tanto": "tanto.gif", "tarrus": "tarrus.gif",
+            "bitty": "bitty.gif", "aidonia": "aidonia.gif", "sanchez": "sanchez.gif", "capleton": "capleton.gif",
+            "beres": "beres.gif", "assassin": "assassin.gif", "busy": "busy.gif", "garnet": "garnet.gif",
+            "buju": "buju.gif", "bob": "bob.gif", "flyer1": "flyer1.jpg", "denz": "denz.gif",
+            "delroy": "delroy.gif", "magic": "magic.gif", "rasric": "rasric.gif", "attitude": "attitude.gif",
+            "keba": "keba.gif", "cherry": "ccherry.gif", "tellstream": "tellstream.gif", "sizzla": "sizzla.gif",
+            "damian": "damian.gif", "mzenergy": "mzenergy.gif", "ladyj": "ladyj.gif", "faze": "faze.gif",
+            "stush": "stush.gif", "tea": "tea.gif", "slowwine": "slowwine.gif", "mst": "mst.gif",
