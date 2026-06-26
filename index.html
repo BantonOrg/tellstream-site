@@ -312,7 +312,7 @@
             gap: 12px;
         }
 
-        /* --- NOTICEBOARD PANEL SYSTEM CLASSES (ROW-TO-COLUMN FIXED) --- */
+/* --- NOTICEBOARD PANEL SYSTEM CLASSES (ROW-TO-COLUMN FIXED WITH FADE) --- */
         #noticeboard-view-panel {
             display: none;
             flex-direction: row; /* Aligns columns side-by-side */
@@ -322,6 +322,8 @@
             padding: 15px;
             gap: 15px;
             background: #111;
+            /* Smooth fade-in animation rules */
+            animation: fadeInNotice 0.25s ease-out forwards;
         }
         .notice-column-box {
             flex: 1;
@@ -333,6 +335,12 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
+        }
+
+        /* Animation timeline instruction */
+        @keyframes fadeInNotice {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
         .notice-box-boss { border-top: 3px solid #ff3333; }
         .notice-box-selectors { border-top: 3px solid #ffdd1a; }
