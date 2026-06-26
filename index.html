@@ -91,7 +91,7 @@
             font-weight: 600;
         }
 
-        .fb-master-link {
+        .fb-master-link, .emoji-master-link {
             font-size: 0.75rem;
             background: #1877f2;
             color: white;
@@ -102,6 +102,13 @@
         }
         .fb-master-link:hover {
             background: #166fe5;
+        }
+        
+        .emoji-master-link {
+            background: #00adb5;
+        }
+        .emoji-master-link:hover {
+            background: #008c94;
         }
 
         .inner-feed-wrapper {
@@ -429,7 +436,10 @@
                 <div class="col-title">💡 System Help & Shorthands</div>
                 <div class="sub-panel-top" id="helpCardsContainer"></div>
                 <div class="sub-panel-bottom">
-                    <div style="font-size:0.85rem; color:#00adb5; font-weight:bold; margin-bottom:4px;">✨ Quick Emojis</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <span style="font-size:0.85rem; color:#00adb5; font-weight:bold;">✨ Quick Emojis</span>
+                        <a href="https://tellstream-emojis.pages.dev/" target="_blank" class="emoji-master-link">See All Codes</a>
+                    </div>
                     <div class="emoji-grid-list" id="quickEmojiList"></div>
                 </div>
             </div>
