@@ -591,7 +591,7 @@
             <!-- Right Side Fullscreen Cloned Panel -->
             <div class="chat-fs-help-panel">
                 <div class="col-title">💡 Site Help and Emoji codes</div>
-                <div class="sub-panel-top" id="helpCardsContainerFS" style="flex:none; background:transparent; padding:0; border:none; display:flex; flex-direction:column; gap:8px;"></div>
+                <div class="help-cards-wrapper-fs" id="helpCardsContainerFS" style="display:flex; flex-direction:column; gap:8px;"></div>
                 <div class="sub-panel-bottom" style="background:transparent; padding:0; border:none; display:flex; flex-direction:column; gap:8px; margin-top:10px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                         <span style="font-size:0.85rem; color:#00adb5; font-weight:bold;">✨ Quick Emojis</span>
@@ -661,10 +661,11 @@
             { id: 3, date: "2 days ago", text: "Weekend scheduling updates coming soon. Keep your locked eyes locked onto the central flyer board for upcoming live dance clashes.", link: "https://www.facebook.com/tellstream.dem" }
         ];
 
+        // Customized instruction sets for the side panel
         const helpInstructions = [
             { title: "Setting Nickname", text: "Fill in the Nickname block before typing to claim your handle in the Lounge panel." },
             { title: "Sending Text Lines", text: "Type your query inside the input field box and tap Send or hit your keyboard Enter button." },
-            { title: "Firing Emojis & Sounds", text: "Tap any active shorthand key code block inside the selection layout panel below to append it to your message." }
+            { title: "Firing Emojis & Sounds", text: "Tap any active shorthand key code block inside the selection layout panel below to append it to your message. Click [See All Codes] for more." }
         ];
 
         function renderFacebookFeed() {
@@ -822,7 +823,7 @@
                     }
                 }
             } else {
-                // Registration path. First registrant gets Super Admin status injected automatically.
+                // Registration path rules assignment logic
                 let assignedLevel = 0;
                 let assignedHover = "Tella Fambily";
 
