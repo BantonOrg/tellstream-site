@@ -40,30 +40,50 @@
             transition: all 0.3s ease;
         }
         
-        .player-card {
-            background-image: url('/src/assets/header-bg.jpg');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
+        /* --- 3-STACK HEADER STRUCTURE (PC/TABLET ROW) --- */
+        .header-container {
+            display: flex;
+            flex-direction: row;
+            width: 100%;
             height: 140px;
-            padding: 0px 40px;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
             overflow: hidden;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 20px;
             flex-shrink: 0;
         }
+
+        .header-stack {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            padding: 0px 40px;
+            background-image: url('/src/assets/header-bg.jpg');
+            background-size: 300% 100%; /* Spans across all 3 stacks */
+            background-repeat: no-repeat;
+        }
+
+        .stack-left {
+            background-position: left center;
+            justify-content: flex-start;
+        }
+
+        .stack-middle {
+            background-position: center center;
+            justify-content: center;
+        }
+
+        .stack-right {
+            background-position: right center;
+            justify-content: flex-end;
+        }
         
-        .player-card .tagline-wrapper {
+        .header-stack .tagline-wrapper {
             display: flex;
             flex-direction: column;
-            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.9);
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
             white-space: nowrap;
         }
-        .player-card h1 {
+        .header-stack h1 {
             color: #00adb5;
             font-size: 1.8rem;
             text-transform: uppercase;
@@ -73,7 +93,7 @@
             -webkit-text-stroke: 1.5px #000000;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9); 
         }
-        .player-card p {
+        .header-stack p {
             color: #eee;
             font-size: 0.95rem;
             font-weight: bold;
@@ -293,10 +313,10 @@
             background: rgba(0, 173, 181, 0.15);
             border: 1px solid rgba(0, 173, 181, 0.3);
             color: #00adb5;
-            display: none;
+            display: none; /* Hidden by default on split view panel */
         }
         body.chat-is-fullscreen #toggle-notice-btn {
-            display: inline-block;
+            display: inline-block; /* Reveals button exclusively inside full maximize screen mode */
         }
 
         .chat-split-body {
@@ -315,21 +335,21 @@
             gap: 12px;
         }
 
-        /* --- NOTICEBOARD PANEL SYSTEM CLASSES (ROW-TO-COLUMN FIXED WITH SLIDE) --- */
+        /* --- NOTICEBOARD PANEL SYSTEM CLASSES --- */
         #noticeboard-view-panel {
             display: none;
-            flex-direction: row; /* Aligns columns side-by-side */
+            flex-direction: row; 
             flex: 1;
             overflow-x: auto; 
             overflow-y: hidden;
             padding: 15px;
             gap: 15px;
             background: #111;
-            animation: slideInNotice 0.25s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+            animation: fadeInNotice 0.25s ease-out forwards;
         }
         .notice-column-box {
             flex: 1;
-            min-width: 250px; /* Keeps layout crisp on smaller screens */
+            min-width: 250px; 
             background: rgba(30, 30, 30, 0.6);
             border: 1px solid rgba(255, 255, 255, 0.05);
             border-radius: 8px;
@@ -337,6 +357,11 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
+        }
+
+        @keyframes fadeInNotice {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
         .notice-box-boss { border-top: 3px solid #ff3333; }
         .notice-box-selectors { border-top: 3px solid #ffdd1a; }
@@ -408,11 +433,6 @@
             margin-top: auto;
         }
 
-        @keyframes slideInNotice {
-            from { transform: translateX(100%); }
-            to { transform: translateX(0); }
-        }
-
         /* Fullscreen side help panel */
         .chat-fs-help-panel {
             width: 380px;
@@ -434,7 +454,6 @@
             border: 1px solid rgba(255, 255, 255, 0.03);
         }
         
-        /* Master Color System Classes */
         .msg .user {
             font-weight: bold;
             margin-bottom: 3px;
@@ -442,15 +461,14 @@
             display: inline-block;
             position: relative;
         }
-        .user-unregistered { color: #22e532; }
-        .user-registered { color: #ffdd1a; cursor: help; }
-        .user-admin { color: #ff3333; cursor: help; }
+        .user-unregistered { color: #22e532; } 
+        .user-registered { color: #ffdd1a; cursor: help; } 
+        .user-admin { color: #ff3333; cursor: help; } 
 
         .msg .user[title] {
             text-decoration: none;
         }
         
-        /* Dropdown security panel layout setup */
         .security-drawer {
             background: rgba(28, 28, 28, 0.98);
             border-bottom: 1px solid rgba(0, 173, 181, 0.3);
@@ -545,6 +563,18 @@
             background: #008c94;
         }
 
+        body.chat-is-fullscreen .main-content {
+            display: none !important;
+        }
+        body.chat-is-fullscreen .chat-sidebar {
+            width: 100% !important;
+            border-left: none;
+        }
+        body.chat-is-fullscreen .chat-fs-help-panel {
+            display: flex !important;
+        }
+
+        /* Lightbox Overlay */
         .flyer-modal-overlay {
             position: fixed;
             top: 0;
@@ -598,7 +628,6 @@
             background: #008c94;
         }
 
-        /* --- ADVANCED RESPONSIVE MEDIA SYSTEM --- */
         @media (max-width: 1024px) {
             body {
                 flex-direction: column;
@@ -612,74 +641,19 @@
                 height: auto;
                 overflow: visible;
                 padding: 10px;
-                gap: 12px;
             }
-            
-            /* Responsive Sliced Background Layout Engine */
-            .player-card {
-                height: auto;
-                flex-direction: column;
-                padding: 0;
-                text-align: center;
-                gap: 0;
-                background: none;
-                box-shadow: none;
-            }
-            .player-card .tagline-wrapper {
-                width: 100%;
-                padding: 20px 10px;
-                background-image: url('/src/assets/header-bg.jpg');
-                background-size: cover;
-                background-position: left center; /* Locks to Left 33% slice */
-                border-radius: 12px 12px 0 0;
-                box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            }
-            .player-card h1 {
-                font-size: 1.4rem;
-                white-space: normal;
-            }
-            .player-card p {
-                font-size: 0.8rem;
-            }
-            #radioPlayer {
-                width: 100% !important;
-                max-width: 100% !important;
-                padding: 20px;
-                background-image: url('/src/assets/header-bg.jpg');
-                background-size: cover;
-                background-position: right center; /* Locks to Right 33% slice */
-                border-radius: 0 0 12px 12px;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-                margin: 0;
-            }
-
             .columns-container {
                 flex-direction: column;
                 height: auto;
                 overflow: visible;
-                gap: 15px;
             }
             .col-3 {
-                height: 420px;
+                height: 500px;
                 flex-shrink: 0;
-                padding: 12px;
             }
-            
-            /* Noticeboard columns turn back into rows on phone display modes */
-            #noticeboard-view-panel {
-                flex-direction: column !important;
-                overflow-y: auto;
-                overflow-x: hidden;
-                height: calc(100vh - 120px);
-            }
-            .notice-column-box {
-                min-width: 100% !important;
-                flex: none;
-            }
-
             .chat-sidebar {
                 width: 100% !important;
-                height: 550px;
+                height: 600px;
                 border-left: none;
                 border-top: 1px solid #2d2d2d;
             }
@@ -687,19 +661,131 @@
                 display: none !important;
             }
         }
+
+        /* ==========================================================================
+           🚨 STRICT MOBILE EXCLUSIVE RESPONSIVE OVERRIDES (TARGETS PHONE ONLY)
+           ========================================================================== */
+        @media (max-width: 576px) {
+            html {
+                font-size: 16px; /* Stabilizes base scaling engine */
+            }
+
+            body {
+                overflow-y: auto !important;
+                height: auto !important;
+            }
+
+            .main-content {
+                padding: 10px !important;
+                gap: 15px !important;
+            }
+
+            /* --- HEADER BACKING RE-SLICE (MOBILE VERTICAL STACKS) --- */
+            .header-container {
+                flex-direction: column !important;
+                height: auto !important;
+            }
+            
+            .header-stack {
+                width: 100% !important;
+                height: 100px !important;
+                padding: 15px !important;
+                background-size: cover !important; /* Drops 3-way layout to handle full block profile */
+                background-position: center center !important;
+                justify-content: center !important;
+                text-align: center !important;
+            }
+            
+            .header-stack h1 {
+                font-size: 2.1rem !important; /* Boosts main title size for small screens */
+            }
+
+            .header-stack p {
+                font-size: 1.05rem !important;
+            }
+
+            /* --- READABILITY FONT BOOST ENGINE --- */
+            .col-title {
+                font-size: 1.4rem !important; 
+                padding-bottom: 12px !important;
+            }
+
+            .fb-post-meta {
+                font-size: 0.95rem !important;
+            }
+
+            .fb-post-text {
+                font-size: 1.15rem !important; /* Huge boost to clarity readability standard */
+                line-height: 1.5 !important;
+            }
+
+            .flyer-item h4 {
+                font-size: 1.2rem !important;
+            }
+
+            .help-item-card h5 {
+                font-size: 1.1rem !important;
+            }
+
+            .help-item-card p {
+                font-size: 1.05rem !important;
+                line-height: 1.4 !important;
+            }
+
+            .emoji-grid-item {
+                font-size: 1.1rem !important;
+                padding: 8px 12px !important;
+            }
+
+            .msg .user {
+                font-size: 1.15rem !important;
+            }
+
+            .msg div {
+                font-size: 1.2rem !important; /* Lounge chat main lines read beautifully */
+                line-height: 1.4 !important;
+            }
+
+            .col-3 {
+                height: auto !important; /* Prevents container crushing */
+                min-height: 420px !important;
+            }
+
+            .chat-sidebar {
+                height: 550px !important;
+            }
+            
+            .chat-input-area input {
+                font-size: 1.1rem !important;
+                padding: 14px !important;
+            }
+            
+            .chat-input-area button.send-main-btn {
+                height: 48px !important;
+                font-size: 1rem !important;
+            }
+        }
     </style>
 </head>
 <body>
 
     <div class="main-content">
-        <div class="player-card">
-            <div class="tagline-wrapper">
-                <h1>Great Music</h1>
-                <p>ALL DAY • EVERY DAY</p>
+        
+        <div class="header-container">
+            <div class="header-stack stack-left">
+                <div class="tagline-wrapper">
+                    <h1>Great Music</h1>
+                    <p>ALL DAY • EVERY DAY</p>
+                </div>
             </div>
-            <audio id="radioPlayer" src="https://a3.asurahosting.com/listen/tellstream/radio.mp3" controls preload="auto" style="width: 100%; max-width: 320px; margin: 0; display: block; box-shadow: 0 4px 10px rgba(0,0,0,0.6); border-radius: 8px;">
-                Your browser does not support the audio element.
-            </audio>
+            
+            <div class="header-stack stack-middle">
+                <audio id="radioPlayer" src="https://a3.asurahosting.com/listen/tellstream/radio.mp3" controls preload="auto" style="width: 100%; max-width: 320px; margin: 0; display: block; box-shadow: 0 4px 10px rgba(0,0,0,0.6); border-radius: 8px;">
+                    Your browser does not support the audio element.
+                </audio>
+            </div>
+            
+            <div class="header-stack stack-right"></div>
         </div>
         
         <div class="columns-container">
@@ -977,7 +1063,6 @@
             messageInput.focus();
         }
 
-        // --- NAVIGATION TOGGLE ENGINE CONTROL ---
         function toggleNoticeBoardView() {
             const streamChat = document.getElementById('chatBox');
             const noticePanel = document.getElementById('noticeboard-view-panel');
@@ -1029,7 +1114,6 @@
             document.getElementById('form-fambily').style.display = (powerLevel >= 0) ? 'block' : 'none';
         }
 
-        // --- SUPABASE NOTICEBOARD DATABASE OPERATIONS ---
         async function fetchNoticeBoardRecords() {
             const { data, error } = await supabase_db
                 .from('notice_board')
