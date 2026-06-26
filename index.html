@@ -51,8 +51,8 @@
         }
         
         .player-card h1 {
-            color: #ff0055;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.9);
+            color: #00adb5;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
             font-size: 1.8rem;
             white-space: nowrap;
         }
@@ -66,7 +66,7 @@
         
         .col-3 {
             flex: 1;
-            background: rgba(30, 30, 30, 0.85);
+            background: rgba(25, 25, 25, 0.88);
             backdrop-filter: blur(8px);
             border-radius: 12px;
             padding: 20px;
@@ -81,13 +81,14 @@
         
         .col-title {
             font-size: 1.1rem;
-            color: #ff0055;
+            color: #00adb5;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             padding-bottom: 8px;
             flex-shrink: 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            font-weight: 600;
         }
 
         .fb-master-link {
@@ -103,7 +104,6 @@
             background: #166fe5;
         }
 
-        /* Inner scroll containers */
         .inner-feed-wrapper {
             flex: 1;
             overflow-y: auto;
@@ -114,7 +114,7 @@
 
         /* Column 1 items */
         .fb-post-card {
-            background: rgba(45, 45, 45, 0.5);
+            background: rgba(45, 45, 45, 0.4);
             border: 1px solid rgba(255, 255, 255, 0.05);
             border-radius: 8px;
             padding: 12px;
@@ -134,15 +134,15 @@
         }
         .fb-post-text {
             font-size: 0.85rem;
-            color: #ddd;
+            color: #eee;
             line-height: 1.4;
         }
 
         /* Column 2 items */
         .flyer-item {
-            background: rgba(45, 45, 45, 0.6);
+            background: rgba(45, 45, 45, 0.5);
             border-radius: 8px;
-            padding: 10px;
+            padding: 12px;
             border: 1px solid rgba(255, 255, 255, 0.05);
             text-align: center;
             cursor: pointer;
@@ -150,12 +150,17 @@
         }
         .flyer-item:hover {
             transform: scale(1.02);
-            background: rgba(60, 60, 60, 0.8);
+            background: rgba(60, 60, 60, 0.7);
         }
         .flyer-item img {
             max-width: 100%;
             height: auto;
             border-radius: 6px;
+        }
+        .flyer-item h4 {
+            margin-top: 8px; 
+            font-size: 0.95rem; 
+            color: #ffffff;
         }
 
         /* Column 3 items */
@@ -174,11 +179,11 @@
             background: rgba(255, 255, 255, 0.03);
             padding: 8px 12px;
             border-radius: 6px;
-            border-left: 3px solid #ff0055;
+            border-left: 3px solid #00adb5;
         }
         .help-item-card h5 {
             font-size: 0.85rem;
-            color: #00adb5;
+            color: #ffffff;
             margin-bottom: 3px;
         }
         .help-item-card p {
@@ -203,14 +208,14 @@
             border: 1px solid rgba(255, 255, 255, 0.02);
         }
         .emoji-grid-item:hover {
-            background: rgba(255, 0, 85, 0.2);
-            border-color: #ff0055;
+            background: rgba(0, 173, 181, 0.2);
+            border-color: #00adb5;
         }
         
         /* Master Sidebar */
         .chat-sidebar {
             width: 380px;
-            background: rgba(24, 24, 24, 0.95);
+            background: rgba(20, 20, 20, 0.96);
             backdrop-filter: blur(10px);
             border-left: 1px solid rgba(45, 45, 45, 0.5);
             display: flex;
@@ -225,7 +230,7 @@
             border-bottom: 1px solid rgba(45, 45, 45, 0.5);
             font-weight: bold;
             font-size: 1.2rem;
-            color: #ff0055;
+            color: #00adb5;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -241,7 +246,7 @@
             cursor: pointer;
         }
         .fullscreen-btn:hover {
-            background: #ff0055;
+            background: #00adb5;
         }
         
         .chat-messages {
@@ -288,7 +293,7 @@
         }
         
         .chat-input-area button {
-            background: #ff0055;
+            background: #00adb5;
             border: none;
             color: white;
             padding: 0 20px;
@@ -298,7 +303,7 @@
         }
         
         .chat-input-area button:hover {
-            background: #e0004c;
+            background: #008c94;
         }
 
         body.chat-is-fullscreen .main-content {
@@ -345,13 +350,16 @@
             position: absolute;
             top: -40px;
             right: 0;
-            background: #ff0055;
+            background: #00adb5;
             color: white;
             border: none;
             padding: 6px 16px;
             border-radius: 4px;
             font-weight: bold;
             cursor: pointer;
+        }
+        .modal-close-btn:hover {
+            background: #008c94;
         }
 
         @media (max-width: 1024px) {
@@ -472,21 +480,18 @@
 
         const imgBaseUrl = "https://tellstream-emojis.pages.dev/";
 
-        // COLUMN 1 DATASET: Edit these items to add mock posts
         const facebookPosts = [
             { id: 1, date: "Just now", text: "Big John is locked and loaded live in the studio! Lock into tellstream.banton.org right now and fire up the lounge chat! 🎚️🔥", link: "https://www.facebook.com/tellstream.dem" },
             { id: 2, date: "Yesterday", text: "Big respect to all the listeners locking in from around the globe. Drop your shoutouts and tell-a-wheel selectors directly inside the main chat line! 🔊🎧", link: "https://www.facebook.com/tellstream.dem" },
             { id: 3, date: "2 days ago", text: "Weekend scheduling updates coming soon. Keep your locked eyes locked onto the central flyer board for upcoming live dance clashes.", link: "https://www.facebook.com/tellstream.dem" }
         ];
 
-        // COLUMN 2 DATASET: Automatic removal happens here based on the danceDate
         const eventFlyers = [
             { id: 1, title: "Big John Summer Bash", img: "/src/assets/flyer1.jpg", danceDate: "2026-07-15" },
-            { id: 2, title: "Tellstream Linkup Dub Clash", img: "/src/assets/flyer1.jpg", danceDate: "2026-05-01" }, // Automatically hidden
+            { id: 2, title: "Tellstream Linkup Dub Clash", img: "/src/assets/flyer1.jpg", danceDate: "2026-05-01" },
             { id: 3, title: "Weekend Showcase Spec", img: "/src/assets/flyer1.jpg", danceDate: "2026-08-30" }
         ];
 
-        // COLUMN 3 DATASET: Quick instructions list array
         const helpInstructions = [
             { title: "Setting Nickname", text: "Fill in the Nickname block before typing to claim your handle in the Lounge panel." },
             { title: "Sending Text Lines", text: "Type your query inside the input field box and tap Send or hit your keyboard Enter button." },
@@ -519,8 +524,8 @@
             flyerContainer.innerHTML = activeCards.map(event => `
                 <div class="flyer-item" onclick="launchFlyerLightbox('${event.img}')">
                     <img src="${event.img}" alt="${event.title}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%2250%22><rect width=%22100%25%22 height=%22100%25%22 fill=%22%23333%22/><text x=%2210%22 y=%2230%22 fill=%22%23aaa%22 font-size=%2212%22>Missing Asset</text></svg>'">
-                    <h4 style="margin-top:8px; font-size:0.9rem; color:#ff0055;">${event.title}</h4>
-                    <p style="font-size:0.75rem; color:#aaa; margin-top:2px;">Date: ${event.danceDate}</p>
+                    <h4>${event.title}</h4>
+                    <p style="font-size:0.75rem; color:#aaa; margin-top:4px;">Date: ${event.danceDate}</p>
                 </div>
             `).join('');
         }
