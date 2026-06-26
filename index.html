@@ -144,4 +144,106 @@
     <div class="main-content">
         <div class="player-card">
             <h1>BIG JOHN LIVE</h1>
-            <audio id="radioPlayer" src="https://a3.asurahosting.com/listen/tellstream/radio.mp3" controls preload="auto" style="width: 100%; max-width: 320px; margin: 0; display: block; box-shadow:
+            <audio id="radioPlayer" src="https://a3.asurahosting.com/listen/tellstream/radio.mp3" controls preload="auto" style="width: 100%; max-width: 320px; margin: 0; display: block; box-shadow: 0 4px 10px rgba(0,0,0,0.6); border-radius: 8px;">
+                Your browser does not support the audio element.
+            </audio>
+        </div>
+        
+        <div class="fb-feed">
+            <h3>Facebook Activity Bridge</h3>
+            <p style="color: #888; margin-top: 10px;">[Facebook Feed Widget Container Placeholder]</p>
+        </div>
+    </div>
+
+    <div class="chat-sidebar">
+        <div class="chat-header">🔊 Listener Lounge</div>
+        <div class="chat-messages" id="chatBox"></div>
+        
+        <div class="chat-input-area">
+            <input type="text" id="usernameInput" placeholder="Nickname" style="width: 80px; flex: none;">
+            <input type="text" id="messageInput" placeholder="Type a message...">
+            <button id="sendBtn">Send</button>
+        </div>
+    </div>
+
+    <script src="/src/assets/emojis.js"></script>
+
+    <script>
+        const SUPABASE_URL = "https://vegwferwmyuunwvfqpsf.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZ3dmZXJ3bXl1dW53dmZxcHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODU5NDQsImV4cCI6MjA5Nzk2MTk0NH0.7F3HUEY59BGE5phlD9AukhZzRa3Ied_ZT43j8YZeIy8";
+        const supabase_db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const chatBox = document.getElementById('chatBox');
+        const usernameInput = document.getElementById('usernameInput');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const audioPlayer = document.getElementById('radioPlayer');
+
+        const imgBaseUrl = "https://tellstream-emojis.pages.dev/";
+
+        audioPlayer.addEventListener('stalled', () => { recoverStream(); });
+        audioPlayer.addEventListener('error', () => { recoverStream(); });
+
+        function recoverStream() {
+            const currentSrc = audioPlayer.src;
+            if (!currentSrc) return;
+            audioPlayer.src = "";
+            audioPlayer.load();
+            audioPlayer.src = currentSrc;
+            audioPlayer.play().catch(err => console.log(err));
+        }
+
+        function appendMessage(data) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'msg';
+            
+            let messageContent = escapeHTML(data.message);
+
+            const codeRegex = /:([a-zA-Z0-9_-]+):/g;
+            messageContent = messageContent.replace(codeRegex, (match, code) => {
+                const lowerCode = code.toLowerCase();
+                // Pulls safely from the window-scoped mapping file loaded above
+                if (window.emojiMapping && window.emojiMapping[lowerCode]) {
+                    return `<img src="${imgBaseUrl}${window.emojiMapping[lowerCode]}" alt="${code}" style="max-height: 48px; vertical-align: middle; margin: 2px; border-radius: 4px;">`;
+                }
+                return match;
+            });
+
+            msgDiv.innerHTML = `<div class="user">${escapeHTML(data.username)}</div><div>${messageContent}</div>`;
+            chatBox.appendChild(msgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            
+            while (chatBox.children.length > 50) {
+                chatBox.removeChild(chatBox.firstChild);
+            }
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+        }
+
+        async function loadMessages() {
+            const { data } = await supabase_db.from('messages').select('*').order('id', { ascending: true }).limit(40);
+            if (data) data.forEach(appendMessage);
+        }
+
+        supabase_db.channel('public:messages')
+            .on('postgres_changes', { event: 'INSERT', pattern: 'public', table: 'messages' }, payload => {
+                appendMessage(payload.new);
+            }).subscribe();
+
+        async function sendMessage() {
+            const user = usernameInput.value.trim() || 'Listener';
+            const text = messageInput.value.trim();
+            if (!text) return;
+            messageInput.value = '';
+            await supabase_db.from('messages').insert([{ username: user, message: text }]);
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+        
+        loadMessages();
+    </script>
+</body>
+</html>
