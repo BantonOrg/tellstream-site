@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tellstream - Big John Live</title>
+    <title>Tellstream - Live Lounge</title>
     
     <!-- Open Graph Metadata for Social Sharing -->
-    <meta property="og:title" content="Tellstream - Big John Live">
+    <meta property="og:title" content="Tellstream - Live Lounge">
     <meta property="og:description" content="Join the Listener Lounge, check out live event flyers, and stream music on Tellstream.">
     <meta property="og:image" content="/src/assets/ogmetaLOGO.jpg">
     <meta property="og:url" content="https://tellstream.banton.org">
@@ -58,11 +58,26 @@
             flex-shrink: 0;
         }
         
+        .player-card .tagline-wrapper {
+            display: flex;
+            flex-direction: column;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+            white-space: nowrap;
+        }
         .player-card h1 {
             color: #00adb5;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
             font-size: 1.8rem;
-            white-space: nowrap;
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 1px;
+            line-height: 1.1;
+        }
+        .player-card p {
+            color: #eee;
+            font-size: 0.95rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin-top: 2px;
         }
         
         .columns-container {
@@ -251,6 +266,12 @@
             align-items: center;
         }
 
+        .nav-controls-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
         .fullscreen-btn {
             background: rgba(255, 255, 255, 0.1);
             color: #fff;
@@ -262,6 +283,11 @@
         }
         .fullscreen-btn:hover {
             background: #00adb5;
+        }
+        #toggle-notice-btn {
+            background: rgba(0, 173, 181, 0.15);
+            border: 1px solid rgba(0, 173, 181, 0.3);
+            color: #00adb5;
         }
 
         .chat-split-body {
@@ -278,6 +304,95 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
+        }
+
+        /* --- NOTICEBOARD PANEL SYSTEM CLASSES --- */
+        #noticeboard-view-panel {
+            display: none;
+            flex-direction: column;
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            gap: 15px;
+            background: #111;
+        }
+        .notice-column-box {
+            background: rgba(30, 30, 30, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .notice-box-boss { border-top: 3px solid #ff3333; }
+        .notice-box-selectors { border-top: 3px solid #ffdd1a; }
+        .notice-box-fambily { border-top: 3px solid #22e532; }
+        
+        .notice-column-header {
+            font-size: 0.85rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .notice-cards-feed {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+        .notice-card-item {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            border-left: 2px solid rgba(0, 173, 181, 0.4);
+        }
+        .notice-input-form-block {
+            display: none;
+            margin-top: 4px;
+        }
+        .notice-row-input {
+            display: flex;
+            gap: 6px;
+        }
+        .notice-row-input input {
+            flex: 1;
+            background: #202020;
+            border: 1px solid #444;
+            padding: 6px 10px;
+            color: #fff;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            outline: none;
+        }
+        .notice-row-input input:focus { border-color: #00adb5; }
+        .notice-inline-btn {
+            background: #00adb5;
+            border: none;
+            color: #fff;
+            font-weight: bold;
+            padding: 0 12px;
+            font-size: 0.75rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #notice-footer-warning {
+            display: none;
+            background: #ff3333;
+            color: #000;
+            font-weight: 900;
+            font-size: 0.8rem;
+            text-align: center;
+            padding: 8px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            border-radius: 4px;
+            margin-top: auto;
         }
 
         /* Fullscreen side help panel */
@@ -525,7 +640,10 @@
     <!-- Main Content Flow Grid -->
     <div class="main-content">
         <div class="player-card">
-            <h1>BIG JOHN LIVE</h1>
+            <div class="tagline-wrapper">
+                <h1>Great Music</h1>
+                <p>ALL DAY • EVERY DAY</p>
+            </div>
             <audio id="radioPlayer" src="https://a3.asurahosting.com/listen/tellstream/radio.mp3" controls preload="auto" style="width: 100%; max-width: 320px; margin: 0; display: block; box-shadow: 0 4px 10px rgba(0,0,0,0.6); border-radius: 8px;">
                 Your browser does not support the audio element.
             </audio>
@@ -567,8 +685,11 @@
     <!-- Master Sidebar Chat Workspace Container -->
     <div class="chat-sidebar">
         <div class="chat-header">
-            <span>🔊 Listener Lounge</span>
-            <button class="fullscreen-btn" id="fsToggleBtn" onclick="toggleChatFullscreen()">Maximize Chat</button>
+            <span id="sidebarPanelTitle">🔊 Listener Lounge</span>
+            <div class="nav-controls-row">
+                <button class="fullscreen-btn" id="toggle-notice-btn" onclick="toggleNoticeBoardView()">📋 Noticeboard</button>
+                <button class="fullscreen-btn" id="fsToggleBtn" onclick="toggleChatFullscreen()">Maximize Chat</button>
+            </div>
         </div>
         
         <!-- Secure Registration Dropdown Drawer Panel -->
@@ -585,9 +706,53 @@
         </div>
         
         <div class="chat-split-body">
-            <!-- Left Side Messages Stream Container -->
+            <!-- VIEW 1: Messages Stream Container -->
             <div class="chat-messages" id="chatBox"></div>
             
+            <!-- VIEW 2: Dynamic Slide-In Noticeboard Section Container -->
+            <div id="noticeboard-view-panel">
+                
+                <!-- BOSS BOARD COLUMN -->
+                <div class="notice-column-box notice-box-boss">
+                    <div class="notice-column-header"><span style="color:#ff3333">👑 Tella Boss Notices</span></div>
+                    <div class="notice-cards-feed" id="feed-boss"></div>
+                    <div class="notice-input-form-block" id="form-boss">
+                        <div class="notice-row-input">
+                            <input type="text" id="input-boss" placeholder="Write boss directive...">
+                            <button class="notice-inline-btn" onclick="submitNoticeUpdate('boss')">Post</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SELECTORS BOARD COLUMN -->
+                <div class="notice-column-box notice-box-selectors">
+                    <div class="notice-column-header"><span style="color:#ffdd1a">🎧 Selector Audio Feed</span></div>
+                    <div class="notice-cards-feed" id="feed-selectors"></div>
+                    <div class="notice-input-form-block" id="form-selectors">
+                        <div class="notice-row-input">
+                            <input type="text" id="input-selectors" placeholder="Write selector notice...">
+                            <button class="notice-inline-btn" onclick="submitNoticeUpdate('selectors')">Post</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAMBILY BOARD COLUMN -->
+                <div class="notice-column-box notice-box-fambily">
+                    <div class="notice-column-header"><span style="color:#22e532">💚 Fambily Column</span></div>
+                    <div class="notice-cards-feed" id="feed-fambily"></div>
+                    <div class="notice-input-form-block" id="form-fambily">
+                        <div class="notice-row-input">
+                            <input type="text" id="input-fambily" placeholder="Write group comment...">
+                            <button class="notice-inline-btn" onclick="submitNoticeUpdate('fambily')">Post</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Static Guard Warning Row Banner (Unregistered Only) -->
+                <div id="notice-footer-warning">YOU MUST BE REGISTERED TO COMMENT</div>
+
+            </div>
+
             <!-- Right Side Fullscreen Cloned Panel -->
             <div class="chat-fs-help-panel">
                 <div class="col-title">💡 Site Help and Emoji codes</div>
@@ -602,7 +767,7 @@
             </div>
         </div>
         
-        <div class="chat-input-area">
+        <div class="chat-input-area" id="chat-input-panel-container">
             <input type="text" id="usernameInput" placeholder="Nickname" style="width: 80px; flex: none;" oninput="syncDrawerName()">
             <button class="lock-toggle-btn" id="lockStatusBtn" onclick="toggleSecurityDrawer()" title="Secure/Verify identity handle">🔒</button>
             <input type="text" id="messageInput" placeholder="Type a message...">
@@ -652,8 +817,9 @@
 
         const imgBaseUrl = "https://tellstream-emojis.pages.dev/";
 
-        // Internal memory state node to cache loaded profile properties locally to prevent DB reading spam
+        // Internal memory state nodes
         let profilesCache = {};
+        let isNoticeBoardActive = false;
 
         const facebookPosts = [
             { id: 1, date: "Just now", text: "Big John is locked and loaded live in the studio! Lock into tellstream.banton.org right now and fire up the lounge chat! 🎚️🔥", link: "https://www.facebook.com/tellstream.dem" },
@@ -661,7 +827,6 @@
             { id: 3, date: "2 days ago", text: "Weekend scheduling updates coming soon. Keep your locked eyes locked onto the central flyer board for upcoming live dance clashes.", link: "https://www.facebook.com/tellstream.dem" }
         ];
 
-        // Customized instruction sets for the side panel
         const helpInstructions = [
             { title: "Setting Nickname", text: "Fill in the Nickname block before typing to claim your handle in the Lounge panel." },
             { title: "Sending Text Lines", text: "Type your query inside the input field box and tap Send or hit your keyboard Enter button." },
@@ -767,6 +932,119 @@
             messageInput.focus();
         }
 
+        // --- NAVIGATION TOGGLE ENGINE CONTROL ---
+        function toggleNoticeBoardView() {
+            const streamChat = document.getElementById('chatBox');
+            const noticePanel = document.getElementById('noticeboard-view-panel');
+            const inputContainer = document.getElementById('chat-input-panel-container');
+            const mainTitle = document.getElementById('sidebarPanelTitle');
+            const toggleBtn = document.getElementById('toggle-notice-btn');
+
+            if (!isNoticeBoardActive) {
+                // Open Noticeboard interface view mode
+                streamChat.style.display = 'none';
+                inputContainer.style.display = 'none'; // Clear regular text strip
+                securityDrawer.classList.remove('open'); // Close registration drawer if active
+                noticePanel.style.display = 'flex';
+                mainTitle.innerText = "📋 Noticeboard";
+                toggleBtn.innerText = "❌ Exit Noticeboard";
+                isNoticeBoardActive = true;
+                
+                // Run evaluation logic check right on click
+                evaluateNoticeBoardForms();
+                fetchNoticeBoardRecords();
+            } else {
+                // Return smoothly to chat interface view mode
+                noticePanel.style.display = 'none';
+                streamChat.style.display = 'flex';
+                inputContainer.style.display = 'flex';
+                mainTitle.innerText = "🔊 Listener Lounge";
+                toggleBtn.innerText = "📋 Noticeboard";
+                isNoticeBoardActive = false;
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+        }
+
+        // Toggles visibility fields under noticeboard columns dynamically
+        function evaluateNoticeBoardForms() {
+            const currentUser = usernameInput.value.trim();
+            const warningBanner = document.getElementById('notice-footer-warning');
+            
+            // Look up authenticated profile session token parameters from local cache
+            const profile = profilesCache[currentUser];
+            const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
+            const isVerified = profile && profile.passkey === authorizedKey;
+
+            if (!isVerified) {
+                // Session is Unregistered/Anonymous Guest
+                warningBanner.style.display = 'block';
+                document.querySelectorAll('.notice-input-form-block').forEach(form => form.style.display = 'none');
+                return;
+            }
+
+            // Authenticated Session Level Controls
+            warningBanner.style.display = 'none';
+            const powerLevel = parseInt(profile.power_level || 0);
+
+            document.getElementById('form-boss').style.display = (powerLevel >= 2) ? 'block' : 'none';
+            document.getElementById('form-selectors').style.display = (powerLevel >= 1) ? 'block' : 'none';
+            document.getElementById('form-fambily').style.display = (powerLevel >= 0) ? 'block' : 'none';
+        }
+
+        // --- SUPABASE NOTICEBOARD DATABASE OPERATIONS ---
+        async function fetchNoticeBoardRecords() {
+            const { data, error } = await supabase_db
+                .from('notice_board')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (!error && data) {
+                document.getElementById('feed-boss').innerHTML = "";
+                document.getElementById('feed-selectors').innerHTML = "";
+                document.getElementById('feed-fambily').innerHTML = "";
+
+                data.forEach(item => {
+                    const columnTarget = document.getElementById(`feed-${item.board_type}`);
+                    if (columnTarget) {
+                        const card = document.createElement('div');
+                        card.className = 'notice-card-item';
+                        card.innerHTML = `<strong>${escapeHTML(item.username)}:</strong> <span>${escapeHTML(item.notice_text)}</span>`;
+                        columnTarget.appendChild(card);
+                    }
+                });
+            }
+        }
+
+        async function submitNoticeUpdate(boardType) {
+            const currentUser = usernameInput.value.trim();
+            const inputField = document.getElementById(`input-${boardType}`);
+            const textContent = inputField.value.trim();
+            
+            if (!textContent) return;
+
+            // Security gate matching server configurations
+            const profile = profilesCache[currentUser];
+            const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
+            if (!profile || profile.passkey !== authorizedKey) return;
+
+            const pLevel = parseInt(profile.power_level || 0);
+            if (boardType === 'boss' && pLevel < 2) return;
+            if (boardType === 'selectors' && pLevel < 1) return;
+
+            const { error } = await supabase_db.from('notice_board').insert([{
+                username: currentUser,
+                notice_text: textContent,
+                board_type: boardType
+            }]);
+
+            if (!error) {
+                inputField.value = "";
+                fetchNoticeBoardRecords();
+            } else {
+                alert("Notice save failed: " + error.message);
+            }
+        }
+
         // Security Identity Drawer Engine Operations
         function syncDrawerName() {
             const currentName = usernameInput.value.trim();
@@ -786,6 +1064,9 @@
                 regEmailInput.style.display = "block";
                 drawerSubmitBtn.innerText = "Lock Name Globally";
             }
+            
+            // Auto update input states if user re-types handle while noticeboard panel remains open
+            if (isNoticeBoardActive) evaluateNoticeBoardForms();
         }
 
         async function toggleSecurityDrawer() {
@@ -813,7 +1094,8 @@
                     localStorage.setItem('tellstream_key_' + currentName, passkey);
                     alert("Identity checked and authorized! Locked to this device memory successfully.");
                     securityDrawer.classList.remove('open');
-                    chatBox.innerHTML = ""; // Force frame wipe to recolor elements on update
+                    chatBox.innerHTML = ""; 
+                    if (isNoticeBoardActive) evaluateNoticeBoardForms();
                     loadMessages();
                 } else {
                     alert("Invalid Passkey entry sequence.");
@@ -855,6 +1137,7 @@
                     await syncProfilesMap();
                     securityDrawer.classList.remove('open');
                     chatBox.innerHTML = "";
+                    if (isNoticeBoardActive) evaluateNoticeBoardForms();
                     loadMessages();
                 }
             }
@@ -898,16 +1181,15 @@
                 return match;
             });
 
-            // Evaluate visual properties depending on profile mapping attributes
             const profile = profilesCache[data.username];
             let nameClass = "user-unregistered";
             let hoverAttribute = "";
 
             if (profile) {
                 if (profile.power_level >= 1) {
-                    nameClass = "user-admin"; // Red name structure
+                    nameClass = "user-admin"; 
                 } else {
-                    nameClass = "user-registered"; // Yellow name structure
+                    nameClass = "user-registered"; 
                 }
                 if (profile.hover_title) {
                     hoverAttribute = `title="${escapeHTML(profile.hover_title)}"`;
@@ -916,7 +1198,7 @@
 
             msgDiv.innerHTML = `<div class="user ${nameClass}" ${hoverAttribute}>${escapeHTML(data.username)}</div><div>${messageContent}</div>`;
             chatBox.appendChild(msgDiv);
-            chatBox.scrollTop = chatBox.scrollHeight;
+            if (!isNoticeBoardActive) chatBox.scrollTop = chatBox.scrollHeight;
             
             while (chatBox.children.length > 50) {
                 chatBox.removeChild(chatBox.firstChild);
@@ -937,10 +1219,15 @@
                 appendMessage(payload.new);
             }).subscribe();
 
-        // Listen for profile changes in real-time
         supabase_db.channel('public:secured_profiles')
             .on('postgres_changes', { event: '*', pattern: 'public', table: 'secured_profiles' }, async () => {
                 await syncProfilesMap();
+            }).subscribe();
+
+        // Realtime Subscription engine channel for Noticeboard live updates
+        supabase_db.channel('public:notice_board')
+            .on('postgres_changes', { event: 'INSERT', pattern: 'public', table: 'notice_board' }, payload => {
+                if (isNoticeBoardActive) fetchNoticeBoardRecords();
             }).subscribe();
 
         async function sendMessage() {
@@ -948,7 +1235,6 @@
             const text = messageInput.value.trim();
             if (!text) return;
 
-            // Security evaluation check gate
             if (profilesCache[user]) {
                 const authorizedKey = localStorage.getItem('tellstream_key_' + user);
                 if (profilesCache[user].passkey !== authorizedKey) {
