@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tellstream - Big John Live</title>
     
-    <!-- Open Graph Metadata for Social Sharing -->
     <meta property="og:title" content="Tellstream - Big John Live">
     <meta property="og:description" content="Join the Listener Lounge, check out live event flyers, and stream music on Tellstream.">
     <meta property="og:image" content="/src/assets/ogmetaLOGO.jpg">
@@ -433,7 +432,6 @@
         
         <div class="columns-container">
             
-            <!-- Column 1: Facebook Feed Container -->
             <div class="col-3">
                 <div class="col-title">
                     <span>📘 Facebook Activity</span>
@@ -442,13 +440,11 @@
                 <div class="inner-feed-wrapper" id="fbFeedContainer"></div>
             </div>
             
-            <!-- Column 2: Event Flyers Container -->
             <div class="col-3">
                 <div class="col-title">🔥 Live Events & Adverts</div>
                 <div class="inner-feed-wrapper" id="flyerContainer"></div>
             </div>
             
-            <!-- Column 3: Split Help & Emoji Selection Container -->
             <div class="col-3">
                 <div class="col-title">💡 System Help & Shorthands</div>
                 <div class="sub-panel-top" id="helpCardsContainer"></div>
@@ -478,7 +474,6 @@
         </div>
     </div>
 
-    <!-- Lightbox Fixed Markup with Action Button Separated Dynamically -->
     <div class="flyer-modal-overlay" id="flyerModal" onclick="closeFlyerLightbox()">
         <div class="modal-content-card" onclick="event.stopPropagation();">
             <img id="modalTargetImg" src="" alt="Expanded View Asset">
@@ -514,13 +509,6 @@
             { id: 3, date: "2 days ago", text: "Weekend scheduling updates coming soon. Keep your locked eyes locked onto the central flyer board for upcoming live dance clashes.", link: "https://www.facebook.com/tellstream.dem" }
         ];
 
-        // Replace "/src/assets/flyer1.jpg" with your actual asset filenames when uploaded
-        const eventFlyers = [
-            { id: 1, title: "Big John Summer Bash", img: "/src/assets/flyer1.jpg", danceDate: "2026-07-15" },
-            { id: 2, title: "Tellstream Linkup Dub Clash", img: "/src/assets/flyer1.jpg", danceDate: "2026-05-01" },
-            { id: 3, title: "Weekend Showcase Spec", img: "/src/assets/flyer1.jpg", danceDate: "2026-08-30" }
-        ];
-
         const helpInstructions = [
             { title: "Setting Nickname", text: "Fill in the Nickname block before typing to claim your handle in the Lounge panel." },
             { title: "Sending Text Lines", text: "Type your query inside the input field box and tap Send or hit your keyboard Enter button." },
@@ -536,27 +524,49 @@
             `).join('');
         }
 
-        function renderActiveFlyers() {
+        async function renderActiveFlyers() {
             const today = new Date();
             today.setHours(0,0,0,0);
 
-            const activeCards = eventFlyers.filter(event => {
-                const expirationDate = new Date(event.danceDate);
-                return expirationDate >= today;
-            });
+            const { data: files, error } = await supabase_db.storage.from('flyers').list('', { limit: 100 });
 
-            if(activeCards.length === 0) {
+            if (error || !files || files.length === 0) {
                 flyerContainer.innerHTML = `<p style="color:#666; text-align:center; padding-top:20px;">No current event flyers listed.</p>`;
                 return;
             }
 
-            flyerContainer.innerHTML = activeCards.map(event => `
-                <div class="flyer-item" onclick="launchFlyerLightbox('${event.img}')">
-                    <img src="${event.img}" alt="${event.title}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%2250%22><rect width=%22100%25%22 height=%22100%25%22 fill=%22%23333%22/><text x=%2210%22 y=%2230%22 fill=%22%23aaa%22 font-size=%2212%22>Missing Asset</text></svg>'">
-                    <h4>${event.title}</h4>
-                    <p style="font-size:0.75rem; color:#aaa; margin-top:4px;">Date: ${event.danceDate}</p>
-                </div>
-            `).join('');
+            let renderedHtml = "";
+
+            for (let file of files) {
+                if (file.name === ".emptyFolderPlaceholder") continue;
+
+                const datePrefix = file.name.substring(0, 6);
+                
+                if (/^\d{6}$/.test(datePrefix)) {
+                    const day = parseInt(datePrefix.substring(0, 2), 10);
+                    const month = parseInt(datePrefix.substring(2, 4), 10) - 1;
+                    const year = 2000 + parseInt(datePrefix.substring(4, 6), 10);
+
+                    const expirationDate = new Date(year, month, day);
+
+                    if (expirationDate < today) {
+                        await supabase_db.storage.from('flyers').remove([file.name]);
+                        continue;
+                    }
+                }
+
+                const { data: urlData } = supabase_db.storage.from('flyers').getPublicUrl(file.name);
+                const titleClean = file.name.substring(7).replace(/\.[^/.]+$/, '').replace(/_/g, ' ');
+
+                renderedHtml += `
+                    <div class="flyer-item" onclick="launchFlyerLightbox('${urlData.publicUrl}')">
+                        <img src="${urlData.publicUrl}" alt="${titleClean}">
+                        <h4 style="text-transform: capitalize;">${titleClean}</h4>
+                    </div>
+                `;
+            }
+
+            flyerContainer.innerHTML = renderedHtml || `<p style="color:#666; text-align:center; padding-top:20px;">No current event flyers listed.</p>`;
         }
 
         function renderHelpContent() {
