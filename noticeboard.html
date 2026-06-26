@@ -28,40 +28,37 @@
             justify-content: space-between;
             align-items: center;
             z-index: 10;
+            height: 90px;
         }
         .header-left { display: flex; flex-direction: column; }
-        .header-left h1 { font-size: 1.1rem; color: #00adb5; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 2px; }
-        .header-left p { font-size: 0.75rem; color: #888; font-weight: bold; letter-spacing: 1px; }
-        .player-controls audio { outline: none; width: 280px; height: 32px; }
+        .header-left h1 { font-size: 1.3rem; color: #00adb5; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 2px; font-weight: 900; }
+        .header-left p { font-size: 0.85rem; color: #eee; font-weight: bold; letter-spacing: 1px; }
+        .player-controls audio { outline: none; width: 320px; height: 36px; }
 
         /* Main Workspace App Layout Grid */
         .main-content {
             display: flex;
             flex: 1;
-            height: calc(100vh - 78px);
+            height: calc(100vh - 90px);
             position: relative;
         }
 
-        /* Left Side: Video/Visual Stream Deck Frame */
-        .video-container {
+        /* Left Side Content Area (Grid Layout matching your layout cards) */
+        .left-content-area {
             flex: 1;
-            background: rgba(0, 0, 0, 0.4);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
             padding: 20px;
-            transition: all 0.3s ease;
+            overflow-y: auto;
         }
-        .video-box {
-            width: 100%;
-            height: 100%;
-            max-width: 960px;
-            max-height: 540px;
-            background: #000;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        .info-card {
+            background: rgba(15, 15, 15, 0.85);
+            border: 1px solid rgba(255,255,255,0.05);
             border-radius: 8px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
         }
 
         /* Right Side: Dual-Mode Interactive Sidebar Panel */
@@ -85,13 +82,13 @@
             justify-content: space-between;
             align-items: center;
         }
-        .panel-title { font-size: 0.85rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; color: #aaa; }
-        .nav-controls { display: flex; gap: 10px; }
+        .panel-title { font-size: 0.9rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; color: #00adb5; }
+        .nav-controls { display: flex; gap: 8px; align-items: center; }
         .nav-btn {
             background: rgba(255,255,255,0.05);
             border: 1px solid rgba(255,255,255,0.1);
             color: #fff;
-            padding: 5px 12px;
+            padding: 6px 12px;
             font-size: 0.75rem;
             font-weight: bold;
             border-radius: 4px;
@@ -117,16 +114,16 @@
 
         /* NOTICEBOARD GRID VIEW COMPONENTS */
         .notice-columns-wrapper { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 15px; }
-        .notice-column { background: #181818; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; padding: 10px; }
+        .notice-column { background: #181818; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; padding: 10px; min-height: 160px; }
         .col-boss { border-top: 3px solid #ff4a4a; }
         .col-selectors { border-top: 3px solid #ffdd57; }
         .col-fambily { border-top: 3px solid #23d160; }
-        .column-header { font-size: 0.8rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; }
-        .notice-feed { display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto; margin-bottom: 8px; }
+        .column-header { font-size: 0.8rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .notice-feed { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; margin-bottom: 8px; }
         .notice-card { background: rgba(255,255,255,0.02); padding: 8px; border-radius: 4px; font-size: 0.85rem; border-left: 2px solid rgba(255,255,255,0.2); }
         
         /* Notice Board Inputs */
-        .notice-input-form { display: none; margin-top: auto; }
+        .notice-input-form { display: none; margin-top: auto; padding-top: 5px; }
         .notice-form-row { display: flex; gap: 6px; }
         .notice-form-row input { flex: 1; background: #252525; border: 1px solid #444; padding: 6px 10px; color: #fff; font-size: 0.8rem; border-radius: 4px; outline: none; }
         .notice-form-row input:focus { border-color: #00adb5; }
@@ -146,7 +143,7 @@
         }
 
         /* FULLSCREEN MAXIMIZE MODIFIERS */
-        body.fullscreen-mode .video-container { display: none; }
+        body.fullscreen-mode .left-content-area { display: none; }
         body.fullscreen-mode .sidebar-panel { width: 100%; }
 
         /* Utility Scrollbar styling */
@@ -170,15 +167,22 @@
 
     <div class="main-content">
         
-        <div class="video-container">
-            <div class="video-box">
+        <div class="left-content-area">
+            <div class="info-card">
+                <h3>Facebook Activity</h3>
+                </div>
+            <div class="info-card">
+                <h3>Live Events & Adverts</h3>
+                </div>
+            <div class="info-card">
+                <h3>Site Help and Emoji codes</h3>
                 </div>
         </div>
 
         <div class="sidebar-panel" id="app-sidebar">
             
             <div class="sidebar-header">
-                <span class="panel-title" id="panel-view-title">🔴 Live Chat Lounge</span>
+                <span class="panel-title" id="panel-view-title">🎙️ Listener Lounge</span>
                 <div class="nav-controls">
                     <button class="nav-btn" id="toggle-notice-btn" onclick="toggleNoticeBoardView()">📋 Noticeboard</button>
                     <button class="nav-btn" id="fullscreen-btn" onclick="toggleChatMaximized()">Maximize Chat</button>
@@ -232,7 +236,7 @@
 
                 </div>
 
-                <div id="notice-warning-banner">⚠️ You must be registered to comment</div>
+                <div id="notice-warning-banner">YOU MUST BE REGISTERED TO COMMENT</div>
             </div>
 
         </div>
@@ -241,12 +245,12 @@
     <script>
         // --- CLIENT SIDE STATE CACHING VARIABLES ---
         let supabaseClient = null;
-        let loggedInUserProfile = null; // Holds profile row cache (username, power_level, passkey)
+        let loggedInUserProfile = null; 
         let isNoticeBoardOpen = false;
 
         // Initialize connection keys for database hooks
         (function initSupabaseConnection() {
-            // Replace these strings with your exact matching configuration API credentials
+            // Put your exact URL and Project API key string variables right here
             const SUPABASE_URL = "https://vegxferwmyuunwvvfqsf.supabase.co"; 
             const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZ3hmZXJ3bXl1dW53dnZmcXNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTgzOTY0MTIsImV4cCI6MjAzMzk3MjQxMn0.example_key";
             
@@ -278,7 +282,7 @@
                     if (!error && data && data.passkey === localPasskey) {
                         loggedInUserProfile = data;
                     } else {
-                        loggedInUserProfile = null; // Clears if passkey data verification fails
+                        loggedInUserProfile = null;
                     }
                     renderNoticeBoardInputs(loggedInUserProfile);
                 });
@@ -312,18 +316,16 @@
             const toggleBtn = document.getElementById('toggle-notice-btn');
 
             if (!isNoticeBoardOpen) {
-                // Switch into Noticeboard Panel Layout View
                 chatView.style.display = 'none';
                 noticeView.style.display = 'flex';
                 mainTitle.innerText = "📋 Central Notice Boards";
                 toggleBtn.innerText = "❌ Exit Noticeboard";
                 isNoticeBoardOpen = true;
-                fetchNoticeBoardRecords(); // Load columns immediately upon entry
+                fetchNoticeBoardRecords(); 
             } else {
-                // Return to Chat View
                 noticeView.style.display = 'none';
                 chatView.style.display = 'flex';
-                mainTitle.innerText = "🔴 Live Chat Lounge";
+                mainTitle.innerText = "🎙️ Listener Lounge";
                 toggleBtn.innerText = "📋 Noticeboard";
                 isNoticeBoardOpen = false;
             }
@@ -334,7 +336,6 @@
             const fullBtn = document.getElementById('fullscreen-btn');
             
             if (!bodyEl.classList.contains('fullscreen-mode')) {
-                bodyEl.classList.contains('fullscreen-mode');
                 bodyEl.classList.add('fullscreen-mode');
                 fullBtn.innerText = "Exit Fullscreen";
             } else {
@@ -351,12 +352,10 @@
                 .order('created_at', { ascending: false })
                 .then(({ data, error }) => {
                     if (!error && data) {
-                        // Clear out old element card buffers
                         document.getElementById('feed-boss').innerHTML = "";
                         document.getElementById('feed-selectors').innerHTML = "";
                         document.getElementById('feed-fambily').innerHTML = "";
 
-                        // Sort raw rows directly into respective targets
                         data.forEach(item => {
                             const container = document.getElementById(`feed-${item.board_type}`);
                             if (container) {
@@ -377,12 +376,10 @@
             const textValue = inputField.value.trim();
             if (!textValue) return;
 
-            // Strict client enforcement processing checkpoint logic matching user permissions
             const currentLevel = parseInt(loggedInUserProfile.power_level || 0);
             if (boardType === 'boss' && currentLevel < 2) return;
             if (boardType === 'selectors' && currentLevel < 1) return;
 
-            // Construct payload row structure
             const noticePayload = {
                 username: loggedInUserProfile.username,
                 notice_text: textValue,
@@ -394,7 +391,7 @@
                 .insert([noticePayload])
                 .then(({ error }) => {
                     if (!error) {
-                        inputField.value = ""; // Flush buffer field
+                        inputField.value = ""; 
                     } else {
                         alert("Error saving announcement post: " + error.message);
                     }
@@ -406,7 +403,6 @@
             supabaseClient
                 .channel('public:notice_board')
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notice_board' }, payload => {
-                    // Re-render columns dynamically on message distribution broadcast receipt
                     if (isNoticeBoardOpen) {
                         fetchNoticeBoardRecords();
                     }
@@ -414,7 +410,7 @@
                 .subscribe();
         }
 
-        // Dummy Shell Stubs for Chat Interaction functions
+        // Shell Stubs for your existing Chat functions to hook into
         function sendChatMessage() {
             const chatInput = document.getElementById('chat-input-field');
             if(!chatInput.value.trim()) return;
