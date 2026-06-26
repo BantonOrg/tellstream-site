@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tellstream - Live Lounge</title>
     
-    <!-- Open Graph Metadata for Social Sharing -->
     <meta property="og:title" content="Tellstream - Live Lounge">
     <meta property="og:description" content="Join the Listener Lounge, check out live event flyers, and stream music on Tellstream.">
     <meta property="og:image" content="/src/assets/ogmetaLOGO.jpg">
@@ -61,7 +60,7 @@
         .player-card .tagline-wrapper {
             display: flex;
             flex-direction: column;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.9);
             white-space: nowrap;
         }
         .player-card h1 {
@@ -71,9 +70,7 @@
             font-weight: 800;
             letter-spacing: 1px;
             line-height: 1.1;
-            /* Draws a thick solid black outline around the letters */
             -webkit-text-stroke: 1.5px #000000;
-            /* Keeps a shadow behind the stroke for depth */
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9); 
         }
         .player-card p {
@@ -82,7 +79,6 @@
             font-weight: bold;
             letter-spacing: 2px;
             margin-top: 2px;
-            /* Draws a solid black outline around the smaller letters */
             -webkit-text-stroke: 1px #000000;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);
         }
@@ -297,10 +293,10 @@
             background: rgba(0, 173, 181, 0.15);
             border: 1px solid rgba(0, 173, 181, 0.3);
             color: #00adb5;
-            display: none; /* Hidden by default on split view panel */
+            display: none;
         }
         body.chat-is-fullscreen #toggle-notice-btn {
-            display: inline-block; /* Reveals button exclusively inside full maximize screen mode */
+            display: inline-block;
         }
 
         .chat-split-body {
@@ -319,7 +315,7 @@
             gap: 12px;
         }
 
-/* --- NOTICEBOARD PANEL SYSTEM CLASSES (ROW-TO-COLUMN FIXED WITH FADE) --- */
+        /* --- NOTICEBOARD PANEL SYSTEM CLASSES (ROW-TO-COLUMN FIXED WITH SLIDE) --- */
         #noticeboard-view-panel {
             display: none;
             flex-direction: row; /* Aligns columns side-by-side */
@@ -329,8 +325,7 @@
             padding: 15px;
             gap: 15px;
             background: #111;
-            /* Smooth fade-in animation rules */
-            animation: fadeInNotice 0.25s ease-out forwards;
+            animation: slideInNotice 0.25s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
         }
         .notice-column-box {
             flex: 1;
@@ -342,12 +337,6 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
-        }
-
-        /* Animation timeline instruction */
-        @keyframes fadeInNotice {
-            from { opacity: 0; }
-            to { opacity: 1; }
         }
         .notice-box-boss { border-top: 3px solid #ff3333; }
         .notice-box-selectors { border-top: 3px solid #ffdd1a; }
@@ -419,6 +408,11 @@
             margin-top: auto;
         }
 
+        @keyframes slideInNotice {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
         /* Fullscreen side help panel */
         .chat-fs-help-panel {
             width: 380px;
@@ -448,11 +442,10 @@
             display: inline-block;
             position: relative;
         }
-        .user-unregistered { color: #22e532; } /* Free Green */
-        .user-registered { color: #ffdd1a; cursor: help; } /* Locked Yellow */
-        .user-admin { color: #ff3333; cursor: help; } /* Staff/Core Red */
+        .user-unregistered { color: #22e532; }
+        .user-registered { color: #ffdd1a; cursor: help; }
+        .user-admin { color: #ff3333; cursor: help; }
 
-        /* Native Browser Tooltip Enhancement Styles */
         .msg .user[title] {
             text-decoration: none;
         }
@@ -552,19 +545,6 @@
             background: #008c94;
         }
 
-        /* Fullscreen state logic overrides */
-        body.chat-is-fullscreen .main-content {
-            display: none !important;
-        }
-        body.chat-is-fullscreen .chat-sidebar {
-            width: 100% !important;
-            border-left: none;
-        }
-        body.chat-is-fullscreen .chat-fs-help-panel {
-            display: flex !important;
-        }
-
-        /* Lightbox Overlay */
         .flyer-modal-overlay {
             position: fixed;
             top: 0;
@@ -618,6 +598,7 @@
             background: #008c94;
         }
 
+        /* --- ADVANCED RESPONSIVE MEDIA SYSTEM --- */
         @media (max-width: 1024px) {
             body {
                 flex-direction: column;
@@ -631,25 +612,74 @@
                 height: auto;
                 overflow: visible;
                 padding: 10px;
+                gap: 12px;
             }
+            
+            /* Responsive Sliced Background Layout Engine */
             .player-card {
                 height: auto;
                 flex-direction: column;
-                padding: 20px;
+                padding: 0;
                 text-align: center;
+                gap: 0;
+                background: none;
+                box-shadow: none;
             }
+            .player-card .tagline-wrapper {
+                width: 100%;
+                padding: 20px 10px;
+                background-image: url('/src/assets/header-bg.jpg');
+                background-size: cover;
+                background-position: left center; /* Locks to Left 33% slice */
+                border-radius: 12px 12px 0 0;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            }
+            .player-card h1 {
+                font-size: 1.4rem;
+                white-space: normal;
+            }
+            .player-card p {
+                font-size: 0.8rem;
+            }
+            #radioPlayer {
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 20px;
+                background-image: url('/src/assets/header-bg.jpg');
+                background-size: cover;
+                background-position: right center; /* Locks to Right 33% slice */
+                border-radius: 0 0 12px 12px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+                margin: 0;
+            }
+
             .columns-container {
                 flex-direction: column;
                 height: auto;
                 overflow: visible;
+                gap: 15px;
             }
             .col-3 {
-                height: 500px;
+                height: 420px;
                 flex-shrink: 0;
+                padding: 12px;
             }
+            
+            /* Noticeboard columns turn back into rows on phone display modes */
+            #noticeboard-view-panel {
+                flex-direction: column !important;
+                overflow-y: auto;
+                overflow-x: hidden;
+                height: calc(100vh - 120px);
+            }
+            .notice-column-box {
+                min-width: 100% !important;
+                flex: none;
+            }
+
             .chat-sidebar {
                 width: 100% !important;
-                height: 600px;
+                height: 550px;
                 border-left: none;
                 border-top: 1px solid #2d2d2d;
             }
@@ -661,7 +691,6 @@
 </head>
 <body>
 
-    <!-- Main Content Flow Grid -->
     <div class="main-content">
         <div class="player-card">
             <div class="tagline-wrapper">
@@ -675,7 +704,6 @@
         
         <div class="columns-container">
             
-            <!-- Column 1: Facebook Feed Container -->
             <div class="col-3">
                 <div class="col-title">
                     <span>📘 Facebook Activity</span>
@@ -684,13 +712,11 @@
                 <div class="inner-feed-wrapper" id="fbFeedContainer"></div>
             </div>
             
-            <!-- Column 2: Event Flyers Container -->
             <div class="col-3">
                 <div class="col-title">🔥 Live Events & Adverts</div>
                 <div class="inner-feed-wrapper" id="flyerContainer"></div>
             </div>
             
-            <!-- Column 3: Site Help & Emoji Codes Panel -->
             <div class="col-3">
                 <div class="col-title">💡 Site Help and Emoji codes</div>
                 <div class="sub-panel-top" id="helpCardsContainer"></div>
@@ -706,7 +732,6 @@
         </div>
     </div>
 
-    <!-- Master Sidebar Chat Workspace Container -->
     <div class="chat-sidebar">
         <div class="chat-header">
             <span id="sidebarPanelTitle">🔊 Listener Lounge</span>
@@ -716,7 +741,6 @@
             </div>
         </div>
         
-        <!-- Secure Registration Dropdown Drawer Panel -->
         <div class="security-drawer" id="securityDrawer">
             <h4 id="drawerTitle">Secure Current Handle</h4>
             <div class="form-grid">
@@ -730,13 +754,10 @@
         </div>
         
         <div class="chat-split-body">
-            <!-- VIEW 1: Messages Stream Container -->
             <div class="chat-messages" id="chatBox"></div>
             
-            <!-- VIEW 2: Dynamic Slide-In Noticeboard Section Container -->
             <div id="noticeboard-view-panel">
                 
-                <!-- BOSS BOARD COLUMN -->
                 <div class="notice-column-box notice-box-boss">
                     <div class="notice-column-header"><span style="color:#ff3333">👑 Tella Boss Notices</span></div>
                     <div class="notice-cards-feed" id="feed-boss"></div>
@@ -748,7 +769,6 @@
                     </div>
                 </div>
 
-                <!-- SELECTORS BOARD COLUMN -->
                 <div class="notice-column-box notice-box-selectors">
                     <div class="notice-column-header"><span style="color:#ffdd1a">🎧 Selector Audio Feed</span></div>
                     <div class="notice-cards-feed" id="feed-selectors"></div>
@@ -760,7 +780,6 @@
                     </div>
                 </div>
 
-                <!-- FAMBILY BOARD COLUMN -->
                 <div class="notice-column-box notice-box-fambily">
                     <div class="notice-column-header"><span style="color:#22e532">💚 Fambily Column</span></div>
                     <div class="notice-cards-feed" id="feed-fambily"></div>
@@ -772,12 +791,10 @@
                     </div>
                 </div>
 
-                <!-- Static Guard Warning Row Banner (Unregistered Only) -->
                 <div id="notice-footer-warning">YOU MUST BE REGISTERED TO COMMENT</div>
 
             </div>
 
-            <!-- Right Side Fullscreen Cloned Panel -->
             <div class="chat-fs-help-panel">
                 <div class="col-title">💡 Site Help and Emoji codes</div>
                 <div class="help-cards-wrapper-fs" id="helpCardsContainerFS" style="display:flex; flex-direction:column; gap:8px;"></div>
@@ -937,7 +954,6 @@
             const isFullscreen = document.body.classList.toggle('chat-is-fullscreen');
             fsToggleBtn.innerText = isFullscreen ? "Exit Fullscreen" : "Maximize Chat";
             
-            // Safeguard Guardrail: If exiting full screen mode, safely close notice view if left active
             if (!isFullscreen && isNoticeBoardActive) {
                 toggleNoticeBoardView();
             }
@@ -970,7 +986,6 @@
             const toggleBtn = document.getElementById('toggle-notice-btn');
 
             if (!isNoticeBoardActive) {
-                // Open Noticeboard interface view mode
                 streamChat.style.display = 'none';
                 inputContainer.style.display = 'none'; 
                 securityDrawer.classList.remove('open'); 
@@ -982,7 +997,6 @@
                 evaluateNoticeBoardForms();
                 fetchNoticeBoardRecords();
             } else {
-                // Return smoothly to chat interface view mode
                 noticePanel.style.display = 'none';
                 streamChat.style.display = 'flex';
                 inputContainer.style.display = 'flex';
@@ -993,7 +1007,6 @@
             }
         }
 
-        // Toggles visibility fields under noticeboard columns dynamically
         function evaluateNoticeBoardForms() {
             const currentUser = usernameInput.value.trim();
             const warningBanner = document.getElementById('notice-footer-warning');
@@ -1069,7 +1082,6 @@
             }
         }
 
-        // Security Identity Drawer Engine Operations
         function syncDrawerName() {
             const currentName = usernameInput.value.trim();
             regNameInput.value = currentName;
