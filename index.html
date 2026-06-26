@@ -226,7 +226,7 @@
             border-color: #00adb5;
         }
         
-        /* Master Sidebar */
+        /* Master Sidebar Workspace Layout */
         .chat-sidebar {
             width: 380px;
             background: rgba(20, 20, 20, 0.96);
@@ -262,6 +262,14 @@
         .fullscreen-btn:hover {
             background: #00adb5;
         }
+
+        /* Split layout container inside the sidebar for fullscreen state operations */
+        .chat-split-body {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            width: 100%;
+        }
         
         .chat-messages {
             flex: 1;
@@ -270,6 +278,18 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
+        }
+
+        /* Embedded full screen menu panel helper state node hidden by default layout constraints */
+        .chat-fs-help-panel {
+            width: 400px;
+            border-left: 1px solid rgba(45, 45, 45, 0.5);
+            background: rgba(15, 15, 15, 0.5);
+            padding: 20px;
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
         }
         
         .msg {
@@ -320,6 +340,7 @@
             background: #008c94;
         }
 
+        /* MASTER FULLSCREEN STATE OVERRIDES */
         body.chat-is-fullscreen .main-content {
             display: none !important;
         }
@@ -327,8 +348,11 @@
             width: 100% !important;
             border-left: none;
         }
+        body.chat-is-fullscreen .chat-fs-help-panel {
+            display: flex !important; /* Forces the copy of Column 3 to show up on the right hand side */
+        }
 
-        /* Lightbox Overlay Fixed Layout */
+        /* Lightbox Overlay */
         .flyer-modal-overlay {
             position: fixed;
             top: 0;
@@ -417,6 +441,9 @@
                 border-left: none;
                 border-top: 1px solid #2d2d2d;
             }
+            body.chat-is-fullscreen .chat-fs-help-panel {
+                display: none !important; /* Keep mobile clean, don't stack it twice */
+            }
         }
     </style>
 </head>
@@ -446,231 +473,5 @@
             </div>
             
             <div class="col-3">
-                <div class="col-title">💡 System Help & Shorthands</div>
-                <div class="sub-panel-top" id="helpCardsContainer"></div>
-                <div class="sub-panel-bottom">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                        <span style="font-size:0.85rem; color:#00adb5; font-weight:bold;">✨ Quick Emojis</span>
-                        <a href="https://tellstream-emojis.pages.dev/" target="_blank" class="emoji-master-link">See All Codes</a>
-                    </div>
-                    <div class="emoji-grid-list" id="quickEmojiList"></div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-    <div class="chat-sidebar">
-        <div class="chat-header">
-            <span>🔊 Listener Lounge</span>
-            <button class="fullscreen-btn" id="fsToggleBtn" onclick="toggleChatFullscreen()">Maximize Chat</button>
-        </div>
-        <div class="chat-messages" id="chatBox"></div>
-        
-        <div class="chat-input-area">
-            <input type="text" id="usernameInput" placeholder="Nickname" style="width: 80px; flex: none;">
-            <input type="text" id="messageInput" placeholder="Type a message...">
-            <button id="sendBtn">Send</button>
-        </div>
-    </div>
-
-    <div class="flyer-modal-overlay" id="flyerModal" onclick="closeFlyerLightbox()">
-        <div class="modal-content-card" onclick="event.stopPropagation();">
-            <img id="modalTargetImg" src="" alt="Expanded View Asset">
-        </div>
-        <button class="modal-close-btn" onclick="closeFlyerLightbox()">Close (X)</button>
-    </div>
-
-    <script src="/src/assets/emojis.js"></script>
-
-    <script>
-        const SUPABASE_URL = "https://vegwferwmyuunwvfqpsf.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZ3dmZXJ3bXl1dW53dmZxcHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODU5NDQsImV4cCI6MjA5Nzk2MTk0NH0.7F3HUEY59BGE5phlD9AukhZzRa3Ied_ZT43j8YZeIy8";
-        const supabase_db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        const chatBox = document.getElementById('chatBox');
-        const usernameInput = document.getElementById('usernameInput');
-        const messageInput = document.getElementById('messageInput');
-        const sendBtn = document.getElementById('sendBtn');
-        const audioPlayer = document.getElementById('radioPlayer');
-        const flyerContainer = document.getElementById('flyerContainer');
-        const quickEmojiList = document.getElementById('quickEmojiList');
-        const fbFeedContainer = document.getElementById('fbFeedContainer');
-        const helpCardsContainer = document.getElementById('helpCardsContainer');
-        const fsToggleBtn = document.getElementById('fsToggleBtn');
-        const flyerModal = document.getElementById('flyerModal');
-        const modalTargetImg = document.getElementById('modalTargetImg');
-
-        const imgBaseUrl = "https://tellstream-emojis.pages.dev/";
-
-        const facebookPosts = [
-            { id: 1, date: "Just now", text: "Big John is locked and loaded live in the studio! Lock into tellstream.banton.org right now and fire up the lounge chat! 🎚️🔥", link: "https://www.facebook.com/tellstream.dem" },
-            { id: 2, date: "Yesterday", text: "Big respect to all the listeners locking in from around the globe. Drop your shoutouts and tell-a-wheel selectors directly inside the main chat line! 🔊🎧", link: "https://www.facebook.com/tellstream.dem" },
-            { id: 3, date: "2 days ago", text: "Weekend scheduling updates coming soon. Keep your locked eyes locked onto the central flyer board for upcoming live dance clashes.", link: "https://www.facebook.com/tellstream.dem" }
-        ];
-
-        const helpInstructions = [
-            { title: "Setting Nickname", text: "Fill in the Nickname block before typing to claim your handle in the Lounge panel." },
-            { title: "Sending Text Lines", text: "Type your query inside the input field box and tap Send or hit your keyboard Enter button." },
-            { title: "Firing Emojis & Sounds", text: "Tap any active shorthand key code block inside the selection layout panel below to append it to your message." }
-        ];
-
-        function renderFacebookFeed() {
-            fbFeedContainer.innerHTML = facebookPosts.map(post => `
-                <div class="fb-post-card" onclick="window.open('${post.link}', '_blank');">
-                    <div class="fb-post-meta">Tellstream Page • ${post.date}</div>
-                    <div class="fb-post-text">${post.text}</div>
-                </div>
-            `).join('');
-        }
-
-        async function renderActiveFlyers() {
-            const today = new Date();
-            today.setHours(0,0,0,0);
-
-            const { data: files, error } = await supabase_db.storage.from('flyers').list('', { limit: 100 });
-
-            if (error || !files || files.length === 0) {
-                flyerContainer.innerHTML = `<p style="color:#666; text-align:center; padding-top:20px;">No current event flyers listed.</p>`;
-                return;
-            }
-
-            let renderedHtml = "";
-
-            for (let file of files) {
-                if (file.name === ".emptyFolderPlaceholder") continue;
-
-                const datePrefix = file.name.substring(0, 6);
-                
-                if (/^\d{6}$/.test(datePrefix)) {
-                    const day = parseInt(datePrefix.substring(0, 2), 10);
-                    const month = parseInt(datePrefix.substring(2, 4), 10) - 1;
-                    const year = 2000 + parseInt(datePrefix.substring(4, 6), 10);
-
-                    const expirationDate = new Date(year, month, day);
-
-                    if (expirationDate < today) {
-                        await supabase_db.storage.from('flyers').remove([file.name]);
-                        continue;
-                    }
-                }
-
-                const { data: urlData } = supabase_db.storage.from('flyers').getPublicUrl(file.name);
-                const titleClean = file.name.substring(7).replace(/\.[^/.]+$/, '').replace(/_/g, ' ');
-
-                renderedHtml += `
-                    <div class="flyer-item" onclick="launchFlyerLightbox('${urlData.publicUrl}')">
-                        <img src="${urlData.publicUrl}" alt="${titleClean}">
-                        <h4 style="text-transform: capitalize;">${titleClean}</h4>
-                    </div>
-                `;
-            }
-
-            flyerContainer.innerHTML = renderedHtml || `<p style="color:#666; text-align:center; padding-top:20px;">No current event flyers listed.</p>`;
-        }
-
-        function renderHelpContent() {
-            helpCardsContainer.innerHTML = helpInstructions.map(item => `
-                <div class="help-item-card">
-                    <h5>${item.title}</h5>
-                    <p>${item.text}</p>
-                </div>
-            `).join('');
-        }
-
-        function launchFlyerLightbox(imgSrc) {
-            modalTargetImg.src = imgSrc;
-            flyerModal.classList.add('active');
-        }
-        function closeFlyerLightbox() {
-            flyerModal.classList.remove('active');
-            modalTargetImg.src = "";
-        }
-
-        function toggleChatFullscreen() {
-            const isFullscreen = document.body.classList.toggle('chat-is-fullscreen');
-            fsToggleBtn.innerText = isFullscreen ? "Exit Fullscreen" : "Maximize Chat";
-        }
-
-        function initQuickEmojiCloud() {
-            if (!window.emojiMapping) return;
-            const items = Object.keys(window.emojiMapping);
-            quickEmojiList.innerHTML = items.slice(0, 32).map(key => `
-                <div class="emoji-grid-item" onclick="insertEmojiCode('${key}')">:${key}:</div>
-            `).join('');
-        }
-
-        function insertEmojiCode(code) {
-            messageInput.value += ` :${code}: `;
-            messageInput.focus();
-        }
-
-        audioPlayer.addEventListener('stalled', () => { recoverStream(); });
-        audioPlayer.addEventListener('error', () => { recoverStream(); });
-
-        function recoverStream() {
-            const currentSrc = audioPlayer.src;
-            if (!currentSrc) return;
-            audioPlayer.src = "";
-            audioPlayer.load();
-            audioPlayer.src = currentSrc;
-            audioPlayer.play().catch(err => console.log(err));
-        }
-
-        function appendMessage(data) {
-            const msgDiv = document.createElement('div');
-            msgDiv.className = 'msg';
-            
-            let messageContent = escapeHTML(data.message);
-
-            const codeRegex = /:([a-zA-Z0-9_-]+):/g;
-            messageContent = messageContent.replace(codeRegex, (match, code) => {
-                const lowerCode = code.toLowerCase();
-                if (window.emojiMapping && window.emojiMapping[lowerCode]) {
-                    return `<img src="${imgBaseUrl}${window.emojiMapping[lowerCode]}" alt="${code}" style="max-height: 48px; vertical-align: middle; margin: 2px; border-radius: 4px;">`;
-                }
-                return match;
-            });
-
-            msgDiv.innerHTML = `<div class="user">${escapeHTML(data.username)}</div><div>${messageContent}</div>`;
-            chatBox.appendChild(msgDiv);
-            chatBox.scrollTop = chatBox.scrollHeight;
-            
-            while (chatBox.children.length > 50) {
-                chatBox.removeChild(chatBox.firstChild);
-            }
-        }
-
-        function escapeHTML(str) {
-            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
-        }
-
-        async function loadMessages() {
-            const { data } = await supabase_db.from('messages').select('*').order('id', { ascending: true }).limit(40);
-            if (data) data.forEach(appendMessage);
-        }
-
-        supabase_db.channel('public:messages')
-            .on('postgres_changes', { event: 'INSERT', pattern: 'public', table: 'messages' }, payload => {
-                appendMessage(payload.new);
-            }).subscribe();
-
-        async function sendMessage() {
-            const user = usernameInput.value.trim() || 'Listener';
-            const text = messageInput.value.trim();
-            if (!text) return;
-            messageInput.value = '';
-            await supabase_db.from('messages').insert([{ username: user, message: text }]);
-        }
-
-        sendBtn.addEventListener('click', sendMessage);
-        messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
-        
-        renderFacebookFeed();
-        renderActiveFlyers();
-        renderHelpContent();
-        setTimeout(initQuickEmojiCloud, 500);
-        loadMessages();
-    </script>
-</body>
-</html>
+                <div class="col-title">💡 Site Help and Emoji codes</div>
+                <div class="sub-
