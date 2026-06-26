@@ -41,23 +41,23 @@
         }
         
         /* --- LOCKED HEADER CONTAINER WITH SPACE-BETWEEN ROUTING SYSTEM --- */
-        .player-card {
-            background-image: url('/src/assets/header-bg.jpg');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            height: 140px;
-            padding: 0px 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            overflow: hidden;
-            display: flex !important;
-            justify-content: space-between !important; /* Strict push: separates text left and player right */
-            align-items: center !important;
-            width: 100% !important;
-            gap: 20px;
-            flex-shrink: 0;
-        }
+.player-card {
+    background-image: url('/src/assets/header-bg.jpg');
+    background-size: 100% 100%; /* Forces the entire banner graphic to scale down completely without cropping the sides */
+    background-position: center center;
+    background-repeat: no-repeat;
+    height: 140px;
+    padding: 0px 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    overflow: hidden;
+    display: flex !important;
+    justify-content: space-between !important; 
+    align-items: center !important;
+    width: 100% !important;
+    gap: 20px;
+    flex-shrink: 0;
+}
         
         .player-card .tagline-wrapper {
             display: flex;
