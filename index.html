@@ -284,10 +284,16 @@
         .fullscreen-btn:hover {
             background: #00adb5;
         }
+
+        /* Noticeboard toggle link visibility overrides */
         #toggle-notice-btn {
             background: rgba(0, 173, 181, 0.15);
             border: 1px solid rgba(0, 173, 181, 0.3);
             color: #00adb5;
+            display: none; /* Hidden by default on split view panel */
+        }
+        body.chat-is-fullscreen #toggle-notice-btn {
+            display: inline-block; /* Reveals button exclusively inside full maximize screen mode */
         }
 
         .chat-split-body {
@@ -912,6 +918,11 @@
         function toggleChatFullscreen() {
             const isFullscreen = document.body.classList.toggle('chat-is-fullscreen');
             fsToggleBtn.innerText = isFullscreen ? "Exit Fullscreen" : "Maximize Chat";
+            
+            // Safeguard Guardrail: If exiting full screen mode, safely close notice view if left active
+            if (!isFullscreen && isNoticeBoardActive) {
+                toggleNoticeBoardView();
+            }
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
@@ -943,14 +954,13 @@
             if (!isNoticeBoardActive) {
                 // Open Noticeboard interface view mode
                 streamChat.style.display = 'none';
-                inputContainer.style.display = 'none'; // Clear regular text strip
-                securityDrawer.classList.remove('open'); // Close registration drawer if active
+                inputContainer.style.display = 'none'; 
+                securityDrawer.classList.remove('open'); 
                 noticePanel.style.display = 'flex';
                 mainTitle.innerText = "📋 Noticeboard";
                 toggleBtn.innerText = "❌ Exit Noticeboard";
                 isNoticeBoardActive = true;
                 
-                // Run evaluation logic check right on click
                 evaluateNoticeBoardForms();
                 fetchNoticeBoardRecords();
             } else {
@@ -970,19 +980,16 @@
             const currentUser = usernameInput.value.trim();
             const warningBanner = document.getElementById('notice-footer-warning');
             
-            // Look up authenticated profile session token parameters from local cache
             const profile = profilesCache[currentUser];
             const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
             const isVerified = profile && profile.passkey === authorizedKey;
 
             if (!isVerified) {
-                // Session is Unregistered/Anonymous Guest
                 warningBanner.style.display = 'block';
                 document.querySelectorAll('.notice-input-form-block').forEach(form => form.style.display = 'none');
                 return;
             }
 
-            // Authenticated Session Level Controls
             warningBanner.style.display = 'none';
             const powerLevel = parseInt(profile.power_level || 0);
 
@@ -1022,7 +1029,6 @@
             
             if (!textContent) return;
 
-            // Security gate matching server configurations
             const profile = profilesCache[currentUser];
             const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
             if (!profile || profile.passkey !== authorizedKey) return;
@@ -1065,7 +1071,6 @@
                 drawerSubmitBtn.innerText = "Lock Name Globally";
             }
             
-            // Auto update input states if user re-types handle while noticeboard panel remains open
             if (isNoticeBoardActive) evaluateNoticeBoardForms();
         }
 
@@ -1089,7 +1094,6 @@
             }
 
             if (profilesCache[currentName]) {
-                // Login validation path
                 if (profilesCache[currentName].passkey === passkey) {
                     localStorage.setItem('tellstream_key_' + currentName, passkey);
                     alert("Identity checked and authorized! Locked to this device memory successfully.");
@@ -1105,7 +1109,6 @@
                     }
                 }
             } else {
-                // Registration path rules assignment logic
                 let assignedLevel = 0;
                 let assignedHover = "Tella Fambily";
 
@@ -1224,7 +1227,6 @@
                 await syncProfilesMap();
             }).subscribe();
 
-        // Realtime Subscription engine channel for Noticeboard live updates
         supabase_db.channel('public:notice_board')
             .on('postgres_changes', { event: 'INSERT', pattern: 'public', table: 'notice_board' }, payload => {
                 if (isNoticeBoardActive) fetchNoticeBoardRecords();
@@ -1251,7 +1253,6 @@
         sendBtn.addEventListener('click', sendMessage);
         messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
         
-        // Boot order engine sequence initialization
         (async function initSystem() {
             renderFacebookFeed();
             renderActiveFlyers();
