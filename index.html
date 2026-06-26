@@ -19,7 +19,6 @@
             display: flex; 
             height: 100vh; 
             overflow: hidden; 
-            flex-direction: row-reverse; /* Flips the chat sidebar to the left and main content to the right */
         }
         
         .main-content { 
@@ -30,6 +29,7 @@
             gap: 20px; 
         }
                 
+        /* Card background layout with smooth rounded corners */
         .player-card { 
             background-image: url('/src/assets/header-bg.jpg'); 
             background-size: cover;
@@ -37,15 +37,21 @@
             background-repeat: no-repeat;
             padding: 40px 30px; 
             border-radius: 12px; 
-            text-align: center; 
             box-shadow: 0 4px 15px rgba(0,0,0,0.5); 
             overflow: hidden;
+            
+            /* Fixed: Flex layout to handle aligning title left and player right */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
         }
                 
         .player-card h1 { 
             color: #ff0055; 
-            margin-bottom: 15px; 
             text-shadow: 0 2px 8px rgba(0,0,0,0.8); 
+            text-align: left;
         }
         
         .fb-feed { 
@@ -59,7 +65,7 @@
         .chat-sidebar { 
             width: 380px; 
             background: #181818; 
-            border-right: 1px solid #2d2d2d; /* Changed border to the right side since it sits on the left now */
+            border-left: 1px solid #2d2d2d; 
             display: flex; 
             flex-direction: column; 
         }
@@ -135,7 +141,7 @@
     <div class="main-content">
         <div class="player-card">
             <h1>BIG JOHN LIVE</h1>
-            <audio id="radioPlayer" src="https://a3.asurahosting.com/listen/tellstream/radio.mp3" controls preload="auto" style="width: 100%; max-width: 400px; margin: 10px auto 0 auto; display: block; box-shadow: 0 4px 10px rgba(0,0,0,0.6); border-radius: 8px;">
+            <audio id="radioPlayer" src="https://a3.asurahosting.com/listen/tellstream/radio.mp3" controls preload="auto" style="width: 100%; max-width: 400px; margin: 0; display: block; box-shadow: 0 4px 10px rgba(0,0,0,0.6); border-radius: 8px;">
                 Your browser does not support the audio element.
             </audio>
         </div>
@@ -162,4 +168,43 @@
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZ3dmZXJ3bXl1dW53dmZxcHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODU5NDQsImV4cCI6MjA5Nzk2MTk0NH0.7F3HUEY59BGE5phlD9AukhZzRa3Ied_ZT43j8YZeIy8";
         const supabase_db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const chatBox = document.getElementById('
+        const chatBox = document.getElementById('chatBox');
+        const usernameInput = document.getElementById('usernameInput');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const audioPlayer = document.getElementById('radioPlayer');
+
+        const imgBaseUrl = "https://tellstream-emojis.pages.dev/";
+        
+        const emojiMapping = {
+            "tellawheel": "tellawheel.gif", "sourire": "sourire.gif", "content": "content.gif", "danc1": "danc1.gif",
+            "oh-2": "OH-2.gif", "pull_up": "pull_up.gif", "langue": "langue.gif", "selassie": "_lion.gif",
+            "clin-oeuil": "clin-oeuil.gif", "speakaz": "speakaz.gif", "triste": "triste.gif", "ziggie": "ziggie.gif",
+            "oh-3": "OH-3.gif", "cdance": "CarltonDanc.gif", "pleure": "pleure.gif", "bb": "bb.gif",
+            "rouge": "rouge.gif", "cool": "cool.gif", "dance3": "danc3.gif", "enerve1": "enerve1.gif",
+            "dance2": "danc2.gif", "roll-eyes": "roll-eyes.gif", "beers": "beers.gif", "bigjohn": "bigjohn.gif",
+            "cruss": "djc_th.gif", "mikeyb1": "mb_th.gif", "jacko": "jm_th.gif", "jk": "jk_th.gif",
+            "wayneirie": "wi_th.gif", "fadab": "fb_th.gif", "bullett": "b_th.gif", "barney": "djb_th.gif",
+            "butta": "djbu_th.gif", "banton": "bm_th.gif", "jj": "jj_th.gif", "fc": "fc_th.gif",
+            "kimmie": "kimmie.gif", "dettol": "d_th.gif", "fabulous": "fab_th.gif", "tnt": "tnt_th.gif",
+            "shylo": "sf_th.gif", "jb": "jrb_th.gif", "many": "djm_th.gif", "flex": "djf_th.gif",
+            "boom": "explosion.gif", "fire": "fire.gif", "tellafire": "tellafire.gif", "pullup": "pull1.gif",
+            "elly": "elly.gif", "dusout": "dusout.gif", "indy": "indy.gif", "sa": "sa.gif",
+            "loj": "loj.gif", "jahhh": "jah.gif", "can": "can.gif", "gb": "gb.gif",
+            "usa": "usa.gif", "jf": "jf.gif", "bless": "bless.gif", "daville": "daville.gif",
+            "delly": "delly.gif", "fran": "fran.gif", "rasta": "rastadance.gif", "lc": "lc.gif",
+            "libertone": "libertone.gif", "security": "security.gif", "katz": "katz.gif", "unknown": "unknown.gif",
+            "sk": "sk.gif", "knight": "knight.gif", "cj": "cj.gif", "rev": "rev.gif",
+            "whodat": "whodat.gif", "raydon": "raydon.gif", "tony": "tony.gif", "platinum": "platinum.gif",
+            "goodas": "goodas.gif", "posh": "posh.gif", "rdz": "rdz.gif", "cure": "cure.gif",
+            "richie": "richiespice.gif", "vybz": "vybz.gif", "spanner": "spanner.gif", "bounty": "bounty.gif",
+            "beenie": "beenie.gif", "movado": "movado.gif", "ifrica": "ifrica.gif", "mackad": "macka.gif",
+            "bigjon3": "bigjohn3.gif", "turbulence": "turbulence.gif", "tanto": "tanto.gif", "tarrus": "tarrus.gif",
+            "bitty": "bitty.gif", "aidonia": "aidonia.gif", "sanchez": "sanchez.gif", "capleton": "capleton.gif",
+            "beres": "beres.gif", "assassin": "assassin.gif", "busy": "busy.gif", "garnet": "garnet.gif",
+            "buju": "buju.gif", "bob": "bob.gif", "flyer1": "flyer1.jpg", "denz": "denz.gif",
+            "delroy": "delroy.gif", "magic": "magic.gif", "rasric": "rasric.gif", "attitude": "attitude.gif",
+            "keba": "keba.gif", "cherry": "ccherry.gif", "tellstream": "tellstream.gif", "sizzla": "sizzla.gif",
+            "damian": "damian.gif", "mzenergy": "mzenergy.gif", "ladyj": "ladyj.gif", "faze": "faze.gif",
+            "stush": "stush.gif", "tea": "tea.gif", "slowwine": "slowwine.gif", "mst": "mst.gif",
+            "vibes1": "vibes1.gif", "vibes3":
