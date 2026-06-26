@@ -40,7 +40,7 @@
             background: rgba(25, 25, 25, 0.92);
             backdrop-filter: blur(8px);
             border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.05);
+            border: 1px solid rgba(255, 255, 255, 0.05);
             display: flex;
             flex-direction: column;
             height: 650px;
@@ -52,11 +52,238 @@
             font-weight: bold;
             font-size: 1.1rem;
             text-align: center;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             color: #00adb5;
-            background: rgba(30,30,30,0.5);
+            background: rgba(30, 30, 30, 0.5);
         }
         .notices-feed {
             flex: 1;
             padding: 15px;
-            overflow-y:
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .notices-feed::-webkit-scrollbar { width: 6px; }
+        .notices-feed::-webkit-scrollbar-thumb { background: rgba(0, 173, 181, 0.3); border-radius: 4px; }
+        
+        .notice-card {
+            background: rgba(45, 45, 45, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            padding: 12px;
+            border-radius: 8px;
+            line-height: 1.4;
+        }
+        .notice-card .author { font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; }
+        .author-admin { color: #ff3333; }
+        .author-registered { color: #ffdd1a; }
+        .author-unregistered { color: #22e532; }
+        .notice-card .text-content { font-size: 0.9rem; color: #eee; word-break: break-word; }
+        .notice-card .time-stamp { font-size: 0.7rem; color: #666; text-align: right; margin-top: 4px; }
+
+        .input-panel {
+            padding: 15px;
+            background: rgba(20, 20, 20, 0.6);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .input-panel textarea {
+            background: #1c1c1c;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 10px;
+            border-radius: 6px;
+            color: #fff;
+            outline: none;
+            font-size: 0.85rem;
+            resize: none;
+        }
+        .input-panel textarea:focus { border-color: #00adb5; }
+        .post-btn {
+            background: #00adb5;
+            color: white;
+            border: none;
+            padding: 8px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .post-btn:hover { background: #008c94; }
+
+        @media (max-width: 900px) {
+            .columns-grid { grid-template-columns: 1fr; }
+            .notice-col { height: 500px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="board-container">
+        <div class="board-header">
+            <h1>Tellstream Info & Review Boards</h1>
+            <p>Updates from the bridge, selector notice blocks, and listener show ratings. Notices clean out automatically after 1 month.</p>
+        </div>
+
+        <div class="columns-grid">
+            <!-- Column 1: Tella Boss Board -->
+            <div class="notice-col">
+                <div class="col-banner">👑 Tella Boss Notice Board</div>
+                <div class="notices-feed" id="bossFeed"></div>
+                <div class="input-panel">
+                    <textarea id="bossText" rows="2" placeholder="Admin notice details (Unlimited letters)..."></textarea>
+                    <button class="post-btn" onclick="submitNotice('boss')">Publish Broadcast</button>
+                </div>
+            </div>
+
+            <!-- Column 2: Selectors Board -->
+            <div class="notice-col">
+                <div class="col-banner">🎛️ Selectors Notice Board</div>
+                <div class="notices-feed" id="selectorsFeed"></div>
+                <div class="input-panel">
+                    <textarea id="selectorsText" rows="2" maxlength="100" placeholder="Selector schedule updates (Max 100)..." oninput="updateCount('selectors')"></textarea>
+                    <div style="font-size:0.7rem; color:#666; text-align:right;" id="selectorsCounter">100 remaining</div>
+                    <button class="post-btn" onclick="submitNotice('selectors')">Post To Deck</button>
+                </div>
+            </div>
+
+            <!-- Column 3: Tella Fambily Board -->
+            <div class="notice-col">
+                <div class="col-banner">💛 Tella Fambily Reviews</div>
+                <div class="notices-feed" id="fambilyFeed"></div>
+                <div class="input-panel">
+                    <textarea id="fambilyText" rows="2" maxlength="50" placeholder="Leave a review of a live set (Max 50)..." oninput="updateCount('fambily')"></textarea>
+                    <div style="font-size:0.7rem; color:#666; text-align:right;" id="fambilyCounter">50 remaining</div>
+                    <button class="post-btn" onclick="submitNotice('fambily')">Submit Review</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://vegwferwmyuunwvfqpsf.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZ3dmZXJ3bXl1dW53dmZxcHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODU5NDQsImV4cCI6MjA5Nzk2MTk0NH0.7F3HUEY59BGE5phlD9AukhZzRa3Ied_ZT43j8YZeIy8";
+        const supabase_db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let profilesCache = {};
+
+        function updateCount(type) {
+            const el = document.getElementById(type + 'Text');
+            const counter = document.getElementById(type + 'Counter');
+            const max = type === 'selectors' ? 100 : 50;
+            counter.innerText = (max - el.value.length) + " remaining";
+        }
+
+        async function fetchProfilesMap() {
+            const { data } = await supabase_db.from('secured_profiles').select('*');
+            profilesCache = {};
+            if (data) {
+                data.forEach(p => { profilesCache[p.username] = p; });
+            }
+        }
+
+        function formatNoticeCard(item) {
+            const profile = profilesCache[item.username];
+            let nameClass = "author-unregistered";
+            if (profile) {
+                nameClass = profile.power_level >= 1 ? "author-admin" : "author-registered";
+            }
+            const dateObj = new Date(item.created_at);
+            const timeStr = dateObj.toLocaleDateString() + " " + dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+            return `
+                <div class="notice-card">
+                    <div class="author ${nameClass}">${escapeHTML(item.username)}</div>
+                    <div class="text-content">${escapeHTML(item.notice_text)}</div>
+                    <div class="time-stamp">${timeStr}</div>
+                </div>
+            `;
+        }
+
+        async function loadAllNotices() {
+            const { data, error } = await supabase_db.from('notice_board').select('*').order('id', { ascending: false });
+            if (error) return;
+
+            document.getElementById('bossFeed').innerHTML = '';
+            document.getElementById('selectorsFeed').innerHTML = '';
+            document.getElementById('fambilyFeed').innerHTML = '';
+
+            const oneMonthAgo = new Date();
+            oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+            data.forEach(item => {
+                const itemDate = new Date(item.created_at);
+                if (itemDate < oneMonthAgo) return;
+
+                const targetFeed = document.getElementById(item.board_type + 'Feed');
+                if (targetFeed) {
+                    targetFeed.innerHTML += formatNoticeCard(item);
+                }
+            });
+        }
+
+        async function submitNotice(type) {
+            let user = localStorage.getItem('tellstream_last_username');
+            if (!user) {
+                user = prompt("Enter your Lounge identity name handle to verify posting rights:");
+                if (user) user = user.trim();
+            }
+            if (!user) return;
+            localStorage.setItem('tellstream_last_username', user);
+
+            const textInput = document.getElementById(type + 'Text');
+            const val = textInput.value.trim();
+            if (!val) return;
+
+            const userProfile = profilesCache[user];
+            const pLevel = userProfile ? userProfile.power_level : 0;
+
+            if (type === 'boss' && pLevel < 2) {
+                alert("Access Denied: Only Core Level 2 Admins can write on this board.");
+                return;
+            }
+            if (type === 'selectors' && pLevel < 1) {
+                alert("Access Denied: You must be configured as Studio Staff / Selector to log scheduling notices.");
+                return;
+            }
+
+            if (userProfile) {
+                const localKey = localStorage.getItem('tellstream_key_' + user);
+                if (userProfile.passkey !== localKey) {
+                    alert("This identity profile is locked! Please verify passkey details in the main stream window lounge panel.");
+                    return;
+                }
+            }
+
+            const { error } = await supabase_db.from('notice_board').insert([{
+                username: user,
+                notice_text: val,
+                board_type: type
+            }]);
+
+            if (!error) {
+                textInput.value = '';
+                if(document.getElementById(type + 'Counter')) updateCount(type);
+                loadAllNotices();
+            } else {
+                alert("Error writing note entry.");
+            }
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+        }
+
+        supabase_db.channel('public:notice_board')
+            .on('postgres_changes', { event: '*', pattern: 'public', table: 'notice_board' }, () => {
+                loadAllNotices();
+            }).subscribe();
+
+        (async function bootNoticeSystem() {
+            await fetchProfilesMap();
+            await loadAllNotices();
+        })();
+    </script>
+</body>
+</html>
