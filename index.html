@@ -9,8 +9,21 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
         body { background: #121212; color: #fff; display: flex; height: 100vh; overflow: hidden; }
         .main-content { flex: 1; display: flex; flex-direction: column; padding: 20px; gap: 20px; }
-        .player-card { background: #1e1e1e; padding: 30px; border-radius: 12px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        .player-card h1 { color: #ff0055; margin-bottom: 15px; }
+        
+        /* Updated: Player card background with smooth rounded corners and hidden overflow */
+        .player-card { 
+            background-image: url('src/assets/header-bg.jpg'); 
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            padding: 40px 30px; 
+            border-radius: 12px; 
+            text-align: center; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5); 
+            overflow: hidden;
+        }
+        
+        .player-card h1 { color: #ff0055; margin-bottom: 15px; text-shadow: 0 2px 8px rgba(0,0,0,0.8); }
         .fb-feed { flex: 1; background: #1e1e1e; border-radius: 12px; padding: 15px; overflow-y: auto; }
         .chat-sidebar { width: 380px; background: #181818; border-left: 1px solid #2d2d2d; display: flex; flex-direction: column; }
         .chat-header { padding: 20px; background: #1e1e1e; border-bottom: 1px solid #2d2d2d; font-weight: bold; font-size: 1.2rem; color: #ff0055; }
@@ -29,8 +42,7 @@
     <div class="main-content">
         <div class="player-card">
             <h1>BIG JOHN LIVE</h1>
-            <!-- Fixed: Put src directly on the audio tag so JavaScript can read it -->
-            <audio id="radioPlayer" src="https://a3.asurahosting.com/listen/tellstream/radio.mp3" controls preload="auto" style="width: 100%; max-width: 400px; margin: 10px auto 0 auto; display: block;">
+            <audio id="radioPlayer" src="https://a3.asurahosting.com/listen/tellstream/radio.mp3" controls preload="auto" style="width: 100%; max-width: 400px; margin: 10px auto 0 auto; display: block; box-shadow: 0 4px 10px rgba(0,0,0,0.6); border-radius: 8px;">
                 Your browser does not support the audio element.
             </audio>
         </div>
@@ -135,7 +147,6 @@
             "haiti": "haiti.gif", "10note": "10note.jpg"
         };
 
-        // Fixed: Isolated Stream Guard Logic
         audioPlayer.addEventListener('stalled', () => { recoverStream(); });
         audioPlayer.addEventListener('error', () => { recoverStream(); });
 
