@@ -13,6 +13,7 @@
             font-family: 'Segoe UI', sans-serif;
         }
         
+        /* Master Container - Forces full viewport height on desktop/tablet to block window scroll */
         body {
             background: url('/src/assets/sitebg1.jpg') no-repeat center center fixed;
             background-size: cover;
@@ -22,15 +23,17 @@
             overflow: hidden;
         }
         
+        /* Left/Center Workspace container holding top header and the new 3-column body section */
         .main-content {
             flex: 1;
             display: flex;
             flex-direction: column;
             padding: 20px;
             gap: 20px;
+            overflow: hidden;
         }
         
-        /* Fixed: Set a distinct height constraint so the layout layout doesn't shrink vertically */
+        /* Header Banner spanning completely across the top of the main area */
         .player-card {
             background-image: url('/src/assets/header-bg.jpg');
             background-size: cover;
@@ -45,6 +48,7 @@
             justify-content: space-between;
             align-items: center;
             gap: 20px;
+            flex-shrink: 0;
         }
         
         .player-card h1 {
@@ -54,16 +58,105 @@
             white-space: nowrap;
         }
         
-        .fb-feed {
+        /* Master container holding the 3 scrollable columns */
+        .columns-container {
+            flex: 1;
+            display: flex;
+            gap: 20px;
+            overflow: hidden;
+        }
+        
+        /* Shared column layout style */
+        .col-3 {
             flex: 1;
             background: rgba(30, 30, 30, 0.85);
             backdrop-filter: blur(8px);
             border-radius: 12px;
-            padding: 15px;
+            padding: 20px;
             overflow-y: auto;
             border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
         
+        .col-title {
+            font-size: 1.1rem;
+            color: #ff0055;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 8px;
+            flex-shrink: 0;
+        }
+
+        /* Column 1 Content Specifics */
+        .fb-wrapper {
+            flex: 1;
+            width: 100%;
+            overflow-y: auto;
+        }
+
+        /* Column 2 Content Specifics (Flyers/Adverts) */
+        .flyers-wrapper {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .flyer-item {
+            background: rgba(45, 45, 45, 0.6);
+            border-radius: 8px;
+            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: center;
+        }
+        .flyer-item img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+        }
+
+        /* Column 3 Split Sectioning (Help Top half, Emojis bottom half) */
+        .sub-panel-top, .sub-panel-bottom {
+            flex: 1;
+            overflow-y: auto;
+            background: rgba(20, 20, 20, 0.4);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+        .help-text p, .help-text li {
+            font-size: 0.9rem;
+            color: #ccc;
+            line-height: 1.4;
+            margin-bottom: 6px;
+        }
+        .help-text ul {
+            padding-left: 20px;
+            margin-bottom: 8px;
+        }
+        .emoji-grid-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+        .emoji-grid-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            color: #00adb5;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+        }
+        .emoji-grid-item:hover {
+            background: rgba(255, 0, 85, 0.2);
+            color: #fff;
+        }
+        
+        /* Master Chat Sidebar Component (Far Right) */
         .chat-sidebar {
             width: 380px;
             background: rgba(24, 24, 24, 0.9);
@@ -71,6 +164,7 @@
             border-left: 1px solid rgba(45, 45, 45, 0.5);
             display: flex;
             flex-direction: column;
+            flex-shrink: 0;
         }
         
         .chat-header {
@@ -138,9 +232,45 @@
         .chat-input-area button:hover {
             background: #e0004c;
         }
+
+        /* RESPONSIVE MOBILE STACKING RULES */
+        @media (max-width: 1024px) {
+            body {
+                flex-direction: column;
+                height: auto;
+                overflow: auto;
+            }
+            .main-content {
+                height: auto;
+                overflow: visible;
+                padding: 10px;
+            }
+            .player-card {
+                height: auto;
+                flex-direction: column;
+                padding: 20px;
+                text-align: center;
+            }
+            .columns-container {
+                flex-direction: column;
+                height: auto;
+                overflow: visible;
+            }
+            .col-3 {
+                height: 500px; /* Gives independent desktop-like scrolling sizes inside mobile stream */
+                flex-shrink: 0;
+            }
+            .chat-sidebar {
+                width: 100%;
+                height: 600px;
+                border-left: none;
+                border-top: 1px solid #2d2d2d;
+            }
+        }
     </style>
 </head>
 <body>
+
     <div class="main-content">
         <div class="player-card">
             <h1>BIG JOHN LIVE</h1>
@@ -149,9 +279,43 @@
             </audio>
         </div>
         
-        <div class="fb-feed">
-            <h3>Facebook Activity Bridge</h3>
-            <p style="color: #888; margin-top: 10px;">[Facebook Feed Widget Container Placeholder]</p>
+        <div class="columns-container">
+            
+            <div class="col-3">
+                <div class="col-title">📘 Facebook Activity Bridge</div>
+                <div class="fb-wrapper">
+                    <iframe src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2Ftellstream.dem&tabs=timeline&width=340&height=500&small_header=true&adapt_container_width=true&hide_cover=false&show_facepile=false" 
+                        style="border:none; overflow:hidden; width:100%; height:100%; min-height:450px;" 
+                        scrolling="yes" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share">
+                    </iframe>
+                </div>
+            </div>
+            
+            <div class="col-3">
+                <div class="col-title">🔥 Live Events & Adverts</div>
+                <div class="flyers-wrapper" id="flyerContainer">
+                    </div>
+            </div>
+            
+            <div class="col-3">
+                <div class="sub-panel-top help-text">
+                    <div class="col-title" style="font-size:0.95rem; margin-bottom:8px;">💡 Chat System Instructions</div>
+                    <p>Welcome to the lounge! To interact with the host and other listeners safely:</p>
+                    <ul>
+                        <li>Set a unique <strong>Nickname</strong> before posting.</li>
+                        <li>Type your thoughts and hit enter or press Send.</li>
+                        <li>To fire special audio tags or graphics, type your shorthand wrapper or click an active emoji node underneath.</li>
+                    </ul>
+                    <p style="font-size:0.8rem; color:#888;">System Version: 2.1 Cloudflare Edge Stack.</p>
+                </div>
+                
+                <div class="sub-panel-bottom">
+                    <div class="col-title" style="font-size:0.95rem; margin-bottom:10px;">✨ Click To Use Emojis</div>
+                    <div class="emoji-grid-list" id="quickEmojiList">
+                        </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -162,4 +326,139 @@
         <div class="chat-input-area">
             <input type="text" id="usernameInput" placeholder="Nickname" style="width: 80px; flex: none;">
             <input type="text" id="messageInput" placeholder="Type a message...">
-            <button id="sendBtn">Send</
+            <button id="sendBtn">Send</button>
+        </div>
+    </div>
+
+    <script src="/src/assets/emojis.js"></script>
+
+    <script>
+        const SUPABASE_URL = "https://vegwferwmyuunwvfqpsf.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZ3dmZXJ3bXl1dW53dmZxcHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODU5NDQsImV4cCI6MjA5Nzk2MTk0NH0.7F3HUEY59BGE5phlD9AukhZzRa3Ied_ZT43j8YZeIy8";
+        const supabase_db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const chatBox = document.getElementById('chatBox');
+        const usernameInput = document.getElementById('usernameInput');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const audioPlayer = document.getElementById('radioPlayer');
+        const flyerContainer = document.getElementById('flyerContainer');
+        const quickEmojiList = document.getElementById('quickEmojiList');
+
+        const imgBaseUrl = "https://tellstream-emojis.pages.dev/";
+
+        // Sample Event/Flyer Dataset with Target Death Dates (YYYY-MM-DD format)
+        const eventFlyers = [
+            { id: 1, title: "Big John Summer Bash", img: "/src/assets/flyer1.jpg", danceDate: "2026-07-15" },
+            { id: 2, title: "Tellstream Linkup Dub Clash", img: "/src/assets/flyer1.jpg", danceDate: "2026-05-01" }, // Example: Expired
+            { id: 3, title: "Weekend Showcase Spec", img: "/src/assets/flyer1.jpg", danceDate: "2026-08-30" }
+        ];
+
+        // Handles automatic filtering out of stale flyer cards based on current client date
+        function renderActiveFlyers() {
+            const today = new Date();
+            today.setHours(0,0,0,0); // Clear timing constraints for calculations
+
+            const activeCards = eventFlyers.filter(event => {
+                const expirationDate = new Date(event.danceDate);
+                return expirationDate >= today;
+            });
+
+            if(activeCards.length === 0) {
+                flyerContainer.innerHTML = `<p style="color:#666; text-align:center; padding-top:20px;">No current event flyers listed.</p>`;
+                return;
+            }
+
+            flyerContainer.innerHTML = activeCards.map(event => `
+                <div class="flyer-item">
+                    <img src="${event.img}" alt="${event.title}" onerror="this.style.display='none'">
+                    <h4 style="margin-top:8px; font-size:0.9rem; color:#ff0055;">${event.title}</h4>
+                    <p style="font-size:0.75rem; color:#aaa; margin-top:2px;">Date: ${event.danceDate}</p>
+                </div>
+            `).join('');
+        }
+
+        // Generates the selection cloud map for Column 3 dynamically from window scope
+        function initQuickEmojiCloud() {
+            if (!window.emojiMapping) return;
+            const items = Object.keys(window.emojiMapping);
+            
+            // Render first 35 emoji shorthands cleanly to avoid crowding the helper wrapper view panel
+            quickEmojiList.innerHTML = items.slice(0, 35).map(key => `
+                <div class="emoji-grid-item" onclick="insertEmojiCode('${key}')">:${key}:</div>
+            `).join('');
+        }
+
+        function insertEmojiCode(code) {
+            messageInput.value += ` :${code}: `;
+            messageInput.focus();
+        }
+
+        audioPlayer.addEventListener('stalled', () => { recoverStream(); });
+        audioPlayer.addEventListener('error', () => { recoverStream(); });
+
+        function recoverStream() {
+            const currentSrc = audioPlayer.src;
+            if (!currentSrc) return;
+            audioPlayer.src = "";
+            audioPlayer.load();
+            audioPlayer.src = currentSrc;
+            audioPlayer.play().catch(err => console.log(err));
+        }
+
+        function appendMessage(data) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'msg';
+            
+            let messageContent = escapeHTML(data.message);
+
+            const codeRegex = /:([a-zA-Z0-9_-]+):/g;
+            messageContent = messageContent.replace(codeRegex, (match, code) => {
+                const lowerCode = code.toLowerCase();
+                if (window.emojiMapping && window.emojiMapping[lowerCode]) {
+                    return `<img src="${imgBaseUrl}${window.emojiMapping[lowerCode]}" alt="${code}" style="max-height: 48px; vertical-align: middle; margin: 2px; border-radius: 4px;">`;
+                }
+                return match;
+            });
+
+            msgDiv.innerHTML = `<div class="user">${escapeHTML(data.username)}</div><div>${messageContent}</div>`;
+            chatBox.appendChild(msgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            
+            while (chatBox.children.length > 50) {
+                chatBox.removeChild(chatBox.firstChild);
+            }
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+        }
+
+        async function loadMessages() {
+            const { data } = await supabase_db.from('messages').select('*').order('id', { ascending: true }).limit(40);
+            if (data) data.forEach(appendMessage);
+        }
+
+        supabase_db.channel('public:messages')
+            .on('postgres_changes', { event: 'INSERT', pattern: 'public', table: 'messages' }, payload => {
+                appendMessage(payload.new);
+            }).subscribe();
+
+        async function sendMessage() {
+            const user = usernameInput.value.trim() || 'Listener';
+            const text = messageInput.value.trim();
+            if (!text) return;
+            messageInput.value = '';
+            await supabase_db.from('messages').insert([{ username: user, message: text }]);
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+        
+        // Boot execution
+        renderActiveFlyers();
+        setTimeout(initQuickEmojiCloud, 500); // Small timeout allows emojis.js map script to completely bind
+        loadMessages();
+    </script>
+</body>
+</html>
