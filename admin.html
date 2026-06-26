@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tellstream - Studio Portal</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background: #121212; color: #fff; padding: 40px 20px; display: flex; justify-content: center; }
+        .admin-card { width: 100%; max-width: 500px; background: #1a1a1a; padding: 30px; border-radius: 12px; border: 1px solid #2d2d2d; box-shadow: 0 8px 30px rgba(0,0,0,0.5); display: none; }
+        h2 { color: #00adb5; margin-bottom: 20px; font-size: 1.5rem; border-bottom: 1px solid #2d2d2d; padding-bottom: 10px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 8px; }
+        input[type="file"] { display: block; width: 100%; background: #242424; border: 1px dashed #444; padding: 20px; border-radius: 6px; color: #fff; cursor: pointer; }
+        button { width: 100%; background: #00adb5; color: #fff; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: background 0.2s; }
+        button:hover { background: #008c94; }
+        .status-msg { margin-top: 15px; font-size: 0.9rem; text-align: center; font-weight: bold; }
+        .lockout { text-align: center; margin-top: 100px; color: #ff0055; font-size: 1.2rem; font-weight: bold; }
+        .notice { background: rgba(0, 173, 181, 0.1); border: 1px solid rgba(0, 173, 181, 0.3); padding: 12px; border-radius: 6px; font-size: 0.8rem; color: #ccc; line-height: 1.4; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="lockout" id="lockoutMsg">🔒 Access Denied: Invalid Security Token</div>
+
+    <div class="admin-card" id="adminPortal">
+        <h2>🔥 Tellstream Flyer Control</h2>
+        
+        <div class="notice">
+            <strong>Naming Rule for John:</strong> The image filename MUST start with the UK dance date numbers (DDMMYY). <br>
+            <em>Example: 260626_reggae_bash.jpg</em>
+        </div>
+
+        <div class="form-group">
+            <label>Select Flyer Image Asset</label>
+            <input type="file" id="flyerFilePicker" accept="image/*">
+        </div>
+        
+        <button id="uploadBtn" onclick="uploadFlyerAsset()">Upload to Server</button>
+        <div class="status-msg" id="statusOutput"></div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://vegwferwmyuunwvfqpsf.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZ3dmZXJ3bXl1dW53dmZxcHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODU5NDQsImV4cCI6MjA5Nzk2MTk0NH0.7F3HUEY59BGE5phlD9AukhZzRa3Ied_ZT43j8YZeIy8";
+        const supabase_db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Security Check: URL must have ?token=TellstreamStudio2026
+        const urlParams = new URLSearchParams(window.location.search);
+        const secretToken = urlParams.get('token');
+
+        if (secretToken === "TellstreamStudio2026") {
+            document.getElementById('lockoutMsg').style.display = 'none';
+            document.getElementById('adminPortal').style.display = 'block';
+        }
+
+        async function uploadFlyerAsset() {
+            const picker = document.getElementById('flyerFilePicker');
+            const status = document.getElementById('statusOutput');
+            
+            if (picker.files.length === 0) {
+                status.style.color = '#ff0055';
+                status.innerText = "Error: Please choose a file first.";
+                return;
+            }
+
+            const file = picker.files[0];
+            const filename = file.name.toLowerCase().replace(/\s+/g, '_');
+
+            // Enforce date convention format verification
+            const datePrefix = filename.substring(0, 6);
+            if (!/^\d{6}$/.test(datePrefix)) {
+                status.style.color = '#ff0055';
+                status.innerText = "Error Name format! Must start with 6 digits (DDMMYY).";
+                return;
+            }
+
+            status.style.color = '#00adb5';
+            status.innerText = "Uploading... please wait.";
+
+            // Push directly into Supabase 'flyers' storage bucket
+            const { data, error } = await supabase_db.storage
+                .from('flyers')
+                .upload(filename, file, { cacheControl: '3600', upsert: true });
+
+            if (error) {
+                status.style.color = '#ff0055';
+                status.innerText = "Upload failed: " + error.message;
+            } else {
+                status.style.color = '#00ffaa';
+                status.innerText = "Thanks! Flyer uploaded successfully.";
+                picker.value = ''; // Reset input
+            }
+        }
+    </script>
+</body>
+</html>
