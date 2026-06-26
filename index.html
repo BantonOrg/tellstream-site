@@ -312,17 +312,20 @@
             gap: 12px;
         }
 
-        /* --- NOTICEBOARD PANEL SYSTEM CLASSES --- */
+        /* --- NOTICEBOARD PANEL SYSTEM CLASSES (ROW-TO-COLUMN FIXED) --- */
         #noticeboard-view-panel {
             display: none;
-            flex-direction: column;
+            flex-direction: row; /* Aligns columns side-by-side */
             flex: 1;
-            overflow-y: auto;
+            overflow-x: auto; 
+            overflow-y: hidden;
             padding: 15px;
             gap: 15px;
             background: #111;
         }
         .notice-column-box {
+            flex: 1;
+            min-width: 250px; /* Keeps layout crisp on smaller screens */
             background: rgba(30, 30, 30, 0.6);
             border: 1px solid rgba(255, 255, 255, 0.05);
             border-radius: 8px;
