@@ -5,27 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tellstream - Live Lounge</title>
     
-    <!-- Open Graph Metadata for Social Sharing -->
     <meta property="og:title" content="Tellstream - Live Lounge">
     <meta property="og:description" content="Join the Listener Lounge, check out live event flyers, and stream music on Tellstream.">
     <meta property="og:image" content="/src/assets/ogmetaLOGO.jpg">
     <meta property="og:url" content="https://tellstream.banton.org">
     <meta property="og:type" content="website">
 
-    <!-- Supabase Connection CDN Core -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
-    <!-- LINK TO YOUR EXTERNALIZED LOOKS FILE -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- Main Content Flow Grid -->
     <div class="main-content">
         
-        <!-- 🧩 MULTI-CELL HEADER BANNER GRID MODULE -->
         <div class="header-container">
-            <!-- Cell 1: Text Block -->
             <div class="header-cell cell-left">
                 <div class="tagline-wrapper">
                     <h1>Great Music</h1>
@@ -33,10 +27,8 @@
                 </div>
             </div>
             
-            <!-- Cell 2: Neon Logo Centerpiece -->
             <div class="header-cell cell-middle"></div>
             
-            <!-- Cell 3: HTML Audio Player Backing Block -->
             <div class="header-cell cell-right">
                 <audio id="radioPlayer" src="https://a3.asurahosting.com/listen/tellstream/radio.mp3" controls preload="auto" style="width: 100%; max-width: 320px; margin: 0; display: block; box-shadow: 0 4px 10px rgba(0,0,0,0.6); border-radius: 8px;">
                     Your browser does not support the audio element.
@@ -46,7 +38,6 @@
         
         <div class="columns-container">
             
-            <!-- Column 1: Facebook Feed Container -->
             <div class="col-3">
                 <div class="col-title">
                     <span>📘 Facebook Activity</span>
@@ -55,13 +46,11 @@
                 <div class="inner-feed-wrapper" id="fbFeedContainer"></div>
             </div>
             
-            <!-- Column 2: Event Flyers Container -->
             <div class="col-3">
                 <div class="col-title">🔥 Live Events & Adverts</div>
                 <div class="inner-feed-wrapper" id="flyerContainer"></div>
             </div>
             
-            <!-- Column 3: Site Help & Emoji Codes Panel -->
             <div class="col-3">
                 <div class="col-title">💡 Site Help and Emoji codes</div>
                 <div class="sub-panel-top" id="helpCardsContainer"></div>
@@ -77,7 +66,6 @@
         </div>
     </div>
 
-    <!-- Master Sidebar Chat Workspace Container -->
     <div class="chat-sidebar">
         <div class="chat-header">
             <span id="sidebarPanelTitle">🔊 Listener Lounge</span>
@@ -87,7 +75,6 @@
             </div>
         </div>
         
-        <!-- Secure Registration Dropdown Drawer Panel -->
         <div class="security-drawer" id="securityDrawer">
             <h4 id="drawerTitle">Secure Current Handle</h4>
             <div class="form-grid">
@@ -101,13 +88,10 @@
         </div>
         
         <div class="chat-split-body">
-            <!-- VIEW 1: Messages Stream Container -->
             <div class="chat-messages" id="chatBox"></div>
             
-            <!-- VIEW 2: Dynamic Slide-In Noticeboard Section Container -->
             <div id="noticeboard-view-panel">
                 
-                <!-- BOSS BOARD COLUMN -->
                 <div class="notice-column-box notice-box-boss">
                     <div class="notice-column-header"><span style="color:#ff3333">👑 Tella Boss Notices</span></div>
                     <div class="notice-cards-feed" id="feed-boss"></div>
@@ -119,7 +103,6 @@
                     </div>
                 </div>
 
-                <!-- SELECTORS BOARD COLUMN -->
                 <div class="notice-column-box notice-box-selectors">
                     <div class="notice-column-header"><span style="color:#ffdd1a">🎧 Selector Audio Feed</span></div>
                     <div class="notice-cards-feed" id="feed-selectors"></div>
@@ -131,7 +114,6 @@
                     </div>
                 </div>
 
-                <!-- FAMBILY BOARD COLUMN -->
                 <div class="notice-column-box notice-box-fambily">
                     <div class="notice-column-header"><span style="color:#22e532">💚 Fambily Column</span></div>
                     <div class="notice-cards-feed" id="feed-fambily"></div>
@@ -143,14 +125,12 @@
                     </div>
                 </div>
 
-                <!-- Static Guard Warning Row Banner (Unregistered Only) -->
                 <div id="notice-footer-warning">YOU MUST BE REGISTERED TO COMMENT</div>
 
             </div>
 
-            <!-- Right Side Fullscreen Cloned Panel -->
             <div class="chat-fs-help-panel">
-                <div class="col-title">💡 Site Help and Emoji codes</div>
+                <div class="col-title" id="fsHelpPanelTitle">💡 Site Help and Emoji codes</div>
                 <div class="help-cards-wrapper-fs" id="helpCardsContainerFS" style="display:flex; flex-direction:column; gap:8px;"></div>
                 <div class="sub-panel-bottom" style="background:transparent; padding:0; border:none; display:flex; flex-direction:column; gap:8px; margin-top:10px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
@@ -162,7 +142,6 @@
             </div>
         </div>
         
-        <!-- Input Console Row -->
         <div class="chat-input-area" id="chat-input-panel-container">
             <div class="left-control-stack">
                 <input type="text" id="usernameInput" placeholder="Nickname" oninput="syncDrawerName()">
@@ -181,10 +160,8 @@
         <button class="modal-close-btn" onclick="closeFlyerLightbox()">Close (X)</button>
     </div>
 
-    <!-- Local Emoji Assets Library Mapping Core Script -->
     <script src="/src/assets/emojis.js"></script>
 
-    <!-- LINK TO YOUR BRAND NEW EXTERNALIZED LOGIC ENGINE FILE -->
     <script src="main.js"></script>
 </body>
 </html>
