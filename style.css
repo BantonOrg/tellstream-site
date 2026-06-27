@@ -277,6 +277,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-shrink: 0;
 }
 
 .nav-controls-row {
@@ -364,7 +365,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    max-height: 180px;
+    height: 100%;
     overflow-y: auto;
 }
 .notice-card-item {
@@ -376,7 +377,8 @@ body {
 }
 .notice-input-form-block {
     display: none;
-    margin-top: 4px;
+    margin-top: auto;
+    padding-top: 4px;
 }
 .notice-row-input {
     display: flex;
@@ -427,7 +429,7 @@ body {
     flex-direction: column;
     gap: 15px;
     overflow-y: auto;
-    height: 100%; /* Dropped all the way to base edge */
+    flex-shrink: 0;
 }
 
 .msg {
@@ -513,6 +515,7 @@ body {
     align-items: center;
     width: 100%;
     box-sizing: border-box;
+    flex-shrink: 0;
 }
 
 .left-control-stack {
@@ -589,32 +592,36 @@ body.chat-is-fullscreen .main-content {
     display: none !important;
 }
 
-/* 🟢 DEDICATED FULL SCREEN ALIGNMENT RULES */
+/* ==========================================================================
+   🟢 CLEAN FULLSCREEN SIDE-BY-SIDE DESIGN (PREVENTS VERTICAL CRUSHING)
+   ========================================================================== */
 body.chat-is-fullscreen .chat-sidebar {
     width: 100% !important;
     border-left: none;
-    display: grid !important;
-    grid-template-columns: 1fr 380px; /* Locks chat layout on left, help sidebar on right */
-    grid-template-rows: auto 1fr;
+    flex-direction: row !important; /* Runs layout side-by-side cleanly */
+    flex-wrap: wrap;
 }
+
 body.chat-is-fullscreen .chat-header {
-    grid-column: 1 / span 2; /* Header spans across both grid lanes */
+    width: 100% !important;
 }
+
 body.chat-is-fullscreen .chat-split-body {
-    grid-column: 1; /* Message stream stays locked left */
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-}
-body.chat-is-fullscreen .chat-input-area {
-    grid-column: 1; /* 🟢 TYPE INPUT BOX FLUSH FIX: Locks input directly under chat column only */
-    width: 100%;
-}
-body.chat-is-fullscreen .chat-fs-help-panel {
-    grid-column: 2; /* 🟢 SIDEBAR FLUSH DROP FIX: Help drops top-to-bottom on the right side */
-    grid-row: 2;
+    flex: 1 !important;
     display: flex !important;
-    height: 100%;
+    flex-direction: column !important; /* Pushes messages down */
+    height: calc(100vh - 65px) !important; 
+    position: relative;
+}
+
+body.chat-is-fullscreen .chat-input-area {
+    width: 100% !important; /* Locks perfectly inline with your text box width */
+    margin-top: auto;
+}
+
+body.chat-is-fullscreen .chat-fs-help-panel {
+    display: flex !important;
+    height: calc(100vh - 65px) !important; /* Clean drop straight to base line */
 }
 
 .flyer-modal-overlay {
@@ -683,10 +690,12 @@ body.chat-is-fullscreen .chat-fs-help-panel {
         display: none !important;
     }
     
-    /* Reset layout mechanics on narrow viewports to stack vertically instead of grid paths */
     body.chat-is-fullscreen .chat-sidebar {
         display: flex !important;
         flex-direction: column !important;
+    }
+    body.chat-is-fullscreen .chat-split-body {
+        height: auto !important;
     }
 
     .main-content {
