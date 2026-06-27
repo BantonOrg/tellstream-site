@@ -305,7 +305,7 @@ body {
     background: rgba(0, 173, 181, 0.15);
     border: 1px solid rgba(0, 173, 181, 0.3);
     color: #00adb5;
-    display: none; /* Hidden by default on desktop layout view state */
+    display: none; 
 }
 
 body.chat-is-fullscreen #toggle-notice-btn {
@@ -673,20 +673,24 @@ body.chat-is-fullscreen .chat-fs-help-panel {
         padding: 10px;
     }
     
+    /* 🟢 Keep widescreen row structure inline side-by-side */
     .header-container {
-        flex-direction: column !important;
+        display: flex !important;
+        flex-direction: row !important;
+        width: 100% !important;
         height: auto !important;
     }
     
     .header-cell {
-        width: 100% !important;
-        height: 180px !important; 
+        flex: 1 1 33.33% !important;
+        width: 33.33% !important;
+        height: 140px !important; 
         justify-content: center !important;
         text-align: center !important;
-        padding: 20px !important;
+        box-sizing: border-box !important;
     }
     
-    /* 🟢 STUNNING MOBILE HEADERS: Stretches all three elements 100% edge-to-edge seamlessly */
+    /* 🟢 Sizing rules to protect the vertical scale of the slices */
     .cell-left {
         background-image: url('header-bg1m.jpg') !important;
         background-position: center center !important;
@@ -695,7 +699,9 @@ body.chat-is-fullscreen .chat-fs-help-panel {
     .cell-middle {
         background-image: url('header-bg2m.jpg') !important;
         background-position: center center !important;
-        background-size: 100% 100% !important;
+        /* 🟢 Forced cover scale parameters so the middle neon asset never crunches vertically */
+        background-size: cover !important;
+        background-repeat: no-repeat !important;
     }
     .cell-right {
         background-image: url('header-bg3m.jpg') !important;
@@ -711,11 +717,11 @@ body.chat-is-fullscreen .chat-fs-help-panel {
         overflow: visible;
     }
     .col-3 {
-        height: auto; /* Allow content layout columns to naturally flow down on mobile devices */
+        height: auto;
         flex-shrink: 0;
     }
     
-    /* 🟢 CHAT FLOOR FIX: Locks chat tracking firmly down without floating up into the air */
+    /* 🟢 Secure chat box container placement */
     .chat-sidebar {
         width: 100% !important;
         height: 600px;
@@ -724,7 +730,7 @@ body.chat-is-fullscreen .chat-fs-help-panel {
         margin-top: 20px;
     }
     
-    /* 🟢 BUTTON RE-ALIGNMENT: Force-hides desktop maximize button, displays Noticeboard button instead */
+    /* 🟢 Mobile view navigation buttons management */
     .fullscreen-btn {
         display: none !important; 
     }
@@ -732,7 +738,7 @@ body.chat-is-fullscreen .chat-fs-help-panel {
         display: inline-block !important;
     }
     
-    /* 📋 MOBILE NOTICEBOARD GRID COLUMN STACKING */
+    /* 📋 Mobile noticeboard vertical grid rows feed alignment */
     #noticeboard-view-panel {
         flex-direction: column !important; 
         overflow-y: auto !important;
