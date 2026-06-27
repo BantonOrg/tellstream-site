@@ -593,7 +593,7 @@ body.chat-is-fullscreen .main-content {
 }
 
 /* ==========================================================================
-   🟢 FLUSH FULLSCREEN FRAMEWORK (KEEPS CHAT LEFT, HELP RIGHT, TYPING FLUSH)
+   🟢 THE PERFECT 4-COLUMN FULLSCREEN ENGINE (NO LAYOUT OVERLAPS)
    ========================================================================== */
 body.chat-is-fullscreen .chat-sidebar {
     width: 100% !important;
@@ -606,44 +606,51 @@ body.chat-is-fullscreen .chat-sidebar {
 body.chat-is-fullscreen .chat-split-body {
     flex: 1 !important;
     display: flex !important;
-    flex-direction: row !important; /* Forces side-by-side view back */
+    flex-direction: row !important; 
     width: 100% !important;
     height: calc(100vh - 65px) !important;
     overflow: hidden !important;
 }
 
-/* Forces the chat text container layout to take up all remaining left space */
-body.chat-is-fullscreen .chat-messages,
+/* 🟢 THE 4-COLUMN BLUEPRINT: Forces every single view component to share equal horizontal scaling paths */
 body.chat-is-fullscreen #noticeboard-view-panel {
+    display: none; 
     flex: 1 !important;
+    width: 100% !important;
     height: 100% !important;
+    padding-right: 20px !important; 
+}
+body.chat-is-fullscreen #noticeboard-view-panel[style*="display: flex"] {
+    display: flex !important;
 }
 
-/* Implements vertical control mapping strictly on the chat box workspace column */
+/* Locks Chat stream on the left layout quadrant */
+body.chat-is-fullscreen .chat-messages {
+    flex: 1 !important;
+    height: calc(100% - 74px) !important; /* Safety line margin above typing box */
+}
+
 body.chat-is-fullscreen .chat-split-body > div:first-child:not([style*="display: none"]) {
     display: flex !important;
     flex-direction: column !important;
     flex: 1 !important;
 }
 
-/* 🟢 TYPING BAR FLUSH OVERRIDE: Positions input strictly beneath the layout lanes */
+/* 🟢 TYPING BAR ALIGNMENT: Sets input width strictly under the left chat lane */
 body.chat-is-fullscreen .chat-input-area {
-    width: calc(100% - 380px) !important; /* Cuts off right before the 380px help panel */
-    position: fixed;
+    width: calc(100% - 380px) !important; 
+    position: absolute;
     bottom: 0;
     left: 0;
     z-index: 10;
 }
 
-/* Moves sidebars dynamically straight down to the screen baseline layer */
+/* Dedicated Helper Panel constraints */
 body.chat-is-fullscreen .chat-fs-help-panel {
     display: flex !important;
-    height: 100vh !important;
-    position: fixed;
-    right: 0;
-    top: 65px;
-    bottom: 0;
-    border-left: 1px solid rgba(45, 45, 45, 0.5);
+    width: 380px !important;
+    height: 100% !important;
+    flex-shrink: 0 !important;
 }
 
 .flyer-modal-overlay {
@@ -720,6 +727,12 @@ body.chat-is-fullscreen .chat-fs-help-panel {
     body.chat-is-fullscreen .chat-split-body {
         flex-direction: column !important;
         height: auto !important;
+    }
+    body.chat-is-fullscreen .chat-messages {
+        height: auto !important;
+    }
+    body.chat-is-fullscreen #noticeboard-view-panel {
+        width: 100% !important;
     }
     body.chat-is-fullscreen .chat-input-area {
         width: 100% !important;
