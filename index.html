@@ -3,155 +3,190 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TellStream - Live Lounge</title>
+    <title>Tellstream - Live Lounge</title>
+    
+    <!-- Open Graph Metadata for Social Sharing -->
+    <meta property="og:title" content="Tellstream - Live Lounge">
+    <meta property="og:description" content="Join the Listener Lounge, check out live event flyers, and stream music on Tellstream.">
+    <meta property="og:image" content="/src/assets/ogmetaLOGO.jpg">
+    <meta property="og:url" content="https://tellstream.banton.org">
+    <meta property="og:type" content="website">
+
+    <!-- Supabase Connection CDN Core -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- LINK TO YOUR EXTERNALIZED LOOKS FILE -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- 📲 MAIN LAYOUT CONTAINER -->
+    <!-- Main Content Flow Grid -->
     <div class="main-content">
         
-        <!-- 🧩 THE 3-CELL HEADER SYSTEM -->
+        <!-- 🧩 MULTI-CELL HEADER BANNER GRID MODULE -->
         <div class="header-container">
+            <!-- Cell 1: Text Block -->
             <div class="header-cell cell-left">
                 <div class="tagline-wrapper">
-                    <h1>Live Flyers</h1>
-                    <p>UPCOMING EVENTS</p>
+                    <h1>Great Music</h1>
+                    <p>ALL DAY • EVERY DAY</p>
                 </div>
             </div>
+            
+            <!-- Cell 2: Neon Logo Centerpiece -->
             <div class="header-cell cell-middle">
-                <!-- Center Logo Container -->
-            </div>
+    <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" style="width: 150px; height: 140px; display: block; visibility: hidden;" alt="spacer">
+</div>
+            
+            <!-- Cell 3: HTML Audio Player Backing Block -->
             <div class="header-cell cell-right">
-                <div class="tagline-wrapper">
-                    <h1>TellStream</h1>
-                    <p>ON AIR NOW</p>
-                </div>
+                <audio id="radioPlayer" src="https://a3.asurahosting.com/listen/tellstream/radio.mp3" controls preload="auto" style="width: 100%; max-width: 320px; margin: 0; display: block; box-shadow: 0 4px 10px rgba(0,0,0,0.6); border-radius: 8px;">
+                    Your browser does not support the audio element.
+                </audio>
             </div>
         </div>
-
-        <!-- 📊 MAIN WORKSPACE COLUMNS -->
+        
         <div class="columns-container">
             
-            <!-- COLUMN 1: FACEBOOK ACTIVITY -->
+            <!-- Column 1: Facebook Feed Container -->
             <div class="col-3">
                 <div class="col-title">
-                    <span>Facebook Activity</span>
-                    <a href="#" class="fb-master-link" target="_blank">Open Full Page</a>
+                    <span>📘 Facebook Activity</span>
+                    <a href="https://www.facebook.com/tellstream.dem" target="_blank" class="fb-master-link">Open Full Page</a>
                 </div>
-                <div class="inner-feed-wrapper">
-                    <div class="fb-post-card">
-                        <div class="fb-post-meta">Tellstream Page • Just now</div>
-                        <div class="fb-post-text">Big John is locked and loaded live in the studio! Lock into tellstream.banton.org right now and fire up the lounge chat! 🔥</div>
-                    </div>
-                    <div class="fb-post-card">
-                        <div class="fb-post-meta">Tellstream Page • Yesterday</div>
-                        <div class="fb-post-text">Big respect to all the listeners locking in from around the globe. Drop your shoutouts and tell-a-wheel selectors directly inside the main chat line! 📻🎧</div>
-                    </div>
-                </div>
+                <div class="inner-feed-wrapper" id="fbFeedContainer"></div>
             </div>
-
-            <!-- COLUMN 2: NOTICEBOARD / EMOBIS -->
+            
+            <!-- Column 2: Event Flyers Container -->
             <div class="col-3">
-                <div class="col-title">
-                    <span>Noticeboard & Extras</span>
-                    <a href="#" class="emoji-master-link">View Full Grid</a>
-                </div>
-                
-                <div class="sub-panel-top">
-                    <div class="flyer-item">
-                        <div class="fb-post-meta">WEEKEND SCHEDULE</div>
-                        <h4>Live Dancehall Clash</h4>
-                    </div>
-                </div>
-
+                <div class="col-title">🔥 Live Events & Adverts</div>
+                <div class="inner-feed-wrapper" id="flyerContainer"></div>
+            </div>
+            
+            <!-- Column 3: Site Help & Emoji Codes Panel -->
+            <div class="col-3">
+                <div class="col-title">💡 Site Help and Emoji codes</div>
+                <div class="sub-panel-top" id="helpCardsContainer"></div>
                 <div class="sub-panel-bottom">
-                    <div class="emoji-grid-list">
-                        <span class="emoji-grid-item">🔥 :dance1:</span>
-                        <span class="emoji-grid-item">🎧 :oh-2:</span>
-                        <span class="emoji-grid-item">🔊 :pull_up:</span>
-                        <span class="emoji-grid-item">👑 :selector:</span>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <span style="font-size:0.85rem; color:#00adb5; font-weight:bold;">✨ Quick Emojis</span>
+                        <a href="https://tellstream-emojis.pages.dev/" target="_blank" class="emoji-master-link">See All Codes</a>
                     </div>
+                    <div class="emoji-grid-list" id="quickEmojiList"></div>
                 </div>
             </div>
 
         </div>
     </div>
 
-    <!-- 💬 LOUNGE CHAT INTERACTION SIDEBAR WORKSPACE -->
+    <!-- Master Sidebar Chat Workspace Container -->
     <div class="chat-sidebar">
-        
         <div class="chat-header">
-            <span>Listener Lounge</span>
-            
+            <span id="sidebarPanelTitle">🔊 Listener Lounge</span>
             <div class="nav-controls-row">
-                <!-- FIXED: Changed class to 'notice-toggle-btn' so the CSS doesn't accidentally hide it on mobile! -->
-                <button id="toggle-notice-btn" class="notice-toggle-btn" style="background: #00adb5; color: white; border: none; padding: 6px 12px; font-size: 0.8rem; border-radius: 4px; cursor: pointer; font-weight: bold;">Noticeboard</button>
-                
-                <!-- Desktop Maximize Button (Safely auto-hidden by the CSS on mobile screen sizes) -->
-                <button class="fullscreen-btn">Maximize Chat</button>
+                <button class="fullscreen-btn" id="toggle-notice-btn" onclick="toggleNoticeBoardView()">📋 Noticeboard</button>
+                <button class="fullscreen-btn" id="fsToggleBtn" onclick="toggleChatFullscreen()">Maximize Chat</button>
             </div>
         </div>
-
-        <div class="chat-split-body">
-            
-            <!-- LIVE CHAT MESSAGES PANEL -->
-            <div class="chat-messages">
-                <div class="msg">
-                    <span class="user user-admin">Big John</span>
-                    <div class="fb-post-text">yaggga yowww</div>
-                </div>
-                <div class="msg">
-                    <span class="user user-registered">Listener</span>
-                    <div class="fb-post-text">testing 13 we nah 3 what about you</div>
-                </div>
-                <div class="msg">
-                    <span class="user user-unregistered">rawted</span>
-                    <div class="fb-post-text">chooooon</div>
-                </div>
+        
+        <!-- Secure Registration Dropdown Drawer Panel -->
+        <div class="security-drawer" id="securityDrawer">
+            <h4 id="drawerTitle">Secure Current Handle</h4>
+            <div class="form-grid">
+                <input type="text" id="regNameInput" placeholder="Name to lock" readonly>
+                <input type="password" id="regPasskeyInput" placeholder="Secret Passkey">
+                <input type="text" id="regReminderInput" placeholder="Key Reminder Hint">
+                <input type="email" id="regEmailInput" placeholder="Recovery Email">
             </div>
-
-            <!-- 📋 INTERIOR NOTICEBOARD VIEW PANEL -->
+            <button class="drawer-action-btn" id="drawerSubmitBtn" onclick="handleSecuritySubmit()">Lock Name Globally</button>
+            <p id="reminderHintDisplay" style="font-size:0.75rem; color:#ffdd1a; margin-top:6px; display:none; text-align:center;"></p>
+        </div>
+        
+        <div class="chat-split-body">
+            <!-- VIEW 1: Messages Stream Container -->
+            <div class="chat-messages" id="chatBox"></div>
+            
+            <!-- VIEW 2: Dynamic Slide-In Noticeboard Section Container -->
             <div id="noticeboard-view-panel">
                 
-                <!-- BOSS COLUMN -->
+                <!-- BOSS BOARD COLUMN -->
                 <div class="notice-column-box notice-box-boss">
-                    <div class="notice-column-header" style="color: #ff3333;">The Bosses</div>
-                    <div class="notice-cards-feed">
-                        <div class="notice-card-item">Banton - Station Owner</div>
+                    <div class="notice-column-header"><span style="color:#ff3333">👑 Tella Boss Notices</span></div>
+                    <div class="notice-cards-feed" id="feed-boss"></div>
+                    <div class="notice-input-form-block" id="form-boss">
+                        <div class="notice-row-input">
+                            <input type="text" id="input-boss" placeholder="Write boss directive...">
+                            <button class="notice-inline-btn" onclick="submitNoticeUpdate('boss')">Post</button>
+                        </div>
                     </div>
                 </div>
 
-                <!-- SELECTORS COLUMN -->
+                <!-- SELECTORS BOARD COLUMN -->
                 <div class="notice-column-box notice-box-selectors">
-                    <div class="notice-column-header" style="color: #ffdd1a;">Selectors</div>
-                    <div class="notice-cards-feed">
-                        <div class="notice-card-item">Big John Live</div>
+                    <div class="notice-column-header"><span style="color:#ffdd1a">🎧 Selector Audio Feed</span></div>
+                    <div class="notice-cards-feed" id="feed-selectors"></div>
+                    <div class="notice-input-form-block" id="form-selectors">
+                        <div class="notice-row-input">
+                            <input type="text" id="input-selectors" placeholder="Write selector notice...">
+                            <button class="notice-inline-btn" onclick="submitNoticeUpdate('selectors')">Post</button>
+                        </div>
                     </div>
                 </div>
 
-                <!-- FAMBILY COLUMN -->
+                <!-- FAMBILY BOARD COLUMN -->
                 <div class="notice-column-box notice-box-fambily">
-                    <div class="notice-column-header" style="color: #22e532;">The Fambily</div>
-                    <div class="notice-cards-feed">
-                        <div class="notice-card-item">Global Locking Crew</div>
+                    <div class="notice-column-header"><span style="color:#22e532">💚 Fambily Column</span></div>
+                    <div class="notice-cards-feed" id="feed-fambily"></div>
+                    <div class="notice-input-form-block" id="form-fambily">
+                        <div class="notice-row-input">
+                            <input type="text" id="input-fambily" placeholder="Write group comment...">
+                            <button class="notice-inline-btn" onclick="submitNoticeUpdate('fambily')">Post</button>
+                        </div>
                     </div>
                 </div>
 
+                <!-- Static Guard Warning Row Banner (Unregistered Only) -->
+                <div id="notice-footer-warning">YOU MUST BE REGISTERED TO COMMENT</div>
+
             </div>
 
+            <!-- Right Side Fullscreen Cloned Panel -->
+            <div class="chat-fs-help-panel">
+                <div class="col-title">💡 Site Help and Emoji codes</div>
+                <div class="help-cards-wrapper-fs" id="helpCardsContainerFS" style="display:flex; flex-direction:column; gap:8px;"></div>
+                <div class="sub-panel-bottom" style="background:transparent; padding:0; border:none; display:flex; flex-direction:column; gap:8px; margin-top:10px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <span style="font-size:0.85rem; color:#00adb5; font-weight:bold;">✨ Quick Emojis</span>
+                        <a href="https://tellstream-emojis.pages.dev/" target="_blank" class="emoji-master-link">See All Codes</a>
+                    </div>
+                    <div class="emoji-grid-list" id="quickEmojiListFS"></div>
+                </div>
+            </div>
         </div>
-
-        <!-- CHAT INPUT CONTROLS DRAWER -->
-        <div class="chat-input-area">
+        
+        <!-- Input Console Row -->
+        <div class="chat-input-area" id="chat-input-panel-container">
             <div class="left-control-stack">
-                <input type="text" id="usernameInput" value="Nickname" placeholder="Name">
-                <button class="send-main-btn">SEND</button>
+                <input type="text" id="usernameInput" placeholder="Nickname" oninput="syncDrawerName()">
+                <button class="send-main-btn" id="sendBtn">Send</button>
             </div>
-            <textarea id="messageInput" placeholder="Type a message..."></textarea>
+            
+            <button class="lock-toggle-btn" id="lockStatusBtn" onclick="toggleSecurityDrawer()" title="Secure/Verify identity handle">🔒</button>
+            <textarea id="messageInput" placeholder="Type a message..." maxlength="120"></textarea>
         </div>
-
     </div>
 
+    <div class="flyer-modal-overlay" id="flyerModal" onclick="closeFlyerLightbox()">
+        <div class="modal-content-card" onclick="event.stopPropagation();">
+            <img id="modalTargetImg" src="" alt="Expanded View Asset">
+        </div>
+        <button class="modal-close-btn" onclick="closeFlyerLightbox()">Close (X)</button>
+    </div>
+
+    <!-- Local Emoji Assets Library Mapping Core Script -->
+    <script src="/src/assets/emojis.js"></script>
+
+    <!-- LINK TO YOUR BRAND NEW EXTERNALIZED LOGIC ENGINE FILE -->
+    <script src="main.js"></script>
 </body>
 </html>
