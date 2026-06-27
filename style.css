@@ -26,7 +26,7 @@ body {
 }
 
 /* ==========================================================================
-   🧩 THE 3-CELL FIXED-HEIGHT HEADER SYSTEM
+   🧩 THE 3-CELL HEADER SYSTEM (DESKTOP MODE)
    ========================================================================== */
 .header-container {
     display: flex;
@@ -40,7 +40,7 @@ body {
 
 .header-cell {
     flex: 1;
-    height: 140px !important;
+    height: 140px !important; /* Fixed default desktop row height */
     background-position: center center;
     background-repeat: no-repeat;
     background-size: cover;
@@ -91,6 +91,9 @@ body {
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);
 }
 
+/* ==========================================================================
+   📊 MAIN LAYOUT WORKSPACE COLUMNS
+   ========================================================================== */
 .columns-container {
     flex: 1;
     display: flex;
@@ -250,6 +253,9 @@ body {
     border-color: #00adb5;
 }
 
+/* ==========================================================================
+   💬 LOUNGE CHAT INTERACTION SIDEBAR WORKSPACE
+   ========================================================================== */
 .chat-sidebar {
     width: 380px;
     background: rgba(20, 20, 20, 0.96);
@@ -645,6 +651,9 @@ body.chat-is-fullscreen .chat-fs-help-panel {
     background: #008c94;
 }
 
+/* ==========================================================================
+   📱 MOBILE & NARROW SCREEN STACK OVERRIDES (ACTIVE UNDER 1024PX WIDTH)
+   ========================================================================== */
 @media (max-width: 1024px) {
     body {
         flex-direction: column;
@@ -660,25 +669,32 @@ body.chat-is-fullscreen .chat-fs-help-panel {
         padding: 10px;
     }
     
+    /* Drops row alignment and triggers vertical stacked formatting */
     .header-container {
         flex-direction: column !important;
         height: auto !important;
     }
+    
+    /* Forces columns to dynamically accept your PaintShop 434px slice dimension heights */
     .header-cell {
         width: 100% !important;
-        height: 140px !important;
+        height: 434px !important; 
         justify-content: center !important;
         text-align: center !important;
         padding: 20px !important;
     }
+    
+    /* MAGIC SWAPS: Safely attaches your custom seamless 'm' suffix background assets */
     .cell-left {
-        background-position: center left;
-    }
-    .cell-middle {
+        background-image: url('header-bg1m.jpg') !important;
         background-position: center center;
     }
+    .cell-middle {
+        background-image: url('header-bg2m.jpg') !important;
+        background-size: contain !important;
+    }
     .cell-right {
-        background-position: center right;
+        background-image: url('header-bg3m.jpg') !important;
         justify-content: center !important;
         padding-right: 0px !important;
     }
