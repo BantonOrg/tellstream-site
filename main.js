@@ -153,6 +153,9 @@ function toggleNoticeBoardView() {
     const inputContainer = document.getElementById('chat-input-panel-container');
     const mainTitle = document.getElementById('sidebarPanelTitle');
     const toggleBtn = document.getElementById('toggle-notice-btn');
+    
+    const fsHelpTitle = document.getElementById('fsHelpPanelTitle');
+    const fsHelpContainer = document.getElementById('helpCardsContainerFS');
 
     if (!isNoticeBoardActive) {
         streamChat.style.display = 'none';
@@ -163,15 +166,41 @@ function toggleNoticeBoardView() {
         toggleBtn.innerText = "❌ Exit Noticeboard";
         isNoticeBoardActive = true;
         
+        if (fsHelpTitle) fsHelpTitle.innerText = "📢 Noticeboard Help";
+        if (fsHelpContainer) {
+            fsHelpContainer.innerHTML = `
+                <div class="help-item-card" style="border-left-color: #00adb5;">
+                    <h5>What is the Noticeboard?</h5>
+                    <p>A dedicated dashboard workspace for the Tellstream crew and fambily to track system updates, live lock-in status, and scheduling updates across the station.</p>
+                </div>
+                <div class="help-item-card" style="border-left-color: #ff3333;">
+                    <h5>👑 Tella Boss Notices</h5>
+                    <p>Reserved strictly for crucial administrative updates and team wide directives. Requires a secure Level 2 profile clear signature to drop logs here.</p>
+                </div>
+                <div class="help-item-card" style="border-left-color: #ffdd1a;">
+                    <h5>🎧 Selector Audio Feed</h5>
+                    <p>Live notification desk tracking who is currently at the controls, studio wheel pull ups, and session changeovers. Open to Level 1 and above.</p>
+                </div>
+                <div class="help-item-card" style="border-left-color: #22e532;">
+                    <h5>💚 Fambily Column</h5>
+                    <p>The open board wall for the locked-in listener community. Anyone with a secured, authorized local global handle profile can submit group entries.</p>
+                </div>
+            `;
+        }
+        
         evaluateNoticeBoardForms();
         fetchNoticeBoardRecords();
     } else {
         noticePanel.style.display = 'none';
         streamChat.style.display = 'flex';
-                inputContainer.style.display = 'flex';
+        inputContainer.style.display = 'flex';
         mainTitle.innerText = "🔊 Listener Lounge";
         toggleBtn.innerText = "📋 Noticeboard";
         isNoticeBoardActive = false;
+        
+        if (fsHelpTitle) fsHelpTitle.innerText = "💡 Site Help and Emoji codes";
+        renderHelpContent(); 
+        
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 }
