@@ -302,10 +302,7 @@ body {
     background: rgba(0, 173, 181, 0.15);
     border: 1px solid rgba(0, 173, 181, 0.3);
     color: #00adb5;
-    display: none;
-}
-body.chat-is-fullscreen #toggle-notice-btn {
-    display: inline-block;
+    display: inline-block; /* Keeping layout consistent */
 }
 
 .chat-split-body {
@@ -669,35 +666,34 @@ body.chat-is-fullscreen .chat-fs-help-panel {
         padding: 10px;
     }
     
-    /* Drops desktop row layout and triggers vertical column sequence */
     .header-container {
         flex-direction: column !important;
         height: auto !important;
     }
     
-    /* Safely shrinks cells down to drop dead weight space while scaling */
     .header-cell {
         width: 100% !important;
         height: 180px !important; 
         justify-content: center !important;
         text-align: center !important;
         padding: 20px !important;
-        background-size: cover !important;
     }
     
-    /* SEAMLESS ALIGNMENT: Sticks the connecting joints tightly edge-to-edge */
+    /* SEAMLESS IDENTICAL SCALING: Stretches all three elements 100% edge-to-edge */
     .cell-left {
         background-image: url('header-bg1m.jpg') !important;
-        background-position: center bottom !important; /* Locks seam to top of middle block */
+        background-position: center center !important;
+        background-size: 100% 100% !important;
     }
     .cell-middle {
         background-image: url('header-bg2m.jpg') !important;
-        background-size: cover !important;
         background-position: center center !important;
+        background-size: 100% 100% !important;
     }
     .cell-right {
         background-image: url('header-bg3m.jpg') !important;
-        background-position: center top !important;    /* Locks seam to bottom of middle block */
+        background-position: center center !important;
+        background-size: 100% 100% !important;
         justify-content: center !important;
         padding-right: 0px !important;
     }
@@ -711,12 +707,33 @@ body.chat-is-fullscreen .chat-fs-help-panel {
         height: 500px;
         flex-shrink: 0;
     }
+    
+    /* 📱 MOBILE CHAT MODIFICATIONS: Hides desktop layout controls */
     .chat-sidebar {
         width: 100% !important;
         height: 600px;
         border-left: none;
         border-top: 1px solid #2d2d2d;
     }
+    
+    /* Replaced Fullscreen Button purpose with Noticeboard Toggle on Mobile */
+    .fullscreen-btn {
+        display: none !important; /* Disables full-size switch on mobile viewports */
+    }
+    
+    /* 📋 MOBILE NOTICEBOARD STACKING */
+    #noticeboard-view-panel {
+        flex-direction: column !important; /* Columns break from row setup and drop vertically */
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        height: auto !important;
+        max-height: 500px;
+    }
+    .notice-column-box {
+        width: 100% !important;
+        min-width: 100% !important;
+    }
+
     body.chat-is-fullscreen .chat-fs-help-panel {
         display: none !important;
     }
