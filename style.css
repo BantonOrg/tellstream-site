@@ -593,7 +593,7 @@ body.chat-is-fullscreen .main-content {
 }
 
 /* ==========================================================================
-   🧩 CLEAN 4-COLUMN HORIZONTAL GRID ENGINE
+   🧩 THE PERFECT 4-COLUMN FULLSCREEN ENGINE (NO LAYOUT OVERLAPS)
    ========================================================================== */
 body.chat-is-fullscreen .chat-sidebar {
     width: 100% !important;
@@ -649,6 +649,60 @@ body.chat-is-fullscreen .chat-fs-help-panel {
     width: 380px !important;
     height: 100% !important;
     flex-shrink: 0 !important;
+}
+
+/* 🛑 FIXED OVERLAY: Locks layout paths completely into a fixed space stack layer */
+.flyer-modal-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(15px);
+    z-index: 9999 !important;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    gap: 15px;
+}
+.flyer-modal-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+.modal-content-card {
+    position: relative;
+    max-width: 85%;
+    max-height: 80vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.modal-content-card img {
+    max-width: 100%;
+    max-height: 80vh;
+    border-radius: 8px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    object-fit: contain;
+}
+.modal-close-btn {
+    background: #00adb5;
+    color: white;
+    border: none;
+    padding: 8px 24px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 0.95rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    transition: background 0.2s;
+}
+.modal-close-btn:hover {
+    background: #008c94;
 }
 
 /* ==========================================================================
