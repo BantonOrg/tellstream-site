@@ -40,32 +40,57 @@
             transition: all 0.3s ease;
         }
         
-        /* --- LOCKED HEADER CONTAINER WITH SPACE-BETWEEN ROUTING SYSTEM --- */
-.player-card {
-    background-image: url('/src/assets/header-bg.jpg');
-    background-size: 100% 100%; /* Forces the entire banner graphic to scale down completely without cropping the sides */
-    background-position: center center;
-    background-repeat: no-repeat;
-    height: 140px;
-    padding: 0px 40px;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    overflow: hidden;
-    display: flex !important;
-    justify-content: space-between !important; 
-    align-items: center !important;
-    width: 100% !important;
-    gap: 20px;
-    flex-shrink: 0;
-}
+        /* ==========================================================================
+           🧩 THE 3-CELL FIXED-HEIGHT HEADER SYSTEM
+           ========================================================================== */
+        .header-container {
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        /* Base rules for all three header cells */
+        .header-cell {
+            flex: 1; /* Smoothly divides the desktop row into perfect equal thirds */
+            height: 140px !important; /* STRICT SAFEGUARD: Height can never change */
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-size: cover; /* Keeps the asset looking sharp inside its box */
+            display: flex;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        /* Individual cell background asset attachments linked directly to your root directory */
+        .cell-left {
+            background-image: url('header-bg1.jpg');
+            justify-content: flex-start;
+            padding-left: 40px;
+        }
+
+        .cell-middle {
+            background-image: url('header-bg2.jpg');
+            justify-content: center;
+        }
+
+        .cell-right {
+            background-image: url('header-bg3.jpg');
+            justify-content: flex-end;
+            padding-right: 40px;
+        }
         
-        .player-card .tagline-wrapper {
+        /* Banner typography rules */
+        .header-cell .tagline-wrapper {
             display: flex;
             flex-direction: column;
             text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
             white-space: nowrap;
         }
-        .player-card h1 {
+        .header-cell h1 {
             color: #00adb5;
             font-size: 1.8rem;
             text-transform: uppercase;
@@ -75,7 +100,7 @@
             -webkit-text-stroke: 1.5px #000000;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9); 
         }
-        .player-card p {
+        .header-cell p {
             color: #eee;
             font-size: 0.95rem;
             font-weight: bold;
@@ -501,7 +526,7 @@
         .drawer-action-btn:hover { background: #008c94; }
         
         /* ==========================================================================
-           🛠️ STACKED CHAT INPUT ROW SYSTEM
+           🛠️ UNIFORM STACKED CHAT INPUT CONSOLE SYSTEM
            ========================================================================== */
         .chat-input-area {
             padding: 12px;
@@ -575,7 +600,7 @@
             color: #fff;
             outline: none;
             resize: none; 
-            height: calc(30px + 30px + 6px); 
+            height: calc(30px + 30px + 6px); /* Locks total row height exactly to 66px */
             font-size: 0.85rem;
             line-height: 1.4;
             box-sizing: border-box;
@@ -649,6 +674,7 @@
             background: #008c94;
         }
 
+        /* Responsive Breakpoints Grid */
         @media (max-width: 1024px) {
             body {
                 flex-direction: column;
@@ -663,12 +689,31 @@
                 overflow: visible;
                 padding: 10px;
             }
-            .player-card {
-                height: auto;
-                flex-direction: column;
-                padding: 20px;
-                text-align: center;
+            
+            /* --- FORCE CELLS TO STACK ON MOBILE SEAMLESSLY WITHOUT ALTERING NATIVE HEIGHTS --- */
+            .header-container {
+                flex-direction: column !important;
+                height: auto !important;
             }
+            .header-cell {
+                width: 100% !important;
+                height: 140px !important; /* Strict lock: cell height remains completely fixed when stacked */
+                justify-content: center !important;
+                text-align: center !important;
+                padding: 20px !important;
+            }
+            .cell-left {
+                background-position: center left;
+            }
+            .cell-middle {
+                background-position: center center;
+            }
+            .cell-right {
+                background-position: center right;
+                justify-content: center !important;
+                padding-right: 0px !important;
+            }
+            
             .columns-container {
                 flex-direction: column;
                 height: auto;
@@ -693,14 +738,22 @@
 <body>
 
     <div class="main-content">
-        <div class="player-card">
-            <div class="tagline-wrapper">
-                <h1>Great Music</h1>
-                <p>ALL DAY • EVERY DAY</p>
+        
+        <div class="header-container">
+            <div class="header-cell cell-left">
+                <div class="tagline-wrapper">
+                    <h1>Great Music</h1>
+                    <p>ALL DAY • EVERY DAY</p>
+                </div>
             </div>
-            <audio id="radioPlayer" src="https://a3.asurahosting.com/listen/tellstream/radio.mp3" controls preload="auto" style="width: 100%; max-width: 320px; margin: 0; display: block; box-shadow: 0 4px 10px rgba(0,0,0,0.6); border-radius: 8px;">
-                Your browser does not support the audio element.
-            </audio>
+            
+            <div class="header-cell cell-middle"></div>
+            
+            <div class="header-cell cell-right">
+                <audio id="radioPlayer" src="https://a3.asurahosting.com/listen/tellstream/radio.mp3" controls preload="auto" style="width: 100%; max-width: 320px; margin: 0; display: block; box-shadow: 0 4px 10px rgba(0,0,0,0.6); border-radius: 8px;">
+                    Your browser does not support the audio element.
+                </audio>
+            </div>
         </div>
         
         <div class="columns-container">
