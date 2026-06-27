@@ -298,12 +298,16 @@ body {
     background: #00adb5;
 }
 
+/* ==========================================================================
+   📋 NOTICEBOARD TOGGLE BUTTON CONTROLS
+   ========================================================================== */
 #toggle-notice-btn {
     background: rgba(0, 173, 181, 0.15);
     border: 1px solid rgba(0, 173, 181, 0.3);
     color: #00adb5;
-    display: none;
+    display: none; /* Hidden by default on desktop layout view state */
 }
+
 body.chat-is-fullscreen #toggle-notice-btn {
     display: inline-block;
 }
@@ -682,7 +686,7 @@ body.chat-is-fullscreen .chat-fs-help-panel {
         padding: 20px !important;
     }
     
-    /* SEAMLESS IDENTICAL SCALING: Stretches all three elements 100% edge-to-edge */
+    /* 🟢 STUNNING MOBILE HEADERS: Stretches all three elements 100% edge-to-edge seamlessly */
     .cell-left {
         background-image: url('header-bg1m.jpg') !important;
         background-position: center center !important;
@@ -707,15 +711,40 @@ body.chat-is-fullscreen .chat-fs-help-panel {
         overflow: visible;
     }
     .col-3 {
-        height: 500px;
+        height: auto; /* Allow content layout columns to naturally flow down on mobile devices */
         flex-shrink: 0;
     }
+    
+    /* 🟢 CHAT FLOOR FIX: Locks chat tracking firmly down without floating up into the air */
     .chat-sidebar {
         width: 100% !important;
         height: 600px;
         border-left: none;
         border-top: 1px solid #2d2d2d;
+        margin-top: 20px;
     }
+    
+    /* 🟢 BUTTON RE-ALIGNMENT: Force-hides desktop maximize button, displays Noticeboard button instead */
+    .fullscreen-btn {
+        display: none !important; 
+    }
+    #toggle-notice-btn {
+        display: inline-block !important;
+    }
+    
+    /* 📋 MOBILE NOTICEBOARD GRID COLUMN STACKING */
+    #noticeboard-view-panel {
+        flex-direction: column !important; 
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        height: auto !important;
+        max-height: 600px;
+    }
+    .notice-column-box {
+        width: 100% !important;
+        min-width: 100% !important;
+    }
+
     body.chat-is-fullscreen .chat-fs-help-panel {
         display: none !important;
     }
