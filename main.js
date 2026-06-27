@@ -44,7 +44,6 @@ const helpInstructions = [
     { title: "Firing Emojis & Sounds", text: "Tap any active shorthand key code block inside the selection layout panel below to append it to your message. Click [See All Codes] for more." }
 ];
 
-// 🟢 NEW ADDITION: Noticeboard-specific guide content definitions
 const noticeboardHelpInstructions = [
     { title: "Noticeboard Rules", text: "Stay respectful. Unauthorized or hostile comments will be flagged and removed instantly." },
     { title: "Authority Levels", text: "The Boss panel is restricted to Station Admins. Selectors manage the central schedule log." },
@@ -106,7 +105,6 @@ async function renderActiveFlyers() {
     flyerContainer.innerHTML = renderedHtml || `<p style="color:#666; text-align:center; padding-top:20px;">No current event flyers listed.</p>`;
 }
 
-// 🟢 MODIFIED LOGIC: Render dynamic layout content maps based on active application states
 function renderHelpContent(useNoticeboardGuide = false) {
     const activeDataset = useNoticeboardGuide ? noticeboardHelpInstructions : helpInstructions;
     const currentTitle = useNoticeboardGuide ? "📋 Noticeboard Help Guide" : "💡 Chat help and emoji codes";
@@ -121,7 +119,6 @@ function renderHelpContent(useNoticeboardGuide = false) {
     helpCardsContainer.innerHTML = html;
     helpCardsContainerFS.innerHTML = html;
 
-    // Dynamically align title headers inside cloned panels
     const fsTitleNode = helpCardsContainerFS.previousElementSibling;
     if (fsTitleNode && fsTitleNode.classList.contains('col-title')) {
         fsTitleNode.innerHTML = currentTitle;
@@ -138,7 +135,6 @@ function closeFlyerLightbox() {
 }
 
 function toggleChatFullscreen() {
-    // Force reset Noticeboard views if jumping into dedicated Maximize mode
     if (isNoticeBoardActive) {
         toggleNoticeBoardView();
     }
@@ -164,16 +160,15 @@ function insertEmojiCode(code) {
     messageInput.focus();
 }
 
-// 🟢 RE-ENGINEERED MECHANISM: Opens noticeboard inside a global layout viewport blueprint layer
 function toggleNoticeBoardView() {
     const streamChat = document.getElementById('chatBox');
     const noticePanel = document.getElementById('noticeboard-view-panel');
     const inputContainer = document.getElementById('chat-input-panel-container');
     const mainTitle = document.getElementById('sidebarPanelTitle');
     const toggleBtn = document.getElementById('toggle-notice-btn');
+    const emojiSectionFS = quickEmojiListFS.parentElement; // Finds the emoji wrap panel
 
     if (!isNoticeBoardActive) {
-        // Toggle full screen layout visibility layer identically to fullscreen controls
         document.body.classList.add('chat-is-fullscreen');
         
         streamChat.style.display = 'none';
@@ -184,12 +179,13 @@ function toggleNoticeBoardView() {
         toggleBtn.innerText = "❌ Exit Noticeboard";
         isNoticeBoardActive = true;
         
-        // Render custom noticeboard help descriptors inside the right-hand panel
+        // Hide the emoji block completely on fullscreen noticeboard view
+        if (emojiSectionFS) emojiSectionFS.style.display = 'none';
+        
         renderHelpContent(true);
         evaluateNoticeBoardForms();
         fetchNoticeBoardRecords();
     } else {
-        // Drop layout visibility classes entirely
         document.body.classList.remove('chat-is-fullscreen');
         
         noticePanel.style.display = 'none';
@@ -199,7 +195,9 @@ function toggleNoticeBoardView() {
         toggleBtn.innerText = "📋 Noticeboard";
         isNoticeBoardActive = false;
         
-        // Restore standard Chat instructions safely
+        // Restore the emoji block when returning to lounge chat
+        if (emojiSectionFS) emojiSectionFS.style.display = 'block';
+        
         renderHelpContent(false);
         chatBox.scrollTop = chatBox.scrollHeight;
     }
