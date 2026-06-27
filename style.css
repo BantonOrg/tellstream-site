@@ -593,35 +593,57 @@ body.chat-is-fullscreen .main-content {
 }
 
 /* ==========================================================================
-   🟢 CLEAN FULLSCREEN SIDE-BY-SIDE DESIGN (PREVENTS VERTICAL CRUSHING)
+   🟢 FLUSH FULLSCREEN FRAMEWORK (KEEPS CHAT LEFT, HELP RIGHT, TYPING FLUSH)
    ========================================================================== */
 body.chat-is-fullscreen .chat-sidebar {
     width: 100% !important;
+    height: 100vh !important;
     border-left: none;
-    flex-direction: row !important; /* Runs layout side-by-side cleanly */
-    flex-wrap: wrap;
-}
-
-body.chat-is-fullscreen .chat-header {
-    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
 }
 
 body.chat-is-fullscreen .chat-split-body {
     flex: 1 !important;
     display: flex !important;
-    flex-direction: column !important; /* Pushes messages down */
-    height: calc(100vh - 65px) !important; 
-    position: relative;
+    flex-direction: row !important; /* Forces side-by-side view back */
+    width: 100% !important;
+    height: calc(100vh - 65px) !important;
+    overflow: hidden !important;
 }
 
+/* Forces the chat text container layout to take up all remaining left space */
+body.chat-is-fullscreen .chat-messages,
+body.chat-is-fullscreen #noticeboard-view-panel {
+    flex: 1 !important;
+    height: 100% !important;
+}
+
+/* Implements vertical control mapping strictly on the chat box workspace column */
+body.chat-is-fullscreen .chat-split-body > div:first-child:not([style*="display: none"]) {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 !important;
+}
+
+/* 🟢 TYPING BAR FLUSH OVERRIDE: Positions input strictly beneath the layout lanes */
 body.chat-is-fullscreen .chat-input-area {
-    width: 100% !important; /* Locks perfectly inline with your text box width */
-    margin-top: auto;
+    width: calc(100% - 380px) !important; /* Cuts off right before the 380px help panel */
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    z-index: 10;
 }
 
+/* Moves sidebars dynamically straight down to the screen baseline layer */
 body.chat-is-fullscreen .chat-fs-help-panel {
     display: flex !important;
-    height: calc(100vh - 65px) !important; /* Clean drop straight to base line */
+    height: 100vh !important;
+    position: fixed;
+    right: 0;
+    top: 65px;
+    bottom: 0;
+    border-left: 1px solid rgba(45, 45, 45, 0.5);
 }
 
 .flyer-modal-overlay {
@@ -693,9 +715,20 @@ body.chat-is-fullscreen .chat-fs-help-panel {
     body.chat-is-fullscreen .chat-sidebar {
         display: flex !important;
         flex-direction: column !important;
+        height: 600px !important;
     }
     body.chat-is-fullscreen .chat-split-body {
+        flex-direction: column !important;
         height: auto !important;
+    }
+    body.chat-is-fullscreen .chat-input-area {
+        width: 100% !important;
+        position: static !important;
+    }
+    body.chat-is-fullscreen .chat-fs-help-panel {
+        position: static !important;
+        height: auto !important;
+        width: 100% !important;
     }
 
     .main-content {
@@ -748,7 +781,7 @@ body.chat-is-fullscreen .chat-fs-help-panel {
     
     .chat-sidebar {
         width: 100% !important;
-        height: 600px;
+        height: 600px !important;
         border-left: none;
         border-top: 1px solid #2d2d2d;
     }
