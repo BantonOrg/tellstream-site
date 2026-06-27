@@ -681,26 +681,26 @@ body.chat-is-fullscreen .chat-fs-help-panel {
     
     .header-cell {
         width: 100% !important;
-        height: 180px !important; 
+        height: 100px !important; 
         justify-content: center !important;
         text-align: center !important;
-        padding: 20px !important;
+        padding: 10px !important;
     }
     
     .cell-left {
         background-image: url('header-bg1m.jpg') !important;
         background-position: center center !important;
-        background-size: 100% 100% !important;
+        background-size: contain !important;
     }
     .cell-middle {
         background-image: url('header-bg2m.jpg') !important;
         background-position: center center !important;
-        background-size: 100% 100% !important;
+        background-size: contain !important;
     }
     .cell-right {
         background-image: url('header-bg3m.jpg') !important;
         background-position: center center !important;
-        background-size: 100% 100% !important;
+        background-size: contain !important;
         justify-content: center !important;
         padding-right: 0px !important;
     }
