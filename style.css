@@ -40,7 +40,7 @@ body {
 
 .header-cell {
     flex: 1;
-    height: 140px !important; /* Fixed default desktop row height */
+    height: 140px !important;
     background-position: center center;
     background-repeat: no-repeat;
     background-size: cover;
@@ -669,32 +669,35 @@ body.chat-is-fullscreen .chat-fs-help-panel {
         padding: 10px;
     }
     
-    /* Drops row alignment and triggers vertical stacked formatting */
+    /* Drops desktop row layout and triggers vertical column sequence */
     .header-container {
         flex-direction: column !important;
         height: auto !important;
     }
     
-    /* Forces columns to dynamically accept your PaintShop 434px slice dimension heights */
+    /* Safely shrinks cells down to drop dead weight space while scaling */
     .header-cell {
         width: 100% !important;
-        height: 434px !important; 
+        height: 180px !important; 
         justify-content: center !important;
         text-align: center !important;
         padding: 20px !important;
+        background-size: cover !important;
     }
     
-    /* MAGIC SWAPS: Safely attaches your custom seamless 'm' suffix background assets */
+    /* SEAMLESS ALIGNMENT: Sticks the connecting joints tightly edge-to-edge */
     .cell-left {
         background-image: url('header-bg1m.jpg') !important;
-        background-position: center center;
+        background-position: center bottom !important; /* Locks seam to top of middle block */
     }
     .cell-middle {
         background-image: url('header-bg2m.jpg') !important;
-        background-size: contain !important;
+        background-size: cover !important;
+        background-position: center center !important;
     }
     .cell-right {
         background-image: url('header-bg3m.jpg') !important;
+        background-position: center top !important;    /* Locks seam to bottom of middle block */
         justify-content: center !important;
         padding-right: 0px !important;
     }
