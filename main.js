@@ -9,6 +9,7 @@ const sendBtn = document.getElementById('sendBtn');
 const audioPlayer = document.getElementById('radioPlayer');
 const flyerContainer = document.getElementById('flyerContainer');
 const quickEmojiList = document.getElementById('quickEmojiList');
+const quickEmojiListFS = document.getElementById('quickEmojiListFS');
 const fbFeedContainer = document.getElementById('fbFeedContainer');
 const helpCardsContainer = document.getElementById('helpCardsContainer');
 const helpCardsContainerFS = document.getElementById('helpCardsContainerFS');
@@ -137,12 +138,8 @@ function initQuickEmojiCloud() {
         <div class="emoji-grid-item" onclick="insertEmojiCode('${key}')">:${key}:</div>
     `).join('');
     
-    // Dynamic fresh lookups ensure we always write directly to live screen elements
-    const liveNormalEmojiList = document.getElementById('quickEmojiList');
-    const liveFullscreenEmojiList = document.getElementById('quickEmojiListFS');
-    
-    if (liveNormalEmojiList) liveNormalEmojiList.innerHTML = html;
-    if (liveFullscreenEmojiList) liveFullscreenEmojiList.innerHTML = html;
+    quickEmojiList.innerHTML = html;
+    quickEmojiListFS.innerHTML = html;
 }
 
 function insertEmojiCode(code) {
@@ -156,11 +153,6 @@ function toggleNoticeBoardView() {
     const inputContainer = document.getElementById('chat-input-panel-container');
     const mainTitle = document.getElementById('sidebarPanelTitle');
     const toggleBtn = document.getElementById('toggle-notice-btn');
-    
-    const fsHelpTitle = document.getElementById('fsHelpPanelTitle');
-    const fsHelpContainer = document.getElementById('helpCardsContainerFS');
-    
-    const fsEmojiContainer = fsHelpContainer ? fsHelpContainer.nextElementSibling : null;
 
     if (!isNoticeBoardActive) {
         streamChat.style.display = 'none';
@@ -171,63 +163,15 @@ function toggleNoticeBoardView() {
         toggleBtn.innerText = "❌ Exit Noticeboard";
         isNoticeBoardActive = true;
         
-        if (fsEmojiContainer) {
-            fsEmojiContainer.innerHTML = `
-                <div style="width: 100%; height: 140px; background: url('header-bg2.jpg') no-repeat center center; background-size: cover; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); box-shadow: inset 0 0 20px rgba(0,0,0,0.6); margin-top: 10px;"></div>
-            `;
-            fsEmojiContainer.style.display = 'block';
-            fsEmojiContainer.style.background = 'transparent';
-            fsEmojiContainer.style.border = 'none';
-            fsEmojiContainer.style.padding = '0';
-        }
-        
-        if (fsHelpTitle) fsHelpTitle.innerText = "📢 Noticeboard Help";
-        if (fsHelpContainer) {
-            fsHelpContainer.innerHTML = `
-                <div class="help-item-card" style="border-left-color: #00adb5;">
-                    <h5>What is the Noticeboard?</h5>
-                    <p>A dedicated dashboard workspace for the Tellstream crew and fambily to track system updates, live lock-in status, and scheduling updates across the station.</p>
-                </div>
-                <div class="help-item-card" style="border-left-color: #ff3333;">
-                    <h5>👑 Tella Boss Notices</h5>
-                    <p>Reserved strictly for crucial administrative updates and team wide directives. Requires a secure Level 2 profile clear signature to drop logs here.</p>
-                </div>
-                <div class="help-item-card" style="border-left-color: #ffdd1a;">
-                    <h5>🎧 Selector Audio Feed</h5>
-                    <p>Live notification desk tracking who is currently at the controls, studio wheel pull ups, and session changeovers. Open to Level 1 and above.</p>
-                </div>
-                <div class="help-item-card" style="border-left-color: #22e532;">
-                    <h5>💚 Fambily Column</h5>
-                    <p>The open board wall for the locked-in listener community. Anyone with a secured, authorized local global handle profile can submit group entries.</p>
-                </div>
-            `;
-        }
-        
         evaluateNoticeBoardForms();
         fetchNoticeBoardRecords();
     } else {
         noticePanel.style.display = 'none';
         streamChat.style.display = 'flex';
-        inputContainer.style.display = 'flex';
+                inputContainer.style.display = 'flex';
         mainTitle.innerText = "🔊 Listener Lounge";
         toggleBtn.innerText = "📋 Noticeboard";
         isNoticeBoardActive = false;
-        
-        if (fsEmojiContainer) {
-            fsEmojiContainer.removeAttribute('style'); 
-            fsEmojiContainer.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                    <span style="font-size:0.85rem; color:#00adb5; font-weight:bold;">✨ Quick Emojis</span>
-                    <a href="https://tellstream-emojis.pages.dev/" target="_blank" class="emoji-master-link">See All Codes</a>
-                </div>
-                <div class="emoji-grid-list" id="quickEmojiListFS"></div>
-            `;
-            initQuickEmojiCloud();
-        }
-        
-        if (fsHelpTitle) fsHelpTitle.innerText = "💡 Site Help and Emoji codes";
-        renderHelpContent(); 
-        
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 }
