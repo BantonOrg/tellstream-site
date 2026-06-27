@@ -92,7 +92,7 @@ body {
 }
 
 /* ==========================================================================
-   📊 MAIN LAYOUT WORKSPACE COLUMNS
+   🔥 MAIN LAYOUT WORKSPACE COLUMNS
    ========================================================================== */
 .columns-container {
     flex: 1;
@@ -254,7 +254,7 @@ body {
 }
 
 /* ==========================================================================
-   💬 LOUNGE CHAT INTERACTION SIDEBAR WORKSPACE
+   🔊 LOUNGE CHAT INTERACTION SIDEBAR WORKSPACE
    ========================================================================== */
 .chat-sidebar {
     width: 380px;
@@ -298,11 +298,19 @@ body {
     background: #00adb5;
 }
 
+/* ==========================================================================
+   📋 NOTICEBOARD TOGGLE BUTTON CONTROLS
+   ========================================================================== */
 #toggle-notice-btn {
     background: rgba(0, 173, 181, 0.15);
     border: 1px solid rgba(0, 173, 181, 0.3);
     color: #00adb5;
-    display: inline-block; /* Keeping layout consistent */
+    display: none; /* 🔴 Hidden by default in normal layout state */
+}
+
+/* 🟢 Only bring the button into view when the chat is maximized to fullscreen */
+body.chat-is-fullscreen #toggle-notice-btn {
+    display: inline-block;
 }
 
 .chat-split-body {
@@ -673,27 +681,26 @@ body.chat-is-fullscreen .chat-fs-help-panel {
     
     .header-cell {
         width: 100% !important;
-        height: 180px !important; 
+        height: 100px !important; 
         justify-content: center !important;
         text-align: center !important;
-        padding: 20px !important;
+        padding: 10px !important;
     }
     
-    /* SEAMLESS IDENTICAL SCALING: Stretches all three elements 100% edge-to-edge */
     .cell-left {
         background-image: url('header-bg1m.jpg') !important;
         background-position: center center !important;
-        background-size: 100% 100% !important;
+        background-size: contain !important;
     }
     .cell-middle {
         background-image: url('header-bg2m.jpg') !important;
         background-position: center center !important;
-        background-size: 100% 100% !important;
+        background-size: contain !important;
     }
     .cell-right {
         background-image: url('header-bg3m.jpg') !important;
         background-position: center center !important;
-        background-size: 100% 100% !important;
+        background-size: contain !important;
         justify-content: center !important;
         padding-right: 0px !important;
     }
@@ -708,7 +715,6 @@ body.chat-is-fullscreen .chat-fs-help-panel {
         flex-shrink: 0;
     }
     
-    /* 📱 MOBILE CHAT MODIFICATIONS: Hides desktop layout controls */
     .chat-sidebar {
         width: 100% !important;
         height: 600px;
@@ -716,14 +722,12 @@ body.chat-is-fullscreen .chat-fs-help-panel {
         border-top: 1px solid #2d2d2d;
     }
     
-    /* Replaced Fullscreen Button purpose with Noticeboard Toggle on Mobile */
     .fullscreen-btn {
-        display: none !important; /* Disables full-size switch on mobile viewports */
+        display: none !important; 
     }
     
-    /* 📋 MOBILE NOTICEBOARD STACKING */
     #noticeboard-view-panel {
-        flex-direction: column !important; /* Columns break from row setup and drop vertically */
+        flex-direction: column !important; 
         overflow-y: auto !important;
         overflow-x: hidden !important;
         height: auto !important;
