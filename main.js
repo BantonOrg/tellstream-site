@@ -44,6 +44,13 @@ const helpInstructions = [
     { title: "Firing Emojis & Sounds", text: "Tap any active shorthand key code block inside the selection layout panel below to append it to your message. Click [See All Codes] for more." }
 ];
 
+// 🟢 NEW ADDITION: Noticeboard-specific guide content definitions
+const noticeboardHelpInstructions = [
+    { title: "Noticeboard Rules", text: "Stay respectful. Unauthorized or hostile comments will be flagged and removed instantly." },
+    { title: "Authority Levels", text: "The Boss panel is restricted to Station Admins. Selectors manage the central schedule log." },
+    { title: "Adding Updates", text: "Once verified via your secure local passkey profile drawer, choose a column target form to submit notifications directly." }
+];
+
 function renderFacebookFeed() {
     fbFeedContainer.innerHTML = facebookPosts.map(post => `
         <div class="fb-post-card" onclick="window.open('${post.link}', '_blank');">
@@ -99,8 +106,12 @@ async function renderActiveFlyers() {
     flyerContainer.innerHTML = renderedHtml || `<p style="color:#666; text-align:center; padding-top:20px;">No current event flyers listed.</p>`;
 }
 
-function renderHelpContent() {
-    const html = helpInstructions.map(item => `
+// 🟢 MODIFIED LOGIC: Render dynamic layout content maps based on active application states
+function renderHelpContent(useNoticeboardGuide = false) {
+    const activeDataset = useNoticeboardGuide ? noticeboardHelpInstructions : helpInstructions;
+    const currentTitle = useNoticeboardGuide ? "📋 Noticeboard Help Guide" : "💡 Chat help and emoji codes";
+    
+    const html = activeDataset.map(item => `
         <div class="help-item-card">
             <h5>${item.title}</h5>
             <p>${item.text}</p>
@@ -109,6 +120,12 @@ function renderHelpContent() {
     
     helpCardsContainer.innerHTML = html;
     helpCardsContainerFS.innerHTML = html;
+
+    // Dynamically align title headers inside cloned panels
+    const fsTitleNode = helpCardsContainerFS.previousElementSibling;
+    if (fsTitleNode && fsTitleNode.classList.contains('col-title')) {
+        fsTitleNode.innerHTML = currentTitle;
+    }
 }
 
 function launchFlyerLightbox(imgSrc) {
@@ -121,12 +138,12 @@ function closeFlyerLightbox() {
 }
 
 function toggleChatFullscreen() {
-    const isFullscreen = document.body.classList.toggle('chat-is-fullscreen');
-    fsToggleBtn.innerText = isFullscreen ? "Exit Fullscreen" : "Maximize Chat";
-    
-    if (!isFullscreen && isNoticeBoardActive) {
+    // Force reset Noticeboard views if jumping into dedicated Maximize mode
+    if (isNoticeBoardActive) {
         toggleNoticeBoardView();
     }
+    const isFullscreen = document.body.classList.toggle('chat-is-fullscreen');
+    fsToggleBtn.innerText = isFullscreen ? "Exit Fullscreen" : "Maximize Chat";
     chatBox.scrollTop = chatBox.scrollHeight;
 }
 
@@ -147,6 +164,7 @@ function insertEmojiCode(code) {
     messageInput.focus();
 }
 
+// 🟢 RE-ENGINEERED MECHANISM: Opens noticeboard inside a global layout viewport blueprint layer
 function toggleNoticeBoardView() {
     const streamChat = document.getElementById('chatBox');
     const noticePanel = document.getElementById('noticeboard-view-panel');
@@ -155,6 +173,9 @@ function toggleNoticeBoardView() {
     const toggleBtn = document.getElementById('toggle-notice-btn');
 
     if (!isNoticeBoardActive) {
+        // Toggle full screen layout visibility layer identically to fullscreen controls
+        document.body.classList.add('chat-is-fullscreen');
+        
         streamChat.style.display = 'none';
         inputContainer.style.display = 'none'; 
         securityDrawer.classList.remove('open'); 
@@ -163,15 +184,23 @@ function toggleNoticeBoardView() {
         toggleBtn.innerText = "❌ Exit Noticeboard";
         isNoticeBoardActive = true;
         
+        // Render custom noticeboard help descriptors inside the right-hand panel
+        renderHelpContent(true);
         evaluateNoticeBoardForms();
         fetchNoticeBoardRecords();
     } else {
+        // Drop layout visibility classes entirely
+        document.body.classList.remove('chat-is-fullscreen');
+        
         noticePanel.style.display = 'none';
         streamChat.style.display = 'flex';
-                inputContainer.style.display = 'flex';
+        inputContainer.style.display = 'flex';
         mainTitle.innerText = "🔊 Listener Lounge";
         toggleBtn.innerText = "📋 Noticeboard";
         isNoticeBoardActive = false;
+        
+        // Restore standard Chat instructions safely
+        renderHelpContent(false);
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 }
@@ -199,17 +228,17 @@ function evaluateNoticeBoardForms() {
 }
 
 async function fetchNoticeBoardRecords() {
-    const { data, error } = await supabase_db
+    const { data: records, error } = await supabase_db
         .from('notice_board')
         .select('*')
         .order('created_at', { ascending: false });
 
-    if (!error && data) {
+    if (!error && records) {
         document.getElementById('feed-boss').innerHTML = "";
         document.getElementById('feed-selectors').innerHTML = "";
         document.getElementById('feed-fambily').innerHTML = "";
 
-        data.forEach(item => {
+        records.forEach(item => {
             const columnTarget = document.getElementById(`feed-${item.board_type}`);
             if (columnTarget) {
                 const card = document.createElement('div');
@@ -460,7 +489,7 @@ messageInput.addEventListener('keypress', (e) => {
 (async function initSystem() {
     renderFacebookFeed();
     renderActiveFlyers();
-    renderHelpContent();
+    renderHelpContent(false);
     setTimeout(initQuickEmojiCloud, 500);
     await syncProfilesMap();
     loadMessages();
