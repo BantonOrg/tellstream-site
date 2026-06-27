@@ -612,7 +612,6 @@ body.chat-is-fullscreen .chat-split-body {
     overflow: hidden !important;
 }
 
-/* 🟢 THE 4-COLUMN BLUEPRINT: Forces every single view component to share equal horizontal scaling paths */
 body.chat-is-fullscreen #noticeboard-view-panel {
     display: none; 
     flex: 1 !important;
@@ -624,10 +623,12 @@ body.chat-is-fullscreen #noticeboard-view-panel[style*="display: flex"] {
     display: flex !important;
 }
 
-/* Locks Chat stream on the left layout quadrant */
+/* 🟢 RIGHT SPACE GAP EMBED: Stretches chat box flush next to right panel scrollbar line */
 body.chat-is-fullscreen .chat-messages {
     flex: 1 !important;
-    height: calc(100% - 74px) !important; /* Safety line margin above typing box */
+    width: 100% !important;
+    height: calc(100% - 74px) !important; 
+    padding-bottom: 95px !important; 
 }
 
 body.chat-is-fullscreen .chat-split-body > div:first-child:not([style*="display: none"]) {
@@ -636,7 +637,7 @@ body.chat-is-fullscreen .chat-split-body > div:first-child:not([style*="display:
     flex: 1 !important;
 }
 
-/* 🟢 TYPING BAR ALIGNMENT: Sets input width strictly under the left chat lane */
+/* Positions console input panel safely locked to bottom edge */
 body.chat-is-fullscreen .chat-input-area {
     width: calc(100% - 380px) !important; 
     position: absolute;
@@ -645,12 +646,50 @@ body.chat-is-fullscreen .chat-input-area {
     z-index: 10;
 }
 
-/* Dedicated Helper Panel constraints */
 body.chat-is-fullscreen .chat-fs-help-panel {
     display: flex !important;
     width: 380px !important;
     height: 100% !important;
     flex-shrink: 0 !important;
+    position: relative; /* Setup anchors for footer corner graphic assets */
+}
+
+/* 🟢 LOWER CORNER WORKSPACE GRAPHIC LAYOUT BOX */
+.fs-footer-branded-adbox {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 150px;
+    background-image: url('header-bg2m.jpg');
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    border-top: 1px solid rgba(0, 173, 181, 0.3);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    gap: 8px;
+}
+.fs-footer-emoji-ribbon {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+.fs-footer-emoji-ribbon img {
+    height: 32px !important;
+    width: auto;
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+}
+
+/* flyer scroll updates */
+.chat-fs-help-panel .sub-panel-bottom {
+    margin-bottom: 160px !important; /* Protects helper text map loops from background bleed overlays */
 }
 
 .flyer-modal-overlay {
@@ -742,6 +781,9 @@ body.chat-is-fullscreen .chat-fs-help-panel {
         position: static !important;
         height: auto !important;
         width: 100% !important;
+    }
+    .fs-footer-branded-adbox {
+        display: none !important; /* Disables footer corner graphic parameters on phone viewports safely */
     }
 
     .main-content {
