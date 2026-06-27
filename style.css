@@ -427,6 +427,7 @@ body {
     flex-direction: column;
     gap: 15px;
     overflow-y: auto;
+    height: 100%; /* Dropped all the way to base edge */
 }
 
 .msg {
@@ -587,12 +588,33 @@ body {
 body.chat-is-fullscreen .main-content {
     display: none !important;
 }
+
+/* 🟢 DEDICATED FULL SCREEN ALIGNMENT RULES */
 body.chat-is-fullscreen .chat-sidebar {
     width: 100% !important;
     border-left: none;
+    display: grid !important;
+    grid-template-columns: 1fr 380px; /* Locks chat layout on left, help sidebar on right */
+    grid-template-rows: auto 1fr;
+}
+body.chat-is-fullscreen .chat-header {
+    grid-column: 1 / span 2; /* Header spans across both grid lanes */
+}
+body.chat-is-fullscreen .chat-split-body {
+    grid-column: 1; /* Message stream stays locked left */
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+body.chat-is-fullscreen .chat-input-area {
+    grid-column: 1; /* 🟢 TYPE INPUT BOX FLUSH FIX: Locks input directly under chat column only */
+    width: 100%;
 }
 body.chat-is-fullscreen .chat-fs-help-panel {
+    grid-column: 2; /* 🟢 SIDEBAR FLUSH DROP FIX: Help drops top-to-bottom on the right side */
+    grid-row: 2;
     display: flex !important;
+    height: 100%;
 }
 
 .flyer-modal-overlay {
@@ -660,6 +682,13 @@ body.chat-is-fullscreen .chat-fs-help-panel {
     body.chat-is-fullscreen .main-content {
         display: none !important;
     }
+    
+    /* Reset layout mechanics on narrow viewports to stack vertically instead of grid paths */
+    body.chat-is-fullscreen .chat-sidebar {
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
     .main-content {
         height: auto;
         overflow: visible;
@@ -708,7 +737,6 @@ body.chat-is-fullscreen .chat-fs-help-panel {
         flex-shrink: 0;
     }
     
-    /* 📱 MOBILE CHAT MODIFICATIONS: Hides desktop layout controls */
     .chat-sidebar {
         width: 100% !important;
         height: 600px;
@@ -716,12 +744,10 @@ body.chat-is-fullscreen .chat-fs-help-panel {
         border-top: 1px solid #2d2d2d;
     }
     
-    /* 🟢 CHAT MAXIMIZE RE-ALIGNMENT: Forcefully hides maximize option on phone screens */
     #fsToggleBtn {
         display: none !important; 
     }
     
-    /* 🟢 MOBILE NOTICEBOARD CONTROLS: Ensures the Noticeboard toggle button stays fully active */
     #toggle-notice-btn {
         display: inline-block !important;
     }
