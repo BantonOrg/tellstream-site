@@ -593,7 +593,7 @@ body.chat-is-fullscreen .main-content {
 }
 
 /* ==========================================================================
-   🟢 THE PERFECT 4-COLUMN FULLSCREEN ENGINE (NO LAYOUT OVERLAPS)
+   🧩 CLEAN 4-COLUMN HORIZONTAL GRID ENGINE
    ========================================================================== */
 body.chat-is-fullscreen .chat-sidebar {
     width: 100% !important;
@@ -612,7 +612,6 @@ body.chat-is-fullscreen .chat-split-body {
     overflow: hidden !important;
 }
 
-/* 🟢 THE 4-COLUMN BLUEPRINT: Forces every single view component to share equal horizontal scaling paths */
 body.chat-is-fullscreen #noticeboard-view-panel {
     display: none; 
     flex: 1 !important;
@@ -624,10 +623,11 @@ body.chat-is-fullscreen #noticeboard-view-panel[style*="display: flex"] {
     display: flex !important;
 }
 
-/* Locks Chat stream on the left layout quadrant */
 body.chat-is-fullscreen .chat-messages {
     flex: 1 !important;
-    height: calc(100% - 74px) !important; /* Safety line margin above typing box */
+    width: 100% !important;
+    height: calc(100% - 74px) !important; 
+    padding-bottom: 95px !important; 
 }
 
 body.chat-is-fullscreen .chat-split-body > div:first-child:not([style*="display: none"]) {
@@ -636,7 +636,6 @@ body.chat-is-fullscreen .chat-split-body > div:first-child:not([style*="display:
     flex: 1 !important;
 }
 
-/* 🟢 TYPING BAR ALIGNMENT: Sets input width strictly under the left chat lane */
 body.chat-is-fullscreen .chat-input-area {
     width: calc(100% - 380px) !important; 
     position: absolute;
@@ -645,65 +644,11 @@ body.chat-is-fullscreen .chat-input-area {
     z-index: 10;
 }
 
-/* Dedicated Helper Panel constraints */
 body.chat-is-fullscreen .chat-fs-help-panel {
     display: flex !important;
     width: 380px !important;
     height: 100% !important;
     flex-shrink: 0 !important;
-}
-
-.flyer-modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.9);
-    backdrop-filter: blur(15px);
-    z-index: 9999;
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: opacity 0.25s ease;
-    gap: 15px;
-}
-.flyer-modal-overlay.active {
-    display: flex;
-    opacity: 1;
-}
-.modal-content-card {
-    position: relative;
-    max-width: 85%;
-    max-height: 80vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-.modal-content-card img {
-    max-width: 100%;
-    max-height: 80vh;
-    border-radius: 8px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    object-fit: contain;
-}
-.modal-close-btn {
-    background: #00adb5;
-    color: white;
-    border: none;
-    padding: 8px 24px;
-    border-radius: 6px;
-    font-weight: bold;
-    cursor: pointer;
-    font-size: 0.95rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    transition: background 0.2s;
-}
-.modal-close-btn:hover {
-    background: #008c94;
 }
 
 /* ==========================================================================
@@ -763,7 +708,6 @@ body.chat-is-fullscreen .chat-fs-help-panel {
         padding: 20px !important;
     }
     
-    /* SEAMLESS IDENTICAL SCALING: Stretches all three elements 100% edge-to-edge */
     .cell-left {
         background-image: url('header-bg1m.jpg') !important;
         background-position: center center !important;
@@ -807,7 +751,6 @@ body.chat-is-fullscreen .chat-fs-help-panel {
         display: inline-block !important;
     }
     
-    /* 📋 MOBILE NOTICEBOARD STACKING */
     #noticeboard-view-panel {
         flex-direction: column !important; 
         overflow-y: auto !important;
