@@ -9,7 +9,6 @@ const sendBtn = document.getElementById('sendBtn');
 const audioPlayer = document.getElementById('radioPlayer');
 const flyerContainer = document.getElementById('flyerContainer');
 const quickEmojiList = document.getElementById('quickEmojiList');
-const quickEmojiListFS = document.getElementById('quickEmojiListFS');
 const fbFeedContainer = document.getElementById('fbFeedContainer');
 const helpCardsContainer = document.getElementById('helpCardsContainer');
 const helpCardsContainerFS = document.getElementById('helpCardsContainerFS');
@@ -138,8 +137,12 @@ function initQuickEmojiCloud() {
         <div class="emoji-grid-item" onclick="insertEmojiCode('${key}')">:${key}:</div>
     `).join('');
     
-    quickEmojiList.innerHTML = html;
-    quickEmojiListFS.innerHTML = html;
+    // Dynamic fresh lookups ensure we always write directly to live screen elements
+    const liveNormalEmojiList = document.getElementById('quickEmojiList');
+    const liveFullscreenEmojiList = document.getElementById('quickEmojiListFS');
+    
+    if (liveNormalEmojiList) liveNormalEmojiList.innerHTML = html;
+    if (liveFullscreenEmojiList) liveFullscreenEmojiList.innerHTML = html;
 }
 
 function insertEmojiCode(code) {
@@ -168,7 +171,6 @@ function toggleNoticeBoardView() {
         toggleBtn.innerText = "❌ Exit Noticeboard";
         isNoticeBoardActive = true;
         
-        // 🎨 Swap out the Emoji panel content with the glowing brand logo banner asset
         if (fsEmojiContainer) {
             fsEmojiContainer.innerHTML = `
                 <div style="width: 100%; height: 140px; background: url('header-bg2.jpg') no-repeat center center; background-size: cover; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); box-shadow: inset 0 0 20px rgba(0,0,0,0.6); margin-top: 10px;"></div>
@@ -211,9 +213,8 @@ function toggleNoticeBoardView() {
         toggleBtn.innerText = "📋 Noticeboard";
         isNoticeBoardActive = false;
         
-        // 💡 Restore original Emoji block back when leaving noticeboard state
         if (fsEmojiContainer) {
-            fsEmojiContainer.removeAttribute('style'); // Clear out our temp styling modifications
+            fsEmojiContainer.removeAttribute('style'); 
             fsEmojiContainer.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                     <span style="font-size:0.85rem; color:#00adb5; font-weight:bold;">✨ Quick Emojis</span>
