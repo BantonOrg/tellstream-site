@@ -302,7 +302,7 @@ body {
     background: rgba(0, 173, 181, 0.15);
     border: 1px solid rgba(0, 173, 181, 0.3);
     color: #00adb5;
-    display: inline-block; /* Keeping layout consistent */
+    display: inline-block; 
 }
 
 .chat-split-body {
@@ -716,14 +716,19 @@ body.chat-is-fullscreen .chat-fs-help-panel {
         border-top: 1px solid #2d2d2d;
     }
     
-    /* Replaced Fullscreen Button purpose with Noticeboard Toggle on Mobile */
-    .fullscreen-btn {
-        display: none !important; /* Disables full-size switch on mobile viewports */
+    /* 🟢 CHAT MAXIMIZE RE-ALIGNMENT: Forcefully hides maximize option on phone screens */
+    #fsToggleBtn {
+        display: none !important; 
+    }
+    
+    /* 🟢 MOBILE NOTICEBOARD CONTROLS: Ensures the Noticeboard toggle button stays fully active */
+    #toggle-notice-btn {
+        display: inline-block !important;
     }
     
     /* 📋 MOBILE NOTICEBOARD STACKING */
     #noticeboard-view-panel {
-        flex-direction: column !important; /* Columns break from row setup and drop vertically */
+        flex-direction: column !important; 
         overflow-y: auto !important;
         overflow-x: hidden !important;
         height: auto !important;
