@@ -156,6 +156,9 @@ function toggleNoticeBoardView() {
     
     const fsHelpTitle = document.getElementById('fsHelpPanelTitle');
     const fsHelpContainer = document.getElementById('helpCardsContainerFS');
+    
+    // Target the emoji section wrapper container right below the help text cards
+    const fsEmojiContainer = fsHelpContainer ? fsHelpContainer.nextElementSibling : null;
 
     if (!isNoticeBoardActive) {
         streamChat.style.display = 'none';
@@ -165,6 +168,9 @@ function toggleNoticeBoardView() {
         mainTitle.innerText = "📋 Noticeboard";
         toggleBtn.innerText = "❌ Exit Noticeboard";
         isNoticeBoardActive = true;
+        
+        // Hide the quick emoji cloud row completely on the noticeboard layout view
+        if (fsEmojiContainer) fsEmojiContainer.style.display = 'none';
         
         if (fsHelpTitle) fsHelpTitle.innerText = "📢 Noticeboard Help";
         if (fsHelpContainer) {
@@ -197,6 +203,9 @@ function toggleNoticeBoardView() {
         mainTitle.innerText = "🔊 Listener Lounge";
         toggleBtn.innerText = "📋 Noticeboard";
         isNoticeBoardActive = false;
+        
+        // Restore the quick emoji cloud layout row back to full display for standard chat entry mode
+        if (fsEmojiContainer) fsEmojiContainer.style.display = 'flex';
         
         if (fsHelpTitle) fsHelpTitle.innerText = "💡 Site Help and Emoji codes";
         renderHelpContent(); 
