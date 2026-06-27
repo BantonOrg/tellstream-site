@@ -157,7 +157,6 @@ function toggleNoticeBoardView() {
     const fsHelpTitle = document.getElementById('fsHelpPanelTitle');
     const fsHelpContainer = document.getElementById('helpCardsContainerFS');
     
-    // Target the emoji section wrapper container right below the help text cards
     const fsEmojiContainer = fsHelpContainer ? fsHelpContainer.nextElementSibling : null;
 
     if (!isNoticeBoardActive) {
@@ -169,8 +168,16 @@ function toggleNoticeBoardView() {
         toggleBtn.innerText = "❌ Exit Noticeboard";
         isNoticeBoardActive = true;
         
-        // Hide the quick emoji cloud row completely on the noticeboard layout view
-        if (fsEmojiContainer) fsEmojiContainer.style.display = 'none';
+        // 🎨 Swap out the Emoji panel content with the glowing brand logo banner asset
+        if (fsEmojiContainer) {
+            fsEmojiContainer.innerHTML = `
+                <div style="width: 100%; height: 140px; background: url('header-bg2.jpg') no-repeat center center; background-size: cover; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); box-shadow: inset 0 0 20px rgba(0,0,0,0.6); margin-top: 10px;"></div>
+            `;
+            fsEmojiContainer.style.display = 'block';
+            fsEmojiContainer.style.background = 'transparent';
+            fsEmojiContainer.style.border = 'none';
+            fsEmojiContainer.style.padding = '0';
+        }
         
         if (fsHelpTitle) fsHelpTitle.innerText = "📢 Noticeboard Help";
         if (fsHelpContainer) {
@@ -204,8 +211,18 @@ function toggleNoticeBoardView() {
         toggleBtn.innerText = "📋 Noticeboard";
         isNoticeBoardActive = false;
         
-        // Restore the quick emoji cloud layout row back to full display for standard chat entry mode
-        if (fsEmojiContainer) fsEmojiContainer.style.display = 'flex';
+        // 💡 Restore original Emoji block back when leaving noticeboard state
+        if (fsEmojiContainer) {
+            fsEmojiContainer.removeAttribute('style'); // Clear out our temp styling modifications
+            fsEmojiContainer.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <span style="font-size:0.85rem; color:#00adb5; font-weight:bold;">✨ Quick Emojis</span>
+                    <a href="https://tellstream-emojis.pages.dev/" target="_blank" class="emoji-master-link">See All Codes</a>
+                </div>
+                <div class="emoji-grid-list" id="quickEmojiListFS"></div>
+            `;
+            initQuickEmojiCloud();
+        }
         
         if (fsHelpTitle) fsHelpTitle.innerText = "💡 Site Help and Emoji codes";
         renderHelpContent(); 
@@ -415,91 +432,4 @@ function appendMessage(data) {
     messageContent = messageContent.replace(codeRegex, (match, code) => {
         const lowerCode = code.toLowerCase();
         if (window.emojiMapping && window.emojiMapping[lowerCode]) {
-            return `<img src="${imgBaseUrl}${window.emojiMapping[lowerCode]}" alt="${code}" style="max-height: 48px; vertical-align: middle; margin: 2px; border-radius: 4px;">`;
-        }
-        return match;
-    });
-
-    const profile = profilesCache[data.username];
-    let nameClass = "user-unregistered";
-    let hoverAttribute = "";
-
-    if (profile) {
-        if (profile.power_level >= 1) {
-            nameClass = "user-admin"; 
-        } else {
-            nameClass = "user-registered"; 
-        }
-        if (profile.hover_title) {
-            hoverAttribute = `title="${escapeHTML(profile.hover_title)}"`;
-        }
-    }
-
-    msgDiv.innerHTML = `<div class="user ${nameClass}" ${hoverAttribute}>${escapeHTML(data.username)}</div><div>${messageContent}</div>`;
-    chatBox.appendChild(msgDiv);
-    if (!isNoticeBoardActive) chatBox.scrollTop = chatBox.scrollHeight;
-    
-    while (chatBox.children.length > 50) {
-        chatBox.removeChild(chatBox.firstChild);
-    }
-}
-
-function escapeHTML(str) {
-    return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
-}
-
-async function loadMessages() {
-    const { data } = await supabase_db.from('messages').select('*').order('id', { ascending: true }).limit(40);
-    if (data) data.forEach(appendMessage);
-}
-
-supabase_db.channel('public:messages')
-    .on('postgres_changes', { event: 'INSERT', pattern: 'public', table: 'messages' }, payload => {
-        appendMessage(payload.new);
-    }).subscribe();
-
-supabase_db.channel('public:secured_profiles')
-    .on('postgres_changes', { event: '*', pattern: 'public', table: 'secured_profiles' }, async () => {
-        await syncProfilesMap();
-    }).subscribe();
-
-supabase_db.channel('public:notice_board')
-    .on('postgres_changes', { event: 'INSERT', pattern: 'public', table: 'notice_board' }, payload => {
-        if (isNoticeBoardActive) fetchNoticeBoardRecords();
-    }).subscribe();
-
-async function sendMessage() {
-    const user = usernameInput.value.trim() || 'Listener';
-    const text = messageInput.value.trim();
-    if (!text) return;
-
-    if (profilesCache[user]) {
-        const authorizedKey = localStorage.getItem('tellstream_key_' + user);
-        if (profilesCache[user].passkey !== authorizedKey) {
-            alert("This handle name has been secured! Please open the identity panel lock box to authorize this machine device layout.");
-            toggleSecurityDrawer();
-            return;
-        }
-    }
-
-    messageInput.value = '';
-    await supabase_db.from('messages').insert([{ username: user, message: text }]);
-}
-
-sendBtn.addEventListener('click', sendMessage);
-
-messageInput.addEventListener('keypress', (e) => { 
-    if (e.key === 'Enter' && !e.shiftKey) { 
-        e.preventDefault(); 
-        sendMessage(); 
-    } 
-});
-
-(async function initSystem() {
-    renderFacebookFeed();
-    renderActiveFlyers();
-    renderHelpContent();
-    setTimeout(initQuickEmojiCloud, 500);
-    await syncProfilesMap();
-    loadMessages();
-})();
+            return `<img src="${imgBaseUrl}${window.emojiMapping[lowerCode]}" alt="${code}" style="max-height: 48px; vertical-align: middle; margin:
