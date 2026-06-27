@@ -302,7 +302,10 @@ body {
     background: rgba(0, 173, 181, 0.15);
     border: 1px solid rgba(0, 173, 181, 0.3);
     color: #00adb5;
-    display: inline-block; /* Keeping layout consistent */
+    display: none;
+}
+body.chat-is-fullscreen #toggle-notice-btn {
+    display: inline-block;
 }
 
 .chat-split-body {
@@ -707,33 +710,12 @@ body.chat-is-fullscreen .chat-fs-help-panel {
         height: 500px;
         flex-shrink: 0;
     }
-    
-    /* 📱 MOBILE CHAT MODIFICATIONS: Hides desktop layout controls */
     .chat-sidebar {
         width: 100% !important;
         height: 600px;
         border-left: none;
         border-top: 1px solid #2d2d2d;
     }
-    
-    /* Replaced Fullscreen Button purpose with Noticeboard Toggle on Mobile */
-    .fullscreen-btn {
-        display: none !important; /* Disables full-size switch on mobile viewports */
-    }
-    
-    /* 📋 MOBILE NOTICEBOARD STACKING */
-    #noticeboard-view-panel {
-        flex-direction: column !important; /* Columns break from row setup and drop vertically */
-        overflow-y: auto !important;
-        overflow-x: hidden !important;
-        height: auto !important;
-        max-height: 500px;
-    }
-    .notice-column-box {
-        width: 100% !important;
-        min-width: 100% !important;
-    }
-
     body.chat-is-fullscreen .chat-fs-help-panel {
         display: none !important;
     }
