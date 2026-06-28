@@ -6,26 +6,27 @@ const gameTable = document.getElementById('game-table');
 const canvasW = 597;
 const canvasH = 1171;
 
-// The 7 absolute coordinate definitions for the Top Half
+/* The absolute coordinate definitions.
+   hideFor arrays now accurately dictate which values require a pip to be obscured.
+*/
 const topPipMap = [
-    { name: 'top-left',     x: 126, y: 126, hideFor: [0, 1, 4, 5, 6] },
-    { name: 'top-right',    x: 469, y: 126, hideFor: [0, 1, 2, 3, 4, 5, 6] },
-    { name: 'mid-left',     x: 126, y: 291, hideFor: [0, 1, 2, 3, 6] },
-    { name: 'mid-center',   x: 298, y: 291, hideFor: [0, 4] },
-    { name: 'mid-right',    x: 469, y: 291, hideFor: [0, 1, 2, 3, 6] },
-    { name: 'bottom-left',  x: 126, y: 453, hideFor: [0, 1, 2, 3, 4, 5, 6] },
-    { name: 'bottom-right', x: 469, y: 453, hideFor: [0, 1, 4, 5, 6] }
+    { name: 'top-left',     x: 126, y: 126, hideFor: [0, 1] },
+    { name: 'top-right',    x: 469, y: 126, hideFor: [0, 1, 2, 3] },
+    { name: 'mid-left',     x: 126, y: 291, hideFor: [0, 1, 2, 3, 4, 5] },
+    { name: 'mid-center',   x: 298, y: 291, hideFor: [0, 2, 4, 6] },
+    { name: 'mid-right',    x: 469, y: 291, hideFor: [0, 1, 2, 3, 4, 5] },
+    { name: 'bottom-left',  x: 126, y: 453, hideFor: [0, 1, 2, 3] },
+    { name: 'bottom-right', x: 469, y: 453, hideFor: [0, 1] }
 ];
 
-// The 7 absolute coordinate definitions for the Bottom Half
 const bottomPipMap = [
-    { name: 'top-left',     x: 126, y: 714, hideFor: [0, 1, 4, 5, 6] },
-    { name: 'top-right',    x: 469, y: 714, hideFor: [0, 1, 2, 3, 4, 5, 6] },
-    { name: 'mid-left',     x: 126, y: 881, hideFor: [0, 1, 2, 3, 6] },
-    { name: 'mid-center',   x: 298, y: 881, hideFor: [0, 4] },
-    { name: 'mid-right',    x: 469, y: 881, hideFor: [0, 1, 2, 3, 6] },
-    { name: 'bottom-left',  x: 126, y: 1042, hideFor: [0, 1, 2, 3, 4, 5, 6] },
-    { name: 'bottom-right', x: 469, y: 1042, hideFor: [0, 1, 4, 5, 6] }
+    { name: 'top-left',     x: 126, y: 714, hideFor: [0, 1] },
+    { name: 'top-right',    x: 469, y: 714, hideFor: [0, 1, 2, 3] },
+    { name: 'mid-left',     x: 126, y: 881, hideFor: [0, 1, 2, 3, 4, 5] },
+    { name: 'mid-center',   x: 298, y: 881, hideFor: [0, 2, 4, 6] },
+    { name: 'mid-right',    x: 469, y: 881, hideFor: [0, 1, 2, 3, 4, 5] },
+    { name: 'bottom-left',  x: 126, y: 1042, hideFor: [0, 1, 2, 3] },
+    { name: 'bottom-right', x: 469, y: 1042, hideFor: [0, 1] }
 ];
 
 function buildMasterDeck() {
