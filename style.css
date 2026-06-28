@@ -506,6 +506,9 @@ body {
 }
 .drawer-action-btn:hover { background: #008c94; }
 
+/* ==========================================================================
+   🎮 CONSOLE INPUT HUB (SWAPPED LAYER ORDER FOR TEXTAREA FLUSH-LEFT POSITIONING)
+   ========================================================================== */
 .chat-input-area {
     padding: 12px;
     background: rgba(30, 30, 30, 0.9);
@@ -518,12 +521,49 @@ body {
     flex-shrink: 0;
 }
 
+/* Textarea now expands first on the left side */
+.chat-input-area textarea#messageInput {
+    flex: 1;
+    order: 1; /* Left position sorting priority */
+    background: #2d2d2d;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 8px 12px;
+    border-radius: 6px;
+    color: #fff;
+    outline: none;
+    resize: none; 
+    height: calc(30px + 30px + 6px); 
+    font-size: 0.85rem;
+    line-height: 1.4;
+    box-sizing: border-box;
+}
+.chat-input-area textarea#messageInput:focus {
+    border-color: rgba(0, 173, 181, 0.4);
+}
+
+/* Lock toggle sits perfectly in between components */
+.lock-toggle-btn {
+    order: 2; /* Centered layout placement */
+    background: transparent;
+    border: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 0;
+    margin: 0 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* Control stack containing username and send button maps cleanly to the far right side */
 .left-control-stack {
     display: flex;
     flex-direction: column;
     gap: 6px; 
     width: 85px;
     flex-shrink: 0;
+    order: 3; /* Right alignment stack routing */
 }
 
 .left-control-stack input#usernameInput {
@@ -555,37 +595,6 @@ body {
 }
 .left-control-stack button.send-main-btn:hover {
     background: #008c94;
-}
-
-.lock-toggle-btn {
-    background: transparent;
-    border: none;
-    font-size: 1.1rem;
-    cursor: pointer;
-    padding: 0;
-    margin: 0 2px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.chat-input-area textarea#messageInput {
-    flex: 1;
-    background: #2d2d2d;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    padding: 8px 12px;
-    border-radius: 6px;
-    color: #fff;
-    outline: none;
-    resize: none; 
-    height: calc(30px + 30px + 6px); 
-    font-size: 0.85rem;
-    line-height: 1.4;
-    box-sizing: border-box;
-}
-.chat-input-area textarea#messageInput:focus {
-    border-color: rgba(0, 173, 181, 0.4);
 }
 
 body.chat-is-fullscreen .main-content {
