@@ -29,7 +29,7 @@ html, body {
 }
 
 /* ==========================================================================
-   2. GAME CANVAS
+   2. GAME SURFACE
    ========================================================================== */
 #game-table {
     background: url('assets/table_bg.jpg') center center no-repeat;
@@ -41,45 +41,63 @@ html, body {
 }
 
 /* ==========================================================================
-   3. THE 28-TILE TESTING GRID
+   3. THE 28-TILE TESTING SURFACES
    ========================================================================== */
 .test-grid-container {
-    width: 80%;
-    height: 70%;
+    width: 85%;
+    height: 75%;
     display: grid;
-    grid-template-columns: repeat(7, 1fr); /* 7 columns */
-    grid-template-rows: repeat(4, 1fr);    /* 4 rows */
-    gap: 15px;
+    grid-template-columns: repeat(7, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    gap: 12px;
     justify-items: center;
     align-items: center;
 }
 
-/* Scaled down container so all 28 pieces line up nicely */
+/* Master Tile Wrapper */
 .domino-item {
-    width: 45px;
-    height: 90px;
+    width: 50px;
+    height: 100px;
+    background-image: url('assets/dom_front.gif');
     background-size: 100% 100%;
-    border-radius: 4px;
+    border-radius: 6px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
     position: relative;
-    overflow: hidden;
+    display: flex;
+    flex-direction: column; /* Splits tile vertically into top and bottom halves */
 }
 
-.pip-mask {
-    position: absolute;
-    left: 0;
+/* Each half becomes an independent 3x3 layout alignment engine */
+.tile-half {
     width: 100%;
     height: 50%;
-    background-size: 700% 100%;
-    background-repeat: no-repeat;
-    pointer-events: none;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    padding: 4%; /* Fine padding adjustment to center masks cleanly over the asset's inner margin */
 }
 
-.pip-mask.top-half { top: 0; }
-.pip-mask.bottom-half { bottom: 0; }
+/* The individual mask placeholder cell */
+.grid-cell {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* The actual _DOM_PIPS patch file placement */
+.pip-mask-patch {
+    width: 82%;  /* Scaled to cover the black pip area cleanly without overflowing margins */
+    height: 82%;
+    background-image: url('assets/_DOM_PIPS.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
 
 /* ==========================================================================
-   4. UI ELEMENTS
+   4. LOADER UI
    ========================================================================== */
 #loading-screen {
     background-color: #000;
