@@ -1,837 +1,555 @@
-/* ==========================================================================
-    Reset & Core Base Engine Rules
-   ========================================================================== */
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    font-family: 'Segoe UI', sans-serif;
-}
+const SUPABASE_URL = "https://vegwferwmyuunwvfqpsf.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZ3dmZXJ3bXl1dW53dmZxcHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODU5NDQsImV4cCI6MjA5Nzk2MTk0NH0.7F3HUEY59BGE5phlD9AukhZzRa3Ied_ZT43j8YZeIy8";
+const supabase_db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-body {
-    background: url('/src/assets/sitebg1.jpg') no-repeat center center fixed;
-    background-size: cover;
-    color: #fff;
-    display: flex;
-    height: 100vh;
-    overflow: hidden;
-    transition: all 0.3s ease;
-}
+const chatBox = document.getElementById('chatBox');
+const usernameInput = document.getElementById('usernameInput');
+const messageInput = document.getElementById('messageInput');
+const sendBtn = document.getElementById('sendBtn');
+const audioPlayer = document.getElementById('radioPlayer');
+const flyerContainer = document.getElementById('flyerContainer');
+const quickEmojiList = document.getElementById('quickEmojiList');
+const quickEmojiListFS = document.getElementById('quickEmojiListFS');
+const fbFeedContainer = document.getElementById('fbFeedContainer');
+const helpCardsContainer = document.getElementById('helpCardsContainer');
+const helpCardsContainerFS = document.getElementById('helpCardsContainerFS');
+const fsToggleBtn = document.getElementById('fsToggleBtn');
+const flyerModal = document.getElementById('flyerModal');
+const modalTargetImg = document.getElementById('modalTargetImg');
 
-.main-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    padding: 20px;
-    gap: 20px;
-    overflow: hidden;
-    transition: all 0.3s ease;
-}
+const securityDrawer = document.getElementById('securityDrawer');
+const drawerTitle = document.getElementById('drawerTitle');
+const regNameInput = document.getElementById('regNameInput');
+const regPasskeyInput = document.getElementById('regPasskeyInput');
+const regReminderInput = document.getElementById('regReminderInput');
+const regEmailInput = document.getElementById('regEmailInput');
+const drawerSubmitBtn = document.getElementById('drawerSubmitBtn');
+const reminderHintDisplay = document.getElementById('reminderHintDisplay');
+const lockStatusBtn = document.getElementById('lockStatusBtn');
 
-/* ==========================================================================
-   🧩 THE 3-CELL HEADER SYSTEM (DESKTOP MODE)
-   ========================================================================== */
-.header-container {
-    display: flex;
-    flex-direction: row;
-    width: 100%;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    overflow: hidden;
-    flex-shrink: 0;
-}
+const imgBaseUrl = "https://tellstream-emojis.pages.dev/";
 
-.header-cell {
-    flex: 1;
-    height: 140px !important;
-    background-position: center center;
-    background-repeat: no-repeat;
-    background-size: cover;
-    display: flex;
-    align-items: center;
-    box-sizing: border-box;
-}
+let profilesCache = {};
+let isNoticeBoardActive = false;
 
-.cell-left {
-    background-image: url('header-bg1.jpg');
-    justify-content: flex-start;
-    padding-left: 40px;
-}
+const facebookPosts = [
+    { id: 1, date: "Just now", text: "Big John is locked and loaded live in the studio! Lock into tellstream.banton.org right now and fire up the lounge chat! 🎚️🔥", link: "https://www.facebook.com/tellstream.dem" },
+    { id: 2, date: "Yesterday", text: "Big respect to all the listeners locking in from around the globe. Drop your shoutouts and tell-a-wheel selectors directly inside the main chat line! 🔊🎧", link: "https://www.facebook.com/tellstream.dem" },
+    { id: 3, date: "2 days ago", text: "Weekend scheduling updates coming soon. Keep your locked eyes locked onto the central flyer board for upcoming live dance clashes.", link: "https://www.facebook.com/tellstream.dem" }
+];
 
-.cell-middle {
-    background-image: url('header-bg2.jpg');
-}
+const helpInstructions = [
+    { title: "Setting Nickname", text: "Fill in the Nickname block before typing to claim your handle in the Lounge panel." },
+    { title: "Sending Text Lines", text: "Type your query inside the input field box and tap Send or hit your keyboard Enter button." },
+    { title: "Firing Emojis & Sounds", text: "Tap any active shorthand key code block inside the selection layout panel below to append it to your message. Click [See All Codes] for more." }
+];
 
-.cell-right {
-    background-image: url('header-bg3.jpg');
-    justify-content: flex-end;
-    padding-right: 40px;
-}
+const noticeboardHelpInstructions = [
+    { title: "Noticeboard Rules", text: "Stay respectful. Unauthorized or hostile comments will be flagged and removed instantly." },
+    { title: "Authority Levels", text: "The Boss panel is restricted to Station Admins. Selectors manage the central schedule log." },
+    { title: "Adding Updates", text: "Once verified via your secure local passkey profile drawer, choose a column target form to submit notifications directly." }
+];
 
-.header-cell .tagline-wrapper {
-    display: flex;
-    flex-direction: column;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
-    white-space: nowrap;
-}
-
-.header-cell h1 {
-    color: #00adb5;
-    font-size: 1.8rem;
-    text-transform: uppercase;
-    font-weight: 800;
-    letter-spacing: 1px;
-    line-height: 1.1;
-    -webkit-text-stroke: 1.5px #000000;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9); 
-}
-
-.header-cell p {
-    color: #eee;
-    font-size: 0.95rem;
-    font-weight: bold;
-    letter-spacing: 2px;
-    margin-top: 2px;
-    -webkit-text-stroke: 1px #000000;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);
-}
-
-/* ==========================================================================
-   📊 MAIN LAYOUT WORKSPACE COLUMNS
-   ========================================================================== */
-.columns-container {
-    flex: 1;
-    display: flex;
-    gap: 20px;
-    overflow: hidden;
-}
-
-.col-3 {
-    flex: 1;
-    background: rgba(25, 25, 25, 0.88);
-    backdrop-filter: blur(8px);
-    border-radius: 12px;
-    padding: 20px;
-    overflow-y: auto;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    position: relative;
-}
-
-.col-title {
-    font-size: 1.1rem;
-    color: #00adb5;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding-bottom: 8px;
-    flex-shrink: 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-weight: 600;
-}
-
-.fb-master-link, .emoji-master-link {
-    font-size: 0.75rem;
-    background: #1877f2;
-    color: white;
-    text-decoration: none;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-weight: bold;
-}
-.fb-master-link:hover {
-    background: #166fe5;
-}
-
-.emoji-master-link {
-    background: #00adb5;
-}
-.emoji-master-link:hover {
-    background: #008c94;
-}
-
-.inner-feed-wrapper {
-    flex: 1;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.fb-post-card {
-    background: rgba(45, 45, 45, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    padding: 12px;
-    cursor: pointer;
-    transition: transform 0.2s, background 0.2s;
-}
-.fb-post-card:hover {
-    transform: scale(1.01);
-    background: rgba(24, 119, 242, 0.1);
-    border-color: rgba(24, 119, 242, 0.4);
-}
-.fb-post-meta {
-    font-size: 0.75rem;
-    color: #00adb5;
-    font-weight: bold;
-    margin-bottom: 6px;
-}
-.fb-post-text {
-    font-size: 0.85rem;
-    color: #eee;
-    line-height: 1.4;
-}
-
-.flyer-item {
-    background: rgba(45, 45, 45, 0.5);
-    border-radius: 8px;
-    padding: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    text-align: center;
-    cursor: pointer;
-    transition: transform 0.2s, background 0.2s;
-}
-.flyer-item:hover {
-    transform: scale(1.02);
-    background: rgba(60, 60, 60, 0.7);
-}
-.flyer-item img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 6px;
-}
-.flyer-item h4 {
-    margin-top: 8px; 
-    font-size: 0.95rem; 
-    color: #ffffff;
-}
-
-.sub-panel-top, .sub-panel-bottom {
-    flex: 1;
-    overflow-y: auto;
-    background: rgba(20, 20, 20, 0.4);
-    padding: 14px;
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.03);
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-.help-item-card {
-    background: rgba(255, 255, 255, 0.03);
-    padding: 8px 12px;
-    border-radius: 6px;
-    border-left: 3px solid #00adb5;
-}
-.help-item-card h5 {
-    font-size: 0.85rem;
-    color: #ffffff;
-    margin-bottom: 3px;
-}
-.help-item-card p {
-    font-size: 0.8rem;
-    color: #ccc;
-    line-height: 1.3;
-}
-
-.emoji-grid-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: center;
-}
-.emoji-grid-item {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 6px 10px;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    cursor: pointer;
-    color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.02);
-}
-.emoji-grid-item:hover {
-    background: rgba(0, 173, 181, 0.2);
-    border-color: #00adb5;
-}
-
-/* ==========================================================================
-   💬 LOUNGE CHAT INTERACTION SIDEBAR WORKSPACE
-   ========================================================================== */
-.chat-sidebar {
-    width: 380px;
-    background: rgba(20, 20, 20, 0.96);
-    backdrop-filter: blur(10px);
-    border-left: 1px solid rgba(45, 45, 45, 0.5);
-    display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
-    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.chat-header {
-    padding: 20px;
-    background: rgba(30, 30, 30, 0.8);
-    border-bottom: 1px solid rgba(45, 45, 45, 0.5);
-    font-weight: bold;
-    font-size: 1.2rem;
-    color: #00adb5;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-shrink: 0;
-}
-
-.nav-controls-row {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-}
-
-.fullscreen-btn {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-    border: none;
-    padding: 6px 12px;
-    font-size: 0.8rem;
-    border-radius: 4px;
-    cursor: pointer;
-}
-.fullscreen-btn:hover {
-    background: #00adb5;
-}
-
-#toggle-notice-btn {
-    background: rgba(0, 173, 181, 0.15);
-    border: 1px solid rgba(0, 173, 181, 0.3);
-    color: #00adb5;
-    display: inline-block; 
-}
-
-.chat-split-body {
-    flex: 1;
-    display: flex;
-    overflow: hidden;
-    width: 100%;
-}
-
-.chat-messages {
-    flex: 1;
-    padding: 20px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-#noticeboard-view-panel {
-    display: none;
-    flex-direction: row; 
-    flex: 1;
-    overflow-x: auto; 
-    overflow-y: hidden;
-    padding: 15px;
-    gap: 15px;
-    background: #111;
-    animation: fadeInNotice 0.25s ease-out forwards;
-}
-.notice-column-box {
-    flex: 1;
-    min-width: 250px; 
-    background: rgba(30, 30, 30, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-@keyframes fadeInNotice {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-.notice-box-boss { border-top: 3px solid #ff3333; }
-.notice-box-selectors { border-top: 3px solid #ffdd1a; }
-.notice-box-fambily { border-top: 3px solid #22e532; }
-
-.notice-column-header {
-    font-size: 0.85rem;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    padding-bottom: 4px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-.notice-cards-feed {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    height: 100%;
-    overflow-y: auto;
-}
-.notice-card-item {
-    background: rgba(255, 255, 255, 0.02);
-    padding: 8px;
-    border-radius: 4px;
-    font-size: 0.85rem;
-    border-left: 2px solid rgba(0, 173, 181, 0.4);
-}
-.notice-input-form-block {
-    display: none;
-    margin-top: auto;
-    padding-top: 4px;
-}
-.notice-row-input {
-    display: flex;
-    gap: 6px;
-}
-.notice-row-input input {
-    flex: 1;
-    background: #202020;
-    border: 1px solid #444;
-    padding: 6px 10px;
-    color: #fff;
-    font-size: 0.8rem;
-    border-radius: 4px;
-    outline: none;
-}
-.notice-row-input input:focus { border-color: #00adb5; }
-.notice-inline-btn {
-    background: #00adb5;
-    border: none;
-    color: #fff;
-    font-weight: bold;
-    padding: 0 12px;
-    font-size: 0.75rem;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-#notice-footer-warning {
-    display: none;
-    background: #ff3333;
-    color: #000;
-    font-weight: 900;
-    font-size: 0.8rem;
-    text-align: center;
-    padding: 8px;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    border-radius: 4px;
-    margin-top: auto;
-}
-
-.chat-fs-help-panel {
-    width: 380px;
-    border-left: 1px solid rgba(45, 45, 45, 0.5);
-    background: rgba(15, 15, 15, 0.6);
-    padding: 20px;
-    display: none;
-    flex-direction: column;
-    gap: 15px;
-    overflow-y: auto;
-    flex-shrink: 0;
-}
-
-.msg {
-    background: rgba(36, 36, 36, 0.85);
-    padding: 10px 14px;
-    border-radius: 8px;
-    line-height: 1.4;
-    max-width: 90%;
-    border: 1px solid rgba(255, 255, 255, 0.03);
-}
-
-.msg .user {
-    font-weight: bold;
-    margin-bottom: 3px;
-    font-size: 0.9rem;
-    display: inline-block;
-    position: relative;
-}
-.user-unregistered { color: #22e532; } 
-.user-registered { color: #ffdd1a; cursor: help; } 
-.user-admin { color: #ff3333; cursor: help; } 
-
-.msg .user[title] {
-    text-decoration: none;
-}
-
-.security-drawer {
-    background: rgba(28, 28, 28, 0.98);
-    border-bottom: 1px solid rgba(0, 173, 181, 0.3);
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease-out;
-    padding: 0 15px;
-}
-.security-drawer.open {
-    max-height: 230px;
-    padding: 15px;
-}
-.security-drawer h4 {
-    font-size: 0.85rem;
-    color: #00adb5;
-    margin-bottom: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-.form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-bottom: 10px;
-}
-.form-grid input {
-    background: #252525;
-    border: 1px solid rgba(255,255,255,0.08);
-    padding: 8px;
-    border-radius: 4px;
-    color: #fff;
-    font-size: 0.8rem;
-    outline: none;
-}
-.form-grid input:focus {
-    border-color: #00adb5;
-}
-.drawer-action-btn {
-    background: #00adb5;
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    font-weight: bold;
-    cursor: pointer;
-    width: 100%;
-}
-.drawer-action-btn:hover { background: #008c94; }
-
-/* ==========================================================================
-   🎮 CONSOLE INPUT HUB (SWAPPED LAYER ORDER FOR TEXTAREA FLUSH-LEFT POSITIONING)
-   ========================================================================== */
-.chat-input-area {
-    padding: 12px;
-    background: rgba(30, 30, 30, 0.9);
-    border-top: 1px solid rgba(45, 45, 45, 0.5);
-    display: flex; 
-    gap: 8px;
-    align-items: center;
-    width: 100%;
-    box-sizing: border-box;
-    flex-shrink: 0;
-}
-
-/* Textarea now expands cleanly on the left side */
-.chat-input-area textarea#messageInput {
-    flex: 1;
-    order: 1; /* Pushes to left edge */
-    background: #2d2d2d;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    padding: 8px 12px;
-    border-radius: 6px;
-    color: #fff;
-    outline: none;
-    resize: none; 
-    height: calc(30px + 30px + 6px); 
-    font-size: 0.85rem;
-    line-height: 1.4;
-    box-sizing: border-box;
-}
-.chat-input-area textarea#messageInput:focus {
-    border-color: rgba(0, 173, 181, 0.4);
-}
-
-/* Lock toggle sits beautifully inline between elements */
-.lock-toggle-btn {
-    order: 2; /* Middle lock sorting position */
-    background: transparent;
-    border: none;
-    font-size: 1.1rem;
-    cursor: pointer;
-    padding: 0;
-    margin: 0 2px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-/* Controls Stack containing user handle configuration and send trigger map cleanly right */
-.left-control-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 6px; 
-    width: 85px;
-    flex-shrink: 0;
-    order: 3; /* Snaps control stack components flush to right edge */
-}
-
-.left-control-stack input#usernameInput {
-    width: 100%;
-    background: #2d2d2d;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    padding: 0 6px;
-    height: 30px; 
-    border-radius: 4px;
-    color: #fff;
-    outline: none;
-    text-align: center;
-    font-size: 0.8rem;
-    box-sizing: border-box;
-}
-
-.left-control-stack button.send-main-btn {
-    width: 100%;
-    height: 30px; 
-    background: #00adb5;
-    border: none;
-    color: white;
-    border-radius: 4px;
-    font-weight: bold;
-    font-size: 0.8rem;
-    cursor: pointer;
-    transition: background 0.2s;
-    box-sizing: border-box;
-}
-.left-control-stack button.send-main-btn:hover {
-    background: #008c94;
-}
-
-body.chat-is-fullscreen .main-content {
-    display: none !important;
-}
-
-/* ==========================================================================
-   🧩 THE PERFECT 4-COLUMN FULLSCREEN ENGINE (NO LAYOUT OVERLAPS)
-   ========================================================================== */
-body.chat-is-fullscreen .chat-sidebar {
-    width: 100% !important;
-    height: 100vh !important;
-    border-left: none;
-    display: flex !important;
-    flex-direction: column !important;
-}
-
-body.chat-is-fullscreen .chat-split-body {
-    flex: 1 !important;
-    display: flex !important;
-    flex-direction: row !important; 
-    width: 100% !important;
-    height: calc(100vh - 65px) !important;
-    overflow: hidden !important;
-}
-
-body.chat-is-fullscreen #noticeboard-view-panel {
-    display: none; 
-    flex: 1 !important;
-    width: 100% !important;
-    height: 100% !important;
-    padding-right: 20px !important; 
-}
-body.chat-is-fullscreen #noticeboard-view-panel[style*="display: flex"] {
-    display: flex !important;
-}
-
-body.chat-is-fullscreen .chat-messages {
-    flex: 1 !important;
-    width: 100% !important;
-    height: calc(100% - 74px) !important; 
-    padding-bottom: 95px !important; 
-}
-
-body.chat-is-fullscreen .chat-split-body > div:first-child:not([style*="display: none"]) {
-    display: flex !important;
-    flex-direction: column !important;
-    flex: 1 !important;
-}
-
-body.chat-is-fullscreen .chat-input-area {
-    width: calc(100% - 380px) !important; 
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    z-index: 10;
-}
-
-body.chat-is-fullscreen .chat-fs-help-panel {
-    display: flex !important;
-    width: 380px !important;
-    height: 100% !important;
-    flex-shrink: 0 !important;
-}
-
-/* 🛑 FIXED OVERLAY: Locks layout paths completely into a fixed space stack layer */
-.flyer-modal-overlay {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    background: rgba(0, 0, 0, 0.9);
-    backdrop-filter: blur(15px);
-    z-index: 9999 !important;
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: opacity 0.25s ease;
-    gap: 15px;
-}
-.flyer-modal-overlay.active {
-    display: flex;
-    opacity: 1;
-}
-.modal-content-card {
-    position: relative;
-    max-width: 85%;
-    max-height: 80vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-.modal-content-card img {
-    max-width: 100%;
-    max-height: 80vh;
-    border-radius: 8px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    object-fit: contain;
-}
-.modal-close-btn {
-    background: #00adb5;
-    color: white;
-    border: none;
-    padding: 8px 24px;
-    border-radius: 6px;
-    font-weight: bold;
-    cursor: pointer;
-    font-size: 0.95rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    transition: background 0.2s;
-}
-.modal-close-btn:hover {
-    background: #008c94;
-}
-
-/* ==========================================================================
-   📱 MOBILE & NARROW SCREEN STACK OVERRIDES (ACTIVE UNDER 1024PX WIDTH)
-   ========================================================================== */
-@media (max-width: 1024px) {
-    body {
-        flex-direction: column;
-        height: auto;
-        overflow: auto;
+function anchorChatToBottom() {
+    const chatContainer = document.querySelector('.chat-messages');
+    if (chatContainer) {
+        // Safe timeout delays rendering evaluation until custom asset nodes wrap cleanly
+        setTimeout(() => {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }, 60);
     }
-    body.chat-is-fullscreen .main-content {
-        display: none !important;
+}
+
+function renderFacebookFeed() {
+    if (!fbFeedContainer) return;
+    fbFeedContainer.innerHTML = facebookPosts.map(post => `
+        <div class="fb-post-card" onclick="window.open('${post.link}', '_blank');">
+            <div class="fb-post-meta">Tellstream Page • ${post.date}</div>
+            <div class="fb-post-text">${post.text}</div>
+        </div>
+    `).join('');
+}
+
+async function renderActiveFlyers() {
+    if (!flyerContainer) return;
+    const today = new Date();
+    today.setDate(today.getDate() - 1);
+    today.setHours(0,0,0,0);
+
+    const { data: files, error } = await supabase_db.storage.from('flyers').list('', { limit: 100 });
+
+    if (error || !files || files.length === 0) {
+        flyerContainer.innerHTML = `<p style="color:#666; text-align:center; padding-top:20px;">No current event flyers listed.</p>`;
+        return;
+    }
+
+    let renderedHtml = "";
+
+    for (let file of files) {
+        if (file.name === ".emptyFolderPlaceholder") continue;
+
+        const datePrefix = file.name.substring(0, 6);
+        
+        if (/^\d{6}$/.test(datePrefix)) {
+            const day = parseInt(datePrefix.substring(0, 2), 10);
+            const month = parseInt(datePrefix.substring(2, 4), 10) - 1;
+            const year = 2000 + parseInt(datePrefix.substring(4, 6), 10);
+
+            const expirationDate = new Date(year, month, day);
+
+            if (expirationDate < today) {
+                await supabase_db.storage.from('flyers').remove([file.name]);
+                continue;
+            }
+        }
+
+        const { data: urlData } = supabase_db.storage.from('flyers').getPublicUrl(file.name);
+        const titleClean = file.name.substring(7).replace(/\.[^/.]+$/, '').replace(/_/g, ' ');
+
+        renderedHtml += `
+            <div class="flyer-item" onclick="launchFlyerLightbox('${urlData.publicUrl}')">
+                <img src="${urlData.publicUrl}" alt="${titleClean}">
+                <h4 style="text-transform: capitalize;">${titleClean}</h4>
+            </div>
+        `;
+    }
+
+    flyerContainer.innerHTML = renderedHtml || `<p style="color:#666; text-align:center; padding-top:20px;">No current event flyers listed.</p>`;
+}
+
+function renderHelpContent(useNoticeboardGuide = false) {
+    const activeDataset = useNoticeboardGuide ? noticeboardHelpInstructions : helpInstructions;
+    const currentTitle = useNoticeboardGuide ? "📋 Noticeboard Help Guide" : "💡 Chat help and emoji codes";
+    
+    const html = activeDataset.map(item => `
+        <div class="help-item-card">
+            <h5>${item.title}</h5>
+            <p>${item.text}</p>
+        </div>
+    `).join('');
+    
+    if (helpCardsContainer) helpCardsContainer.innerHTML = html;
+    if (helpCardsContainerFS) helpCardsContainerFS.innerHTML = html;
+
+    const fsTitleNode = helpCardsContainerFS ? helpCardsContainerFS.previousElementSibling : null;
+    if (fsTitleNode && fsTitleNode.classList.contains('col-title')) {
+        fsTitleNode.innerHTML = currentTitle;
+    }
+}
+
+function launchFlyerLightbox(imgSrc) {
+    modalTargetImg.src = imgSrc;
+    flyerModal.classList.add('active');
+}
+function closeFlyerLightbox() {
+    flyerModal.classList.remove('active');
+    modalTargetImg.src = "";
+}
+
+if (flyerModal) {
+    flyerModal.addEventListener('click', (e) => {
+        if (e.target === flyerModal || e.target.classList.contains('modal-close-btn')) {
+            closeFlyerLightbox();
+        }
+    });
+}
+
+function toggleChatFullscreen() {
+    if (isNoticeBoardActive) {
+        toggleNoticeBoardView();
+    }
+    const isFullscreen = document.body.classList.toggle('chat-is-fullscreen');
+    if (fsToggleBtn) fsToggleBtn.innerText = isFullscreen ? "Exit Fullscreen" : "Maximize Chat";
+    anchorChatToBottom();
+}
+
+if (fsToggleBtn) {
+    fsToggleBtn.addEventListener('click', toggleChatFullscreen);
+}
+
+function initQuickEmojiCloud() {
+    if (!window.emojiMapping) return;
+    const items = Object.keys(window.emojiMapping);
+    
+    const html = items.slice(0, 32).map(key => `
+        <div class="emoji-grid-item" onclick="insertEmojiCode('${key}')">:${key}:</div>
+    `).join('');
+    
+    if (quickEmojiList) quickEmojiList.innerHTML = html;
+    if (quickEmojiListFS) quickEmojiListFS.innerHTML = html;
+}
+
+function insertEmojiCode(code) {
+    messageInput.value += ` :${code}: `;
+    messageInput.focus();
+}
+
+function toggleNoticeBoardView() {
+    const streamChat = document.getElementById('chatBox');
+    const noticePanel = document.getElementById('noticeboard-view-panel');
+    const inputContainer = document.getElementById('chat-input-panel-container') || document.querySelector('.chat-input-area');
+    const mainTitle = document.getElementById('sidebarPanelTitle');
+    const toggleBtn = document.getElementById('toggle-notice-btn');
+    const emojiSectionFS = quickEmojiListFS ? quickEmojiListFS.parentElement : null;
+
+    if (!isNoticeBoardActive) {
+        document.body.classList.add('chat-is-fullscreen');
+        
+        if (streamChat) streamChat.style.display = 'none';
+        if (inputContainer) inputContainer.style.display = 'none'; 
+        if (securityDrawer) securityDrawer.classList.remove('open'); 
+        if (noticePanel) noticePanel.style.display = 'flex';
+        if (mainTitle) mainTitle.innerText = "📋 Noticeboard";
+        if (toggleBtn) toggleBtn.innerText = "❌ Exit Noticeboard";
+        isNoticeBoardActive = true;
+        
+        if (emojiSectionFS) emojiSectionFS.style.display = 'none';
+        
+        renderHelpContent(true);
+        evaluateNoticeBoardForms();
+        fetchNoticeBoardRecords();
+    } else {
+        document.body.classList.remove('chat-is-fullscreen');
+        
+        if (noticePanel) noticePanel.style.display = 'none';
+        if (streamChat) streamChat.style.display = 'flex';
+        if (inputContainer) inputContainer.style.display = 'flex';
+        if (mainTitle) mainTitle.innerText = "🔊 Listener Lounge";
+        if (toggleBtn) toggleBtn.innerText = "📋 Noticeboard";
+        isNoticeBoardActive = false;
+        
+        if (emojiSectionFS) emojiSectionFS.style.display = 'block';
+        
+        renderHelpContent(false);
+        anchorChatToBottom();
+    }
+}
+
+const toggleNoticeBtn = document.getElementById('toggle-notice-btn');
+if (toggleNoticeBtn) {
+    toggleNoticeBtn.addEventListener('click', toggleNoticeBoardView);
+}
+
+function evaluateNoticeBoardForms() {
+    const currentUser = usernameInput.value.trim();
+    const warningBanner = document.getElementById('notice-footer-warning');
+    
+    const profile = profilesCache[currentUser];
+    const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
+    const isVerified = profile && profile.passkey === authorizedKey;
+
+    if (!isVerified) {
+        if (warningBanner) warningBanner.style.display = 'block';
+        document.querySelectorAll('.notice-input-form-block').forEach(form => form.style.display = 'none');
+        return;
+    }
+
+    if (warningBanner) warningBanner.style.display = 'none';
+    const powerLevel = parseInt(profile.power_level || 0);
+
+    const fBoss = document.getElementById('form-boss');
+    const fSelectors = document.getElementById('form-selectors');
+    const fFambily = document.getElementById('form-fambily');
+
+    if (fBoss) fBoss.style.display = (powerLevel >= 2) ? 'block' : 'none';
+    if (fSelectors) fSelectors.style.display = (powerLevel >= 1) ? 'block' : 'none';
+    if (fFambily) fFambily.style.display = (powerLevel >= 0) ? 'block' : 'none';
+}
+
+async function fetchNoticeBoardRecords() {
+    const { data: records, error } = await supabase_db
+        .from('notice_board')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (!error && records) {
+        const fBoss = document.getElementById('feed-boss');
+        const fSelectors = document.getElementById('feed-selectors');
+        const fFambily = document.getElementById('feed-fambily');
+
+        if (fBoss) fBoss.innerHTML = "";
+        if (fSelectors) fSelectors.innerHTML = "";
+        if (fFambily) fFambily.innerHTML = "";
+
+        records.forEach(item => {
+            const columnTarget = document.getElementById(`feed-${item.board_type}`);
+            if (columnTarget) {
+                const card = document.createElement('div');
+                card.className = 'notice-card-item';
+                card.innerHTML = `<strong>${escapeHTML(item.username)}:</strong> <span>${escapeHTML(item.notice_text)}</span>`;
+                columnTarget.appendChild(card);
+            }
+        });
+    }
+}
+
+async function submitNoticeUpdate(boardType) {
+    const currentUser = usernameInput.value.trim();
+    const inputField = document.getElementById(`input-${boardType}`);
+    const textContent = inputField ? inputField.value.trim() : "";
+    
+    if (!textContent) return;
+
+    const profile = profilesCache[currentUser];
+    const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
+    if (!profile || profile.passkey !== authorizedKey) return;
+
+    const pLevel = parseInt(profile.power_level || 0);
+    if (boardType === 'boss' && pLevel < 2) return;
+    if (boardType === 'selectors' && pLevel < 1) return;
+
+    const { error } = await supabase_db.from('notice_board').insert([{
+        username: currentUser,
+        notice_text: textContent,
+        board_type: boardType
+    }]);
+
+    if (!error) {
+        if (inputField) inputField.value = "";
+        fetchNoticeBoardRecords();
+    } else {
+        alert("Notice save failed: " + error.message);
+    }
+}
+
+function syncDrawerName() {
+    const currentName = usernameInput.value.trim();
+    if (regNameInput) regNameInput.value = currentName;
+    if (reminderHintDisplay) reminderHintDisplay.style.display = "none";
+    
+    if (profilesCache[currentName]) {
+        if (lockStatusBtn) lockStatusBtn.innerText = "🔒";
+        if (drawerTitle) drawerTitle.innerText = "Name is Secured: Log In";
+        if (regReminderInput) regReminderInput.style.display = "none";
+        if (regEmailInput) regEmailInput.style.display = "none";
+        if (drawerSubmitBtn) drawerSubmitBtn.innerText = "Authorize Device Local Memory";
+    } else {
+        if (lockStatusBtn) lockStatusBtn.innerText = "🔓";
+        if (drawerTitle) drawerTitle.innerText = "Secure Current Handle";
+        if (regReminderInput) regReminderInput.style.display = "block";
+        if (regEmailInput) regEmailInput.style.display = "block";
+        if (drawerSubmitBtn) drawerSubmitBtn.innerText = "Lock Name Globally";
     }
     
-    body.chat-is-fullscreen .chat-sidebar {
-        display: flex !important;
-        flex-direction: column !important;
-        height: 600px !important;
-    }
-    body.chat-is-fullscreen .chat-split-body {
-        flex-direction: column !important;
-        height: auto !important;
-    }
-    body.chat-is-fullscreen .chat-messages {
-        height: auto !important;
-    }
-    body.chat-is-fullscreen #noticeboard-view-panel {
-        width: 100% !important;
-    }
-    body.chat-is-fullscreen .chat-input-area {
-        width: 100% !important;
-        position: static !important;
-    }
-    body.chat-is-fullscreen .chat-fs-help-panel {
-        position: static !important;
-        height: auto !important;
-        width: 100% !important;
-    }
+    if (isNoticeBoardActive) evaluateNoticeBoardForms();
+}
 
-    .main-content {
-        height: auto;
-        overflow: visible;
-        padding: 10px;
-    }
-    
-    .header-container {
-        flex-direction: column !important;
-        height: auto !important;
-    }
-    
-    .header-cell {
-        width: 100% !important;
-        height: 180px !important; 
-        justify-content: center !important;
-        text-align: center !important;
-        padding: 20px !important;
-    }
-    
-    .cell-left {
-        background-image: url('header-bg1m.jpg') !important;
-        background-position: center center !important;
-        background-size: 100% 100% !important;
-    }
-    .cell-middle {
-        background-image: url('header-bg2m.jpg') !important;
-        background-position: center center !important;
-        background-size: 100% 100% !important;
-    }
-    .cell-right {
-        background-image: url('header-bg3m.jpg') !important;
-        background-position: center center !important;
-        background-size: 100% 100% !important;
-        justify-content: center !important;
-        padding-right: 0px !important;
-    }
-    
-    .columns-container {
-        flex-direction: column;
-        height: auto;
-        overflow: visible;
-    }
-    .col-3 {
-        height: 500px;
-        flex-shrink: 0;
-    }
-    
-    .chat-sidebar {
-        width: 100% !important;
-        height: 600px !important;
-        border-left: none;
-        border-top: 1px solid #2d2d2d;
-    }
-    
-    #fsToggleBtn {
-        display: none !important; 
-    }
-    
-    #toggle-notice-btn {
-        display: inline-block !important;
-    }
-    
-    #noticeboard-view-panel {
-        flex-direction: column !important; 
-        overflow-y: auto !important;
-        overflow-x: hidden !important;
-        height: auto !important;
-        max-height: 500px;
-    }
-    .notice-column-box {
-        width: 100% !important;
-        min-width: 100% !important;
-    }
+if (usernameInput) {
+    usernameInput.addEventListener('input', syncDrawerName);
+}
+if (lockStatusBtn) {
+    lockStatusBtn.addEventListener('click', toggleSecurityDrawer);
+}
+if (drawerSubmitBtn) {
+    drawerSubmitBtn.addEventListener('click', handleSecuritySubmit);
+}
 
-    body.chat-is-fullscreen .chat-fs-help-panel {
-        display: none !important;
+async function toggleSecurityDrawer() {
+    if (!securityDrawer) return;
+    const isOpen = securityDrawer.classList.toggle('open');
+    if (isOpen) {
+        syncDrawerName();
+        if (regPasskeyInput) regPasskeyInput.focus();
     }
 }
+
+async function handleSecuritySubmit() {
+    const currentName = usernameInput.value.trim();
+    const passkey = regPasskeyInput.value.trim();
+    const reminder = regReminderInput.value.trim();
+    const email = regEmailInput.value.trim();
+
+    if (!currentName || !passkey) {
+        alert("Please fill in both Name and a Passkey string.");
+        return;
+    }
+
+    if (profilesCache[currentName]) {
+        if (profilesCache[currentName].passkey === passkey) {
+            localStorage.setItem('tellstream_key_' + currentName, passkey);
+            alert("Identity checked and authorized! Locked to this device memory successfully.");
+            securityDrawer.classList.remove('open');
+            if (chatBox) chatBox.innerHTML = ""; 
+            if (isNoticeBoardActive) evaluateNoticeBoardForms();
+            loadMessages();
+        } else {
+            alert("Invalid Passkey entry sequence.");
+            if (profilesCache[currentName].key_reminder && reminderHintDisplay) {
+                reminderHintDisplay.innerText = "Hint Clue: " + profilesCache[currentName].key_reminder;
+                reminderHintDisplay.style.display = "block";
+            }
+        }
+    } else {
+        let assignedLevel = 0;
+        let assignedHover = "Tella Fambily";
+
+        if (currentName === "Banton") {
+            assignedLevel = 2;
+            assignedHover = "banton.org";
+        } else if (currentName === "BIG JOHN NEW000") {
+            assignedLevel = 2;
+            assignedHover = "the boss";
+        } else if (currentName === "Perfection") {
+            assignedLevel = 2;
+            assignedHover = "You done know";
+        }
+
+        const { error } = await supabase_db.from('secured_profiles').insert([{
+            username: currentName,
+            passkey: passkey,
+            key_reminder: reminder,
+            email: email,
+            power_level: assignedLevel,
+            hover_title: assignedHover
+        }]);
+
+        if (error) {
+            alert("Could not claim this name block profile target.");
+        } else {
+            localStorage.setItem('tellstream_key_' + currentName, passkey);
+            alert("Registration complete! Handle status successfully upgraded.");
+            await syncProfilesMap();
+            securityDrawer.classList.remove('open');
+            if (chatBox) chatBox.innerHTML = "";
+            if (isNoticeBoardActive) evaluateNoticeBoardForms();
+            loadMessages();
+        }
+    }
+}
+
+async function syncProfilesMap() {
+    const { data } = await supabase_db.from('secured_profiles').select('*');
+    profilesCache = {};
+    if (data) {
+        data.forEach(p => {
+            profilesCache[p.username] = p;
+        });
+    }
+    syncDrawerName();
+}
+
+if (audioPlayer) {
+    audioPlayer.addEventListener('stalled', () => { recoverStream(); });
+    audioPlayer.addEventListener('error', () => { recoverStream(); });
+}
+
+function recoverStream() {
+    if (!audioPlayer) return;
+    const currentSrc = audioPlayer.src;
+    if (!currentSrc) return;
+    audioPlayer.src = "";
+    audioPlayer.load();
+    audioPlayer.src = currentSrc;
+    audioPlayer.play().catch(err => console.log(err));
+}
+
+function appendMessage(data) {
+    if (!chatBox) return;
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'msg';
+    
+    let messageContent = escapeHTML(data.message);
+
+    const codeRegex = /:([a-zA-Z0-9_-]+):/g;
+    messageContent = messageContent.replace(codeRegex, (match, code) => {
+        const lowerCode = code.toLowerCase();
+        if (window.emojiMapping && window.emojiMapping[lowerCode]) {
+            return `<img src="${imgBaseUrl}${window.emojiMapping[lowerCode]}" alt="${code}" style="max-height: 48px; vertical-align: middle; margin: 2px; border-radius: 4px;">`;
+        }
+        return match;
+    });
+
+    const profile = profilesCache[data.username];
+    let nameClass = "user-unregistered";
+    let hoverAttribute = "";
+
+    if (profile) {
+        if (profile.power_level >= 1) {
+            nameClass = "user-admin"; 
+        } else {
+            nameClass = "user-registered"; 
+        }
+        if (profile.hover_title) {
+            hoverAttribute = `title="${escapeHTML(profile.hover_title)}"`;
+        }
+    }
+
+    msgDiv.innerHTML = `<div class="user ${nameClass}" ${hoverAttribute}>${escapeHTML(data.username)}</div><div>${messageContent}</div>`;
+    chatBox.appendChild(msgDiv);
+    
+    if (!isNoticeBoardActive) {
+        anchorChatToBottom();
+    }
+    
+    while (chatBox.children.length > 50) {
+        chatBox.removeChild(chatBox.firstChild);
+    }
+}
+
+function escapeHTML(str) {
+    return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+}
+
+async function loadMessages() {
+    const { data } = await supabase_db.from('messages').select('*').order('id', { ascending: true }).limit(40);
+    if (data) {
+        data.forEach(appendMessage);
+        anchorChatToBottom();
+    }
+}
+
+supabase_db.channel('public:messages')
+    .on('postgres_changes', { event: 'INSERT', pattern: 'public', table: 'messages' }, payload => {
+        appendMessage(payload.new);
+    }).subscribe();
+
+supabase_db.channel('public:secured_profiles')
+    .on('postgres_changes', { event: '*', pattern: 'public', table: 'secured_profiles' }, async () => {
+        await syncProfilesMap();
+    }).subscribe();
+
+supabase_db.channel('public:notice_board')
+    .on('postgres_changes', { event: 'INSERT', pattern: 'public', table: 'notice_board' }, payload => {
+        if (isNoticeBoardActive) fetchNoticeBoardRecords();
+    }).subscribe();
+
+async function sendMessage() {
+    const user = usernameInput.value.trim() || 'Listener';
+    const text = messageInput.value.trim();
+    if (!text) return;
+
+    if (profilesCache[user]) {
+        const authorizedKey = localStorage.getItem('tellstream_key_' + user);
+        if (profilesCache[user].passkey !== authorizedKey) {
+            alert("This handle name has been secured! Please open the identity panel lock box to authorize this machine device layout.");
+            toggleSecurityDrawer();
+            return;
+        }
+    }
+
+    messageInput.value = '';
+    await supabase_db.from('messages').insert([{ username: user, message: text }]);
+}
+
+if (sendBtn) {
+    sendBtn.addEventListener('click', sendMessage);
+}
+
+if (messageInput) {
+    messageInput.addEventListener('keypress', (e) => { 
+        if (e.key === 'Enter' && !e.shiftKey) { 
+            e.preventDefault(); 
+            sendMessage(); 
+        } 
+    });
+}
+
+// 🚀 Core Engine Initialization Cycle
+document.addEventListener("DOMContentLoaded", async () => {
+    renderFacebookFeed();
+    await renderActiveFlyers();
+    renderHelpContent(false);
+    await syncProfilesMap();
+    initQuickEmojiCloud();
+    await loadMessages();
+});
