@@ -2,25 +2,49 @@ const startBtn = document.getElementById('start-btn');
 const loadingScreen = document.getElementById('loading-screen');
 const gameTable = document.getElementById('game-table');
 
-// Horizontal sprite panel offsets (0 through 6)
-const maskXOffsets = {
-    0: '0%',
-    1: '16.66%',
-    2: '33.33%',
-    3: '50%',
-    4: '66.66%',
-    5: '83.33%',
-    6: '100%'
-};
+// The 7 active coordinates on our 3x3 matrix (ignoring Row 1 Col 2 and Row 3 Col 2)
+const activePipPositions = [
+    { row: 1, col: 1 }, { row: 1, col: 3 },
+    { row: 2, col: 1 }, { row: 2, col: 2 }, { row: 2, col: 3 },
+    { row: 3, col: 1 }, { row: 3, col: 3 }
+];
 
-// Explicitly generate and label the 28 unique domino pieces
+// Returns true if a specific pip coordinate should be hidden to generate the target value
+function shouldHidePip(value, row, col) {
+    switch (value) {
+        case 0: // Blank: Wipe everything out
+            return true;
+            
+        case 1: // One: Hide all 6 outer pips, keep the exact center (2,2)
+            return !(row === 2 && col === 2);
+            
+        case 2: // Two: Hide 5 pips, leaving a clean top-left to bottom-right diagonal line
+            return !( (row === 1 && col === 1) || (row === 3 && col === 3) );
+            
+        case 3: // Three: Hide 4 pips, keeping the full clean diagonal line across the matrix
+            return !( (row === 1 && col === 1) || (row === 2 && col === 2) || (row === 3 && col === 3) );
+            
+        case 4: // Four: Hide the middle row line completely, revealing the 4 outer corner anchors
+            return (row === 2);
+            
+        case 5: // Five: Hide only the left and right side pips of the middle line
+            return (row === 2 && (col === 1 || col === 3));
+            
+        case 6: // Six: Hide only the single absolute center pip
+            return (row === 2 && col === 2);
+            
+        default:
+            return false;
+    }
+}
+
 function buildMasterDeck() {
     const deck = [];
     for (let i = 0; i <= 6; i++) {
         for (let j = i; j <= 6; j++) {
             deck.push({
-                id: `tile-${i}-${j}`,  // Machine ID
-                title: `Domino ${i}:${j}`, // Readable title
+                id: `tile-${i}-${j}`,
+                title: `Domino ${i}:${j}`,
                 top: i,
                 bottom: j
             });
@@ -29,11 +53,38 @@ function buildMasterDeck() {
     return deck;
 }
 
-// Render all 28 tiles neatly inside a layout grid
+// Builds a 3x3 sub-grid structure for either the top or bottom half of a tile
+function renderHalfGrid(halfValue) {
+    const halfContainer = document.createElement('div');
+    halfContainer.className = 'tile-half';
+
+    // Loop directly through the row/column matrix blocks
+    for (let r = 1; r <= 3; r++) {
+        for (let c = 1; c <= 3; c++) {
+            const cell = document.createElement('div');
+            cell.className = 'grid-cell';
+            
+            // Set grid positions explicitly so browser renders coordinates perfectly
+            cell.style.gridRowStart = r;
+            cell.style.gridColumnStart = c;
+
+            // Check if this coordinate matches one of our 7 active positions and needs masking
+            const isActivePip = activePipPositions.some(p => p.row === r && p.col === c);
+            if (isActivePip && shouldHidePip(halfValue, r, c)) {
+                const maskPatch = document.createElement('div');
+                maskPatch.className = 'pip-mask-patch';
+                cell.appendChild(maskPatch);
+            }
+
+            halfContainer.appendChild(cell);
+        }
+    }
+    return halfContainer;
+}
+
 function displayFullTestingGrid() {
     gameTable.innerHTML = '';
 
-    // Create a neat grid container element
     const gridContainer = document.createElement('div');
     gridContainer.className = 'test-grid-container';
     gameTable.appendChild(gridContainer);
@@ -43,39 +94,20 @@ function displayFullTestingGrid() {
     masterDeck.forEach((tile) => {
         const tileElement = document.createElement('div');
         tileElement.className = 'domino-item';
-        
-        // Label the elements physically so you can inspect them via DevTools
         tileElement.id = tile.id;
         tileElement.setAttribute('title', tile.title);
-        tileElement.dataset.top = tile.top;
-        tileElement.dataset.bottom = tile.bottom;
 
-        // Base background template asset
-        tileElement.style.backgroundImage = "url('assets/dom_front.gif')";
+        // Append the top 3x3 layout, followed directly by the bottom 3x3 layout
+        tileElement.appendChild(renderHalfGrid(tile.top));
+        tileElement.appendChild(renderHalfGrid(tile.bottom));
 
-        // Render the top half pip mask layer
-        const topMask = document.createElement('div');
-        topMask.className = 'pip-mask top-half';
-        topMask.style.backgroundImage = "url('assets/_DOM_PIPS.png')";
-        topMask.style.backgroundPosition = `${maskXOffsets[tile.top]} 0px`;
-        tileElement.appendChild(topMask);
-
-        // Render the bottom half pip mask layer
-        const bottomMask = document.createElement('div');
-        bottomMask.className = 'pip-mask bottom-half';
-        bottomMask.style.backgroundImage = "url('assets/_DOM_PIPS.png')";
-        bottomMask.style.backgroundPosition = `${maskXOffsets[tile.bottom]} 0px`;
-        tileElement.appendChild(bottomMask);
-
-        // Add the finished tile directly to the layout grid row
         gridContainer.appendChild(tileElement);
     });
 }
 
-// Emulate loader ready sequence
 setTimeout(() => {
     startBtn.disabled = false;
-    startBtn.innerText = "TEST 28 DECK GRID";
+    startBtn.innerText = "TEST 3x3 MASK GRID";
 }, 1000);
 
 startBtn.addEventListener('click', () => {
