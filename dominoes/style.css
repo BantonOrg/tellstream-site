@@ -1,5 +1,5 @@
 /* ==========================================================================
-   1. RESET & CORE VIEWPORT LOCK
+   1. RESET & VIEWPORT LOCK
    ========================================================================== */
 * {
     box-sizing: border-box;
@@ -15,7 +15,6 @@ html, body {
     font-family: sans-serif;
 }
 
-/* Base screen containers */
 .screen {
     position: fixed;
     top: 0;
@@ -30,22 +29,61 @@ html, body {
 }
 
 /* ==========================================================================
-   2. GAME SURFACE & BACKGROUND
+   2. GAME CANVAS
    ========================================================================== */
 #game-table {
     background: url('assets/table_bg.jpg') center center no-repeat;
     background-size: 100% 100%;
     position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 /* ==========================================================================
-   3. LOADING SCREEN UI
+   3. THE 28-TILE TESTING GRID
+   ========================================================================== */
+.test-grid-container {
+    width: 80%;
+    height: 70%;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr); /* 7 columns */
+    grid-template-rows: repeat(4, 1fr);    /* 4 rows */
+    gap: 15px;
+    justify-items: center;
+    align-items: center;
+}
+
+/* Scaled down container so all 28 pieces line up nicely */
+.domino-item {
+    width: 45px;
+    height: 90px;
+    background-size: 100% 100%;
+    border-radius: 4px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+.pip-mask {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 50%;
+    background-size: 700% 100%;
+    background-repeat: no-repeat;
+    pointer-events: none;
+}
+
+.pip-mask.top-half { top: 0; }
+.pip-mask.bottom-half { bottom: 0; }
+
+/* ==========================================================================
+   4. UI ELEMENTS
    ========================================================================== */
 #loading-screen {
     background-color: #000;
     display: flex;
-    justify-content: flex-start;
-    align-items: flex-start;
     padding: 20px;
 }
 
@@ -58,80 +96,4 @@ html, body {
     border-radius: 25px;
     font-weight: bold;
     color: #000;
-    transition: background 0.2s ease;
-}
-
-#start-btn:disabled {
-    background: #555;
-    color: #aaa;
-    cursor: not-allowed;
-}
-
-/* ==========================================================================
-   4. DOMINO CONTAINERS & PIP MASKING LAYERS
-   ========================================================================== */
-.domino-item {
-    position: absolute;
-    width: 60px;
-    height: 120px;
-    background-size: 100% 100%;
-    border-radius: 6px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
-    overflow: hidden; /* Keeps the top/bottom mask elements bound inside the tile corners */
-}
-
-/* Base styles for the dynamic pip-shifter sheets */
-.pip-mask {
-    position: absolute;
-    left: 0;
-    width: 100%;
-    height: 50%; /* Splitting the tile perfectly in two halves */
-    background-size: 100% 700%; /* Scales the 7-row vertical strip properly relative to the half-height */
-    background-repeat: no-repeat;
-    pointer-events: none; /* Keeps clicks passing straight through to the tile container */
-}
-
-.pip-mask.top-half {
-    top: 0;
-}
-
-.pip-mask.bottom-half {
-    bottom: 0;
-}
-
-/* ==========================================================================
-   5. MOBILE ROTATION GUARD OVERLAY
-   ========================================================================== */
-#rotation-overlay {
-    display: none; /* Kept dormant on desktop / landscape mobile views */
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(10, 10, 10, 0.95);
-    color: #fff;
-    z-index: 9999; /* Higher priority than any play assets */
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    padding: 20px;
-}
-
-/* Triggered layout filter for narrow smartphone screen widths turned vertical */
-@media screen and (max-width: 932px) and (orientation: portrait) {
-    #rotation-overlay {
-        display: flex;
-    }
-}
-
-.message h2 {
-    color: #00e5ff;
-    margin-bottom: 12px;
-}
-
-.message p {
-    font-size: 1rem;
-    line-height: 1.4;
-    max-width: 400px;
 }
