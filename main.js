@@ -96,7 +96,18 @@ function checkBanStatus(username) {
     return { isBanned: false };
 }
 
-// Appends a private localized warning card from Tella Security
+// Injects the custom private room landing greeting from Tella Security
+function appendPrivateWelcomeGreeting() {
+    if (!chatBox) return;
+    const systemDiv = document.createElement('div');
+    systemDiv.className = 'msg';
+    systemDiv.style.borderLeft = '4px solid #00E676'; // Clean blessing green border
+    systemDiv.style.background = 'rgba(0, 230, 118, 0.05)';
+    systemDiv.innerHTML = `<div class="user" style="color: #00E676; font-weight: 900;">TELLA SECURITY</div><div style="color: #e0f2f1; font-size: 0.88rem; line-height: 1.4;">Greetings and welcome to Tellstream Chat. Please help keep this experience a positive blessing for one and all. Remember, at any time, users may have children around them. Bad blessings will be removed. One love from Tella Security. <br><span style="opacity: 0.4; font-size: 0.75rem; font-style: italic;">(Only you can see this welcome greeting)</span></div>`;
+    chatBox.appendChild(systemDiv);
+    anchorChatToBottom();
+}
+
 function appendPrivateWarning(user, text, strikeCount, customMessage = null) {
     if (!chatBox) return;
 
@@ -117,7 +128,6 @@ function appendPrivateWarning(user, text, strikeCount, customMessage = null) {
     systemDiv.innerHTML = `<div class="user" style="color: #ff3333; font-weight: 900;">TELLA SECURITY</div><div style="color: #ffdddd; font-style: italic; font-size: 0.85rem;">${warningMsg} <br><span style="opacity: 0.6;">(Only you can see this message)</span></div>`;
     chatBox.appendChild(systemDiv);
 
-    // If text is provided, show their masked input to keep their screen flowing
     if (text) {
         const maskedText = cleanSwearWords(text);
         const msgDiv = document.createElement('div');
@@ -169,7 +179,6 @@ async function handleUserStrike(username, originalText) {
     appendPrivateWarning(username, originalText, currentStrikes);
 }
 
-// Scans for sorry text patterns to see if a strike deduction is valid
 async function checkAndProcessApology(username, text) {
     const lowerUser = username.toLowerCase();
     const existingRecord = bannedUsersCache[lowerUser];
@@ -216,21 +225,6 @@ async function handleAdminFilterCommand(text) {
     }
     else if (text === '/listwords') {
         alert(bannedWordsCache.length === 0 ? "Filter is empty." : "Filtered Words:\n" + bannedWordsCache.join(', '));
-    }
-}
-
-async function syncBannedWordsMap() {
-    const { data } = await supabase_db.from('banned_words').select('word');
-    if (data) bannedWordsCache = data.map(item => item.word.toLowerCase());
-}
-
-async function syncBannedUsersMap() {
-    const { data } = await supabase_db.from('banned_users').select('*');
-    bannedUsersCache = {};
-    if (data) {
-        data.forEach(u => {
-            bannedUsersCache[u.username.toLowerCase()] = u;
-        });
     }
 }
 
@@ -419,14 +413,12 @@ async function submitNoticeUpdate(boardType) {
         return;
     }
 
-    // Noticeboard filter trigger
     if (containsSwearWords(textContent)) {
         await handleUserStrike(currentUser, textContent);
         inputField.value = "";
         return; 
     }
 
-    // Check if the user is submitting a structural text apology on the noticeboard
     const wasApology = await checkAndProcessApology(currentUser, textContent);
     if (wasApology) {
         inputField.value = "";
@@ -538,6 +530,21 @@ async function syncProfilesMap() {
     syncDrawerName();
 }
 
+async function syncBannedWordsMap() {
+    const { data } = await supabase_db.from('banned_words').select('word');
+    if (data) bannedWordsCache = data.map(item => item.word.toLowerCase());
+}
+
+async function syncBannedUsersMap() {
+    const { data } = await supabase_db.from('banned_users').select('*');
+    bannedUsersCache = {};
+    if (data) {
+        data.forEach(u => {
+            bannedUsersCache[u.username.toLowerCase()] = u;
+        });
+    }
+}
+
 audioPlayer.addEventListener('stalled', () => { recoverStream(); });
 audioPlayer.addEventListener('error', () => { recoverStream(); });
 
@@ -629,7 +636,6 @@ async function sendMessage() {
         return; 
     }
 
-    // Scan if they are posting a system strike apology text line
     const wasApology = await checkAndProcessApology(user, text);
     if (wasApology) {
         messageInput.value = '';
@@ -652,4 +658,7 @@ messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.s
     await syncBannedWordsMap();
     await syncBannedUsersMap();
     loadMessages();
+    
+    // Fires the isolated welcome greeting immediately after existing message backlogs finish drawing
+    setTimeout(appendPrivateWelcomeGreeting, 800);
 })();
