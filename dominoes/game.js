@@ -2,41 +2,31 @@ const startBtn = document.getElementById('start-btn');
 const loadingScreen = document.getElementById('loading-screen');
 const gameTable = document.getElementById('game-table');
 
-// The 7 active coordinates on our 3x3 matrix (ignoring Row 1 Col 2 and Row 3 Col 2)
-const activePipPositions = [
-    { row: 1, col: 1 }, { row: 1, col: 3 },
-    { row: 2, col: 1 }, { row: 2, col: 2 }, { row: 2, col: 3 },
-    { row: 3, col: 1 }, { row: 3, col: 3 }
+// Total original canvas dimensions
+const canvasW = 597;
+const canvasH = 1171;
+
+// The 7 absolute coordinate definitions for the Top Half
+const topPipMap = [
+    { name: 'top-left',     x: 126, y: 126, hideFor: [0, 1, 4, 5, 6] },
+    { name: 'top-right',    x: 469, y: 126, hideFor: [0, 1, 2, 3, 4, 5, 6] },
+    { name: 'mid-left',     x: 126, y: 291, hideFor: [0, 1, 2, 3, 6] },
+    { name: 'mid-center',   x: 298, y: 291, hideFor: [0, 4] },
+    { name: 'mid-right',    x: 469, y: 291, hideFor: [0, 1, 2, 3, 6] },
+    { name: 'bottom-left',  x: 126, y: 453, hideFor: [0, 1, 2, 3, 4, 5, 6] },
+    { name: 'bottom-right', x: 469, y: 453, hideFor: [0, 1, 4, 5, 6] }
 ];
 
-// Returns true if a specific pip coordinate should be hidden to generate the target value
-function shouldHidePip(value, row, col) {
-    switch (value) {
-        case 0: // Blank: Wipe everything out
-            return true;
-            
-        case 1: // One: Hide all 6 outer pips, keep the exact center (2,2)
-            return !(row === 2 && col === 2);
-            
-        case 2: // Two: Hide 5 pips, leaving a clean top-left to bottom-right diagonal line
-            return !( (row === 1 && col === 1) || (row === 3 && col === 3) );
-            
-        case 3: // Three: Hide 4 pips, keeping the full clean diagonal line across the matrix
-            return !( (row === 1 && col === 1) || (row === 2 && col === 2) || (row === 3 && col === 3) );
-            
-        case 4: // Four: Hide the middle row line completely, revealing the 4 outer corner anchors
-            return (row === 2);
-            
-        case 5: // Five: Hide only the left and right side pips of the middle line
-            return (row === 2 && (col === 1 || col === 3));
-            
-        case 6: // Six: Hide only the single absolute center pip
-            return (row === 2 && col === 2);
-            
-        default:
-            return false;
-    }
-}
+// The 7 absolute coordinate definitions for the Bottom Half
+const bottomPipMap = [
+    { name: 'top-left',     x: 126, y: 714, hideFor: [0, 1, 4, 5, 6] },
+    { name: 'top-right',    x: 469, y: 714, hideFor: [0, 1, 2, 3, 4, 5, 6] },
+    { name: 'mid-left',     x: 126, y: 881, hideFor: [0, 1, 2, 3, 6] },
+    { name: 'mid-center',   x: 298, y: 881, hideFor: [0, 4] },
+    { name: 'mid-right',    x: 469, y: 881, hideFor: [0, 1, 2, 3, 6] },
+    { name: 'bottom-left',  x: 126, y: 1042, hideFor: [0, 1, 2, 3, 4, 5, 6] },
+    { name: 'bottom-right', x: 469, y: 1042, hideFor: [0, 1, 4, 5, 6] }
+];
 
 function buildMasterDeck() {
     const deck = [];
@@ -53,30 +43,24 @@ function buildMasterDeck() {
     return deck;
 }
 
-// Builds a clean 3x3 sub-grid structure for either the top or bottom half of a tile
-function renderHalfGrid(halfValue) {
-    const halfContainer = document.createElement('div');
-    halfContainer.className = 'tile-half';
-
-    for (let r = 1; r <= 3; r++) {
-        for (let c = 1; c <= 3; c++) {
-            const cell = document.createElement('div');
-            cell.className = 'grid-cell';
+// Drops cover patches precisely at percentage centers
+function applyPipMasks(tileElement, value, coordinateMap) {
+    coordinateMap.forEach(pip => {
+        // If the current domino value means this pip should be hidden, cover it
+        if (pip.hideFor.includes(value)) {
+            const maskPatch = document.createElement('div');
+            maskPatch.className = 'pip-mask-patch';
             
-            cell.style.gridRowStart = r;
-            cell.style.gridColumnStart = c;
-
-            const isActivePip = activePipPositions.some(p => p.row === r && p.col === c);
-            if (isActivePip && shouldHidePip(halfValue, r, c)) {
-                const maskPatch = document.createElement('div');
-                maskPatch.className = 'pip-mask-patch';
-                cell.appendChild(maskPatch);
-            }
-
-            halfContainer.appendChild(cell);
+            // Convert raw pixel centers to precise element percentages
+            const leftPercent = (pip.x / canvasW) * 100;
+            const topPercent = (pip.y / canvasH) * 100;
+            
+            maskPatch.style.left = `${leftPercent}%`;
+            maskPatch.style.top = `${topPercent}%`;
+            
+            tileElement.appendChild(maskPatch);
         }
-    }
-    return halfContainer;
+    });
 }
 
 function displayFullTestingGrid() {
@@ -89,24 +73,21 @@ function displayFullTestingGrid() {
     const masterDeck = buildMasterDeck();
 
     masterDeck.forEach((tile) => {
-        // Create a structural wrapper to group the tile and text label cleanly together
         const wrapper = document.createElement('div');
         wrapper.className = 'debug-card-wrapper';
 
-        // Build the domino element itself
         const tileElement = document.createElement('div');
         tileElement.className = 'domino-item';
         tileElement.id = tile.id;
 
-        tileElement.appendChild(renderHalfGrid(tile.top));
-        tileElement.appendChild(renderHalfGrid(tile.bottom));
+        // Apply masks for both halves directly using the pixel coordinate definitions
+        applyPipMasks(tileElement, tile.top, topPipMap);
+        applyPipMasks(tileElement, tile.bottom, bottomPipMap);
 
-        // Create the readable descriptor text underneath
         const textLabel = document.createElement('div');
         textLabel.className = 'debug-label';
         textLabel.innerText = tile.label;
 
-        // Group them up inside the grid column
         wrapper.appendChild(tileElement);
         wrapper.appendChild(textLabel);
         gridContainer.appendChild(wrapper);
@@ -115,7 +96,7 @@ function displayFullTestingGrid() {
 
 setTimeout(() => {
     startBtn.disabled = false;
-    startBtn.innerText = "TEST DIAGNOSTIC GRID";
+    startBtn.innerText = "TEST PIXEL COORDINATE GRID";
 }, 1000);
 
 startBtn.addEventListener('click', () => {
