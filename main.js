@@ -30,7 +30,8 @@ const lockStatusBtn = document.getElementById('lockStatusBtn');
 const imgBaseUrl = "https://tellstream-emojis.pages.dev/";
 
 let profilesCache = {};
-let bannedWordsCache = []; // Global live array caching your Supabase blocklist
+let bannedWordsCache = [];
+let bannedUsersCache = {}; 
 let isNoticeBoardActive = false;
 
 const facebookPosts = [
@@ -42,16 +43,17 @@ const facebookPosts = [
 const helpInstructions = [
     { title: "Setting Nickname", text: "Fill in the Nickname block before typing to claim your handle in the Lounge panel." },
     { title: "Sending Text Lines", text: "Type your query inside the input field box and tap Send or hit your keyboard Enter button." },
-    { title: "Firing Emojis & Sounds", text: "Tap any active shorthand key code block inside the selection layout panel below to append it to your message. Click [See All Codes] for more." }
+    { title: "Firing Emojis & Sounds", text: "Tap any active shorthand key code block inside the selection layout panel below to append it to your message. Click [See All Codes] for more." },
+    { title: "⚠️ Chat Moderation Rules", text: "Profanity and abusive language are automatically blocked. Swearing triggers an automated strike track system: 3 strikes results in a 24-hour temporary lockout. A repeat offense after lockout leads to an instant, permanent handle ban. Genuine apologies can restore one lost strike." }
 ];
 
 const noticeboardHelpInstructions = [
-    { title: "Noticeboard Rules", text: "Stay respectful. Unauthorized or hostile comments will be flagged and removed instantly." },
+    { title: "Noticeboard Rules", text: "Stay respectful. Unauthorized, abusive, or hostile comments will be flagged and removed instantly by Station Admins." },
     { title: "Authority Levels", text: "The Boss panel is restricted to Station Admins. Selectors manage the central schedule log." },
-    { title: "Adding Updates", text: "Once verified via your secure local passkey profile drawer, choose a column target form to submit notifications directly." }
+    { title: "Adding Updates", text: "Once verified via your secure local passkey profile drawer, choose a column target form to submit notifications directly." },
+    { title: "⚠️ Noticeboard Enforcement", text: "The dynamic global blocklist active in the Lounge chat applies directly to noticeboard columns. Posting restricted keywords increments your profile strikes and can lead to an automated 24-hour column ban or permanent lifetime removal." }
 ];
 
-// Fallback scroll system that handles render engine timing smoothly
 function anchorChatToBottom() {
     const chatContainer = document.querySelector('.chat-messages') || chatBox;
     if (chatContainer) {
@@ -61,50 +63,174 @@ function anchorChatToBottom() {
     }
 }
 
-// Intercepts message text data streams and silent-masks words inside cache boundaries
+function containsSwearWords(text) {
+    if (bannedWordsCache.length === 0) return false;
+    const escapedWords = bannedWordsCache.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+    const pattern = new RegExp(`\\b(${escapedWords})\\b`, 'gi');
+    return pattern.test(text);
+}
+
 function cleanSwearWords(text) {
     if (bannedWordsCache.length === 0) return text;
-    // Escapes special characters to keep regex clean and searches with explicit word boundaries (\b)
     const escapedWords = bannedWordsCache.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
     const pattern = new RegExp(`\\b(${escapedWords})\\b`, 'gi');
     return text.replace(pattern, '****');
 }
 
-// Special Admin Command Routing Core Engine
+function checkBanStatus(username) {
+    const userBan = bannedUsersCache[username.toLowerCase()];
+    if (!userBan) return { isBanned: false };
+
+    if (userBan.is_permanent) {
+        return { isBanned: true, message: "You have been permanently banned from the Tellstream Lounge." };
+    }
+
+    if (userBan.ban_expires_at) {
+        const expiration = new Date(userBan.ban_expires_at);
+        if (expiration > new Date()) {
+            const remainingHours = Math.ceil((expiration - new Date()) / (1000 * 60 * 60));
+            return { isBanned: true, message: `You are temporarily banned for swearing. Ban expires in ${remainingHours} hours.` };
+        }
+    }
+
+    return { isBanned: false };
+}
+
+// Appends a private localized warning card from Tella Security
+function appendPrivateWarning(user, text, strikeCount, customMessage = null) {
+    if (!chatBox) return;
+
+    let warningMsg = customMessage;
+    if (!warningMsg) {
+        warningMsg = `⚠️ PRIVATE WARNING: Strike ${strikeCount}/3. Bad language detected.`;
+        if (strikeCount === 3) {
+            warningMsg = "🛑 AUTOMATED BAN ACTION: You have used banned keywords 3 times. You are now locked out for 24 hours.";
+        } else if (strikeCount > 3) {
+            warningMsg = "🚫 PERMANENT LIFETIME LOCKOUT: Repeat offense detected. Your handle access is permanently revoked.";
+        }
+    }
+
+    const systemDiv = document.createElement('div');
+    systemDiv.className = 'msg';
+    systemDiv.style.borderLeft = '4px solid #ff3333';
+    systemDiv.style.background = 'rgba(255, 51, 51, 0.08)';
+    systemDiv.innerHTML = `<div class="user" style="color: #ff3333; font-weight: 900;">TELLA SECURITY</div><div style="color: #ffdddd; font-style: italic; font-size: 0.85rem;">${warningMsg} <br><span style="opacity: 0.6;">(Only you can see this message)</span></div>`;
+    chatBox.appendChild(systemDiv);
+
+    // If text is provided, show their masked input to keep their screen flowing
+    if (text) {
+        const maskedText = cleanSwearWords(text);
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'msg';
+        
+        const profile = profilesCache[user];
+        let nameClass = "user-unregistered";
+        let hoverAttribute = "";
+        if (profile) {
+            nameClass = (profile.power_level >= 1) ? "user-admin" : "user-registered";
+            if (profile.hover_title) hoverAttribute = `title="${escapeHTML(profile.hover_title)}"`;
+        }
+
+        msgDiv.innerHTML = `<div class="user ${nameClass}" ${hoverAttribute}>${escapeHTML(user)}</div><div>${escapeHTML(maskedText)}</div>`;
+        chatBox.appendChild(msgDiv);
+    }
+    
+    anchorChatToBottom();
+}
+
+async function handleUserStrike(username, originalText) {
+    const lowerUser = username.toLowerCase();
+    const existingRecord = bannedUsersCache[lowerUser];
+    
+    let currentStrikes = existingRecord ? existingRecord.strikes : 0;
+    let apologyUsed = existingRecord ? existingRecord.apology_used : false;
+    currentStrikes += 1;
+
+    let banExpiresAt = null;
+    let isPermanent = false;
+
+    if (currentStrikes === 3) {
+        const tomorrow = new Date();
+        tomorrow.setHours(tomorrow.getHours() + 24);
+        banExpiresAt = tomorrow.toISOString();
+    } else if (currentStrikes > 3) {
+        isPermanent = true;
+    }
+
+    await supabase_db.from('banned_users').upsert({
+        username: lowerUser,
+        strikes: currentStrikes,
+        ban_expires_at: banExpiresAt,
+        is_permanent: isPermanent,
+        apology_used: apologyUsed,
+        updated_at: new Date().toISOString()
+    });
+
+    appendPrivateWarning(username, originalText, currentStrikes);
+}
+
+// Scans for sorry text patterns to see if a strike deduction is valid
+async function checkAndProcessApology(username, text) {
+    const lowerUser = username.toLowerCase();
+    const existingRecord = bannedUsersCache[lowerUser];
+    
+    if (!existingRecord || existingRecord.strikes === 0 || existingRecord.apology_used) return false;
+
+    const apologyRegex = /\b(sorry|apologise|apologize)\b/i;
+    if (apologyRegex.test(text)) {
+        let currentStrikes = existingRecord.strikes - 1;
+        
+        await supabase_db.from('banned_users').upsert({
+            username: lowerUser,
+            strikes: currentStrikes,
+            ban_expires_at: null,
+            is_permanent: false,
+            apology_used: true,
+            updated_at: new Date().toISOString()
+        });
+
+        appendPrivateWarning(username, null, currentStrikes, `✅ APOLOGY ACCEPTED: Your one-time grace apology has been processed. One strike removed! Current strikes: ${currentStrikes}/3.`);
+        return true;
+    }
+    return false;
+}
+
 async function handleAdminFilterCommand(text) {
     if (text.startsWith('/add ')) {
         const wordToAdd = text.substring(5).trim().toLowerCase();
         if (!wordToAdd) return;
         const { error } = await supabase_db.from('banned_words').insert([{ word: wordToAdd }]);
-        if (!error) {
-            alert(`"${wordToAdd}" has been added to the database filter.`);
-        } else {
-            alert("Error adding word: " + error.message);
-        }
+        if (!error) alert(`"${wordToAdd}" added to filter list.`);
     } 
     else if (text.startsWith('/del ')) {
         const wordToDel = text.substring(5).trim().toLowerCase();
         if (!wordToDel) return;
         const { error } = await supabase_db.from('banned_words').delete().eq('word', wordToDel);
-        if (!error) {
-            alert(`"${wordToDel}" has been removed from the database filter.`);
-        } else {
-            alert("Error removing word: " + error.message);
-        }
+        if (!error) alert(`"${wordToDel}" removed from filter list.`);
     } 
+    else if (text.startsWith('/unban ')) {
+        const userToUnban = text.substring(7).trim().toLowerCase();
+        if (!userToUnban) return;
+        const { error } = await supabase_db.from('banned_users').delete().eq('username', userToUnban);
+        if (!error) alert(`User "${userToUnban}" has been successfully unbanned.`);
+    }
     else if (text === '/listwords') {
-        if (bannedWordsCache.length === 0) {
-            alert("The filter blocklist table is currently empty.");
-        } else {
-            alert("Current Global Filter Words:\n" + bannedWordsCache.join(', '));
-        }
+        alert(bannedWordsCache.length === 0 ? "Filter is empty." : "Filtered Words:\n" + bannedWordsCache.join(', '));
     }
 }
 
 async function syncBannedWordsMap() {
     const { data } = await supabase_db.from('banned_words').select('word');
+    if (data) bannedWordsCache = data.map(item => item.word.toLowerCase());
+}
+
+async function syncBannedUsersMap() {
+    const { data } = await supabase_db.from('banned_users').select('*');
+    bannedUsersCache = {};
     if (data) {
-        bannedWordsCache = data.map(item => item.word.toLowerCase());
+        data.forEach(u => {
+            bannedUsersCache[u.username.toLowerCase()] = u;
+        });
     }
 }
 
@@ -130,28 +256,21 @@ async function renderActiveFlyers() {
     }
 
     let renderedHtml = "";
-
     for (let file of files) {
         if (file.name === ".emptyFolderPlaceholder") continue;
-
         const datePrefix = file.name.substring(0, 6);
-        
         if (/^\d{6}$/.test(datePrefix)) {
             const day = parseInt(datePrefix.substring(0, 2), 10);
             const month = parseInt(datePrefix.substring(2, 4), 10) - 1;
             const year = 2000 + parseInt(datePrefix.substring(4, 6), 10);
-
             const expirationDate = new Date(year, month, day);
-
             if (expirationDate < today) {
                 await supabase_db.storage.from('flyers').remove([file.name]);
                 continue;
             }
         }
-
         const { data: urlData } = supabase_db.storage.from('flyers').getPublicUrl(file.name);
         const titleClean = file.name.substring(7).replace(/\.[^/.]+$/, '').replace(/_/g, ' ');
-
         renderedHtml += `
             <div class="flyer-item" onclick="launchFlyerLightbox('${urlData.publicUrl}')">
                 <img src="${urlData.publicUrl}" alt="${titleClean}">
@@ -159,28 +278,22 @@ async function renderActiveFlyers() {
             </div>
         `;
     }
-
     flyerContainer.innerHTML = renderedHtml || `<p style="color:#666; text-align:center; padding-top:20px;">No current event flyers listed.</p>`;
 }
 
 function renderHelpContent(useNoticeboardGuide = false) {
     const activeDataset = useNoticeboardGuide ? noticeboardHelpInstructions : helpInstructions;
     const currentTitle = useNoticeboardGuide ? "📋 Noticeboard Help Guide" : "💡 Chat help and emoji codes";
-    
     const html = activeDataset.map(item => `
         <div class="help-item-card">
             <h5>${item.title}</h5>
             <p>${item.text}</p>
         </div>
     `).join('');
-    
     helpCardsContainer.innerHTML = html;
     helpCardsContainerFS.innerHTML = html;
-
     const fsTitleNode = helpCardsContainerFS.previousElementSibling;
-    if (fsTitleNode && fsTitleNode.classList.contains('col-title')) {
-        fsTitleNode.innerHTML = currentTitle;
-    }
+    if (fsTitleNode && fsTitleNode.classList.contains('col-title')) fsTitleNode.innerHTML = currentTitle;
 }
 
 function launchFlyerLightbox(imgSrc) {
@@ -193,22 +306,17 @@ function closeFlyerLightbox() {
 }
 
 function toggleChatFullscreen() {
-    if (isNoticeBoardActive) {
-        toggleNoticeBoardView();
-    }
-    const isFullscreen = document.body.classList.toggle('chat-is-fullscreen');
-    fsToggleBtn.innerText = isFullscreen ? "Exit Fullscreen" : "Maximize Chat";
+    if (isNoticeBoardActive) toggleNoticeBoardView();
+    document.body.classList.toggle('chat-is-fullscreen');
+    fsToggleBtn.innerText = document.body.classList.contains('chat-is-fullscreen') ? "Exit Fullscreen" : "Maximize Chat";
     anchorChatToBottom();
 }
 
 function initQuickEmojiCloud() {
     if (!window.emojiMapping) return;
-    const items = Object.keys(window.emojiMapping);
-    
-    const html = items.slice(0, 32).map(key => `
+    const html = Object.keys(window.emojiMapping).slice(0, 32).map(key => `
         <div class="emoji-grid-item" onclick="insertEmojiCode('${key}')">:${key}:</div>
     `).join('');
-    
     quickEmojiList.innerHTML = html;
     quickEmojiListFS.innerHTML = html;
 }
@@ -228,7 +336,6 @@ function toggleNoticeBoardView() {
 
     if (!isNoticeBoardActive) {
         document.body.classList.add('chat-is-fullscreen');
-        
         streamChat.style.display = 'none';
         inputContainer.style.display = 'none'; 
         securityDrawer.classList.remove('open'); 
@@ -236,24 +343,19 @@ function toggleNoticeBoardView() {
         mainTitle.innerText = "📋 Noticeboard";
         toggleBtn.innerText = "❌ Exit Noticeboard";
         isNoticeBoardActive = true;
-        
         if (emojiSectionFS) emojiSectionFS.style.display = 'none';
-        
         renderHelpContent(true);
         evaluateNoticeBoardForms();
         fetchNoticeBoardRecords();
     } else {
         document.body.classList.remove('chat-is-fullscreen');
-        
         noticePanel.style.display = 'none';
         streamChat.style.display = 'flex';
         inputContainer.style.display = 'flex';
         mainTitle.innerText = "🔊 Listener Lounge";
         toggleBtn.innerText = "📋 Noticeboard";
         isNoticeBoardActive = false;
-        
         if (emojiSectionFS) emojiSectionFS.style.display = 'block';
-        
         renderHelpContent(false);
         anchorChatToBottom();
     }
@@ -262,7 +364,6 @@ function toggleNoticeBoardView() {
 function evaluateNoticeBoardForms() {
     const currentUser = usernameInput.value.trim();
     const warningBanner = document.getElementById('notice-footer-warning');
-    
     const profile = profilesCache[currentUser];
     const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
     const isVerified = profile && profile.passkey === authorizedKey;
@@ -275,23 +376,17 @@ function evaluateNoticeBoardForms() {
 
     warningBanner.style.display = 'none';
     const powerLevel = parseInt(profile.power_level || 0);
-
     document.getElementById('form-boss').style.display = (powerLevel >= 2) ? 'block' : 'none';
     document.getElementById('form-selectors').style.display = (powerLevel >= 1) ? 'block' : 'none';
     document.getElementById('form-fambily').style.display = (powerLevel >= 0) ? 'block' : 'none';
 }
 
 async function fetchNoticeBoardRecords() {
-    const { data: records, error } = await supabase_db
-        .from('notice_board')
-        .select('*')
-        .order('created_at', { ascending: false });
-
+    const { data: records, error } = await supabase_db.from('notice_board').select('*').order('created_at', { ascending: false });
     if (!error && records) {
         document.getElementById('feed-boss').innerHTML = "";
         document.getElementById('feed-selectors').innerHTML = "";
         document.getElementById('feed-fambily').innerHTML = "";
-
         records.forEach(item => {
             const columnTarget = document.getElementById(`feed-${item.board_type}`);
             if (columnTarget) {
@@ -308,7 +403,6 @@ async function submitNoticeUpdate(boardType) {
     const currentUser = usernameInput.value.trim();
     const inputField = document.getElementById(`input-${boardType}`);
     let textContent = inputField.value.trim();
-    
     if (!textContent) return;
 
     const profile = profilesCache[currentUser];
@@ -319,8 +413,25 @@ async function submitNoticeUpdate(boardType) {
     if (boardType === 'boss' && pLevel < 2) return;
     if (boardType === 'selectors' && pLevel < 1) return;
 
-    // Direct inline sanitization matching against active cache matrix definitions
-    textContent = cleanSwearWords(textContent);
+    const banCheck = checkBanStatus(currentUser);
+    if (banCheck.isBanned) {
+        alert(banCheck.message);
+        return;
+    }
+
+    // Noticeboard filter trigger
+    if (containsSwearWords(textContent)) {
+        await handleUserStrike(currentUser, textContent);
+        inputField.value = "";
+        return; 
+    }
+
+    // Check if the user is submitting a structural text apology on the noticeboard
+    const wasApology = await checkAndProcessApology(currentUser, textContent);
+    if (wasApology) {
+        inputField.value = "";
+        return;
+    }
 
     const { error } = await supabase_db.from('notice_board').insert([{
         username: currentUser,
@@ -354,13 +465,11 @@ function syncDrawerName() {
         regEmailInput.style.display = "block";
         drawerSubmitBtn.innerText = "Lock Name Globally";
     }
-    
     if (isNoticeBoardActive) evaluateNoticeBoardForms();
 }
 
 async function toggleSecurityDrawer() {
-    const isOpen = securityDrawer.classList.toggle('open');
-    if (isOpen) {
+    if (securityDrawer.classList.toggle('open')) {
         syncDrawerName();
         regPasskeyInput.focus();
     }
@@ -380,7 +489,7 @@ async function handleSecuritySubmit() {
     if (profilesCache[currentName]) {
         if (profilesCache[currentName].passkey === passkey) {
             localStorage.setItem('tellstream_key_' + currentName, passkey);
-            alert("Identity checked and authorized! Locked to this device memory successfully.");
+            alert("Identity checked and authorized!");
             securityDrawer.classList.remove('open');
             chatBox.innerHTML = ""; 
             if (isNoticeBoardActive) evaluateNoticeBoardForms();
@@ -395,17 +504,9 @@ async function handleSecuritySubmit() {
     } else {
         let assignedLevel = 0;
         let assignedHover = "Tella Fambily";
-
-        if (currentName === "Banton") {
-            assignedLevel = 2;
-            assignedHover = "banton.org";
-        } else if (currentName === "BIG JOHN NEW000") {
-            assignedLevel = 2;
-            assignedHover = "the boss";
-        } else if (currentName === "Perfection") {
-            assignedLevel = 2;
-            assignedHover = "You done know";
-        }
+        if (currentName === "Banton") { assignedLevel = 2; assignedHover = "banton.org"; }
+        else if (currentName === "BIG JOHN NEW000") { assignedLevel = 2; assignedHover = "the boss"; }
+        else if (currentName === "Perfection") { assignedLevel = 2; assignedHover = "You done know"; }
 
         const { error } = await supabase_db.from('secured_profiles').insert([{
             username: currentName,
@@ -420,7 +521,7 @@ async function handleSecuritySubmit() {
             alert("Could not claim this name block profile target.");
         } else {
             localStorage.setItem('tellstream_key_' + currentName, passkey);
-            alert("Registration complete! Handle status successfully upgraded.");
+            alert("Registration complete!");
             await syncProfilesMap();
             securityDrawer.classList.remove('open');
             chatBox.innerHTML = "";
@@ -433,11 +534,7 @@ async function handleSecuritySubmit() {
 async function syncProfilesMap() {
     const { data } = await supabase_db.from('secured_profiles').select('*');
     profilesCache = {};
-    if (data) {
-        data.forEach(p => {
-            profilesCache[p.username] = p;
-        });
-    }
+    if (data) data.forEach(p => { profilesCache[p.username] = p; });
     syncDrawerName();
 }
 
@@ -456,11 +553,9 @@ function recoverStream() {
 function appendMessage(data) {
     const msgDiv = document.createElement('div');
     msgDiv.className = 'msg';
-    
     let messageContent = escapeHTML(data.message);
 
-    const codeRegex = /:([a-zA-Z0-9_-]+):/g;
-    messageContent = messageContent.replace(codeRegex, (match, code) => {
+    messageContent = messageContent.replace(/:([a-zA-Z0-9_-]+):/g, (match, code) => {
         const lowerCode = code.toLowerCase();
         if (window.emojiMapping && window.emojiMapping[lowerCode]) {
             return `<img src="${imgBaseUrl}${window.emojiMapping[lowerCode]}" alt="${code}" style="max-height: 48px; vertical-align: middle; margin: 2px; border-radius: 4px;">`;
@@ -473,24 +568,15 @@ function appendMessage(data) {
     let hoverAttribute = "";
 
     if (profile) {
-        if (profile.power_level >= 1) {
-            nameClass = "user-admin"; 
-        } else {
-            nameClass = "user-registered"; 
-        }
-        if (profile.hover_title) {
-            hoverAttribute = `title="${escapeHTML(profile.hover_title)}"`;
-        }
+        nameClass = (profile.power_level >= 1) ? "user-admin" : "user-registered";
+        if (profile.hover_title) hoverAttribute = `title="${escapeHTML(profile.hover_title)}"`;
     }
 
     msgDiv.innerHTML = `<div class="user ${nameClass}" ${hoverAttribute}>${escapeHTML(data.username)}</div><div>${messageContent}</div>`;
     chatBox.appendChild(msgDiv);
-    
     anchorChatToBottom();
     
-    while (chatBox.children.length > 50) {
-        chatBox.removeChild(chatBox.firstChild);
-    }
+    while (chatBox.children.length > 50) chatBox.removeChild(chatBox.firstChild);
 }
 
 function escapeHTML(str) {
@@ -499,42 +585,24 @@ function escapeHTML(str) {
 
 async function loadMessages() {
     const { data } = await supabase_db.from('messages').select('*').order('id', { ascending: true }).limit(40);
-    if (data) {
-        data.forEach(appendMessage);
-        anchorChatToBottom();
-    }
+    if (data) { data.forEach(appendMessage); anchorChatToBottom(); }
 }
 
-supabase_db.channel('public:messages')
-    .on('postgres_changes', { event: 'INSERT', pattern: 'public', table: 'messages' }, payload => {
-        appendMessage(payload.new);
-    }).subscribe();
-
-supabase_db.channel('public:secured_profiles')
-    .on('postgres_changes', { event: '*', pattern: 'public', table: 'secured_profiles' }, async () => {
-        await syncProfilesMap();
-    }).subscribe();
-
-supabase_db.channel('public:notice_board')
-    .on('postgres_changes', { event: 'INSERT', pattern: 'public', table: 'notice_board' }, payload => {
-        if (isNoticeBoardActive) fetchNoticeBoardRecords();
-    }).subscribe();
-
-// Realtime synchronizer channel mapping database updates immediately out across listener layout stacks
-supabase_db.channel('public:banned_words')
-    .on('postgres_changes', { event: '*', pattern: 'public', table: 'banned_words' }, async () => {
-        await syncBannedWordsMap();
-    }).subscribe();
+// Subscriptions
+supabase_db.channel('public:messages').on('postgres_changes', { event: 'INSERT', pattern: 'public', table: 'messages' }, payload => { appendMessage(payload.new); }).subscribe();
+supabase_db.channel('public:secured_profiles').on('postgres_changes', { event: '*', pattern: 'public', table: 'secured_profiles' }, async () => { await syncProfilesMap(); }).subscribe();
+supabase_db.channel('public:notice_board').on('postgres_changes', { event: 'INSERT', pattern: 'public', table: 'notice_board' }, payload => { if (isNoticeBoardActive) fetchNoticeBoardRecords(); }).subscribe();
+supabase_db.channel('public:banned_words').on('postgres_changes', { event: '*', pattern: 'public', table: 'banned_words' }, async () => { await syncBannedWordsMap(); }).subscribe();
+supabase_db.channel('public:banned_users').on('postgres_changes', { event: '*', pattern: 'public', table: 'banned_users' }, async () => { await syncBannedUsersMap(); }).subscribe();
 
 async function sendMessage() {
     const user = usernameInput.value.trim() || 'Listener';
     let text = messageInput.value.trim();
     if (!text) return;
 
-    // Check if a layout text parameter starts with an execution slash '/' command routing block
     if (text.startsWith('/')) {
         const profile = profilesCache[user];
-        if (profile && parseInt(profile.power_level || 0) >= 2) {
+        if (profile && parseInt(profile.power_level || 0) >= 1) { 
             messageInput.value = '';
             await handleAdminFilterCommand(text);
             return;
@@ -542,27 +610,38 @@ async function sendMessage() {
     }
 
     if (profilesCache[user]) {
-        const authorizedKey = localStorage.getItem('tellstream_key_' + user);
-        if (profilesCache[user].passkey !== authorizedKey) {
-            alert("This handle name has been secured! Please open the identity panel lock box to authorize this machine device layout.");
+        if (localStorage.getItem('tellstream_key_' + user) !== profilesCache[user].passkey) {
+            alert("This handle name has been secured! Please unlock the identity box.");
             toggleSecurityDrawer();
             return;
         }
     }
 
-    text = cleanSwearWords(text);
+    const banCheck = checkBanStatus(user);
+    if (banCheck.isBanned) {
+        alert(banCheck.message);
+        return;
+    }
+
+    if (containsSwearWords(text)) {
+        messageInput.value = '';
+        await handleUserStrike(user, text);
+        return; 
+    }
+
+    // Scan if they are posting a system strike apology text line
+    const wasApology = await checkAndProcessApology(user, text);
+    if (wasApology) {
+        messageInput.value = '';
+        return;
+    }
+
     messageInput.value = '';
     await supabase_db.from('messages').insert([{ username: user, message: text }]);
 }
 
 sendBtn.addEventListener('click', sendMessage);
-
-messageInput.addEventListener('keypress', (e) => { 
-    if (e.key === 'Enter' && !e.shiftKey) { 
-        e.preventDefault(); 
-        sendMessage(); 
-    } 
-});
+messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
 
 (async function initSystem() {
     renderFacebookFeed();
@@ -570,6 +649,7 @@ messageInput.addEventListener('keypress', (e) => {
     renderHelpContent(false);
     setTimeout(initQuickEmojiCloud, 500);
     await syncProfilesMap();
-    await syncBannedWordsMap(); // Pre-loads blocklist directly before drawing chat streams
+    await syncBannedWordsMap();
+    await syncBannedUsersMap();
     loadMessages();
 })();
