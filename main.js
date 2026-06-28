@@ -310,6 +310,7 @@ function closeFlyerLightbox() {
     modalTargetImg.src = "";
 }
 
+// Fullscreen toggle
 function toggleChatFullscreen() {
     if (isNoticeBoardActive) toggleNoticeBoardView();
     document.body.classList.toggle('chat-is-fullscreen');
@@ -668,36 +669,43 @@ messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.s
     renderHelpContent(false);
     setTimeout(initQuickEmojiCloud, 500);
     
-    // Explicitly await your full backend database profiles map first
+    // Explicitly await every database profile and configuration mapping sequence completely
     await syncProfilesMap();
     await syncBannedWordsMap();
     await syncBannedUsersMap();
-    loadMessages();
     
-    // Force direct DOM evaluation immediately following profile verification sync
+    // Await historical messages completely before firing greeting layouts
+    await loadMessages();
+    
+    // Synchronize UI locks based on the fully loaded session state parameters
     const currentUser = usernameInput.value.trim();
     syncDrawerName();
 
-    // Trigger greeting assembly matching the confirmed active session state
-    const profile = profilesCache[currentUser];
-    const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
-    const isLoggedIn = profile && profile.passkey === authorizedKey;
+    // Small timeout ensures the DOM has completely rendered the back history messages
+    setTimeout(() => {
+        const profile = profilesCache[currentUser];
+        const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
+        const isLoggedIn = profile && profile.passkey === authorizedKey;
 
-    const mainBody = "Greetings and welcome to Tellstream Chat. Please help keep this experience a positive blessing for one and all. Remember, at any time, users may have children around them. Bad blessings will be removed. One love from Tellstream.";
+        const mainBody = "Greetings and welcome to Tellstream Chat. Please help keep this experience a positive blessing for one and all. Remember, at any time, users may have children around them. Bad blessings will be removed. One love from Tellstream.";
 
-    if (isLoggedIn) {
-        const prefix = `Welcome back ${currentUser}, we are blessed you are here. Please continue to fulljoy the vibes. `;
-        const lastSeenKey = `tellstream_greeting_${currentUser.toLowerCase()}`;
-        const lastSeenDate = localStorage.getItem(lastSeenKey);
-        const todayDateStr = new Date().toDateString();
+        if (isLoggedIn) {
+            const prefix = `Welcome back ${currentUser}, we are blessed you are here. Please continue to fulljoy the vibes. `;
+            const lastSeenKey = `tellstream_greeting_${currentUser.toLowerCase()}`;
+            const lastSeenDate = localStorage.getItem(lastSeenKey);
+            const todayDateStr = new Date().toDateString();
 
-        if (lastSeenDate === todayDateStr) {
-            appendPrivateWelcomeGreeting(prefix);
+            if (lastSeenDate === todayDateStr) {
+                // Return visit same day: ONLY show the custom prefix message string
+                appendPrivateWelcomeGreeting(prefix);
+            } else {
+                // First visit of the day: Combined Prefix + Main Core rules layout block
+                appendPrivateWelcomeGreeting(prefix + mainBody);
+                localStorage.setItem(lastSeenKey, todayDateStr);
+            }
         } else {
-            appendPrivateWelcomeGreeting(prefix + mainBody);
-            localStorage.setItem(lastSeenKey, todayDateStr);
+            // Unregistered users always receive full guidelines body text tracking cards
+            appendPrivateWelcomeGreeting(mainBody);
         }
-    } else {
-        appendPrivateWelcomeGreeting(mainBody);
-    }
+    }, 200);
 })();
