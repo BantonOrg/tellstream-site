@@ -483,19 +483,17 @@ messageInput.addEventListener('keypress', (e) => {
         sendMessage(); 
     } 
 });
-
-(async function initSystem() {
-    renderFacebookFeed();
-    renderActiveFlyers();
-    renderHelpContent(false);
-    setTimeout(initQuickEmojiCloud, 500);
-    await syncProfilesMap();
-    loadMessages();
-})();
 function anchorChatToBottom() {
+    // Try targeting the exact message container
     const chatContainer = document.querySelector('.chat-messages');
+    
     if (chatContainer) {
-        // Instantly snaps the scrollbar track directly to the absolute bottom line
-        chatContainer.scrollTop = chatContainer.scrollHeight;
+        // Use setTimeout to force the browser to finish rendering images/elements first
+        setTimeout(() => {
+            chatContainer.scrollTo({
+                top: chatContainer.scrollHeight,
+                behavior: 'instant' // Snaps it instantly down without lag
+            });
+        }, 100); // 100ms delay ensures elements are fully drawn
     }
 }
