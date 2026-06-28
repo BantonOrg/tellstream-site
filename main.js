@@ -50,18 +50,7 @@ const noticeboardHelpInstructions = [
     { title: "Adding Updates", text: "Once verified via your secure local passkey profile drawer, choose a column target form to submit notifications directly." }
 ];
 
-function anchorChatToBottom() {
-    const chatContainer = document.querySelector('.chat-messages');
-    if (chatContainer) {
-        // Safe timeout delays rendering evaluation until custom asset nodes wrap cleanly
-        setTimeout(() => {
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }, 60);
-    }
-}
-
 function renderFacebookFeed() {
-    if (!fbFeedContainer) return;
     fbFeedContainer.innerHTML = facebookPosts.map(post => `
         <div class="fb-post-card" onclick="window.open('${post.link}', '_blank');">
             <div class="fb-post-meta">Tellstream Page • ${post.date}</div>
@@ -71,7 +60,6 @@ function renderFacebookFeed() {
 }
 
 async function renderActiveFlyers() {
-    if (!flyerContainer) return;
     const today = new Date();
     today.setDate(today.getDate() - 1);
     today.setHours(0,0,0,0);
@@ -128,10 +116,10 @@ function renderHelpContent(useNoticeboardGuide = false) {
         </div>
     `).join('');
     
-    if (helpCardsContainer) helpCardsContainer.innerHTML = html;
-    if (helpCardsContainerFS) helpCardsContainerFS.innerHTML = html;
+    helpCardsContainer.innerHTML = html;
+    helpCardsContainerFS.innerHTML = html;
 
-    const fsTitleNode = helpCardsContainerFS ? helpCardsContainerFS.previousElementSibling : null;
+    const fsTitleNode = helpCardsContainerFS.previousElementSibling;
     if (fsTitleNode && fsTitleNode.classList.contains('col-title')) {
         fsTitleNode.innerHTML = currentTitle;
     }
@@ -146,25 +134,13 @@ function closeFlyerLightbox() {
     modalTargetImg.src = "";
 }
 
-if (flyerModal) {
-    flyerModal.addEventListener('click', (e) => {
-        if (e.target === flyerModal || e.target.classList.contains('modal-close-btn')) {
-            closeFlyerLightbox();
-        }
-    });
-}
-
 function toggleChatFullscreen() {
     if (isNoticeBoardActive) {
         toggleNoticeBoardView();
     }
     const isFullscreen = document.body.classList.toggle('chat-is-fullscreen');
-    if (fsToggleBtn) fsToggleBtn.innerText = isFullscreen ? "Exit Fullscreen" : "Maximize Chat";
-    anchorChatToBottom();
-}
-
-if (fsToggleBtn) {
-    fsToggleBtn.addEventListener('click', toggleChatFullscreen);
+    fsToggleBtn.innerText = isFullscreen ? "Exit Fullscreen" : "Maximize Chat";
+    chatBox.scrollTop = chatBox.scrollHeight;
 }
 
 function initQuickEmojiCloud() {
@@ -175,8 +151,8 @@ function initQuickEmojiCloud() {
         <div class="emoji-grid-item" onclick="insertEmojiCode('${key}')">:${key}:</div>
     `).join('');
     
-    if (quickEmojiList) quickEmojiList.innerHTML = html;
-    if (quickEmojiListFS) quickEmojiListFS.innerHTML = html;
+    quickEmojiList.innerHTML = html;
+    quickEmojiListFS.innerHTML = html;
 }
 
 function insertEmojiCode(code) {
@@ -187,22 +163,23 @@ function insertEmojiCode(code) {
 function toggleNoticeBoardView() {
     const streamChat = document.getElementById('chatBox');
     const noticePanel = document.getElementById('noticeboard-view-panel');
-    const inputContainer = document.getElementById('chat-input-panel-container') || document.querySelector('.chat-input-area');
+    const inputContainer = document.getElementById('chat-input-panel-container');
     const mainTitle = document.getElementById('sidebarPanelTitle');
     const toggleBtn = document.getElementById('toggle-notice-btn');
-    const emojiSectionFS = quickEmojiListFS ? quickEmojiListFS.parentElement : null;
+    const emojiSectionFS = quickEmojiListFS.parentElement; // Finds the emoji wrap panel
 
     if (!isNoticeBoardActive) {
         document.body.classList.add('chat-is-fullscreen');
         
-        if (streamChat) streamChat.style.display = 'none';
-        if (inputContainer) inputContainer.style.display = 'none'; 
-        if (securityDrawer) securityDrawer.classList.remove('open'); 
-        if (noticePanel) noticePanel.style.display = 'flex';
-        if (mainTitle) mainTitle.innerText = "📋 Noticeboard";
-        if (toggleBtn) toggleBtn.innerText = "❌ Exit Noticeboard";
+        streamChat.style.display = 'none';
+        inputContainer.style.display = 'none'; 
+        securityDrawer.classList.remove('open'); 
+        noticePanel.style.display = 'flex';
+        mainTitle.innerText = "📋 Noticeboard";
+        toggleBtn.innerText = "❌ Exit Noticeboard";
         isNoticeBoardActive = true;
         
+        // Hide the emoji block completely on fullscreen noticeboard view
         if (emojiSectionFS) emojiSectionFS.style.display = 'none';
         
         renderHelpContent(true);
@@ -211,23 +188,19 @@ function toggleNoticeBoardView() {
     } else {
         document.body.classList.remove('chat-is-fullscreen');
         
-        if (noticePanel) noticePanel.style.display = 'none';
-        if (streamChat) streamChat.style.display = 'flex';
-        if (inputContainer) inputContainer.style.display = 'flex';
-        if (mainTitle) mainTitle.innerText = "🔊 Listener Lounge";
-        if (toggleBtn) toggleBtn.innerText = "📋 Noticeboard";
+        noticePanel.style.display = 'none';
+        streamChat.style.display = 'flex';
+        inputContainer.style.display = 'flex';
+        mainTitle.innerText = "🔊 Listener Lounge";
+        toggleBtn.innerText = "📋 Noticeboard";
         isNoticeBoardActive = false;
         
+        // Restore the emoji block when returning to lounge chat
         if (emojiSectionFS) emojiSectionFS.style.display = 'block';
         
         renderHelpContent(false);
-        anchorChatToBottom();
+        chatBox.scrollTop = chatBox.scrollHeight;
     }
-}
-
-const toggleNoticeBtn = document.getElementById('toggle-notice-btn');
-if (toggleNoticeBtn) {
-    toggleNoticeBtn.addEventListener('click', toggleNoticeBoardView);
 }
 
 function evaluateNoticeBoardForms() {
@@ -239,21 +212,17 @@ function evaluateNoticeBoardForms() {
     const isVerified = profile && profile.passkey === authorizedKey;
 
     if (!isVerified) {
-        if (warningBanner) warningBanner.style.display = 'block';
+        warningBanner.style.display = 'block';
         document.querySelectorAll('.notice-input-form-block').forEach(form => form.style.display = 'none');
         return;
     }
 
-    if (warningBanner) warningBanner.style.display = 'none';
+    warningBanner.style.display = 'none';
     const powerLevel = parseInt(profile.power_level || 0);
 
-    const fBoss = document.getElementById('form-boss');
-    const fSelectors = document.getElementById('form-selectors');
-    const fFambily = document.getElementById('form-fambily');
-
-    if (fBoss) fBoss.style.display = (powerLevel >= 2) ? 'block' : 'none';
-    if (fSelectors) fSelectors.style.display = (powerLevel >= 1) ? 'block' : 'none';
-    if (fFambily) fFambily.style.display = (powerLevel >= 0) ? 'block' : 'none';
+    document.getElementById('form-boss').style.display = (powerLevel >= 2) ? 'block' : 'none';
+    document.getElementById('form-selectors').style.display = (powerLevel >= 1) ? 'block' : 'none';
+    document.getElementById('form-fambily').style.display = (powerLevel >= 0) ? 'block' : 'none';
 }
 
 async function fetchNoticeBoardRecords() {
@@ -263,13 +232,9 @@ async function fetchNoticeBoardRecords() {
         .order('created_at', { ascending: false });
 
     if (!error && records) {
-        const fBoss = document.getElementById('feed-boss');
-        const fSelectors = document.getElementById('feed-selectors');
-        const fFambily = document.getElementById('feed-fambily');
-
-        if (fBoss) fBoss.innerHTML = "";
-        if (fSelectors) fSelectors.innerHTML = "";
-        if (fFambily) fFambily.innerHTML = "";
+        document.getElementById('feed-boss').innerHTML = "";
+        document.getElementById('feed-selectors').innerHTML = "";
+        document.getElementById('feed-fambily').innerHTML = "";
 
         records.forEach(item => {
             const columnTarget = document.getElementById(`feed-${item.board_type}`);
@@ -286,7 +251,7 @@ async function fetchNoticeBoardRecords() {
 async function submitNoticeUpdate(boardType) {
     const currentUser = usernameInput.value.trim();
     const inputField = document.getElementById(`input-${boardType}`);
-    const textContent = inputField ? inputField.value.trim() : "";
+    const textContent = inputField.value.trim();
     
     if (!textContent) return;
 
@@ -305,7 +270,7 @@ async function submitNoticeUpdate(boardType) {
     }]);
 
     if (!error) {
-        if (inputField) inputField.value = "";
+        inputField.value = "";
         fetchNoticeBoardRecords();
     } else {
         alert("Notice save failed: " + error.message);
@@ -314,42 +279,31 @@ async function submitNoticeUpdate(boardType) {
 
 function syncDrawerName() {
     const currentName = usernameInput.value.trim();
-    if (regNameInput) regNameInput.value = currentName;
-    if (reminderHintDisplay) reminderHintDisplay.style.display = "none";
+    regNameInput.value = currentName;
+    reminderHintDisplay.style.display = "none";
     
     if (profilesCache[currentName]) {
-        if (lockStatusBtn) lockStatusBtn.innerText = "🔒";
-        if (drawerTitle) drawerTitle.innerText = "Name is Secured: Log In";
-        if (regReminderInput) regReminderInput.style.display = "none";
-        if (regEmailInput) regEmailInput.style.display = "none";
-        if (drawerSubmitBtn) drawerSubmitBtn.innerText = "Authorize Device Local Memory";
+        lockStatusBtn.innerText = "🔒";
+        drawerTitle.innerText = "Name is Secured: Log In";
+        regReminderInput.style.display = "none";
+        regEmailInput.style.display = "none";
+        drawerSubmitBtn.innerText = "Authorize Device Local Memory";
     } else {
-        if (lockStatusBtn) lockStatusBtn.innerText = "🔓";
-        if (drawerTitle) drawerTitle.innerText = "Secure Current Handle";
-        if (regReminderInput) regReminderInput.style.display = "block";
-        if (regEmailInput) regEmailInput.style.display = "block";
-        if (drawerSubmitBtn) drawerSubmitBtn.innerText = "Lock Name Globally";
+        lockStatusBtn.innerText = "🔓";
+        drawerTitle.innerText = "Secure Current Handle";
+        regReminderInput.style.display = "block";
+        regEmailInput.style.display = "block";
+        drawerSubmitBtn.innerText = "Lock Name Globally";
     }
     
     if (isNoticeBoardActive) evaluateNoticeBoardForms();
 }
 
-if (usernameInput) {
-    usernameInput.addEventListener('input', syncDrawerName);
-}
-if (lockStatusBtn) {
-    lockStatusBtn.addEventListener('click', toggleSecurityDrawer);
-}
-if (drawerSubmitBtn) {
-    drawerSubmitBtn.addEventListener('click', handleSecuritySubmit);
-}
-
 async function toggleSecurityDrawer() {
-    if (!securityDrawer) return;
     const isOpen = securityDrawer.classList.toggle('open');
     if (isOpen) {
         syncDrawerName();
-        if (regPasskeyInput) regPasskeyInput.focus();
+        regPasskeyInput.focus();
     }
 }
 
@@ -369,12 +323,12 @@ async function handleSecuritySubmit() {
             localStorage.setItem('tellstream_key_' + currentName, passkey);
             alert("Identity checked and authorized! Locked to this device memory successfully.");
             securityDrawer.classList.remove('open');
-            if (chatBox) chatBox.innerHTML = ""; 
+            chatBox.innerHTML = ""; 
             if (isNoticeBoardActive) evaluateNoticeBoardForms();
             loadMessages();
         } else {
             alert("Invalid Passkey entry sequence.");
-            if (profilesCache[currentName].key_reminder && reminderHintDisplay) {
+            if (profilesCache[currentName].key_reminder) {
                 reminderHintDisplay.innerText = "Hint Clue: " + profilesCache[currentName].key_reminder;
                 reminderHintDisplay.style.display = "block";
             }
@@ -410,7 +364,7 @@ async function handleSecuritySubmit() {
             alert("Registration complete! Handle status successfully upgraded.");
             await syncProfilesMap();
             securityDrawer.classList.remove('open');
-            if (chatBox) chatBox.innerHTML = "";
+            chatBox.innerHTML = "";
             if (isNoticeBoardActive) evaluateNoticeBoardForms();
             loadMessages();
         }
@@ -428,13 +382,10 @@ async function syncProfilesMap() {
     syncDrawerName();
 }
 
-if (audioPlayer) {
-    audioPlayer.addEventListener('stalled', () => { recoverStream(); });
-    audioPlayer.addEventListener('error', () => { recoverStream(); });
-}
+audioPlayer.addEventListener('stalled', () => { recoverStream(); });
+audioPlayer.addEventListener('error', () => { recoverStream(); });
 
 function recoverStream() {
-    if (!audioPlayer) return;
     const currentSrc = audioPlayer.src;
     if (!currentSrc) return;
     audioPlayer.src = "";
@@ -444,7 +395,6 @@ function recoverStream() {
 }
 
 function appendMessage(data) {
-    if (!chatBox) return;
     const msgDiv = document.createElement('div');
     msgDiv.className = 'msg';
     
@@ -476,10 +426,7 @@ function appendMessage(data) {
 
     msgDiv.innerHTML = `<div class="user ${nameClass}" ${hoverAttribute}>${escapeHTML(data.username)}</div><div>${messageContent}</div>`;
     chatBox.appendChild(msgDiv);
-    
-    if (!isNoticeBoardActive) {
-        anchorChatToBottom();
-    }
+    if (!isNoticeBoardActive) chatBox.scrollTop = chatBox.scrollHeight;
     
     while (chatBox.children.length > 50) {
         chatBox.removeChild(chatBox.firstChild);
@@ -492,10 +439,7 @@ function escapeHTML(str) {
 
 async function loadMessages() {
     const { data } = await supabase_db.from('messages').select('*').order('id', { ascending: true }).limit(40);
-    if (data) {
-        data.forEach(appendMessage);
-        anchorChatToBottom();
-    }
+    if (data) data.forEach(appendMessage);
 }
 
 supabase_db.channel('public:messages')
@@ -531,25 +475,20 @@ async function sendMessage() {
     await supabase_db.from('messages').insert([{ username: user, message: text }]);
 }
 
-if (sendBtn) {
-    sendBtn.addEventListener('click', sendMessage);
-}
+sendBtn.addEventListener('click', sendMessage);
 
-if (messageInput) {
-    messageInput.addEventListener('keypress', (e) => { 
-        if (e.key === 'Enter' && !e.shiftKey) { 
-            e.preventDefault(); 
-            sendMessage(); 
-        } 
-    });
-}
-
-// 🚀 Core Engine Initialization Cycle
-document.addEventListener("DOMContentLoaded", async () => {
-    renderFacebookFeed();
-    await renderActiveFlyers();
-    renderHelpContent(false);
-    await syncProfilesMap();
-    initQuickEmojiCloud();
-    await loadMessages();
+messageInput.addEventListener('keypress', (e) => { 
+    if (e.key === 'Enter' && !e.shiftKey) { 
+        e.preventDefault(); 
+        sendMessage(); 
+    } 
 });
+
+(async function initSystem() {
+    renderFacebookFeed();
+    renderActiveFlyers();
+    renderHelpContent(false);
+    setTimeout(initQuickEmojiCloud, 500);
+    await syncProfilesMap();
+    loadMessages();
+})();
