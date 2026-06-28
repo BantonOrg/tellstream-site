@@ -44,7 +44,7 @@ function buildMasterDeck() {
         for (let j = i; j <= 6; j++) {
             deck.push({
                 id: `tile-${i}-${j}`,
-                title: `Domino ${i}:${j}`,
+                label: `[ ${i} - ${j} ]`,
                 top: i,
                 bottom: j
             });
@@ -53,22 +53,19 @@ function buildMasterDeck() {
     return deck;
 }
 
-// Builds a 3x3 sub-grid structure for either the top or bottom half of a tile
+// Builds a clean 3x3 sub-grid structure for either the top or bottom half of a tile
 function renderHalfGrid(halfValue) {
     const halfContainer = document.createElement('div');
     halfContainer.className = 'tile-half';
 
-    // Loop directly through the row/column matrix blocks
     for (let r = 1; r <= 3; r++) {
         for (let c = 1; c <= 3; c++) {
             const cell = document.createElement('div');
             cell.className = 'grid-cell';
             
-            // Set grid positions explicitly so browser renders coordinates perfectly
             cell.style.gridRowStart = r;
             cell.style.gridColumnStart = c;
 
-            // Check if this coordinate matches one of our 7 active positions and needs masking
             const isActivePip = activePipPositions.some(p => p.row === r && p.col === c);
             if (isActivePip && shouldHidePip(halfValue, r, c)) {
                 const maskPatch = document.createElement('div');
@@ -92,22 +89,33 @@ function displayFullTestingGrid() {
     const masterDeck = buildMasterDeck();
 
     masterDeck.forEach((tile) => {
+        // Create a structural wrapper to group the tile and text label cleanly together
+        const wrapper = document.createElement('div');
+        wrapper.className = 'debug-card-wrapper';
+
+        // Build the domino element itself
         const tileElement = document.createElement('div');
         tileElement.className = 'domino-item';
         tileElement.id = tile.id;
-        tileElement.setAttribute('title', tile.title);
 
-        // Append the top 3x3 layout, followed directly by the bottom 3x3 layout
         tileElement.appendChild(renderHalfGrid(tile.top));
         tileElement.appendChild(renderHalfGrid(tile.bottom));
 
-        gridContainer.appendChild(tileElement);
+        // Create the readable descriptor text underneath
+        const textLabel = document.createElement('div');
+        textLabel.className = 'debug-label';
+        textLabel.innerText = tile.label;
+
+        // Group them up inside the grid column
+        wrapper.appendChild(tileElement);
+        wrapper.appendChild(textLabel);
+        gridContainer.appendChild(wrapper);
     });
 }
 
 setTimeout(() => {
     startBtn.disabled = false;
-    startBtn.innerText = "TEST 3x3 MASK GRID";
+    startBtn.innerText = "TEST DIAGNOSTIC GRID";
 }, 1000);
 
 startBtn.addEventListener('click', () => {
