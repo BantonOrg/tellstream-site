@@ -2,23 +2,35 @@ const startBtn = document.getElementById('start-btn');
 const loadingScreen = document.getElementById('loading-screen');
 const gameTable = document.getElementById('game-table');
 
-// Define 10 fixed, non-overlapping coordinate slots around the screen edges (leaving center logo clear)
+// Adjusted slots to keep tiles inside the neon felt lines, away from the wooden border
 const tableSlots = [
-    { x: 10, y: 10, rot: 15 },   // Top Left
-    { x: 32, y: 8,  rot: -10 },  // Top Left-Center
-    { x: 55, y: 8,  rot: 5 },    // Top Right-Center
-    { x: 78, y: 12, rot: -20 },  // Top Right
+    { x: 14, y: 16, rot: 12 },   // Top Left
+    { x: 34, y: 14, rot: -8 },   // Top Left-Center
+    { x: 54, y: 14, rot: 6 },    // Top Right-Center
+    { x: 74, y: 17, rot: -15 },  // Top Right
     
-    { x: 8,  y: 42, rot: 90 },   // Far Left Middle
-    { x: 82, y: 45, rot: -90 },  // Far Right Middle
+    { x: 12, y: 44, rot: 90 },   // Left Mid Felt
+    { x: 78, y: 46, rot: -90 },  // Right Mid Felt
     
-    { x: 12, y: 75, rot: -5 },   // Bottom Left
-    { x: 35, y: 78, rot: 12 },   // Bottom Left-Center
-    { x: 58, y: 75, rot: -15 },  // Bottom Right-Center
-    { x: 80, y: 76, rot: 8 }     // Bottom Right
+    { x: 16, y: 70, rot: -6 },   // Bottom Left
+    { x: 36, y: 72, rot: 14 },   // Bottom Left-Center
+    { x: 56, y: 70, rot: -10 },  // Bottom Right-Center
+    { x: 76, y: 71, rot: 5 }     // Bottom Right
 ];
 
-// Build the mathematically unique 28-card Double-Six deck
+// Maps numbers 0-6 to percentage shifts for your vertical background mask asset
+// This assumes a vertical strip layout. If the offsets look inverted or misaligned, 
+// we can easily flip the order or fine-tune these percentages to lock it in.
+const maskYOffsets = {
+    0: '0%',
+    1: '16.66%',
+    2: '33.33%',
+    3: '50%',
+    4: '66.66%',
+    5: '83.33%',
+    6: '100%'
+};
+
 function generateDeck() {
     const deck = [];
     for (let i = 0; i <= 6; i++) {
@@ -29,7 +41,6 @@ function generateDeck() {
     return deck;
 }
 
-// Shuffle routine
 function shuffle(array) {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -38,37 +49,44 @@ function shuffle(array) {
     return array;
 }
 
-// Populate 10 random non-duplicate domino positions on the field without overlaps
 function spawnDisplayDominoes() {
-    // Clear out any old dominoes first
     gameTable.innerHTML = '';
 
     const fullDeck = generateDeck();
     const shuffledDeck = shuffle(fullDeck);
-    
-    // Snag exactly 10 unique elements for our display pool
     const displayPool = shuffledDeck.slice(0, 10);
-
-    // Shuffle the layout slots so dominoes land in different spots every match
     const shuffledSlots = shuffle([...tableSlots]);
 
     displayPool.forEach((tileData, index) => {
         const tileElement = document.createElement('div');
         tileElement.className = 'domino-item';
 
-        // Split the pool: 7 face up (indices 0-6), 3 face down (indices 7-9)
         if (index < 7) {
+            // 1. Set base front image (shows all 7 pips natively)
             tileElement.style.backgroundImage = "url('assets/dom_front.gif')";
             tileElement.dataset.top = tileData.top;
             tileElement.dataset.bottom = tileData.bottom;
+
+            // 2. Inject top half cover layer
+            const topMask = document.createElement('div');
+            topMask.className = 'pip-mask top-half';
+            topMask.style.backgroundImage = "url('assets/_DOM_PIPS.png')";
+            topMask.style.backgroundPosition = `0px ${maskYOffsets[tileData.top]}`;
+            tileElement.appendChild(topMask);
+
+            // 3. Inject bottom half cover layer
+            const bottomMask = document.createElement('div');
+            bottomMask.className = 'pip-mask bottom-half';
+            bottomMask.style.backgroundImage = "url('assets/_DOM_PIPS.png')";
+            bottomMask.style.backgroundPosition = `0px ${maskYOffsets[tileData.bottom]}`;
+            tileElement.appendChild(bottomMask);
+
         } else {
+            // Face down tiles
             tileElement.style.backgroundImage = "url('assets/dom_back.gif')";
         }
 
-        // Get one of our guaranteed safe, non-overlapping coordinates
         const slot = shuffledSlots[index];
-
-        // Apply coordinates flat onto the table layout
         tileElement.style.left = `${slot.x}%`;
         tileElement.style.top = `${slot.y}%`;
         tileElement.style.transform = `rotate(${slot.rot}deg)`;
@@ -77,16 +95,13 @@ function spawnDisplayDominoes() {
     });
 }
 
-// Simulate the asset loader completion
 setTimeout(() => {
     startBtn.disabled = false;
     startBtn.innerText = "START GAME";
 }, 1000);
 
-// Transition to gameplay surface and trigger the distribution
 startBtn.addEventListener('click', () => {
     loadingScreen.classList.add('hidden');
     gameTable.classList.remove('hidden');
-    
     spawnDisplayDominoes();
 });
