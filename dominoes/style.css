@@ -65,7 +65,7 @@ html, body {
 /* Master Tile Container */
 .domino-item {
     width: 48px;
-    height: 94px; /* Calibrated to standard proportions */
+    height: 94px;
     background-image: url('assets/dom_front.gif');
     background-size: 100% 100%;
     border-radius: 6px;
