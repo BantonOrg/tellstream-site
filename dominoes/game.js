@@ -2,26 +2,8 @@ const startBtn = document.getElementById('start-btn');
 const loadingScreen = document.getElementById('loading-screen');
 const gameTable = document.getElementById('game-table');
 
-// Adjusted slots to keep tiles inside the neon felt lines, away from the wooden border
-const tableSlots = [
-    { x: 14, y: 16, rot: 12 },   // Top Left
-    { x: 34, y: 14, rot: -8 },   // Top Left-Center
-    { x: 54, y: 14, rot: 6 },    // Top Right-Center
-    { x: 74, y: 17, rot: -15 },  // Top Right
-    
-    { x: 12, y: 44, rot: 90 },   // Left Mid Felt
-    { x: 78, y: 46, rot: -90 },  // Right Mid Felt
-    
-    { x: 16, y: 70, rot: -6 },   // Bottom Left
-    { x: 36, y: 72, rot: 14 },   // Bottom Left-Center
-    { x: 56, y: 70, rot: -10 },  // Bottom Right-Center
-    { x: 76, y: 71, rot: 5 }     // Bottom Right
-];
-
-// Maps numbers 0-6 to percentage shifts for your vertical background mask asset
-// This assumes a vertical strip layout. If the offsets look inverted or misaligned, 
-// we can easily flip the order or fine-tune these percentages to lock it in.
-const maskYOffsets = {
+// Horizontal sprite panel offsets (0 through 6)
+const maskXOffsets = {
     0: '0%',
     1: '16.66%',
     2: '33.33%',
@@ -31,77 +13,73 @@ const maskYOffsets = {
     6: '100%'
 };
 
-function generateDeck() {
+// Explicitly generate and label the 28 unique domino pieces
+function buildMasterDeck() {
     const deck = [];
     for (let i = 0; i <= 6; i++) {
         for (let j = i; j <= 6; j++) {
-            deck.push({ top: i, bottom: j });
+            deck.push({
+                id: `tile-${i}-${j}`,  // Machine ID
+                title: `Domino ${i}:${j}`, // Readable title
+                top: i,
+                bottom: j
+            });
         }
     }
     return deck;
 }
 
-function shuffle(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
-}
-
-function spawnDisplayDominoes() {
+// Render all 28 tiles neatly inside a layout grid
+function displayFullTestingGrid() {
     gameTable.innerHTML = '';
 
-    const fullDeck = generateDeck();
-    const shuffledDeck = shuffle(fullDeck);
-    const displayPool = shuffledDeck.slice(0, 10);
-    const shuffledSlots = shuffle([...tableSlots]);
+    // Create a neat grid container element
+    const gridContainer = document.createElement('div');
+    gridContainer.className = 'test-grid-container';
+    gameTable.appendChild(gridContainer);
 
-    displayPool.forEach((tileData, index) => {
+    const masterDeck = buildMasterDeck();
+
+    masterDeck.forEach((tile) => {
         const tileElement = document.createElement('div');
         tileElement.className = 'domino-item';
+        
+        // Label the elements physically so you can inspect them via DevTools
+        tileElement.id = tile.id;
+        tileElement.setAttribute('title', tile.title);
+        tileElement.dataset.top = tile.top;
+        tileElement.dataset.bottom = tile.bottom;
 
-        if (index < 7) {
-            // 1. Set base front image (shows all 7 pips natively)
-            tileElement.style.backgroundImage = "url('assets/dom_front.gif')";
-            tileElement.dataset.top = tileData.top;
-            tileElement.dataset.bottom = tileData.bottom;
+        // Base background template asset
+        tileElement.style.backgroundImage = "url('assets/dom_front.gif')";
 
-            // 2. Inject top half cover layer
-            const topMask = document.createElement('div');
-            topMask.className = 'pip-mask top-half';
-            topMask.style.backgroundImage = "url('assets/_DOM_PIPS.png')";
-            topMask.style.backgroundPosition = `0px ${maskYOffsets[tileData.top]}`;
-            tileElement.appendChild(topMask);
+        // Render the top half pip mask layer
+        const topMask = document.createElement('div');
+        topMask.className = 'pip-mask top-half';
+        topMask.style.backgroundImage = "url('assets/_DOM_PIPS.png')";
+        topMask.style.backgroundPosition = `${maskXOffsets[tile.top]} 0px`;
+        tileElement.appendChild(topMask);
 
-            // 3. Inject bottom half cover layer
-            const bottomMask = document.createElement('div');
-            bottomMask.className = 'pip-mask bottom-half';
-            bottomMask.style.backgroundImage = "url('assets/_DOM_PIPS.png')";
-            bottomMask.style.backgroundPosition = `0px ${maskYOffsets[tileData.bottom]}`;
-            tileElement.appendChild(bottomMask);
+        // Render the bottom half pip mask layer
+        const bottomMask = document.createElement('div');
+        bottomMask.className = 'pip-mask bottom-half';
+        bottomMask.style.backgroundImage = "url('assets/_DOM_PIPS.png')";
+        bottomMask.style.backgroundPosition = `${maskXOffsets[tile.bottom]} 0px`;
+        tileElement.appendChild(bottomMask);
 
-        } else {
-            // Face down tiles
-            tileElement.style.backgroundImage = "url('assets/dom_back.gif')";
-        }
-
-        const slot = shuffledSlots[index];
-        tileElement.style.left = `${slot.x}%`;
-        tileElement.style.top = `${slot.y}%`;
-        tileElement.style.transform = `rotate(${slot.rot}deg)`;
-
-        gameTable.appendChild(tileElement);
+        // Add the finished tile directly to the layout grid row
+        gridContainer.appendChild(tileElement);
     });
 }
 
+// Emulate loader ready sequence
 setTimeout(() => {
     startBtn.disabled = false;
-    startBtn.innerText = "START GAME";
+    startBtn.innerText = "TEST 28 DECK GRID";
 }, 1000);
 
 startBtn.addEventListener('click', () => {
     loadingScreen.classList.add('hidden');
     gameTable.classList.remove('hidden');
-    spawnDisplayDominoes();
+    displayFullTestingGrid();
 });
