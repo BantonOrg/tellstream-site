@@ -29,7 +29,7 @@ html, body {
 
 /* Stretches the table background completely to every corner */
 #game-table {
-    background: url('assets/loading-bg.jpg') center center no-repeat;
+    background: url('assets/table_bg.jpg') center center no-repeat;
     background-size: 100% 100%;
     position: relative;
 }
