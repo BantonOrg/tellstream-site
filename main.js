@@ -492,3 +492,10 @@ messageInput.addEventListener('keypress', (e) => {
     await syncProfilesMap();
     loadMessages();
 })();
+function anchorChatToBottom() {
+    const chatContainer = document.querySelector('.chat-messages');
+    if (chatContainer) {
+        // Instantly snaps the scrollbar track directly to the absolute bottom line
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+}
