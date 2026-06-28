@@ -103,7 +103,7 @@ function appendPrivateWelcomeGreeting() {
     systemDiv.className = 'msg';
     systemDiv.style.borderLeft = '4px solid #00E676'; // Clean blessing green border
     systemDiv.style.background = 'rgba(0, 230, 118, 0.05)';
-    systemDiv.innerHTML = `<div class="user" style="color: #00E676; font-weight: 900;">TELLA SECURITY</div><div style="color: #e0f2f1; font-size: 0.88rem; line-height: 1.4;">Greetings and welcome to Tellstream Chat. Please help keep this experience a positive blessing for one and all. Remember, at any time, users may have children around them. Bad blessings will be removed. One love from Tella Security. <br><span style="opacity: 0.4; font-size: 0.75rem; font-style: italic;">(Only you can see this welcome greeting)</span></div>`;
+    systemDiv.innerHTML = `<div class="user" style="color: #00E676; font-weight: 900;">TELLA SECURITY</div><div style="color: #e0f2f1; font-size: 0.88rem; line-height: 1.4;">Greetings and welcome to Tellstream Chat. Please help keep this experience a positive blessing for one and all. Remember, at any time, users may have children around them. Bad blessings will be removed. One love from Tellstream. <br><span style="opacity: 0.4; font-size: 0.75rem; font-style: italic;">(Only you can see this welcome greeting)</span></div>`;
     chatBox.appendChild(systemDiv);
     anchorChatToBottom();
 }
