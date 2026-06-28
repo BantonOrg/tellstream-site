@@ -30,6 +30,7 @@ const lockStatusBtn = document.getElementById('lockStatusBtn');
 const imgBaseUrl = "https://tellstream-emojis.pages.dev/";
 
 let profilesCache = {};
+let bannedWordsCache = []; // Global live array caching your Supabase blocklist
 let isNoticeBoardActive = false;
 
 const facebookPosts = [
@@ -49,6 +50,63 @@ const noticeboardHelpInstructions = [
     { title: "Authority Levels", text: "The Boss panel is restricted to Station Admins. Selectors manage the central schedule log." },
     { title: "Adding Updates", text: "Once verified via your secure local passkey profile drawer, choose a column target form to submit notifications directly." }
 ];
+
+// Fallback scroll system that handles render engine timing smoothly
+function anchorChatToBottom() {
+    const chatContainer = document.querySelector('.chat-messages') || chatBox;
+    if (chatContainer) {
+        setTimeout(() => {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }, 50);
+    }
+}
+
+// Intercepts message text data streams and silent-masks words inside cache boundaries
+function cleanSwearWords(text) {
+    if (bannedWordsCache.length === 0) return text;
+    // Escapes special characters to keep regex clean and searches with explicit word boundaries (\b)
+    const escapedWords = bannedWordsCache.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+    const pattern = new RegExp(`\\b(${escapedWords})\\b`, 'gi');
+    return text.replace(pattern, '****');
+}
+
+// Special Admin Command Routing Core Engine
+async function handleAdminFilterCommand(text) {
+    if (text.startsWith('/add ')) {
+        const wordToAdd = text.substring(5).trim().toLowerCase();
+        if (!wordToAdd) return;
+        const { error } = await supabase_db.from('banned_words').insert([{ word: wordToAdd }]);
+        if (!error) {
+            alert(`"${wordToAdd}" has been added to the database filter.`);
+        } else {
+            alert("Error adding word: " + error.message);
+        }
+    } 
+    else if (text.startsWith('/del ')) {
+        const wordToDel = text.substring(5).trim().toLowerCase();
+        if (!wordToDel) return;
+        const { error } = await supabase_db.from('banned_words').delete().eq('word', wordToDel);
+        if (!error) {
+            alert(`"${wordToDel}" has been removed from the database filter.`);
+        } else {
+            alert("Error removing word: " + error.message);
+        }
+    } 
+    else if (text === '/listwords') {
+        if (bannedWordsCache.length === 0) {
+            alert("The filter blocklist table is currently empty.");
+        } else {
+            alert("Current Global Filter Words:\n" + bannedWordsCache.join(', '));
+        }
+    }
+}
+
+async function syncBannedWordsMap() {
+    const { data } = await supabase_db.from('banned_words').select('word');
+    if (data) {
+        bannedWordsCache = data.map(item => item.word.toLowerCase());
+    }
+}
 
 function renderFacebookFeed() {
     fbFeedContainer.innerHTML = facebookPosts.map(post => `
@@ -140,7 +198,7 @@ function toggleChatFullscreen() {
     }
     const isFullscreen = document.body.classList.toggle('chat-is-fullscreen');
     fsToggleBtn.innerText = isFullscreen ? "Exit Fullscreen" : "Maximize Chat";
-    chatBox.scrollTop = chatBox.scrollHeight;
+    anchorChatToBottom();
 }
 
 function initQuickEmojiCloud() {
@@ -166,7 +224,7 @@ function toggleNoticeBoardView() {
     const inputContainer = document.getElementById('chat-input-panel-container');
     const mainTitle = document.getElementById('sidebarPanelTitle');
     const toggleBtn = document.getElementById('toggle-notice-btn');
-    const emojiSectionFS = quickEmojiListFS.parentElement; // Finds the emoji wrap panel
+    const emojiSectionFS = quickEmojiListFS.parentElement;
 
     if (!isNoticeBoardActive) {
         document.body.classList.add('chat-is-fullscreen');
@@ -179,7 +237,6 @@ function toggleNoticeBoardView() {
         toggleBtn.innerText = "❌ Exit Noticeboard";
         isNoticeBoardActive = true;
         
-        // Hide the emoji block completely on fullscreen noticeboard view
         if (emojiSectionFS) emojiSectionFS.style.display = 'none';
         
         renderHelpContent(true);
@@ -195,11 +252,10 @@ function toggleNoticeBoardView() {
         toggleBtn.innerText = "📋 Noticeboard";
         isNoticeBoardActive = false;
         
-        // Restore the emoji block when returning to lounge chat
         if (emojiSectionFS) emojiSectionFS.style.display = 'block';
         
         renderHelpContent(false);
-        chatBox.scrollTop = chatBox.scrollHeight;
+        anchorChatToBottom();
     }
 }
 
@@ -251,7 +307,7 @@ async function fetchNoticeBoardRecords() {
 async function submitNoticeUpdate(boardType) {
     const currentUser = usernameInput.value.trim();
     const inputField = document.getElementById(`input-${boardType}`);
-    const textContent = inputField.value.trim();
+    let textContent = inputField.value.trim();
     
     if (!textContent) return;
 
@@ -262,6 +318,9 @@ async function submitNoticeUpdate(boardType) {
     const pLevel = parseInt(profile.power_level || 0);
     if (boardType === 'boss' && pLevel < 2) return;
     if (boardType === 'selectors' && pLevel < 1) return;
+
+    // Direct inline sanitization matching against active cache matrix definitions
+    textContent = cleanSwearWords(textContent);
 
     const { error } = await supabase_db.from('notice_board').insert([{
         username: currentUser,
@@ -426,7 +485,8 @@ function appendMessage(data) {
 
     msgDiv.innerHTML = `<div class="user ${nameClass}" ${hoverAttribute}>${escapeHTML(data.username)}</div><div>${messageContent}</div>`;
     chatBox.appendChild(msgDiv);
-    if (!isNoticeBoardActive) chatBox.scrollTop = chatBox.scrollHeight;
+    
+    anchorChatToBottom();
     
     while (chatBox.children.length > 50) {
         chatBox.removeChild(chatBox.firstChild);
@@ -439,7 +499,10 @@ function escapeHTML(str) {
 
 async function loadMessages() {
     const { data } = await supabase_db.from('messages').select('*').order('id', { ascending: true }).limit(40);
-    if (data) data.forEach(appendMessage);
+    if (data) {
+        data.forEach(appendMessage);
+        anchorChatToBottom();
+    }
 }
 
 supabase_db.channel('public:messages')
@@ -457,10 +520,26 @@ supabase_db.channel('public:notice_board')
         if (isNoticeBoardActive) fetchNoticeBoardRecords();
     }).subscribe();
 
+// Realtime synchronizer channel mapping database updates immediately out across listener layout stacks
+supabase_db.channel('public:banned_words')
+    .on('postgres_changes', { event: '*', pattern: 'public', table: 'banned_words' }, async () => {
+        await syncBannedWordsMap();
+    }).subscribe();
+
 async function sendMessage() {
     const user = usernameInput.value.trim() || 'Listener';
-    const text = messageInput.value.trim();
+    let text = messageInput.value.trim();
     if (!text) return;
+
+    // Check if a layout text parameter starts with an execution slash '/' command routing block
+    if (text.startsWith('/')) {
+        const profile = profilesCache[user];
+        if (profile && parseInt(profile.power_level || 0) >= 2) {
+            messageInput.value = '';
+            await handleAdminFilterCommand(text);
+            return;
+        }
+    }
 
     if (profilesCache[user]) {
         const authorizedKey = localStorage.getItem('tellstream_key_' + user);
@@ -471,6 +550,7 @@ async function sendMessage() {
         }
     }
 
+    text = cleanSwearWords(text);
     messageInput.value = '';
     await supabase_db.from('messages').insert([{ username: user, message: text }]);
 }
@@ -490,5 +570,6 @@ messageInput.addEventListener('keypress', (e) => {
     renderHelpContent(false);
     setTimeout(initQuickEmojiCloud, 500);
     await syncProfilesMap();
+    await syncBannedWordsMap(); // Pre-loads blocklist directly before drawing chat streams
     loadMessages();
 })();
