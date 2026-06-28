@@ -34,6 +34,18 @@ let bannedWordsCache = [];
 let bannedUsersCache = {}; 
 let isNoticeBoardActive = false;
 
+// Populate saved handle from memory immediately on start
+if (usernameInput) {
+    const savedName = localStorage.getItem('tellstream_saved_username');
+    if (savedName) usernameInput.value = savedName;
+    
+    // Save handle automatically if they manually type/change it
+    usernameInput.addEventListener('input', () => {
+        localStorage.setItem('tellstream_saved_username', usernameInput.value.trim());
+        syncDrawerName();
+    });
+}
+
 const facebookPosts = [
     { id: 1, date: "Just now", text: "Big John is locked and loaded live in the studio! Lock into tellstream.banton.org right now and fire up the lounge chat! 🎚️🔥", link: "https://www.facebook.com/tellstream.dem" },
     { id: 2, date: "Yesterday", text: "Big respect to all the listeners locking in from around the globe. Drop your shoutouts and tell-a-wheel selectors directly inside the main chat line! 🔊🎧", link: "https://www.facebook.com/tellstream.dem" },
@@ -96,7 +108,6 @@ function checkBanStatus(username) {
     return { isBanned: false };
 }
 
-// Handles custom private greeting compilation logic using layout arguments
 function appendPrivateWelcomeGreeting(compiledMessageText) {
     if (!chatBox) return;
     const systemDiv = document.createElement('div');
@@ -481,6 +492,7 @@ async function handleSecuritySubmit() {
     if (profilesCache[currentName]) {
         if (profilesCache[currentName].passkey === passkey) {
             localStorage.setItem('tellstream_key_' + currentName, passkey);
+            localStorage.setItem('tellstream_saved_username', currentName);
             alert("Identity checked and authorized!");
             securityDrawer.classList.remove('open');
             chatBox.innerHTML = ""; 
@@ -513,6 +525,7 @@ async function handleSecuritySubmit() {
             alert("Could not claim this name block profile target.");
         } else {
             localStorage.setItem('tellstream_key_' + currentName, passkey);
+            localStorage.setItem('tellstream_saved_username', currentName);
             alert("Registration complete!");
             await syncProfilesMap();
             securityDrawer.classList.remove('open');
@@ -654,37 +667,37 @@ messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.s
     renderActiveFlyers();
     renderHelpContent(false);
     setTimeout(initQuickEmojiCloud, 500);
+    
+    // Explicitly await your full backend database profiles map first
     await syncProfilesMap();
     await syncBannedWordsMap();
     await syncBannedUsersMap();
     loadMessages();
     
-    // Split greeting configuration loop matrix
-    setTimeout(() => {
-        const currentUser = usernameInput.value.trim();
-        const profile = profilesCache[currentUser];
-        const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
-        const isLoggedIn = profile && profile.passkey === authorizedKey;
+    // Force direct DOM evaluation immediately following profile verification sync
+    const currentUser = usernameInput.value.trim();
+    syncDrawerName();
 
-        const mainBody = "Greetings and welcome to Tellstream Chat. Please help keep this experience a positive blessing for one and all. Remember, at any time, users may have children around them. Bad blessings will be removed. One love from Tellstream.";
+    // Trigger greeting assembly matching the confirmed active session state
+    const profile = profilesCache[currentUser];
+    const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
+    const isLoggedIn = profile && profile.passkey === authorizedKey;
 
-        if (isLoggedIn) {
-            const prefix = `Welcome back ${currentUser}, we are blessed you are here. Please continue to fulljoy the vibes. `;
-            const lastSeenKey = `tellstream_greeting_${currentUser.toLowerCase()}`;
-            const lastSeenDate = localStorage.getItem(lastSeenKey);
-            const todayDateStr = new Date().toDateString();
+    const mainBody = "Greetings and welcome to Tellstream Chat. Please help keep this experience a positive blessing for one and all. Remember, at any time, users may have children around them. Bad blessings will be removed. One love from Tellstream.";
 
-            if (lastSeenDate === todayDateStr) {
-                // Return visit same day: ONLY show the prefix
-                appendPrivateWelcomeGreeting(prefix);
-            } else {
-                // First visit of the day: Prefix + Rules body text
-                appendPrivateWelcomeGreeting(prefix + mainBody);
-                localStorage.setItem(lastSeenKey, todayDateStr);
-            }
+    if (isLoggedIn) {
+        const prefix = `Welcome back ${currentUser}, we are blessed you are here. Please continue to fulljoy the vibes. `;
+        const lastSeenKey = `tellstream_greeting_${currentUser.toLowerCase()}`;
+        const lastSeenDate = localStorage.getItem(lastSeenKey);
+        const todayDateStr = new Date().toDateString();
+
+        if (lastSeenDate === todayDateStr) {
+            appendPrivateWelcomeGreeting(prefix);
         } else {
-            // Unregistered guest: Show entire rules body every time
-            appendPrivateWelcomeGreeting(mainBody);
+            appendPrivateWelcomeGreeting(prefix + mainBody);
+            localStorage.setItem(lastSeenKey, todayDateStr);
         }
-    }, 800);
+    } else {
+        appendPrivateWelcomeGreeting(mainBody);
+    }
 })();
