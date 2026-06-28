@@ -1,4 +1,6 @@
-/* Reset defaults and lock the view */
+/* ==========================================================================
+   1. RESET & CORE VIEWPORT LOCK
+   ========================================================================== */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -27,14 +29,26 @@ html, body {
     display: none !important;
 }
 
-/* Stretches the table background completely to every corner */
+/* ==========================================================================
+   2. GAME SURFACE & BACKGROUND
+   ========================================================================== */
 #game-table {
     background: url('assets/table_bg.jpg') center center no-repeat;
     background-size: 100% 100%;
     position: relative;
 }
 
-/* Start Button Style */
+/* ==========================================================================
+   3. LOADING SCREEN UI
+   ========================================================================== */
+#loading-screen {
+    background-color: #000;
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    padding: 20px;
+}
+
 #start-btn {
     padding: 15px 40px;
     font-size: 1.2rem;
@@ -44,6 +58,7 @@ html, body {
     border-radius: 25px;
     font-weight: bold;
     color: #000;
+    transition: background 0.2s ease;
 }
 
 #start-btn:disabled {
@@ -52,9 +67,43 @@ html, body {
     cursor: not-allowed;
 }
 
-/* --- Mobile Rotation Guard Overlay --- */
+/* ==========================================================================
+   4. DOMINO CONTAINERS & PIP MASKING LAYERS
+   ========================================================================== */
+.domino-item {
+    position: absolute;
+    width: 60px;
+    height: 120px;
+    background-size: 100% 100%;
+    border-radius: 6px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+    overflow: hidden; /* Keeps the top/bottom mask elements bound inside the tile corners */
+}
+
+/* Base styles for the dynamic pip-shifter sheets */
+.pip-mask {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 50%; /* Splitting the tile perfectly in two halves */
+    background-size: 100% 700%; /* Scales the 7-row vertical strip properly relative to the half-height */
+    background-repeat: no-repeat;
+    pointer-events: none; /* Keeps clicks passing straight through to the tile container */
+}
+
+.pip-mask.top-half {
+    top: 0;
+}
+
+.pip-mask.bottom-half {
+    bottom: 0;
+}
+
+/* ==========================================================================
+   5. MOBILE ROTATION GUARD OVERLAY
+   ========================================================================== */
 #rotation-overlay {
-    display: none;
+    display: none; /* Kept dormant on desktop / landscape mobile views */
     position: fixed;
     top: 0;
     left: 0;
@@ -62,13 +111,14 @@ html, body {
     height: 100vh;
     background: rgba(10, 10, 10, 0.95);
     color: #fff;
-    z-index: 9999;
+    z-index: 9999; /* Higher priority than any play assets */
     justify-content: center;
     align-items: center;
     text-align: center;
     padding: 20px;
 }
 
+/* Triggered layout filter for narrow smartphone screen widths turned vertical */
 @media screen and (max-width: 932px) and (orientation: portrait) {
     #rotation-overlay {
         display: flex;
@@ -84,14 +134,4 @@ html, body {
     font-size: 1rem;
     line-height: 1.4;
     max-width: 400px;
-}
-
-/* Basic sizing container for the test dominoes */
-.domino-item {
-    position: absolute;
-    width: 60px;
-    height: 120px;
-    background-size: 100% 100%;
-    border-radius: 6px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
 }
