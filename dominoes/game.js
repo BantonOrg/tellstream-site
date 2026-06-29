@@ -1,5 +1,5 @@
 // ==========================================================================
-// Tellstream Dominoes - Scenario 1: Single-to-Single Path Test
+// Tellstream Dominoes - Scenario 2: Single-to-Double Path Test
 // ==========================================================================
 
 const gameTable = document.getElementById('game-table');
@@ -41,16 +41,16 @@ const TRACK = {
     rightX:  2170
 };
 
-// Pure singles sequence approaching and climbing the corner
+// Sequence where a Single is followed by a Double to turn the corner
 function buildTestSequence() {
     return [
         { id: 'tile-6-5', top: 6, bottom: 5, isDouble: false },
         { id: 'tile-5-4', top: 5, bottom: 4, isDouble: false },
         { id: 'tile-4-3', top: 4, bottom: 3, isDouble: false },
         { id: 'tile-3-2', top: 3, bottom: 2, isDouble: false }, // Last flat horizontal single
-        { id: 'tile-2-1', top: 2, bottom: 1, isDouble: false }, // The Corner Turner (Single)
-        { id: 'tile-1-0', top: 1, bottom: 0, isDouble: false }, // Up vertical wall
-        { id: 'tile-0-3', top: 0, bottom: 3, isDouble: false }
+        { id: 'tile-2-2', top: 2, bottom: 2, isDouble: true },  // The Corner Turner (Double)
+        { id: 'tile-2-1', top: 2, bottom: 1, isDouble: false }, // Up vertical wall
+        { id: 'tile-1-0', top: 1, bottom: 0, isDouble: false }
     ];
 }
 
@@ -74,33 +74,34 @@ function calculateSequentialTrack(deck) {
     let prevTile = null;
 
     deck.forEach((tile, index) => {
-        // Defaults for flat horizontal singles
-        let width = TILE_BASE_H;
-        let height = TILE_BASE_W;
-        let angle = 90;
+        // Default layout parameters for horizontal pieces
+        let width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+        let height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+        let angle = tile.isDouble ? 0 : 90;
 
         if (index > 0) {
             if (direction === 'left') {
                 const stepX = currentX - (prevTile.w / 2) - (width / 2);
                 
-                // Trigger when entering the corner zone near left track line
+                // Trigger corner check when approaching left track line
                 if (stepX - (width / 2) <= TRACK.leftX + 50) {
                     direction = 'up';
                     
-                    // Stand the single tall for vertical movement
-                    width = TILE_BASE_W;
-                    height = TILE_BASE_H;
-                    angle = 0;
+                    // Incoming tile is a double turning the corner vertically
+                    // Standing double dimension setup (crosswise to vertical flow)
+                    width = TILE_BASE_H;
+                    height = TILE_BASE_W;
+                    angle = 90;
 
-                    // Option A: Stack on top face
-                    const optionA_X = currentX; 
+                    // Option A: Stack on top face of the previous single
+                    const optionA_X = currentX;
                     const optionA_X_Dist = Math.abs(optionA_X - TRACK.leftX);
                     
-                    // Option B: Snap to side face
-                    const optionB_X = currentX - (prevTile.w / 2) - (TILE_BASE_W / 2);
+                    // Option B: Snap to side face of the previous single
+                    const optionB_X = currentX - (prevTile.w / 2) - (width / 2);
                     const optionB_X_Dist = Math.abs(optionB_X - TRACK.leftX);
                     
-                    // Magnet Check: Choose the layout configuration closest to the path line
+                    // Magnet Check: Choose layout option closest to the path line
                     if (optionA_X_Dist < optionB_X_Dist) {
                         currentX = optionA_X;
                         currentY = TRACK.bottomY - (prevTile.h / 2) - (height / 2);
@@ -113,9 +114,10 @@ function calculateSequentialTrack(deck) {
                 }
             } 
             else if (direction === 'up') {
-                width = TILE_BASE_W;
-                height = TILE_BASE_H;
-                angle = 0;
+                // Moving up vertical wall
+                width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+                height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+                angle = tile.isDouble ? 90 : 0;
                 currentY -= (prevTile.h / 2) + (height / 2);
             }
         } else {
@@ -153,7 +155,7 @@ function initDirectCanvas() {
     boardContainer.style.position = 'absolute';
     gameTable.appendChild(boardContainer);
 
-    // Render underlying layout track line
+    // Render path track guide line
     const canvas = document.createElement('canvas');
     canvas.width = BOARD_NATIVE_W;
     canvas.height = BOARD_NATIVE_H;
