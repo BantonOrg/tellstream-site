@@ -1,16 +1,16 @@
 // ==========================================================================
-// Tellstream Dominoes - Raw Asset Layout Canvas (Fixed)
+// Tellstream Dominoes - Bottom-to-Left Corner Test Track
 // ==========================================================================
 
-const startBtn = document.getElementById('start-btn');
-const loadingScreen = document.getElementById('loading-screen');
 const gameTable = document.getElementById('game-table');
+const loadingScreen = document.getElementById('loading-screen');
 
 const BOARD_NATIVE_W = 2730;
 const BOARD_NATIVE_H = 1536;
 const canvasW = 597;
 const canvasH = 1171;
 
+// 75% Scale Metrics
 const TILE_BASE_W = 90;
 const TILE_BASE_H = 176;
 
@@ -34,20 +34,18 @@ const bottomPipMap = [
     { name: 'bottom-right', x: 469, y: 1042, hideFor: [0, 1] }
 ];
 
-function buildMasterDeck() {
-    const deck = [];
-    for (let i = 0; i <= 6; i++) {
-        for (let j = i; j <= 6; j++) {
-            deck.push({
-                id: `tile-${i}-${j}`,
-                label: `[ ${i} - ${j} ]`,
-                top: i,
-                bottom: j,
-                isDouble: i === j
-            });
-        }
-    }
-    return deck;
+// A dedicated test sequence running along the bottom and climbing the left wall
+function buildTestSequence() {
+    return [
+        { id: 'tile-6-6', top: 6, bottom: 6, isDouble: true },
+        { id: 'tile-6-5', top: 6, bottom: 5, isDouble: false },
+        { id: 'tile-5-5', top: 5, bottom: 5, isDouble: true },
+        { id: 'tile-5-4', top: 5, bottom: 4, isDouble: false },
+        { id: 'tile-4-4', top: 4, bottom: 4, isDouble: true }, // The Corner Piece
+        { id: 'tile-4-2', top: 4, bottom: 2, isDouble: false }, // Heading Up
+        { id: 'tile-2-2', top: 2, bottom: 2, isDouble: true },
+        { id: 'tile-2-1', top: 2, bottom: 1, isDouble: false }
+    ];
 }
 
 function applyPipMasks(tileElement, value, coordinateMap) {
@@ -62,32 +60,79 @@ function applyPipMasks(tileElement, value, coordinateMap) {
     });
 }
 
-/**
- * MANUAL RAW CANVAS PLACEMENT MAP
- * Edit the X, Y, and Angle values here directly to arrange your sample patterns.
- */
-function getManualCoordinates() {
-    return {
-        'tile-6-6': { x: 500,  y: 400,  angle: 0   }, // Vertical Double
-        'tile-6-5': { x: 650,  y: 400,  angle: 90  }, // Horizontal Single
-        'tile-5-5': { x: 800,  y: 400,  angle: 0   },
-        'tile-5-4': { x: 950,  y: 400,  angle: 90  },
-        'tile-4-4': { x: 1100, y: 400,  angle: 0   },
-        'tile-4-3': { x: 1250, y: 400,  angle: 90  },
-        'tile-3-3': { x: 1400, y: 400,  angle: 0   },
-        
-        // Next row coordinates for staging your test pieces
-        'tile-3-2': { x: 500,  y: 650,  angle: 90  },
-        'tile-2-2': { x: 650,  y: 650,  angle: 0   },
-        'tile-2-1': { x: 800,  y: 650,  angle: 90  },
-        'tile-1-1': { x: 950,  y: 650,  angle: 0   },
-        'tile-1-0': { x: 1100, y: 650,  angle: 90  }
-    };
+function calculateSequentialTrack(deck) {
+    const layoutMap = {};
+    
+    const LEFT_BOUND_X = 415;
+    const BOTTOM_BOUND_Y = 1160;
+
+    // Start on the bottom track, positioned safely inward to move left
+    let currentX = 1400;
+    let currentY = BOTTOM_BOUND_Y;
+    let direction = 'left';
+    let prevTile = null;
+
+    deck.forEach((tile, index) => {
+        let width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+        let height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+        let angle = tile.isDouble ? 0 : 90;
+
+        if (direction === 'up') {
+            width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+            height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+            angle = tile.isDouble ? 90 : 0;
+        }
+
+        if (index > 0) {
+            const prevWidth = prevTile.isDouble ? (prevTile.dir === 'up' ? TILE_BASE_H : TILE_BASE_W) : (prevTile.dir === 'up' ? TILE_BASE_W : TILE_BASE_H);
+            const prevHeight = prevTile.isDouble ? (prevTile.dir === 'up' ? TILE_BASE_W : TILE_BASE_H) : (prevTile.dir === 'up' ? TILE_BASE_H : TILE_BASE_W);
+
+            if (direction === 'left') {
+                currentX -= (prevWidth / 2) + (width / 2);
+                
+                // Trigger the Corner state when hitting the left lane threshold
+                if (currentX - (width / 2) < LEFT_BOUND_X + 100) { 
+                    direction = 'up';
+                    
+                    // Convert parameters immediately for the vertical turn
+                    width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+                    height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+                    angle = tile.isDouble ? 90 : 0;
+
+                    // Side-snap logic: Place this turning tile AT THE SIDE of the horizontal piece
+                    currentX = (currentX + (prevWidth / 2) + (width / 2)) - (prevWidth / 2) - (width / 2);
+                    currentY = BOTTOM_BOUND_Y; 
+                }
+            }
+            else if (direction === 'up') {
+                // Stack vertically moving up from the side-anchored corner tile
+                currentY -= (prevHeight / 2) + (height / 2);
+            }
+        } else {
+            currentX -= (width / 2);
+        }
+
+        layoutMap[tile.id] = { x: currentX, y: currentY, w: width, h: height, angle: angle, dir: direction };
+        prevTile = { isDouble: tile.isDouble, dir: direction };
+    });
+
+    return layoutMap;
 }
 
-function displayDynamicMatchTable() {
+function resizeGameTableContainer() {
+    const container = document.querySelector('.match-board-container');
+    if (!container) return;
+    const fitScale = Math.min(window.innerWidth / BOARD_NATIVE_W, window.innerHeight / BOARD_NATIVE_H);
+    container.style.transform = `scale(${fitScale})`;
+}
+
+function initDirectCanvas() {
+    if (loadingScreen) loadingScreen.classList.add('hidden');
+    if (gameTable) gameTable.classList.remove('hidden');
+
     gameTable.innerHTML = '';
     
+    // Clear backframe backgrounds for clear testing layout
     document.body.style.backgroundColor = '#000000';
     gameTable.style.backgroundColor = '#000000';
     gameTable.style.backgroundImage = 'none';
@@ -99,33 +144,19 @@ function displayDynamicMatchTable() {
     boardContainer.style.position = 'absolute';
     gameTable.appendChild(boardContainer);
 
-    const masterDeck = buildMasterDeck();
-    const manualPositions = getManualCoordinates();
+    const testDeck = buildTestSequence();
+    const layoutCoordinates = calculateSequentialTrack(testDeck);
 
-    let gridX = 200;
-    let gridY = 900;
-
-    masterDeck.forEach((tile) => {
-        let coords = manualPositions[tile.id];
-        
-        if (!coords) {
-            coords = { x: gridX, y: gridY, angle: tile.isDouble ? 0 : 90 };
-            gridX += 160;
-            if (gridX > 2400) {
-                gridX = 200;
-                gridY += 200;
-            }
-        }
-
-        const width = coords.angle === 90 ? TILE_BASE_H : TILE_BASE_W;
-        const height = coords.angle === 90 ? TILE_BASE_W : TILE_BASE_H;
+    testDeck.forEach((tile) => {
+        const coords = layoutCoordinates[tile.id];
+        if (!coords) return;
 
         const wrapper = document.createElement('div');
         wrapper.className = 'live-card-wrapper';
-        wrapper.style.width = `${width}px`;
-        wrapper.style.height = `${height}px`;
-        wrapper.style.left = `${coords.x - (width / 2)}px`;
-        wrapper.style.top = `${coords.y - (height / 2)}px`;
+        wrapper.style.width = `${coords.w}px`;
+        wrapper.style.height = `${coords.h}px`;
+        wrapper.style.left = `${coords.x - (coords.w / 2)}px`;
+        wrapper.style.top = `${coords.y - (coords.h / 2)}px`;
         wrapper.style.position = 'absolute';
 
         const rotationContainer = document.createElement('div');
@@ -158,28 +189,13 @@ function displayDynamicMatchTable() {
         boardContainer.appendChild(wrapper);
     });
 
-    const container = document.querySelector('.match-board-container');
-    if (container) {
-        const fitScale = Math.min(window.innerWidth / BOARD_NATIVE_W, window.innerHeight / BOARD_NATIVE_H);
-        container.style.transform = `scale(${fitScale})`;
-    }
+    resizeGameTableContainer();
 }
 
-window.addEventListener('resize', () => {
-    const container = document.querySelector('.match-board-container');
-    if (container) {
-        const fitScale = Math.min(window.innerWidth / BOARD_NATIVE_W, window.innerHeight / BOARD_NATIVE_H);
-        container.style.transform = `scale(${fitScale})`;
-    }
-});
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDirectCanvas);
+} else {
+    initDirectCanvas();
+}
 
-setTimeout(() => {
-    startBtn.disabled = false;
-    startBtn.innerText = "OPEN MANUAL CANVAS";
-}, 1000);
-
-startBtn.addEventListener('click', () => {
-    loadingScreen.classList.add('hidden');
-    gameTable.classList.remove('hidden');
-    displayDynamicMatchTable();
-});
+window.addEventListener('resize', resizeGameTableContainer);
