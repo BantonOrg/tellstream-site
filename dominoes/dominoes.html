@@ -45,7 +45,11 @@
                     // Hide the initial loading screen wrapper overlay
                     document.getElementById("loading-screen").style.display = "none";
                     // Initialize the network setup state loop
-                    initNetwork();
+                    if (typeof initNetwork === 'function') {
+                        initNetwork();
+                    } else {
+                        console.warn("initNetwork function not found. Ensure network.js is loaded correctly.");
+                    }
                 });
             }
         });
