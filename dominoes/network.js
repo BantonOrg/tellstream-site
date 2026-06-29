@@ -13,25 +13,31 @@ let dominoDb;
  */
 function initNetwork() {
     console.log("Network layer initialized. Ready for room connection orchestration.");
-    console.log("Database Target URL:", supabaseUrl);
     
     try {
-        // Correcting to lowercase 'supabase' as exposed by the CDN script
         if (!dominoDb) {
             dominoDb = supabase.createClient(supabaseUrl, supabaseKey);
         }
 
         if (dominoDb) {
             console.log("✅ Unique Domino database client successfully initialized!");
-            alert("Bridge connected perfectly!");
+            
+            // --- SCREEN TRANSITION LOGIC ---
+            // 1. Hide the loading/start screen
+            const loadingScreen = document.getElementById('loading-screen');
+            if (loadingScreen) {
+                loadingScreen.classList.add('hidden-layout');
+            }
+
+            // 2. Reveal the lounge/lobby interface screen
+            const lobbyView = document.getElementById('lobby-view');
+            if (lobbyView) {
+                lobbyView.classList.remove('hidden-layout');
+                console.log("Lobby interface screen element revealed.");
+            }
         }
     } catch (error) {
         console.error("❌ Connection setup failed:", error.message);
-    }
-    
-    const lobbyView = document.getElementById('lobby-view');
-    if (lobbyView) {
-        console.log("Lobby interface screen element detected.");
     }
 }
 
