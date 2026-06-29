@@ -8,11 +8,14 @@
     padding: 0;
 }
 
-body {
-    background-color: #0b0c10;
+/* Force viewport locks to banish scrollbars completely */
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #050508;
     color: #c5c6c7;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    overflow-x: hidden;
 }
 
 #loading-screen {
@@ -32,6 +35,7 @@ body {
 #loading-screen.hidden {
     opacity: 0;
     pointer-events: none;
+    display: none !important;
 }
 
 .lobby-btn {
@@ -48,30 +52,42 @@ body {
     box-shadow: 0 0 15px rgba(102, 252, 241, 0.2);
 }
 
+/* Game Table Center Stage Fitting */
 #game-table {
     width: 100vw;
     height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: #050508;
+    position: relative;
+    overflow: hidden;
 }
 
 #game-table.hidden {
     display: none !important;
 }
 
-/* Hardcoded Absolute Table Root URL */
+/* Absolute Table Background Canvas Configuration */
 .match-board-container {
     background-image: url('/dominoes/assets/table_bg.jpg');
-    background-size: cover;
+    background-size: 100% 100%;
     background-position: center;
     background-repeat: no-repeat;
     box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.8);
     border-radius: 8px;
+    position: relative;
+    flex-shrink: 0; /* Prevents the browser from warping the 2730x1536 aspect container */
 }
 
-/* Hardcoded Absolute Domino Asset URL */
+/* Dynamic Card Wrapper Positioning */
+.live-card-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+/* The Core Domino Asset Instance */
 .domino-item {
     background-image: url('/dominoes/assets/dom_front.gif');
     background-size: 100% 100%;
@@ -80,7 +96,7 @@ body {
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
 }
 
-/* Fixed circular mask patches using isolated pixel center shifts */
+/* Circular mask patches using isolated pixel center shifts */
 .pip-mask-patch {
     position: absolute;
     width: 25px;
@@ -106,4 +122,15 @@ body {
     white-space: nowrap;
     pointer-events: none;
     z-index: 100;
+}
+
+/* Complete Suppression of the Orientation Warning Overlay for Desktop Screen Mode */
+.orientation-notice, 
+div[class*="rotate-notice"], 
+div[id*="rotate-device"],
+body > div:last-of-type {
+    /* If your notice template uses a specific class id, swap it directly here */
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
 }
