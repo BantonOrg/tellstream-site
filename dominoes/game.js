@@ -1,5 +1,5 @@
 // ==========================================================================
-// Tellstream Dominoes - Scenario 3: Double-to-Single Path Test
+// Tellstream Dominoes - Explicit Structural Corner Test (Bottom-Left)
 // ==========================================================================
 
 const gameTable = document.getElementById('game-table');
@@ -13,6 +13,122 @@ const canvasH = 1171;
 const TILE_BASE_W = 90;
 const TILE_BASE_H = 176;
 
+// Mapped directly to your customized white path track
+const TRACK = {
+    bottomY: 1160,
+    topY:    310,
+    leftX:   560,
+    rightX:  2170
+};
+
+// CHANGE THIS VALUE TO TEST SCENARIO 1, 2, or 3
+const TEST_SCENARIO = 1; 
+
+function buildStrictSequence(scenarioNum) {
+    if (scenarioNum === 1) {
+        // Scenario 1: Single-to-Single
+        return [
+            { id: 't1', top: 6, bottom: 5, isDouble: false, isCornerTurner: false },
+            { id: 't2', top: 5, bottom: 4, isDouble: false, isCornerTurner: false },
+            { id: 't3', top: 4, bottom: 3, isDouble: false, isCornerTurner: false }, // Base single
+            { id: 't4', top: 3, bottom: 2, isDouble: false, isCornerTurner: true },  // Corner single
+            { id: 't5', top: 2, bottom: 1, isDouble: false, isCornerTurner: false },
+            { id: 't6', top: 1, bottom: 0, isDouble: false, isCornerTurner: false }
+        ];
+    } else if (scenarioNum === 2) {
+        // Scenario 2: Single-to-Double
+        return [
+            { id: 't1', top: 6, bottom: 5, isDouble: false, isCornerTurner: false },
+            { id: 't2', top: 5, bottom: 4, isDouble: false, isCornerTurner: false },
+            { id: 't3', top: 4, bottom: 3, isDouble: false, isCornerTurner: false }, // Base single
+            { id: 't4', top: 3, bottom: 3, isDouble: true,  isCornerTurner: true },  // Corner double
+            { id: 't5', top: 3, bottom: 2, isDouble: false, isCornerTurner: false },
+            { id: 't6', top: 2, bottom: 1, isDouble: false, isCornerTurner: false }
+        ];
+    } else if (scenarioNum === 3) {
+        // Scenario 3: Double-to-Single
+        return [
+            { id: 't1', top: 6, bottom: 5, isDouble: false, isCornerTurner: false },
+            { id: 't2', top: 5, bottom: 4, isDouble: false, isCornerTurner: false },
+            { id: 't3', top: 4, bottom: 4, isDouble: true,  isCornerTurner: false }, // Base double
+            { id: 't4', top: 4, bottom: 3, isDouble: false, isCornerTurner: true },  // Corner single
+            { id: 't5', top: 3, bottom: 2, isDouble: false, isCornerTurner: false },
+            { id: 't6', top: 2, bottom: 1, isDouble: false, isCornerTurner: false }
+        ];
+    }
+}
+
+function calculateStrictTrack(deck) {
+    const layoutMap = {};
+    let currentX = 1400; 
+    let currentY = TRACK.bottomY;
+    let direction = 'left';
+    let prevTile = null;
+
+    deck.forEach((tile) => {
+        let width, height, angle;
+
+        // 1. Establish structural orientation purely by sequence role
+        if (direction === 'left') {
+            if (tile.isCornerTurner) {
+                // The corner turner must be stood vertically up the wall
+                width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+                height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+                angle = tile.isDouble ? 90 : 0;
+            } else {
+                // Regular run pieces laying flat horizontally
+                width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+                height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+                angle = tile.isDouble ? 0 : 90;
+            }
+        } else if (direction === 'up') {
+            // Climbing the left wall vertically
+            width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+            height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+            angle = tile.isDouble ? 90 : 0;
+        }
+
+        // 2. Compute coordinate links based on those strict shapes
+        if (prevTile) {
+            if (tile.isCornerTurner) {
+                direction = 'up'; // Change tracking direction immediately
+
+                // Option A: Top Stack
+                const optionA_X = currentX;
+                const optionA_X_Dist = Math.abs(optionA_X - TRACK.leftX);
+
+                // Option B: Side Snap
+                const optionB_X = currentX - (prevTile.w / 2) - (width / 2);
+                const optionB_X_Dist = Math.abs(optionB_X - TRACK.leftX);
+
+                // Apply Magnet center check choice
+                if (optionA_X_Dist < optionB_X_Dist) {
+                    currentX = optionA_X;
+                    currentY = TRACK.bottomY - (prevTile.h / 2) - (height / 2);
+                } else {
+                    currentX = optionB_X;
+                    currentY = TRACK.bottomY;
+                }
+            } else {
+                // Normal sequential flow steps
+                if (direction === 'left') {
+                    currentX = currentX - (prevTile.w / 2) - (width / 2);
+                } else if (direction === 'up') {
+                    currentY = currentY - (prevTile.h / 2) - (height / 2);
+                }
+            }
+        } else {
+            currentX -= (width / 2);
+        }
+
+        layoutMap[tile.id] = { x: currentX, y: currentY, w: width, h: height, angle: angle };
+        prevTile = { w: width, h: height };
+    });
+
+    return layoutMap;
+}
+
+// --- RENDERING LAYER ---
 const topPipMap = [
     { name: 'top-left',     x: 126, y: 126, hideFor: [0, 1] },
     { name: 'top-right',    x: 469, y: 126, hideFor: [0, 1, 2, 3] },
@@ -33,26 +149,6 @@ const bottomPipMap = [
     { name: 'bottom-right', x: 469, y: 1042, hideFor: [0, 1] }
 ];
 
-// Mapped directly to your customized white path track
-const TRACK = {
-    bottomY: 1160,
-    topY:    310,
-    leftX:   560,
-    rightX:  2170
-};
-
-// Sequence where a Double is followed by a Single to turn the corner
-function buildTestSequence() {
-    return [
-        { id: 'tile-6-5', top: 6, bottom: 5, isDouble: false },
-        { id: 'tile-5-4', top: 5, bottom: 4, isDouble: false },
-        { id: 'tile-4-4', top: 4, bottom: 4, isDouble: true },  // Horizontal Double leading up to corner
-        { id: 'tile-4-3', top: 4, bottom: 3, isDouble: false }, // The Corner Turner (Single)
-        { id: 'tile-3-2', top: 3, bottom: 2, isDouble: false }, // Up vertical wall
-        { id: 'tile-2-1', top: 2, bottom: 1, isDouble: false }
-    ];
-}
-
 function applyPipMasks(tileElement, value, coordinateMap) {
     coordinateMap.forEach(pip => {
         if (pip.hideFor.includes(value)) {
@@ -63,70 +159,6 @@ function applyPipMasks(tileElement, value, coordinateMap) {
             tileElement.appendChild(maskPatch);
         }
     });
-}
-
-function calculateSequentialTrack(deck) {
-    const layoutMap = {};
-    let currentX = 1400; 
-    let currentY = TRACK.bottomY;
-    let direction = 'left';
-    let prevTile = null;
-
-    deck.forEach((tile, index) => {
-        // Handle initial geometry based on double status layout on bottom lane
-        let width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-        let height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
-        let angle = tile.isDouble ? 0 : 90;
-
-        if (index > 0) {
-            if (direction === 'left') {
-                const stepX = currentX - (prevTile.w / 2) - (width / 2);
-                
-                // Trigger corner check when approaching left track line
-                if (stepX - (width / 2) <= TRACK.leftX + 50) {
-                    direction = 'up';
-                    
-                    // Incoming single stands tall for vertical layout flow
-                    width = TILE_BASE_W;
-                    height = TILE_BASE_H;
-                    angle = 0;
-
-                    // Option A: Stack on top face of the previous double
-                    const optionA_X = currentX;
-                    const optionA_X_Dist = Math.abs(optionA_X - TRACK.leftX);
-                    
-                    // Option B: Snap to side face of the previous double
-                    const optionB_X = currentX - (prevTile.w / 2) - (width / 2);
-                    const optionB_X_Dist = Math.abs(optionB_X - TRACK.leftX);
-                    
-                    // Magnet Check: Choose layout option closest to the path line
-                    if (optionA_X_Dist < optionB_X_Dist) {
-                        currentX = optionA_X;
-                        currentY = TRACK.bottomY - (prevTile.h / 2) - (height / 2);
-                    } else {
-                        currentX = optionB_X;
-                        currentY = TRACK.bottomY;
-                    }
-                } else {
-                    currentX = stepX;
-                }
-            } 
-            else if (direction === 'up') {
-                // Moving up vertical wall
-                width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
-                height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-                angle = tile.isDouble ? 90 : 0;
-                currentY -= (prevTile.h / 2) + (height / 2);
-            }
-        } else {
-            currentX -= (width / 2);
-        }
-
-        layoutMap[tile.id] = { x: currentX, y: currentY, w: width, h: height, angle: angle };
-        prevTile = { w: width, h: height };
-    });
-
-    return layoutMap;
 }
 
 function resizeGameTableContainer() {
@@ -141,10 +173,8 @@ function initDirectCanvas() {
     if (gameTable) gameTable.classList.remove('hidden');
 
     gameTable.innerHTML = '';
-    
     document.body.style.backgroundColor = '#000000';
     gameTable.style.backgroundColor = '#000000';
-    gameTable.style.backgroundImage = 'none';
 
     const boardContainer = document.createElement('div');
     boardContainer.className = 'match-board-container';
@@ -153,7 +183,6 @@ function initDirectCanvas() {
     boardContainer.style.position = 'absolute';
     gameTable.appendChild(boardContainer);
 
-    // Render path track guide line
     const canvas = document.createElement('canvas');
     canvas.width = BOARD_NATIVE_W;
     canvas.height = BOARD_NATIVE_H;
@@ -172,8 +201,8 @@ function initDirectCanvas() {
     ctx.lineTo(TRACK.leftX, TRACK.topY);
     ctx.stroke();
 
-    const testDeck = buildTestSequence();
-    const layoutCoordinates = calculateSequentialTrack(testDeck);
+    const testDeck = buildStrictSequence(TEST_SCENARIO);
+    const layoutCoordinates = calculateStrictTrack(testDeck);
 
     testDeck.forEach((tile) => {
         const coords = layoutCoordinates[tile.id];
@@ -191,7 +220,13 @@ function initDirectCanvas() {
         const rotationContainer = document.createElement('div');
         rotationContainer.style.width = `${TILE_BASE_W}px`;
         rotationContainer.style.height = `${TILE_BASE_H}px`;
-        rotationContainer.style.transform = `rotate(${coords.angle}deg)`;
+        
+        // Base rotational rules for rendering
+        let renderAngle = coords.angle;
+        if (tile.isDouble && coords.angle === 90) renderAngle = 90;
+        else if (!tile.isDouble && coords.angle === 90) renderAngle = 90;
+
+        rotationContainer.style.transform = `rotate(${renderAngle}deg)`;
         rotationContainer.style.transformOrigin = 'center center';
         rotationContainer.style.position = 'relative';
         rotationContainer.style.display = 'flex';
@@ -200,7 +235,6 @@ function initDirectCanvas() {
 
         const tileElement = document.createElement('div');
         tileElement.className = 'domino-item';
-        tileElement.id = tile.id;
         tileElement.style.width = `${TILE_BASE_W}px`;
         tileElement.style.height = `${TILE_BASE_H}px`;
         tileElement.style.position = 'absolute';
@@ -208,13 +242,8 @@ function initDirectCanvas() {
         applyPipMasks(tileElement, tile.top, topPipMap);
         applyPipMasks(tileElement, tile.bottom, bottomPipMap);
 
-        const textLabel = document.createElement('div');
-        textLabel.className = 'debug-label';
-        textLabel.innerText = `[${tile.top}-${tile.bottom}]`;
-
         rotationContainer.appendChild(tileElement);
         wrapper.appendChild(rotationContainer);
-        wrapper.appendChild(textLabel);
         boardContainer.appendChild(wrapper);
     });
 
@@ -226,5 +255,4 @@ if (document.readyState === 'loading') {
 } else {
     initDirectCanvas();
 }
-
 window.addEventListener('resize', resizeGameTableContainer);
