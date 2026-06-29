@@ -1,278 +1,183 @@
-// ==========================================================================
-// Tellstream Dominoes - Complete Seating & Network Synced Layer
-// ==========================================================================
+// ============================================================================
+// NETWORK.JS - FULL NETWORK LAYER, COUNTDOWN SYSTEMS, AND ROOM ADMINISTRATIVE FUNCTIONS
+// ============================================================================
 
-const SUPABASE_URL = 'https://vegwferwmyuunwvfqpsf.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZ3dmZXJ3bXl1dW53dmZxcHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODU5NDQsImV4cCI6MjA5Nzk2MTk0NH0.7F3HUEY59BGE5phlD9AukhZzRa3Ied_ZT43j8YZeIy8';
-let supabaseClient = null;
+// Global Tracking State for Disconnect Windows
+const activeTimers = {};
 
-try {
-    if (typeof supabase !== 'undefined' && supabase.createClient) {
-        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    }
-} catch (e) {
-    console.warn("Supabase initialization error. Core engine running offline mode.");
-}
+/**
+ * Handles a network drop event from the WebSocket layer
+ * @param {string} roomId - Identifier for the active match group
+ * @param {number} droppedPlayerIndex - Position array slot of the dropped user (1-4 base matching UI layout)
+ * @param {Array} currentPlayersList - Reference list of current players for local state check
+ */
+function handlePlayerDisconnect(roomId, droppedPlayerIndex, currentPlayersList) {
+    // If a tracking clock loop is already alive for this slot, bypass duplicate allocations
+    if (activeTimers[droppedPlayerIndex]) return;
 
-const urlParams = new URLSearchParams(window.location.search);
-const localPlayerName = urlParams.get('name') || 'Banton';
-
-let currentRoomCode = null;
-let playerSeatNumber = null; // null = Spectator, 1 = Host, 2-4 = Joined Players
-let roomSubscription = null;
-let localGameState = {
-    room_code: null,
-    game_state: 'waiting', 
-    board_line: [],       
-    active_turn: 1,       
-    players: {},
-    boneyard: [],
-    connected_spectators: []
-};
-
-function initNetwork() {
-    showLobbyUI();
-}
-
-function showLobbyUI() {
-    const lobbyView = document.getElementById("lobby-view");
-    if (!lobbyView) return;
+    let timeRemaining = 120; // 2-Minute Grace Limit in Seconds
     
-    lobbyView.innerHTML = `
-        <div class="lobby-panel" style="z-index: 1000; position: relative; padding: 40px; text-align: center;">
-            <h2 style="color: #66fcf1; font-size: 3rem; margin-bottom: 10px; font-weight: bold; letter-spacing: 2px;">TELLSTREAM LOUNGE</h2>
-            <p style="color: #66fcf1; font-size: 1.1rem; margin-bottom: 30px; letter-spacing: 1px; text-transform: uppercase;">Logged in as: <span style="color: #fff; font-weight: bold;">${localPlayerName}</span></p>
-            <p style="color: #c5c6c7; font-size: 1.3rem; margin-bottom: 40px; letter-spacing: 1px;">Create a table or enter a lounge room code to watch a live match.</p>
+    // 1. Instant Global Freeze Loop Execution
+    console.warn(`Connection lost with Player ${droppedPlayerIndex}. Freezing game actions.`);
+    lockGameBoardInput(true);
+
+    // 2. Trigger UI countdown update immediately
+    updateDisconnectTimerDisplay(droppedPlayerIndex, "2:00");
+
+    // 3. Fire ticking clock logic
+    activeTimers[droppedPlayerIndex] = setInterval(() => {
+        timeRemaining--;
+
+        if (timeRemaining > 0) {
+            // Parse seconds down into readable MM:SS layout
+            const mins = Math.floor(timeRemaining / 60);
+            const secs = timeRemaining % 60;
+            const timeString = `${mins}:${secs.toString().padStart(2, '0')}`;
             
-            <div class="lobby-actions">
-                <button id="create-room-btn" class="lobby-btn primary" style="margin-bottom: 15px; padding: 12px 30px; font-size: 1.2rem; cursor: pointer;">Create New Table</button>
-                
-                <div class="join-input-group" style="margin-top: 20px;">
-                    <input type="text" id="room-code-input" placeholder="ENTER CODE" maxlength="4" style="padding: 12px; font-size: 1.2rem; text-align: center; text-transform: uppercase;">
-                    <button id="join-room-btn" class="lobby-btn" style="padding: 12px 25px; font-size: 1.2rem; cursor: pointer;">Enter Room</button>
-                </div>
-            </div>
-        </div>
-    `;
-
-    document.getElementById("create-room-btn").addEventListener("click", createRoom);
-    document.getElementById("join-room-btn").addEventListener("click", () => {
-        const code = document.getElementById("room-code-input").value.toUpperCase().trim();
-        if (code.length === 4) joinRoom(code);
-    });
-}
-
-function generateFullDominoSet() {
-    const bones = [];
-    let idCounter = 1;
-    for (let i = 0; i <= 6; i++) {
-        for (let j = i; j <= 6; j++) {
-            bones.push({
-                id: `b${idCounter++}`,
-                top: i,
-                bottom: j,
-                isDouble: (i === j)
-            });
-        }
-    }
-    return bones;
-}
-
-function shuffleBones(deck) {
-    for (let i = deck.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [deck[i], deck[j]] = [deck[j], deck[i]];
-    }
-    return deck;
-}
-
-async function createRoom() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; 
-    let generatedCode = '';
-    for (let i = 0; i < 4; i++) {
-        generatedCode += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-
-    localGameState = {
-        room_code: generatedCode,
-        game_state: 'waiting',
-        board_line: [],
-        active_turn: 1, 
-        players: {
-            player1: { seat: 1, hand: [], name: localPlayerName }
-        },
-        boneyard: [],
-        connected_spectators: [localPlayerName] // Host starts in list
-    };
-
-    if (!supabaseClient) {
-        playerSeatNumber = 1;
-        currentRoomCode = generatedCode;
-        switchToGameTableView();
-        renderLiveTable(localGameState.board_line);
-        return;
-    }
-
-    try {
-        const { error } = await supabaseClient
-            .from('domino_rooms')
-            .insert([localGameState]);
-
-        if (error) throw error;
-
-        playerSeatNumber = 1; 
-        currentRoomCode = generatedCode;
-        subscribeToRoom(currentRoomCode);
-    } catch (err) {
-        console.error("Database fault:", err);
-        playerSeatNumber = 1;
-        currentRoomCode = generatedCode;
-        switchToGameTableView();
-        renderLiveTable(localGameState.board_line);
-    }
-}
-
-async function joinRoom(code) {
-    if (!supabaseClient) return;
-
-    try {
-        const { data, error } = await supabaseClient
-            .from('domino_rooms')
-            .select('*')
-            .eq('room_code', code)
-            .single();
-
-        if (error || !data) {
-            alert("Room session not found!");
-            return;
-        }
-
-        let spectatorsList = data.connected_spectators || [];
-        if (!spectatorsList.includes(localPlayerName)) {
-            spectatorsList.push(localPlayerName);
-        }
-
-        const { error: updateError } = await supabaseClient
-            .from('domino_rooms')
-            .update({ connected_spectators: spectatorsList })
-            .eq('room_code', code);
-
-        if (updateError) throw updateError;
-
-        localGameState = data;
-        localGameState.connected_spectators = spectatorsList;
-        playerSeatNumber = null; // Always a spectator initially
-        currentRoomCode = code;
-        
-        subscribeToRoom(currentRoomCode);
-    } catch (err) {
-        console.error("Error joining room:", err);
-    }
-}
-
-function subscribeToRoom(code) {
-    if (!supabaseClient) return;
-    
-    roomSubscription = supabaseClient
-        .channel(`room_${code}`)
-        .on('postgres_changes', { 
-            event: 'UPDATE', 
-            schema: 'public', 
-            table: 'domino_rooms', 
-            filter: `room_code=eq.${code}` 
-        }, payload => {
-            const updatedData = payload.new;
+            updateDisconnectTimerDisplay(droppedPlayerIndex, timeString);
+        } else {
+            // Grace period expired with zero recovery
+            clearInterval(activeTimers[droppedPlayerIndex]);
+            delete activeTimers[droppedPlayerIndex];
             
-            // Check if host promoted us into a specific player seating slot
-            playerSeatNumber = null; 
-            if (updatedData.players.player1?.name === localPlayerName) playerSeatNumber = 1;
-            else if (updatedData.players.player2?.name === localPlayerName) playerSeatNumber = 2;
-            else if (updatedData.players.player3?.name === localPlayerName) playerSeatNumber = 3;
-            else if (updatedData.players.player4?.name === localPlayerName) playerSeatNumber = 4;
-
-            localGameState = updatedData;
-            handleRoomUpdate(localGameState);
-        })
-        .subscribe();
-
-    switchToGameTableView();
-    renderLiveTable(localGameState.board_line);
+            handleGracePeriodExpiry(roomId, droppedPlayerIndex);
+        }
+    }, 1000);
 }
 
 /**
- * Triggered by the Host clicking [Start Match] in the UI list module
+ * Handles network recovery event prior to expiration windows
+ * @param {number} recoveredPlayerIndex - Position array slot of the recovered user (1-4 base matching UI layout)
  */
-async function triggerGameStartHandshake(chosenOpponentNames) {
-    if (playerSeatNumber !== 1) return; // Safeguard
+function handlePlayerReconnect(recoveredPlayerIndex) {
+    if (activeTimers[recoveredPlayerIndex]) {
+        clearInterval(activeTimers[recoveredPlayerIndex]);
+        delete activeTimers[recoveredPlayerIndex];
+        
+        // Restore standard inward visual components
+        clearDisconnectTimerDisplay(recoveredPlayerIndex);
+        
+        // If zero other tracking alerts are alive across the remaining seats, unfreeze play
+        if (Object.keys(activeTimers).length === 0) {
+            lockGameBoardInput(false);
+            console.log("All players stable. Unfreezing game actions.");
+        }
+    }
+}
 
-    const fullDeck = shuffleBones(generateFullDominoSet());
+/**
+ * Grace period closure branch if recovery limits fail
+ * @param {string} roomId - Identifier for the active match group
+ * @param {number} failedPlayerIndex - Position array slot of the dropped user
+ */
+function handleGracePeriodExpiry(roomId, failedPlayerIndex) {
+    console.error(`Player ${failedPlayerIndex} failed to reconnect within the 2-minute buffer.`);
     
-    // Automatically generate clean assignments and deal 7 bones per chosen user
-    const updatedPlayers = {
-        player1: { seat: 1, hand: fullDeck.slice(0, 7), name: localPlayerName }
+    // Expose unlock panels allowing surviving clients clean room teardown choices
+    exposeLobbyTeardownControls(roomId);
+}
+
+/**
+ * Administrative Power: Shift an active player back to a spectator slot
+ * (Can only be processed post-match reset inside Lounge state parameters)
+ * @param {string} roomId - Identifier for the active match group
+ * @param {string} targetPlayerId - Unique identifier of user targeted for seating adjustment
+ * @param {boolean} isLocalUserHost - Flag tracking room ownership validation
+ */
+function movePlayerToSpectator(roomId, targetPlayerId, isLocalUserHost) {
+    if (!isLocalUserHost) {
+        console.error("Permission Denied: Only the host can eject players to spectator slots.");
+        return;
+    }
+
+    // Dispatches state update down network pipeline to shift role profiles
+    // Note: This changes room parameters but safely preserves workspace connections without room deletion
+    const payload = {
+        action: "demote_to_spectator",
+        room: roomId,
+        target: targetPlayerId
     };
 
-    let cardPointer = 7;
-    chosenOpponentNames.forEach((name, index) => {
-        const seatId = index + 2; // Converts to player2, player3, player4
-        updatedPlayers[`player${seatId}`] = {
-            seat: seatId,
-            hand: fullDeck.slice(cardPointer, cardPointer + 7),
-            name: name
-        };
-        cardPointer += 7;
-    });
+    sendNetworkPayload(payload);
+    console.log(`Host action processed: Moving ${targetPlayerId} to spectator lounge tracking.`);
+}
 
-    const leftovers = fullDeck.slice(cardPointer, 28);
+/**
+ * Administrative Power: Seat an eligible spectator into an empty table corner
+ * @param {string} roomId - Identifier for the active match group
+ * @param {string} targetPlayerId - Unique identifier of spectator targeted for play slot
+ * @param {number} targetedSeatSlot - Destination seat coordinate key index chosen
+ * @param {boolean} isLocalUserHost - Flag tracking room ownership validation
+ */
+function assignSpectatorToSeat(roomId, targetPlayerId, targetedSeatSlot, isLocalUserHost) {
+    if (!isLocalUserHost) {
+         console.error("Permission Denied: Only the host can manage table seating configurations.");
+         return;
+    }
 
-    localGameState.players = updatedPlayers;
-    localGameState.boneyard = leftovers;
-    localGameState.game_state = 'playing';
-    localGameState.active_turn = 1; // Host dropped first clearance line
+    const payload = {
+        action: "assign_seat",
+        room: roomId,
+        target: targetPlayerId,
+        seat: targetedSeatSlot
+    };
 
-    try {
-        await supabaseClient
-            .from('domino_rooms')
-            .update({
-                players: localGameState.players,
-                boneyard: localGameState.boneyard,
-                game_state: localGameState.game_state,
-                active_turn: localGameState.active_turn
-            })
-            .eq('room_code', currentRoomCode);
-    } catch (err) {
-        console.error("Failed launching match:", err);
+    sendNetworkPayload(payload);
+}
+
+/**
+ * Internal Input Anchor Lock Blocks
+ * @param {boolean} shouldLock - Toggle boolean setting state parameter values
+ */
+function lockGameBoardInput(shouldLock) {
+    const boardArea = document.getElementById('domino-table-container');
+    if (!boardArea) return;
+
+    if (shouldLock) {
+        boardArea.classList.add('network-frozen-state');
+        boardArea.style.pointerEvents = 'none'; // Lock active tile placement clicks entirely
+    } else {
+        boardArea.classList.remove('network-frozen-state');
+        boardArea.style.pointerEvents = 'auto';
     }
 }
 
-function switchToGameTableView() {
-    const lobbyView = document.getElementById("lobby-view");
-    const tableView = document.getElementById("table-view");
-    if (lobbyView) lobbyView.style.display = "none";
-    if (tableView) tableView.classList.remove("hidden-layout");
-}
-
-async function pushMoveToDatabase(updatedBoardLine, nextTurnSeatNumber, updatedPlayersMap) {
-    localGameState.board_line = updatedBoardLine;
-    localGameState.active_turn = nextTurnSeatNumber;
-    localGameState.players = updatedPlayersMap;
-
-    try {
-        await supabaseClient
-            .from('domino_rooms')
-            .update({
-                board_line: localGameState.board_line,
-                active_turn: localGameState.active_turn,
-                players: localGameState.players
-            })
-            .eq('room_code', currentRoomCode);
-    } catch (err) {
-        console.error("Failed syncing move sequence:", err);
+/**
+ * Outward pipeline transmitter dispatch skeleton wrapper
+ * @param {Object} dataPacket - Formatted package settings payload
+ */
+function sendNetworkPayload(dataPacket) {
+    if (typeof globalWebSocketClient !== 'undefined' && globalWebSocketClient.readyState === WebSocket.OPEN) {
+        globalWebSocketClient.send(JSON.stringify(dataPacket));
+    } else {
+        console.warn("Network transmission skipped: WebSocket layer offline or uninitialized.");
     }
 }
 
-function handleRoomUpdate(updatedRoomState) {
-    if (typeof renderLiveTable === 'function') {
-        renderLiveTable(updatedRoomState.board_line);
+/**
+ * Visual control expansion wrapper on dead connection limits
+ * @param {string} roomId - Identifier for the active match group
+ */
+function exposeLobbyTeardownControls(roomId) {
+    // Renders administrative abort menus safely onto client elements
+    const controlPanel = document.getElementById('lobby-management-controls');
+    if (controlPanel) {
+        controlPanel.innerHTML = `
+            <div class="grace-expiry-alert">
+                <p>A player has left the table completely. Dissolve match and return to lounge?</p>
+                <button onclick="confirmLobbyDissolve('${roomId}')">Return to Lounge</button>
+            </div>
+        `;
     }
+}
+
+// Export module logic safely for system loop initialization architecture
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        handlePlayerDisconnect,
+        handlePlayerReconnect,
+        movePlayerToSpectator,
+        assignSpectatorToSeat,
+        lockGameBoardInput
+    };
 }
