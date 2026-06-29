@@ -54,7 +54,10 @@
             </div>
             
             <div class="col-3">
-                <div class="col-title">💡 Chat help and emoji codes</div>
+                <div class="col-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>💡 Chat help and emoji codes</span>
+                    <a id="banton-dominoes-link" href="/dominoes/dominoes.html" style="display: none; background: #00adb5; color: #ffffff; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; text-decoration: none; font-weight: bold; border: 1px solid #ffffff;">🎲 Test</a>
+                </div>
                 <div class="sub-panel-top" id="helpCardsContainer"></div>
                 <div class="sub-panel-bottom">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
@@ -163,7 +166,19 @@
     </div>
 
     <script src="/src/assets/emojis.js"></script>
-
     <script src="main.js"></script>
+
+    <script>
+        const observer = new MutationObserver(() => {
+            if (document.body.innerText.includes("Welcome back Banton")) {
+                const link = document.getElementById('banton-dominoes-link');
+                if (link && link.style.display === 'none') {
+                    link.style.display = 'inline-block';
+                    observer.disconnect(); // Stop checking once revealed
+                }
+            }
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+    </script>
 </body>
 </html>
