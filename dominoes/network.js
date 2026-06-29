@@ -7,7 +7,6 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 let supabaseClient = null;
 
 try {
-    // Fixed initialization to check for global lower-case supabase from the v2 CDN
     if (typeof supabase !== 'undefined' && supabase.createClient) {
         supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     }
@@ -95,6 +94,7 @@ async function createRoom() {
         generatedCode += chars.charAt(Math.floor(Math.random() * chars.length));
     }
 
+    // Backend Execution: Shuffling & Dealing Loop Logic
     const fullDeck = shuffleBones(generateFullDominoSet());
     const assignedPlayersObject = {
         player1: { seat: 1, hand: fullDeck.slice(0, 7), name: "Table Host" },
@@ -103,6 +103,7 @@ async function createRoom() {
         player4: { seat: 4, hand: fullDeck.slice(21, 28), name: "Waiting..." }
     };
 
+    // Locate starting turn option (Whoever owns highest double starts down)
     let startingSeat = 1;
     let highestDouble = -1;
     for (let s = 1; s <= 4; s++) {
@@ -172,6 +173,7 @@ async function joinRoom(code) {
         let assignedSeat = null;
         const currentPlayers = data.players;
 
+        // Auto-assign open player seat vectors cleanly
         for (let i = 2; i <= 4; i++) {
             if (currentPlayers[`player${i}`].name === "Waiting...") {
                 assignedSeat = i;
@@ -185,6 +187,7 @@ async function joinRoom(code) {
             return;
         }
 
+        // Push seat registry updates to database
         const { error: updateError } = await supabaseClient
             .from('domino_rooms')
             .update({ players: currentPlayers })
@@ -192,6 +195,7 @@ async function joinRoom(code) {
 
         if (updateError) throw updateError;
 
+        // Update local memory states with the raw table dataset we downloaded
         localGameState = data;
         localGameState.players = currentPlayers;
 
@@ -221,6 +225,7 @@ function subscribeToRoom(code) {
 
     switchToGameTableView();
     
+    // 🌟 THE FIX: Instantly paint the board layout on load using the data in memory!
     if (typeof renderLiveTable === 'function') {
         renderLiveTable(localGameState.board_line);
     }
@@ -234,11 +239,15 @@ function switchToGameTableView() {
     if (tableView) tableView.classList.remove("hidden-layout");
 }
 
+/**
+ * Core dynamic action: Dispatches state modifications straight to Supabase data layer
+ */
 async function pushMoveToDatabase(updatedBoardLine, nextTurnSeatNumber, updatedPlayersMap) {
     localGameState.board_line = updatedBoardLine;
     localGameState.active_turn = nextTurnSeatNumber;
     localGameState.players = updatedPlayersMap;
 
+    // Evaluate if anyone completely ran out of bones (Domino win state)
     let winnerDeclared = null;
     for (let i = 1; i <= 4; i++) {
         if (localGameState.players[`player${i}`].hand.length === 0) {
@@ -269,7 +278,10 @@ async function pushMoveToDatabase(updatedBoardLine, nextTurnSeatNumber, updatedP
 
 function handleRoomUpdate(updatedRoomState) {
     if (typeof renderLiveTable === 'function') {
+        // Redraws the horseshoe path with the true updated array from the server
         renderLiveTable(updatedRoomState.board_line);
     }
+    
+    // Developer validation debugging tracker hook layout
     console.log(`Match Lounge Synchronized. Active Turn Seat: Player ${updatedRoomState.active_turn}`);
 }
