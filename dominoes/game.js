@@ -1,5 +1,5 @@
 // ==========================================================================
-// Tellstream Dominoes - Raw Asset Layout Canvas
+// Tellstream Dominoes - Raw Asset Layout Canvas (Fixed)
 // ==========================================================================
 
 const startBtn = document.getElementById('start-btn');
@@ -81,15 +81,13 @@ function getManualCoordinates() {
         'tile-2-2': { x: 650,  y: 650,  angle: 0   },
         'tile-2-1': { x: 800,  y: 650,  angle: 90  },
         'tile-1-1': { x: 950,  y: 650,  angle: 0   },
-        'tile-1-0': { x: 1100, y: 650,  angle: 90  },
-        { name: 'remainder-tiles', note: 'All other tiles will stack cleanly across the grid lines below.' }
+        'tile-1-0': { x: 1100, y: 650,  angle: 90  }
     };
 }
 
 function displayDynamicMatchTable() {
     gameTable.innerHTML = '';
     
-    // Force a pitch black background frame override
     document.body.style.backgroundColor = '#000000';
     gameTable.style.backgroundColor = '#000000';
     gameTable.style.backgroundImage = 'none';
@@ -110,7 +108,6 @@ function displayDynamicMatchTable() {
     masterDeck.forEach((tile) => {
         let coords = manualPositions[tile.id];
         
-        // If a tile isn't manually positioned above, grid it out systematically along the bottom area
         if (!coords) {
             coords = { x: gridX, y: gridY, angle: tile.isDouble ? 0 : 90 };
             gridX += 160;
