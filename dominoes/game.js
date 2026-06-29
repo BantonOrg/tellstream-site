@@ -217,7 +217,7 @@ function displayDynamicMatchTable() {
         tileElement.className = 'domino-item';
         tileElement.id = tile.id;
         
-        // CRITICAL FIX: Explicitly lock the asset height and width sizes to match the 75% math footprints
+        // FORCED INLINE BOUNDING: This strips out master texture overflow inheritance
         tileElement.style.width = `${TILE_BASE_W}px`;
         tileElement.style.height = `${TILE_BASE_H}px`;
         tileElement.style.position = 'absolute';
@@ -236,7 +236,6 @@ function displayDynamicMatchTable() {
     });
 }
 
-// Doubled the lobby button interface scale size
 setTimeout(() => {
     startBtn.disabled = false;
     startBtn.innerText = "TEST DYNAMIC CIRCUIT GRID";
