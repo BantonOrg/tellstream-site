@@ -195,6 +195,10 @@ async function joinRoom(code) {
 
         if (updateError) throw updateError;
 
+        // Update local memory states with the raw table dataset we downloaded
+        localGameState = data;
+        localGameState.players = currentPlayers;
+
         playerSeatNumber = assignedSeat;
         currentRoomCode = code;
         subscribeToRoom(currentRoomCode);
@@ -220,6 +224,11 @@ function subscribeToRoom(code) {
         .subscribe();
 
     switchToGameTableView();
+    
+    // 🌟 THE FIX: Instantly paint the board layout on load using the data in memory!
+    if (typeof renderLiveTable === 'function') {
+        renderLiveTable(localGameState.board_line);
+    }
 }
 
 function switchToGameTableView() {
