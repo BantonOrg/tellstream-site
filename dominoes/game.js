@@ -134,8 +134,8 @@ function calculateCircuitLayout(deck) {
                 currentY -= (prevHeight / 2) + (height / 2);
             }
 
-            // PROACTIVE CEILING CHECK: If the top edge breaches the safety line, turn inward right
-            if (currentY - (height / 2) < 260) {
+            // CEILING TRIGGER ADAPTATION: Pushed ceiling line check up from 260 to 195 to clear logo text
+            if (currentY - (height / 2) < 195) {
                 direction = 'right';
                 width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
@@ -203,8 +203,8 @@ function calculateCircuitLayout(deck) {
                 currentY -= (prevHeight / 2) + (height / 2);
             }
 
-            // PROACTIVE CEILING CHECK: If top edge breaches safety line, turn inward left
-            if (currentY - (height / 2) < 260) {
+            // CEILING TRIGGER ADAPTATION: Pushed ceiling line check up from 260 to 195 to clear logo text
+            if (currentY - (height / 2) < 195) {
                 direction = 'left';
                 width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
