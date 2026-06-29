@@ -8,7 +8,6 @@
     padding: 0;
 }
 
-/* Force viewport locks to banish scrollbars completely */
 html, body {
     width: 100%;
     height: 100%;
@@ -52,7 +51,6 @@ html, body {
     box-shadow: 0 0 15px rgba(102, 252, 241, 0.2);
 }
 
-/* Game Table Center Stage Fitting */
 #game-table {
     width: 100vw;
     height: 100vh;
@@ -61,14 +59,18 @@ html, body {
     align-items: center;
     position: relative;
     overflow: hidden;
+    background-color: #050508;
 }
 
 #game-table.hidden {
     display: none !important;
 }
 
-/* Absolute Table Background Canvas Configuration */
+/* Fluid Responsive Table Container matching 2730x1536 Aspect Ratio */
 .match-board-container {
+    width: 100vw;
+    max-width: 2730px;
+    aspect-ratio: 2730 / 1536; 
     background-image: url('/dominoes/assets/table_bg.jpg');
     background-size: 100% 100%;
     background-position: center;
@@ -76,7 +78,14 @@ html, body {
     box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.8);
     border-radius: 8px;
     position: relative;
-    flex-shrink: 0; /* Prevents the browser from warping the 2730x1536 aspect container */
+}
+
+/* Scale down slightly if the user screen height is too short for the width */
+@media (min-aspect-ratio: 2730/1536) {
+    .match-board-container {
+        height: 100vh;
+        width: auto;
+    }
 }
 
 /* Dynamic Card Wrapper Positioning */
@@ -96,7 +105,7 @@ html, body {
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
 }
 
-/* Circular mask patches using isolated pixel center shifts */
+/* Circular mask patches */
 .pip-mask-patch {
     position: absolute;
     width: 25px;
@@ -124,12 +133,11 @@ html, body {
     z-index: 100;
 }
 
-/* Complete Suppression of the Orientation Warning Overlay for Desktop Screen Mode */
+/* Suppression of Orientation Warning Overlay */
 .orientation-notice, 
 div[class*="rotate-notice"], 
 div[id*="rotate-device"],
 body > div:last-of-type {
-    /* If your notice template uses a specific class id, swap it directly here */
     display: none !important;
     visibility: hidden !important;
     opacity: 0 !important;
