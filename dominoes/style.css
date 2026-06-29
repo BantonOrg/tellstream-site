@@ -1,231 +1,189 @@
-/* ============================================================================
-   DOMINO-TABLE-LAYOUT.CSS - FULL STRUCTURAL AND VISUAL DESIGN SYSTEM
-   ============================================================================ */
+/* ==========================================================================
+   Tellstream Dominoes - Table & Layout UI Core Styles
+   ========================================================================== */
 
-/* Global Reset & Base Layout */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
 html, body {
-    margin: 0;
-    padding: 0;
     width: 100%;
     height: 100%;
-    background-color: #1a1a1a;
-    color: #ffffff;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     overflow: hidden;
+    background-color: #050508;
+    color: #c5c6c7;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Core Application Screens */
-.screen {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    display: block;
-    background-color: #1a1a1a;
-}
-
-/* Loading Screen Center Alignment */
 #loading-screen {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 50;
-    background-color: #121212;
-}
-
-.loading-content button {
-    padding: 15px 30px;
-    font-size: 18px;
-    font-weight: bold;
-    color: #121212;
-    background-color: #00ffcc;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0, 255, 204, 0.4);
-    transition: transform 0.2s ease;
-}
-
-.loading-content button:hover {
-    transform: scale(1.05);
-}
-
-/* Visibility Control Utility Classes */
-.hidden-layout {
-    display: none !important;
-}
-
-/* Main Table Board Setup Container */
-#domino-table-container {
-    position: relative;
-    width: 2567px;   /* Absolute max scale boundary matching layout rules */
-    height: 1367px;  /* Absolute max scale height boundary matching layout rules */
-    margin: 0 auto;
-    overflow: hidden;
-}
-
-/* 4 Corner Player Information Structural Layout Elements */
-.player-table-slot {
-    font-weight: 700;
-    font-size: 20px;
-    color: #ffffff;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    white-space: nowrap;
-    background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent background plate for readability */
-    padding: 8px 14px;
-    border-radius: 6px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-    z-index: 10;
-    pointer-events: none; /* Allows click interactions underneath the layout text area */
-}
-
-/* Distinctive Gold Accent Styling for Hand Size Displays */
-.player-tiles {
-    color: #ffd700;
-    font-size: 18px;
-    font-variant-numeric: tabular-nums;
-}
-
-/* Visual Separation Pointer Glyphs */
-.arrow-indicator {
-    color: rgba(255, 255, 255, 0.35);
-    font-size: 18px;
-    user-select: none;
-}
-
-/* Empty Pre-Game Placeholder Formatting Rules */
-.no-player {
-    color: #ffffff;
-    opacity: 0.45;
-    font-style: italic;
-    font-weight: 400;
-    font-size: 18px;
-}
-
-/* ============================================================================
-   NETWORK CONNECTIVITY STATES & TIMERS
-   ============================================================================ */
-
-.connection-state-indicator {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 13px;
-    font-weight: bold;
-    color: #ffffff;
-    transition: all 0.3s ease;
-}
-
-/* Stable Inward-Facing Network State State Accent */
-.connection-state-indicator.connected {
-    background-color: #00ffcc;
-    box-shadow: 0 0 8px rgba(0, 255, 204, 0.7);
-}
-
-/* 2-Minute Warning Countdown Display Transform Rules */
-.connection-state-indicator.disconnected-countdown {
-    background-color: #ff3333;
-    width: auto;
-    height: auto;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-family: monospace;
-    font-variant-numeric: tabular-nums;
-    box-shadow: 0 0 10px rgba(255, 51, 51, 0.8);
-    animation: connectionBlinker 1s linear infinite;
-}
-
-/* ============================================================================
-   POST-GAME FLOW CELEBRATION OVERLAY
-   ============================================================================ */
-
-#victory-celebration-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.85); /* Heavy blackout block over the board */
-    z-index: 100;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    pointer-events: auto; /* Forces hard click capture across the entire viewport */
-}
-
-/* Centerpiece Banner Formatting */
-.victory-banner-content {
-    text-align: center;
-    transform: scale(0.9);
-    animation: bannerPopIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-}
-
-.victory-banner-content h1 {
-    color: #00ffcc;
-    font-size: 64px;
-    letter-spacing: 2px;
-    margin: 0;
-    padding: 0;
-    text-shadow: 0 0 25px rgba(0, 255, 204, 0.7);
-}
-
-.victory-banner-content p {
-    color: #ffffff;
-    font-size: 32px;
-    margin: 10px 0 0 0;
-    font-weight: 300;
-    letter-spacing: 1px;
-}
-
-/* ============================================================================
-   MOBILE RESPONSIVENESS AND ROTATION HANDLING
-   ============================================================================ */
-
-/* HIDDEN BY DEFAULT on desktop browsers and landscape viewport ratios */
-#rotation-overlay {
-    display: none;
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: #ffffff;
-    color: #121212;
-    z-index: 9999;
+    background: radial-gradient(circle, #1f2833 0%, #0b0c10 100%);
+    display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
+    z-index: 9999;
+}
+
+#loading-screen.hidden {
+    opacity: 0;
+    pointer-events: none;
+    display: none !important;
+}
+
+.lobby-btn {
+    padding: 30px 80px;
+    font-size: 2.4rem;
+    border-radius: 8px;
+    font-weight: bold;
+    color: #66fcf1;
+    background: transparent;
+    border: 4px solid #66fcf1;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    box-shadow: 0 0 30px rgba(102, 252, 241, 0.3);
+    transition: all 0.2s ease-in-out;
+}
+
+.lobby-btn:hover {
+    background: #66fcf1;
+    color: #0b0c10;
+    box-shadow: 0 0 50px rgba(102, 252, 241, 0.7);
+}
+
+#game-table {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    background-color: #050508;
+}
+
+#game-table.hidden {
+    display: none !important;
+}
+
+/* Fixed Resolution Game Container utilizing hardware scale matrices */
+.match-board-container {
+    background-image: url('/dominoes/assets/table_bg.jpg');
+    background-size: 100% 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+    box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.8);
+    border-radius: 8px;
+    transform-origin: center center; /* Shrink vector centered in the view frame */
+    flex-shrink: 0;
+}
+
+.live-card-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+.domino-item {
+    background-image: url('/dominoes/assets/dom_front.gif');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    border-radius: 8px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.6);
+}
+
+.pip-mask-patch {
+    position: absolute;
+    width: 19px;
+    height: 19px;
+    background-color: #e6dfd3;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+.debug-label {
+    position: absolute;
+    bottom: -24px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 10px;
+    font-weight: bold;
+    color: #66fcf1;
+    background-color: rgba(5, 5, 8, 0.9);
+    padding: 1px 5px;
+    border-radius: 3px;
+    border: 1px solid #45f3ff4d;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 100;
+}
+
+.orientation-notice, 
+div[class*="rotate-notice"], 
+div[id*="rotate-device"],
+body > div:last-of-type {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+.screen.hidden-layout {
+    display: none !important;
+}
+
+#lobby-view {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: radial-gradient(circle, #1a1d24 0%, #050508 100%);
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 500;
+}
+
+.lobby-panel {
     text-align: center;
-    padding: 20px;
+    background: rgba(11, 12, 16, 0.85);
+    padding: 50px;
+    border-radius: 12px;
+    border: 2px solid #66fcf1;
+    box-shadow: 0 0 40px rgba(102, 252, 241, 0.15);
 }
 
-#rotation-overlay h2 {
-    font-size: 28px;
-    margin-bottom: 15px;
+.lobby-actions {
+    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
 }
 
-/* Enforce the warning overlay only when an actual mobile device environment is portrait orientation */
-@media screen and (max-width: 1024px) and (orientation: portrait) {
-    #rotation-overlay {
-        display: flex;
-    }
+.join-input-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
 }
 
-/* ============================================================================
-   SYSTEM ANIMATIONS
-   ============================================================================ */
-
-@keyframes connectionBlinker {
-    50% { opacity: 0.3; }
-}
-
-@keyframes bannerPopIn {
-    to {
-        transform: scale(1);
-    }
+#room-code-input {
+    background: #0b0c10;
+    border: 2px solid #c5c6c7;
+    border-radius: 4px;
+    color: #66fcf1;
+    font-size: 2rem;
+    padding: 10px;
+    width: 200px;
+    text-align: center;
+    font-weight: bold;
+    text-transform: uppercase;
 }
