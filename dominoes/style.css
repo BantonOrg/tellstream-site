@@ -37,18 +37,26 @@ html, body {
     display: none !important;
 }
 
+/* UI FIX: Doubled the sizing specifications for the initial entrance button */
 .lobby-btn {
-    padding: 15px 40px;
-    font-size: 1.2rem;
+    padding: 30px 80px;
+    font-size: 2.4rem;
+    border-radius: 8px;
     font-weight: bold;
     color: #66fcf1;
     background: transparent;
-    border: 2px solid #66fcf1;
-    border-radius: 4px;
+    border: 4px solid #66fcf1;
     cursor: pointer;
     text-transform: uppercase;
-    letter-spacing: 2px;
-    box-shadow: 0 0 15px rgba(102, 252, 241, 0.2);
+    letter-spacing: 4px;
+    box-shadow: 0 0 30px rgba(102, 252, 241, 0.3);
+    transition: all 0.2s ease-in-out;
+}
+
+.lobby-btn:hover {
+    background: #66fcf1;
+    color: #0b0c10;
+    box-shadow: 0 0 50px rgba(102, 252, 241, 0.7);
 }
 
 #game-table {
@@ -66,7 +74,6 @@ html, body {
     display: none !important;
 }
 
-/* Fluid Responsive Table Container matching 2730x1536 Aspect Ratio */
 .match-board-container {
     width: 100vw;
     max-width: 2730px;
@@ -87,7 +94,6 @@ html, body {
     }
 }
 
-/* Dynamic Card Wrapper Positioning */
 .live-card-wrapper {
     display: flex;
     justify-content: center;
@@ -95,7 +101,6 @@ html, body {
     z-index: 10;
 }
 
-/* The Core Domino Asset Instance */
 .domino-item {
     background-image: url('/dominoes/assets/dom_front.gif');
     background-size: 100% 100%;
@@ -104,7 +109,6 @@ html, body {
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.6);
 }
 
-/* Circular mask patches adjusted down to match the 75% tile footprint scaling */
 .pip-mask-patch {
     position: absolute;
     width: 19px;
@@ -115,7 +119,6 @@ html, body {
     pointer-events: none;
 }
 
-/* Debug Labels Positioning */
 .debug-label {
     position: absolute;
     bottom: -24px;
@@ -132,7 +135,6 @@ html, body {
     z-index: 100;
 }
 
-/* Suppression of Orientation Warning Overlay */
 .orientation-notice, 
 div[class*="rotate-notice"], 
 div[id*="rotate-device"],
