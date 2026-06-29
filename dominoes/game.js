@@ -1,5 +1,5 @@
 // ==========================================================================
-// Tellstream Dominoes - Adjusted Left Branch Corner Test
+// Tellstream Dominoes - Clean Array-Driven Structural Corner Test
 // ==========================================================================
 
 const gameTable = document.getElementById('game-table');
@@ -22,23 +22,23 @@ const TRACK = {
 
 function buildLeftBranch() {
     return [
-        { id: 'l1', top: 6, bottom: 5, isDouble: false },
-        { id: 'l2', top: 5, bottom: 4, isDouble: false },
-        { id: 'l3', top: 4, bottom: 3, isDouble: false }, 
-        { id: 'l4', top: 3, bottom: 2, isDouble: false }, // Stays horizontal
-        { id: 'l5', top: 2, bottom: 1, isDouble: false }, // Becomes the new corner turner
-        { id: 'l6', top: 1, bottom: 0, isDouble: false }
+        { id: 'l1', top: 6, bottom: 5, isDouble: false, isCornerTurner: false },
+        { id: 'l2', top: 5, bottom: 4, isDouble: false, isCornerTurner: false },
+        { id: 'l3', top: 4, bottom: 3, isDouble: false, isCornerTurner: false }, 
+        { id: 'l4', top: 3, bottom: 2, isDouble: false, isCornerTurner: false }, // Stays flat
+        { id: 'l5', top: 2, bottom: 1, isDouble: false, isCornerTurner: true  }, // Explicit turn execution point
+        { id: 'l6', top: 1, bottom: 0, isDouble: false, isCornerTurner: false }
     ];
 }
 
 function buildRightBranch() {
     return [
-        { id: 'r1', top: 6, bottom: 5, isDouble: false },
-        { id: 'r2', top: 5, bottom: 4, isDouble: false },
-        { id: 'r3', top: 4, bottom: 3, isDouble: false }, 
-        { id: 'r4', top: 3, bottom: 2, isDouble: false }, // Bottom-Right Corner
-        { id: 'r5', top: 2, bottom: 1, isDouble: false }, 
-        { id: 'r6', top: 1, bottom: 0, isDouble: false }
+        { id: 'r1', top: 6, bottom: 5, isDouble: false, isCornerTurner: false },
+        { id: 'r2', top: 5, bottom: 4, isDouble: false, isCornerTurner: false },
+        { id: 'r3', top: 4, bottom: 3, isDouble: false, isCornerTurner: false }, 
+        { id: 'r4', top: 3, bottom: 2, isDouble: false, isCornerTurner: true  }, // Explicit turn execution point
+        { id: 'r5', top: 2, bottom: 1, isDouble: false, isCornerTurner: false }, 
+        { id: 'r6', top: 1, bottom: 0, isDouble: false, isCornerTurner: false }
     ];
 }
 
@@ -58,7 +58,7 @@ function calculateBranch(deck, startDirection) {
             if (direction === 'left') {
                 const stepX = currentX - (prevTile.w / 2) - (width / 2);
                 
-                if (stepX - (width / 2) <= TRACK.leftX + 50) {
+                if (tile.isCornerTurner) {
                     direction = 'up';
                     
                     width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
@@ -67,8 +67,7 @@ function calculateBranch(deck, startDirection) {
 
                     const optionA_X = currentX; 
                     const optionA_X_Dist = Math.abs(optionA_X - TRACK.leftX);
-                    
-                    const optionB_X = currentX - (prevTile.w / 2) - (width / 2);
+                    const optionB_X = stepX;
                     const optionB_X_Dist = Math.abs(optionB_X - TRACK.leftX);
                     
                     if (optionA_X_Dist < optionB_X_Dist) {
@@ -85,7 +84,7 @@ function calculateBranch(deck, startDirection) {
             else if (direction === 'right') {
                 const stepX = currentX + (prevTile.w / 2) + (width / 2);
                 
-                if (stepX + (width / 2) >= TRACK.rightX - 50) {
+                if (tile.isCornerTurner) {
                     direction = 'up';
                     
                     width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
@@ -94,8 +93,7 @@ function calculateBranch(deck, startDirection) {
 
                     const optionA_X = currentX; 
                     const optionA_X_Dist = Math.abs(optionA_X - TRACK.rightX);
-                    
-                    const optionB_X = currentX + (prevTile.w / 2) + (width / 2);
+                    const optionB_X = stepX;
                     const optionB_X_Dist = Math.abs(optionB_X - TRACK.rightX);
                     
                     if (optionA_X_Dist < optionB_X_Dist) {
