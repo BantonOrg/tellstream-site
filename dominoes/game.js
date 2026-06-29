@@ -1,5 +1,5 @@
 // ==========================================================================
-// Tellstream Dominoes - Restored Baseline Perfect Bottom Code
+// Tellstream Dominoes - Adjusted Left Branch Corner Test
 // ==========================================================================
 
 const gameTable = document.getElementById('game-table');
@@ -25,8 +25,8 @@ function buildLeftBranch() {
         { id: 'l1', top: 6, bottom: 5, isDouble: false },
         { id: 'l2', top: 5, bottom: 4, isDouble: false },
         { id: 'l3', top: 4, bottom: 3, isDouble: false }, 
-        { id: 'l4', top: 3, bottom: 2, isDouble: false }, // Bottom-Left Corner
-        { id: 'l5', top: 2, bottom: 1, isDouble: false }, 
+        { id: 'l4', top: 3, bottom: 2, isDouble: false }, // Stays horizontal
+        { id: 'l5', top: 2, bottom: 1, isDouble: false }, // Becomes the new corner turner
         { id: 'l6', top: 1, bottom: 0, isDouble: false }
     ];
 }
@@ -126,7 +126,6 @@ function calculateBranch(deck, startDirection) {
     return layoutMap;
 }
 
-// --- RENDERING INTEGRATION ---
 function resizeGameTableContainer() {
     const container = document.querySelector('.match-board-container');
     if (!container) return;
