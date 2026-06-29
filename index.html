@@ -170,7 +170,9 @@
 
     <script>
         const observer = new MutationObserver(() => {
-            if (document.body.innerText.includes("Welcome back Banton")) {
+            // Check if user is either Banton or TellaSecurity
+            const bodyText = document.body.innerText;
+            if (bodyText.includes("Welcome back Banton") || bodyText.includes("Welcome back TellaSecurity")) {
                 const link = document.getElementById('banton-dominoes-link');
                 if (link && link.style.display === 'none') {
                     link.style.display = 'inline-block';
