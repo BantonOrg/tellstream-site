@@ -1,5 +1,5 @@
 // ==========================================================================
-// Tellstream Dominoes - Patched Edge Alignment Corner Test
+// Tellstream Dominoes - Restored Baseline Path Track (Bottom-Left Corner)
 // ==========================================================================
 
 const gameTable = document.getElementById('game-table');
@@ -13,6 +13,7 @@ const canvasH = 1171;
 const TILE_BASE_W = 90;
 const TILE_BASE_H = 176;
 
+// Baseline tracks matching your very first screenshot alignment perfectly
 const TRACK = {
     bottomY: 1160,
     topY:    310,
@@ -20,74 +21,92 @@ const TRACK = {
     rightX:  2170
 };
 
+// CHANGE THIS TO 1, 2, OR 3 TO TEST EACH SCENARIO DATA BLOCK
 const TEST_SCENARIO = 1; 
 
 function buildStrictSequence(scenarioNum) {
-    return [
-        { id: 't1', top: 6, bottom: 5, isDouble: false, isCornerTurner: false },
-        { id: 't2', top: 5, bottom: 4, isDouble: false, isCornerTurner: false },
-        { id: 't3', top: 4, bottom: 3, isDouble: false, isCornerTurner: false }, 
-        { id: 't4', top: 3, bottom: 2, isDouble: false, isCornerTurner: true },  
-        { id: 't5', top: 2, bottom: 1, isDouble: false, isCornerTurner: false },
-        { id: 't6', top: 1, bottom: 0, isDouble: false, isCornerTurner: false }
-    ];
+    if (scenarioNum === 1) {
+        // Scenario 1: Single before Single
+        return [
+            { id: 't1', top: 6, bottom: 5, isDouble: false },
+            { id: 't2', top: 5, bottom: 4, isDouble: false },
+            { id: 't3', top: 4, bottom: 3, isDouble: false }, 
+            { id: 't4', top: 3, bottom: 2, isDouble: false }, // Corner Turner
+            { id: 't5', top: 2, bottom: 1, isDouble: false }, 
+            { id: 't6', top: 1, bottom: 0, isDouble: false }
+        ];
+    } else if (scenarioNum === 2) {
+        // Scenario 2: Double after Single
+        return [
+            { id: 't1', top: 6, bottom: 5, isDouble: false },
+            { id: 't2', top: 5, bottom: 4, isDouble: false },
+            { id: 't3', top: 4, bottom: 3, isDouble: false }, 
+            { id: 't4', top: 3, bottom: 3, isDouble: true },  // Corner Turner
+            { id: 't5', top: 3, bottom: 2, isDouble: false }, 
+            { id: 't6', top: 2, bottom: 1, isDouble: false }
+        ];
+    } else if (scenarioNum === 3) {
+        // Scenario 3: Single after Double
+        return [
+            { id: 't1', top: 6, bottom: 5, isDouble: false },
+            { id: 't2', top: 5, bottom: 4, isDouble: false },
+            { id: 't3', top: 4, bottom: 4, isDouble: true },  
+            { id: 't4', top: 4, bottom: 3, isDouble: false }, // Corner Turner
+            { id: 't5', top: 3, bottom: 2, isDouble: false }, 
+            { id: 't6', top: 2, bottom: 1, isDouble: false }
+        ];
+    }
 }
 
 function calculateStrictTrack(deck) {
     const layoutMap = {};
-    let currentX = 1400; 
+    let currentX = 1400; // Original baseline start
     let currentY = TRACK.bottomY;
     let direction = 'left';
     let prevTile = null;
 
-    deck.forEach((tile) => {
-        let width, height, angle;
+    deck.forEach((tile, index) => {
+        // Baseline geometry mapping from your original file layout
+        let width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+        let height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+        let angle = tile.isDouble ? 0 : 90;
 
-        if (direction === 'left') {
-            if (tile.isCornerTurner) {
-                width = TILE_BASE_W;
-                height = TILE_BASE_H;
-                angle = 0;
-            } else {
-                width = TILE_BASE_H;
-                height = TILE_BASE_W;
-                angle = 90;
-            }
-        } else if (direction === 'up') {
-            width = TILE_BASE_W;
-            height = TILE_BASE_H;
-            angle = 0;
-        }
+        if (index > 0) {
+            if (direction === 'left') {
+                const stepX = currentX - (prevTile.w / 2) - (width / 2);
+                
+                // Original coordinate-based lane switch threshold
+                if (stepX - (width / 2) <= TRACK.leftX + 50) {
+                    direction = 'up';
+                    
+                    // Stand the corner block up for vertical lane transition
+                    width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+                    height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+                    angle = tile.isDouble ? 90 : 0;
 
-        if (prevTile) {
-            if (tile.isCornerTurner) {
-                direction = 'up';
-
-                // Option A: Stack on top face
-                // Center-X stays aligned with previous center. Center-Y moves up by half of both heights.
-                const optionA_X = currentX;
-                const optionA_Y = currentY - (prevTile.h / 2) - (height / 2);
-                const optionA_Dist = Math.abs(optionA_X - TRACK.leftX);
-
-                // Option B: Snap to left side face
-                // Center-X moves left to clear the boundary. Center-Y aligns with previous top edge base.
-                const optionB_X = currentX - (prevTile.w / 2) - (width / 2);
-                const optionB_Y = currentY - (prevTile.h / 2) + (height / 2);
-                const optionB_Dist = Math.abs(optionB_X - TRACK.leftX);
-
-                if (optionA_Dist < optionB_Dist) {
-                    currentX = optionA_X;
-                    currentY = optionA_Y;
+                    // Original Baseline Magnet Selection Logic
+                    const optionA_X = currentX; 
+                    const optionA_X_Dist = Math.abs(optionA_X - TRACK.leftX);
+                    
+                    const optionB_X = currentX - (prevTile.w / 2) - (width / 2);
+                    const optionB_X_Dist = Math.abs(optionB_X - TRACK.leftX);
+                    
+                    if (optionA_X_Dist < optionB_X_Dist) {
+                        currentX = optionA_X;
+                        currentY = TRACK.bottomY - (prevTile.h / 2) - (height / 2);
+                    } else {
+                        currentX = optionB_X;
+                        currentY = TRACK.bottomY;
+                    }
                 } else {
-                    currentX = optionB_X;
-                    currentY = optionB_Y;
+                    currentX = stepX;
                 }
-            } else {
-                if (direction === 'left') {
-                    currentX = currentX - (prevTile.w / 2) - (width / 2);
-                } else if (direction === 'up') {
-                    currentY = currentY - (prevTile.h / 2) - (height / 2);
-                }
+            } 
+            else if (direction === 'up') {
+                width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+                height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+                angle = tile.isDouble ? 90 : 0;
+                currentY -= (prevTile.h / 2) + (height / 2);
             }
         } else {
             currentX -= (width / 2);
