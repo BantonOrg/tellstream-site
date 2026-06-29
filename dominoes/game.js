@@ -1,5 +1,5 @@
 // ==========================================================================
-// Tellstream Dominoes - Direct Coordinate Visual Path Check
+// Tellstream Dominoes - Balanced Visual Path Alignment
 // ==========================================================================
 
 const gameTable = document.getElementById('game-table');
@@ -8,12 +8,12 @@ const loadingScreen = document.getElementById('loading-screen');
 const BOARD_NATIVE_W = 2730;
 const BOARD_NATIVE_H = 1536;
 
-// Direct track intersections mapped directly to your board paths
+// Centerline Tracks balanced between the logo text edges and the outer neon glow
 const TRACK = {
-    bottomY: 1160,  // Exact horizontal center line matching the first domino track
-    topY:    511,   // Calculated center line between Top Outer and Top Inner (693)
-    leftX:   684,   // Calculated center line between Left Outer and Left Inner (940)
-    rightX:  2110   // Calculated center line between Right Inner (1794) and Right Outer
+    bottomY: 1160,  // Stays exactly locked to your correct bottom domino track line
+    topY:    310,   // Moved UP: Halfway between the top of the "T" and the top glowing frame
+    leftX:   475,   // Moved LEFT: Halfway between the left side of "T" and the left glowing frame
+    rightX:  2255   // Moved RIGHT: Halfway between the right side of "M" and the right glowing frame
 };
 
 function resizeGameTableContainer() {
@@ -27,7 +27,6 @@ function drawPerfectPathTrack() {
     if (loadingScreen) loadingScreen.classList.add('hidden');
     if (gameTable) gameTable.classList.remove('hidden');
 
-    // Wipe out any old elements or text labels
     gameTable.innerHTML = '';
 
     const boardContainer = document.createElement('div');
@@ -37,7 +36,6 @@ function drawPerfectPathTrack() {
     boardContainer.style.position = 'absolute';
     gameTable.appendChild(boardContainer);
 
-    // Create a high-res rendering canvas for the path line
     const canvas = document.createElement('canvas');
     canvas.width = BOARD_NATIVE_W;
     canvas.height = BOARD_NATIVE_H;
@@ -50,29 +48,24 @@ function drawPerfectPathTrack() {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, BOARD_NATIVE_W, BOARD_NATIVE_H);
 
-    // Clear, sharp white path line styling
+    // High visibility white tracking line
     ctx.strokeStyle = '#FFFFFF';
     ctx.lineWidth = 6;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'miter';
     
-    // Begin path loop trace
     ctx.beginPath();
     
-    // Start at Bottom Right
+    // Track loop configuration
     ctx.moveTo(TRACK.rightX, TRACK.bottomY);
-    // Track horizontally to Left Corner
     ctx.lineTo(TRACK.leftX, TRACK.bottomY);
-    // Track vertically to Top Left Corner
     ctx.lineTo(TRACK.leftX, TRACK.topY);
-    // Track horizontally to Top Right Corner
     ctx.lineTo(TRACK.rightX, TRACK.topY);
-    // Track vertically back to Bottom Right
     ctx.lineTo(TRACK.rightX, TRACK.bottomY);
     
     ctx.stroke();
 
-    // Blue anchor points on corner joints to see exact turning vertexes
+    // Corner alignment anchor points
     ctx.fillStyle = '#00FFFF';
     const corners = [
         { x: TRACK.leftX, y: TRACK.bottomY },
