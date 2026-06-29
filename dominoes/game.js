@@ -1,5 +1,5 @@
 // ==========================================================================
-// Tellstream Dominoes - Perfect Geometric Chain Test
+// Tellstream Dominoes - Raw Asset Layout Canvas
 // ==========================================================================
 
 const startBtn = document.getElementById('start-btn');
@@ -11,7 +11,6 @@ const BOARD_NATIVE_H = 1536;
 const canvasW = 597;
 const canvasH = 1171;
 
-// 75% Scale Metrics
 const TILE_BASE_W = 90;
 const TILE_BASE_H = 176;
 
@@ -35,37 +34,20 @@ const bottomPipMap = [
     { name: 'bottom-right', x: 469, y: 1042, hideFor: [0, 1] }
 ];
 
-function buildEulerianSequence() {
-    return [
-        { id: 'tile-6-6', top: 6, bottom: 6, isDouble: true },
-        { id: 'tile-6-5', top: 6, bottom: 5, isDouble: false },
-        { id: 'tile-5-5', top: 5, bottom: 5, isDouble: true },
-        { id: 'tile-5-4', top: 5, bottom: 4, isDouble: false },
-        { id: 'tile-4-4', top: 4, bottom: 4, isDouble: true },
-        { id: 'tile-4-3', top: 4, bottom: 3, isDouble: false },
-        { id: 'tile-3-3', top: 3, bottom: 3, isDouble: true },
-        { id: 'tile-3-2', top: 3, bottom: 2, isDouble: false },
-        { id: 'tile-2-2', top: 2, bottom: 2, isDouble: true },
-        { id: 'tile-2-1', top: 2, bottom: 1, isDouble: false },
-        { id: 'tile-1-1', top: 1, bottom: 1, isDouble: true },
-        { id: 'tile-1-0', top: 1, bottom: 0, isDouble: false },
-        { id: 'tile-0-0', top: 0, bottom: 0, isDouble: true },
-        { id: 'tile-0-2', top: 0, bottom: 2, isDouble: false },
-        { id: 'tile-2-4', top: 2, bottom: 4, isDouble: false },
-        { id: 'tile-4-1', top: 4, bottom: 1, isDouble: false },
-        { id: 'tile-1-3', top: 1, bottom: 3, isDouble: false },
-        { id: 'tile-3-5', top: 3, bottom: 5, isDouble: false },
-        { id: 'tile-5-0', top: 5, bottom: 0, isDouble: false },
-        { id: 'tile-0-3', top: 0, bottom: 3, isDouble: false },
-        { id: 'tile-3-6', top: 3, bottom: 6, isDouble: false },
-        { id: 'tile-6-4', top: 6, bottom: 4, isDouble: false },
-        { id: 'tile-4-2', top: 4, bottom: 2, isDouble: false },
-        { id: 'tile-2-3', top: 2, bottom: 3, isDouble: false },
-        { id: 'tile-3-1', top: 3, bottom: 1, isDouble: false },
-        { id: 'tile-1-5', top: 1, bottom: 5, isDouble: false },
-        { id: 'tile-5-2', top: 5, bottom: 2, isDouble: false },
-        { id: 'tile-2-6', top: 2, bottom: 6, isDouble: false }
-    ];
+function buildMasterDeck() {
+    const deck = [];
+    for (let i = 0; i <= 6; i++) {
+        for (let j = i; j <= 6; j++) {
+            deck.push({
+                id: `tile-${i}-${j}`,
+                label: `[ ${i} - ${j} ]`,
+                top: i,
+                bottom: j,
+                isDouble: i === j
+            });
+        }
+    }
+    return deck;
 }
 
 function applyPipMasks(tileElement, value, coordinateMap) {
@@ -80,100 +62,38 @@ function applyPipMasks(tileElement, value, coordinateMap) {
     });
 }
 
-function calculateSequentialTrack(deck) {
-    const layoutMap = {};
-    
-    // Bounds boundaries based on your framing lanes
-    const LEFT_BOUND_X = 415;
-    const RIGHT_BOUND_X = 2315;
-    const TOP_BOUND_Y = 175;
-    const BOTTOM_BOUND_Y = 1160;
-
-    let currentX = 2150;
-    let currentY = BOTTOM_BOUND_Y;
-    let direction = 'left';
-    let prevTile = null;
-
-    deck.forEach((tile, index) => {
-        let width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-        let height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
-        let angle = tile.isDouble ? 0 : 90;
-
-        if (direction === 'up' || direction === 'down') {
-            width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
-            height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-            angle = tile.isDouble ? 90 : 0;
-        }
-
-        if (index > 0) {
-            const prevWidth = prevTile.isDouble ? (prevTile.dir === 'up' || prevTile.dir === 'down' ? TILE_BASE_H : TILE_BASE_W) : (prevTile.dir === 'up' || prevTile.dir === 'down' ? TILE_BASE_W : TILE_BASE_H);
-            const prevHeight = prevTile.isDouble ? (prevTile.dir === 'up' || prevTile.dir === 'down' ? TILE_BASE_W : TILE_BASE_H) : (prevTile.dir === 'up' || prevTile.dir === 'down' ? TILE_BASE_H : TILE_BASE_W);
-
-            if (direction === 'left') {
-                currentX -= (prevWidth / 2) + (width / 2);
-                
-                // Corner Shift Check
-                if (currentX - (width / 2) < LEFT_BOUND_X) {
-                    direction = 'up';
-                    // Recalculate dimensions immediately for orientation swap
-                    width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
-                    height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-                    angle = tile.isDouble ? 90 : 0;
-
-                    // Re-align perfectly centered on the corner turn square face
-                    currentX = LEFT_BOUND_X;
-                    currentY = BOTTOM_BOUND_Y - (prevHeight / 2) - (height / 2);
-                }
-            }
-            else if (direction === 'up') {
-                currentY -= (prevHeight / 2) + (height / 2);
-
-                // Top Corner Shift Check
-                if (currentY - (height / 2) < TOP_BOUND_Y) {
-                    direction = 'right';
-                    width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-                    height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
-                    angle = tile.isDouble ? 0 : 90;
-
-                    currentY = TOP_BOUND_Y;
-                    currentX = LEFT_BOUND_X + (prevWidth / 2) + (width / 2);
-                }
-            }
-            else if (direction === 'right') {
-                currentX += (prevWidth / 2) + (width / 2);
-
-                // Right Corner Shift Check
-                if (currentX + (width / 2) > RIGHT_BOUND_X) {
-                    direction = 'down';
-                    width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
-                    height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-                    angle = tile.isDouble ? 90 : 0;
-
-                    currentX = RIGHT_BOUND_X;
-                    currentY = TOP_BOUND_Y + (prevHeight / 2) + (height / 2);
-                }
-            }
-            else if (direction === 'down') {
-                currentY += (prevHeight / 2) + (height / 2);
-            }
-        }
-
-        layoutMap[tile.id] = { x: currentX, y: currentY, w: width, h: height, angle: angle, dir: direction };
-        prevTile = { isDouble: tile.isDouble, dir: direction };
-    });
-
-    return layoutMap;
-}
-
-function resizeGameTableContainer() {
-    const container = document.querySelector('.match-board-container');
-    if (!container) return;
-    const fitScale = Math.min(window.innerWidth / BOARD_NATIVE_W, window.innerHeight / BOARD_NATIVE_H);
-    container.style.transform = `scale(${fitScale})`;
+/**
+ * MANUAL RAW CANVAS PLACEMENT MAP
+ * Edit the X, Y, and Angle values here directly to arrange your sample patterns.
+ */
+function getManualCoordinates() {
+    return {
+        'tile-6-6': { x: 500,  y: 400,  angle: 0   }, // Vertical Double
+        'tile-6-5': { x: 650,  y: 400,  angle: 90  }, // Horizontal Single
+        'tile-5-5': { x: 800,  y: 400,  angle: 0   },
+        'tile-5-4': { x: 950,  y: 400,  angle: 90  },
+        'tile-4-4': { x: 1100, y: 400,  angle: 0   },
+        'tile-4-3': { x: 1250, y: 400,  angle: 90  },
+        'tile-3-3': { x: 1400, y: 400,  angle: 0   },
+        
+        // Next row coordinates for staging your test pieces
+        'tile-3-2': { x: 500,  y: 650,  angle: 90  },
+        'tile-2-2': { x: 650,  y: 650,  angle: 0   },
+        'tile-2-1': { x: 800,  y: 650,  angle: 90  },
+        'tile-1-1': { x: 950,  y: 650,  angle: 0   },
+        'tile-1-0': { x: 1100, y: 650,  angle: 90  },
+        { name: 'remainder-tiles', note: 'All other tiles will stack cleanly across the grid lines below.' }
+    };
 }
 
 function displayDynamicMatchTable() {
     gameTable.innerHTML = '';
+    
+    // Force a pitch black background frame override
+    document.body.style.backgroundColor = '#000000';
+    gameTable.style.backgroundColor = '#000000';
+    gameTable.style.backgroundImage = 'none';
+
     const boardContainer = document.createElement('div');
     boardContainer.className = 'match-board-container';
     boardContainer.style.width = `${BOARD_NATIVE_W}px`;
@@ -181,19 +101,34 @@ function displayDynamicMatchTable() {
     boardContainer.style.position = 'absolute';
     gameTable.appendChild(boardContainer);
 
-    const masterDeck = buildEulerianSequence();
-    const layoutCoordinates = calculateSequentialTrack(masterDeck);
+    const masterDeck = buildMasterDeck();
+    const manualPositions = getManualCoordinates();
+
+    let gridX = 200;
+    let gridY = 900;
 
     masterDeck.forEach((tile) => {
-        const coords = layoutCoordinates[tile.id];
-        if (!coords) return;
+        let coords = manualPositions[tile.id];
+        
+        // If a tile isn't manually positioned above, grid it out systematically along the bottom area
+        if (!coords) {
+            coords = { x: gridX, y: gridY, angle: tile.isDouble ? 0 : 90 };
+            gridX += 160;
+            if (gridX > 2400) {
+                gridX = 200;
+                gridY += 200;
+            }
+        }
+
+        const width = coords.angle === 90 ? TILE_BASE_H : TILE_BASE_W;
+        const height = coords.angle === 90 ? TILE_BASE_W : TILE_BASE_H;
 
         const wrapper = document.createElement('div');
         wrapper.className = 'live-card-wrapper';
-        wrapper.style.width = `${coords.w}px`;
-        wrapper.style.height = `${coords.h}px`;
-        wrapper.style.left = `${coords.x - (coords.w / 2)}px`;
-        wrapper.style.top = `${coords.y - (coords.h / 2)}px`;
+        wrapper.style.width = `${width}px`;
+        wrapper.style.height = `${height}px`;
+        wrapper.style.left = `${coords.x - (width / 2)}px`;
+        wrapper.style.top = `${coords.y - (height / 2)}px`;
         wrapper.style.position = 'absolute';
 
         const rotationContainer = document.createElement('div');
@@ -226,14 +161,24 @@ function displayDynamicMatchTable() {
         boardContainer.appendChild(wrapper);
     });
 
-    resizeGameTableContainer();
+    const container = document.querySelector('.match-board-container');
+    if (container) {
+        const fitScale = Math.min(window.innerWidth / BOARD_NATIVE_W, window.innerHeight / BOARD_NATIVE_H);
+        container.style.transform = `scale(${fitScale})`;
+    }
 }
 
-window.addEventListener('resize', resizeGameTableContainer);
+window.addEventListener('resize', () => {
+    const container = document.querySelector('.match-board-container');
+    if (container) {
+        const fitScale = Math.min(window.innerWidth / BOARD_NATIVE_W, window.innerHeight / BOARD_NATIVE_H);
+        container.style.transform = `scale(${fitScale})`;
+    }
+});
 
 setTimeout(() => {
     startBtn.disabled = false;
-    startBtn.innerText = "TEST MATCHING CIRCUIT";
+    startBtn.innerText = "OPEN MANUAL CANVAS";
 }, 1000);
 
 startBtn.addEventListener('click', () => {
