@@ -1,5 +1,5 @@
 // ==========================================================================
-// Tellstream Dominoes - Core Game Engine & Dynamic Board Layout
+// Tellstream Dominoes - Core Game Engine & Precise Mask Layout
 // ==========================================================================
 
 const startBtn = document.getElementById('start-btn');
@@ -89,7 +89,6 @@ function calculateCircuitLayout(deck) {
     const leftBranchTiles = deck.slice(0, 14).reverse();
     const rightBranchTiles = deck.slice(14);
 
-    // Track state configurations
     let currentX = startX;
     let currentY = startY;
     let direction = 'left';
@@ -129,7 +128,7 @@ function calculateCircuitLayout(deck) {
             currentX += (prevWidth / 2) + (width / 2);
         }
 
-        layoutMap[tile.id] = { x: currentX, y: currentY, angle: rotationDegrees };
+        layoutMap[tile.id] = { x: currentX, y: currentY, w: width, h: height, angle: rotationDegrees, dir: direction };
         prevTile = { isDouble: tile.isDouble, dir: direction };
     });
 
@@ -172,7 +171,7 @@ function calculateCircuitLayout(deck) {
             currentX -= (prevWidth / 2) + (width / 2);
         }
 
-        layoutMap[tile.id] = { x: currentX, y: currentY, angle: rotationDegrees };
+        layoutMap[tile.id] = { x: currentX, y: currentY, w: width, h: height, angle: rotationDegrees, dir: direction };
         prevTile = { isDouble: tile.isDouble, dir: direction };
     });
 
@@ -199,31 +198,45 @@ function displayDynamicMatchTable() {
         const coords = layoutCoordinates[tile.id];
         if (!coords) return;
 
-        // Create the tile element directly at standard native dimensions
+        // Outer positioning cell box matching calculated layout bounds
+        const wrapper = document.createElement('div');
+        wrapper.className = 'live-card-wrapper';
+        wrapper.style.width = `${coords.w}px`;
+        wrapper.style.height = `${coords.h}px`;
+        wrapper.style.left = `${coords.x - (coords.w / 2)}px`;
+        wrapper.style.top = `${coords.y - (coords.h / 2)}px`;
+        wrapper.style.position = 'absolute';
+
+        // Inner structural container to rotate the card cleanly without affecting absolute mask math
+        const rotationContainer = document.createElement('div');
+        rotationContainer.style.width = `${TILE_BASE_W}px`;
+        rotationContainer.style.height = `${TILE_BASE_H}px`;
+        rotationContainer.style.transform = `rotate(${coords.angle}deg)`;
+        rotationContainer.style.transformOrigin = 'center center';
+        rotationContainer.style.position = 'relative';
+        rotationContainer.style.display = 'flex';
+        rotationContainer.style.justify = 'center';
+        rotationContainer.style.alignItems = 'center';
+
         const tileElement = document.createElement('div');
         tileElement.className = 'domino-item';
         tileElement.id = tile.id;
-        tileElement.style.width = `${TILE_BASE_W}px`;
-        tileElement.style.height = `${TILE_BASE_H}px`;
+        tileElement.style.width = '100%';
+        tileElement.style.height = '100%';
         tileElement.style.position = 'absolute';
-        
-        // Offset coordinates by half width/height to center position perfectly
-        tileElement.style.left = `${coords.x - (TILE_BASE_W / 2)}px`;
-        tileElement.style.top = `${coords.y - (TILE_BASE_H / 2)}px`;
 
-        // Apply masks while tile is perfectly straight (Guarantees precision alignment)
+        // Direct mask rendering on native upright ratios
         applyPipMasks(tileElement, tile.top, topPipMap);
         applyPipMasks(tileElement, tile.bottom, bottomPipMap);
-
-        // Spin the entire completed object including its mask children safely
-        tileElement.style.transform = `rotate(${coords.angle}deg)`;
 
         const textLabel = document.createElement('div');
         textLabel.className = 'debug-label';
         textLabel.innerText = tile.label;
-        tileElement.appendChild(textLabel);
 
-        boardContainer.appendChild(tileElement);
+        rotationContainer.appendChild(tileElement);
+        wrapper.appendChild(rotationContainer);
+        wrapper.appendChild(textLabel);
+        boardContainer.appendChild(wrapper);
     });
 }
 
