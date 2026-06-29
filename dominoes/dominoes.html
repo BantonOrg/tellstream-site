@@ -5,23 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TellStream Lounge Dominoes</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-    <!-- 1. LOADING SCREEN -->
     <div id="loading-screen" class="screen">
         <div class="loading-content">
-            <!-- Loading assets happen here -->
-            <button id="start-btn" disabled>Loading 100%...</button>
+            <button id="start-btn">Click to Enter Lounge</button>
         </div>
     </div>
 
-    <!-- 2. GAME TABLE BACKGROUND (Stretches fullscreen on start) -->
-    <div id="game-table" class="screen hidden">
-        <!-- 10 Display dominoes (7 face up, 3 face down) will inject here -->
+    <div id="lobby-view" class="screen">
+        </div>
+
+    <div id="table-view" class="screen hidden-layout">
+        <div id="game-table">
+            </div>
     </div>
 
-    <!-- 3. MOBILE ROTATION GUARD OVERLAY -->
     <div id="rotation-overlay">
         <div class="message">
             <h2>🔄 Please Rotate Your Device</h2>
@@ -29,6 +30,7 @@
         </div>
     </div>
 
+    <script src="network.js"></script>
     <script src="game.js"></script>
 </body>
 </html>
