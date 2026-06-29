@@ -1,5 +1,5 @@
 // ==========================================================================
-// Tellstream Dominoes - Restored Baseline Path Track (Bottom-Left Corner)
+// Tellstream Dominoes - Scenario 1: Traveling Right to Bottom-Right Corner
 // ==========================================================================
 
 const gameTable = document.getElementById('game-table');
@@ -13,7 +13,7 @@ const canvasH = 1171;
 const TILE_BASE_W = 90;
 const TILE_BASE_H = 176;
 
-// Baseline tracks matching your very first screenshot alignment perfectly
+// Mapped path tracks
 const TRACK = {
     bottomY: 1160,
     topY:    310,
@@ -21,62 +21,36 @@ const TRACK = {
     rightX:  2170
 };
 
-// CHANGE THIS TO 1, 2, OR 3 TO TEST EACH SCENARIO DATA BLOCK
-const TEST_SCENARIO = 1; 
-
-function buildStrictSequence(scenarioNum) {
-    if (scenarioNum === 1) {
-        // Scenario 1: Single before Single
-        return [
-            { id: 't1', top: 6, bottom: 5, isDouble: false },
-            { id: 't2', top: 5, bottom: 4, isDouble: false },
-            { id: 't3', top: 4, bottom: 3, isDouble: false }, 
-            { id: 't4', top: 3, bottom: 2, isDouble: false }, // Corner Turner
-            { id: 't5', top: 2, bottom: 1, isDouble: false }, 
-            { id: 't6', top: 1, bottom: 0, isDouble: false }
-        ];
-    } else if (scenarioNum === 2) {
-        // Scenario 2: Double after Single
-        return [
-            { id: 't1', top: 6, bottom: 5, isDouble: false },
-            { id: 't2', top: 5, bottom: 4, isDouble: false },
-            { id: 't3', top: 4, bottom: 3, isDouble: false }, 
-            { id: 't4', top: 3, bottom: 3, isDouble: true },  // Corner Turner
-            { id: 't5', top: 3, bottom: 2, isDouble: false }, 
-            { id: 't6', top: 2, bottom: 1, isDouble: false }
-        ];
-    } else if (scenarioNum === 3) {
-        // Scenario 3: Single after Double
-        return [
-            { id: 't1', top: 6, bottom: 5, isDouble: false },
-            { id: 't2', top: 5, bottom: 4, isDouble: false },
-            { id: 't3', top: 4, bottom: 4, isDouble: true },  
-            { id: 't4', top: 4, bottom: 3, isDouble: false }, // Corner Turner
-            { id: 't5', top: 3, bottom: 2, isDouble: false }, 
-            { id: 't6', top: 2, bottom: 1, isDouble: false }
-        ];
-    }
+// Scenario 1: Pure single-to-single sequence heading right
+function buildStrictSequence() {
+    return [
+        { id: 't1', top: 6, bottom: 5, isDouble: false },
+        { id: 't2', top: 5, bottom: 4, isDouble: false },
+        { id: 't3', top: 4, bottom: 3, isDouble: false }, 
+        { id: 't4', top: 3, bottom: 2, isDouble: false }, // Corner Turner
+        { id: 't5', top: 2, bottom: 1, isDouble: false }, // Up the right wall
+        { id: 't6', top: 1, bottom: 0, isDouble: false }
+    ];
 }
 
 function calculateStrictTrack(deck) {
     const layoutMap = {};
-    let currentX = 1400; // Original baseline start
+    let currentX = 1400; // Start at middle
     let currentY = TRACK.bottomY;
-    let direction = 'left';
+    let direction = 'right'; // Heading right
     let prevTile = null;
 
     deck.forEach((tile, index) => {
-        // Baseline geometry mapping from your original file layout
         let width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
         let height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
         let angle = tile.isDouble ? 0 : 90;
 
         if (index > 0) {
-            if (direction === 'left') {
-                const stepX = currentX - (prevTile.w / 2) - (width / 2);
+            if (direction === 'right') {
+                const stepX = currentX + (prevTile.w / 2) + (width / 2);
                 
-                // Original coordinate-based lane switch threshold
-                if (stepX - (width / 2) <= TRACK.leftX + 50) {
+                // Proximity trigger for the right-hand corner wall
+                if (stepX + (width / 2) >= TRACK.rightX - 50) {
                     direction = 'up';
                     
                     // Stand the corner block up for vertical lane transition
@@ -84,12 +58,12 @@ function calculateStrictTrack(deck) {
                     height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                     angle = tile.isDouble ? 90 : 0;
 
-                    // Original Baseline Magnet Selection Logic
+                    // Magnet Selection Logic adjusted for Right X alignment
                     const optionA_X = currentX; 
-                    const optionA_X_Dist = Math.abs(optionA_X - TRACK.leftX);
+                    const optionA_X_Dist = Math.abs(optionA_X - TRACK.rightX);
                     
-                    const optionB_X = currentX - (prevTile.w / 2) - (width / 2);
-                    const optionB_X_Dist = Math.abs(optionB_X - TRACK.leftX);
+                    const optionB_X = currentX + (prevTile.w / 2) + (width / 2);
+                    const optionB_X_Dist = Math.abs(optionB_X - TRACK.rightX);
                     
                     if (optionA_X_Dist < optionB_X_Dist) {
                         currentX = optionA_X;
@@ -103,13 +77,14 @@ function calculateStrictTrack(deck) {
                 }
             } 
             else if (direction === 'up') {
+                // Climbing up the right-hand wall vertically
                 width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
                 height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 angle = tile.isDouble ? 90 : 0;
                 currentY -= (prevTile.h / 2) + (height / 2);
             }
         } else {
-            currentX -= (width / 2);
+            currentX += (width / 2);
         }
 
         layoutMap[tile.id] = { x: currentX, y: currentY, w: width, h: height, angle: angle };
@@ -187,12 +162,12 @@ function initDirectCanvas() {
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
     ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.moveTo(TRACK.rightX, TRACK.bottomY);
-    ctx.lineTo(TRACK.leftX, TRACK.bottomY);
-    ctx.lineTo(TRACK.leftX, TRACK.topY);
+    ctx.moveTo(1400, TRACK.bottomY);
+    ctx.lineTo(TRACK.rightX, TRACK.bottomY);
+    ctx.lineTo(TRACK.rightX, TRACK.topY);
     ctx.stroke();
 
-    const testDeck = buildStrictSequence(TEST_SCENARIO);
+    const testDeck = buildStrictSequence();
     const layoutCoordinates = calculateStrictTrack(testDeck);
 
     testDeck.forEach((tile) => {
