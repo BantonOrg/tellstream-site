@@ -21,103 +21,133 @@ const TRACK = {
 };
 
 function buildLeftBranch() {
+    // 13 Tiles total matching out from center
     return [
-        { id: 'l1', top: 6, bottom: 5, isDouble: false, isCornerTurner: false },
-        { id: 'l2', top: 5, bottom: 4, isDouble: false, isCornerTurner: false },
-        { id: 'l3', top: 4, bottom: 3, isDouble: false, isCornerTurner: false }, 
-        { id: 'l4', top: 3, bottom: 2, isDouble: false, isCornerTurner: false }, // Stays flat
-        { id: 'l5', top: 2, bottom: 1, isDouble: false, isCornerTurner: true  }, // Explicit turn execution point
-        { id: 'l6', top: 1, bottom: 0, isDouble: false, isCornerTurner: false }
+        { id: 'l1', top: 6, bottom: 5, isDouble: false },
+        { id: 'l2', top: 5, bottom: 4, isDouble: false },
+        { id: 'l3', top: 4, bottom: 4, isDouble: true },  
+        { id: 'l4', top: 4, bottom: 3, isDouble: false },
+        { id: 'l5', top: 3, bottom: 2, isDouble: false }, 
+        { id: 'l6', top: 2, bottom: 2, isDouble: true },  
+        { id: 'l7', top: 2, bottom: 1, isDouble: false }, 
+        { id: 'l8', top: 1, bottom: 1, isDouble: true },
+        { id: 'l9', top: 1, bottom: 0, isDouble: false },
+        { id: 'l10', top: 0, bottom: 0, isDouble: true },
+        { id: 'l11', top: 0, bottom: 3, isDouble: false },
+        { id: 'l12', top: 3, bottom: 5, isDouble: false },
+        { id: 'l13', top: 5, bottom: 5, isDouble: true }
     ];
 }
 
 function buildRightBranch() {
+    // 15 Tiles total (including the center starting tile r1)
     return [
-        { id: 'r1', top: 6, bottom: 5, isDouble: false, isCornerTurner: false },
-        { id: 'r2', top: 5, bottom: 4, isDouble: false, isCornerTurner: false },
-        { id: 'r3', top: 4, bottom: 3, isDouble: false, isCornerTurner: false }, 
-        { id: 'r4', top: 3, bottom: 2, isDouble: false, isCornerTurner: true  }, // Explicit turn execution point
-        { id: 'r5', top: 2, bottom: 1, isDouble: false, isCornerTurner: false }, 
-        { id: 'r6', top: 1, bottom: 0, isDouble: false, isCornerTurner: false }
+        { id: 'r1', top: 6, bottom: 6, isDouble: true },  
+        { id: 'r2', top: 6, bottom: 4, isDouble: false },
+        { id: 'r3', top: 4, bottom: 2, isDouble: false },
+        { id: 'r4', top: 2, bottom: 5, isDouble: false },
+        { id: 'r5', top: 5, bottom: 1, isDouble: false },
+        { id: 'r6', top: 1, bottom: 3, isDouble: false },
+        { id: 'r7', top: 3, bottom: 3, isDouble: true },
+        { id: 'r8', top: 3, bottom: 6, isDouble: false },
+        { id: 'r9', top: 6, bottom: 1, isDouble: false },
+        { id: 'r10', top: 1, bottom: 4, isDouble: false }, 
+        { id: 'r11', top: 4, bottom: 5, isDouble: false }, 
+        { id: 'r12', top: 5, bottom: 0, isDouble: false },
+        { id: 'r13', top: 0, bottom: 2, isDouble: false },
+        { id: 'r14', top: 2, bottom: 6, isDouble: false },
+        { id: 'r15', top: 0, bottom: 4, isDouble: false }
     ];
 }
 
 function calculateBranch(deck, startDirection) {
     const layoutMap = {};
-    let currentX = 1400; 
-    let currentY = TRACK.bottomY;
-    let direction = startDirection; 
+    
+    let headX = 1400; 
+    let headY = TRACK.bottomY;
+    
+    let vector = (startDirection === 'left') ? [-1, 0] : [1, 0];
     let prevTile = null;
 
     deck.forEach((tile, index) => {
-        let width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-        let height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
-        let angle = tile.isDouble ? 0 : 90;
-
-        if (index > 0) {
-            if (direction === 'left') {
-                const stepX = currentX - (prevTile.w / 2) - (width / 2);
-                
-                if (tile.isCornerTurner) {
-                    direction = 'up';
-                    
-                    width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
-                    height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-                    angle = tile.isDouble ? 90 : 0;
-
-                    const optionA_X = currentX; 
-                    const optionA_X_Dist = Math.abs(optionA_X - TRACK.leftX);
-                    const optionB_X = stepX;
-                    const optionB_X_Dist = Math.abs(optionB_X - TRACK.leftX);
-                    
-                    if (optionA_X_Dist < optionB_X_Dist) {
-                        currentX = optionA_X;
-                        currentY = TRACK.bottomY - (prevTile.h / 2) - (height / 2);
-                    } else {
-                        currentX = optionB_X;
-                        currentY = TRACK.bottomY;
-                    }
-                } else {
-                    currentX = stepX;
-                }
-            } 
-            else if (direction === 'right') {
-                const stepX = currentX + (prevTile.w / 2) + (width / 2);
-                
-                if (tile.isCornerTurner) {
-                    direction = 'up';
-                    
-                    width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
-                    height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-                    angle = tile.isDouble ? 90 : 0;
-
-                    const optionA_X = currentX; 
-                    const optionA_X_Dist = Math.abs(optionA_X - TRACK.rightX);
-                    const optionB_X = stepX;
-                    const optionB_X_Dist = Math.abs(optionB_X - TRACK.rightX);
-                    
-                    if (optionA_X_Dist < optionB_X_Dist) {
-                        currentX = optionA_X;
-                        currentY = TRACK.bottomY - (prevTile.h / 2) - (height / 2);
-                    } else {
-                        currentX = optionB_X;
-                        currentY = TRACK.bottomY;
-                    }
-                } else {
-                    currentX = stepX;
-                }
-            }
-            else if (direction === 'up') {
-                width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
-                height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-                angle = tile.isDouble ? 90 : 0;
-                currentY -= (prevTile.h / 2) + (height / 2);
-            }
+        let isMovingHorizontal = vector[1] === 0;
+        
+        let width, height, angle;
+        if (tile.isDouble) {
+            width = isMovingHorizontal ? TILE_BASE_W : TILE_BASE_H;
+            height = isMovingHorizontal ? TILE_BASE_H : TILE_BASE_W;
+            angle = isMovingHorizontal ? 0 : 90;
         } else {
-            currentX = (startDirection === 'left') ? currentX - (width / 2) : currentX + (width / 2);
+            width = isMovingHorizontal ? TILE_BASE_H : TILE_BASE_W;
+            height = isMovingHorizontal ? TILE_BASE_W : TILE_BASE_H;
+            angle = isMovingHorizontal ? 90 : 0;
         }
 
-        layoutMap[tile.id] = { x: currentX, y: currentY, w: width, h: height, angle: angle };
+        if (index > 0) {
+            let stepDist = isMovingHorizontal 
+                ? (prevTile.w / 2) + (width / 2)
+                : (prevTile.h / 2) + (height / 2);
+
+            let nextX = headX + (vector[0] * stepDist);
+            let nextY = headY + (vector[1] * stepDist);
+
+            if (startDirection === 'left') {
+                if (vector[0] === -1 && nextX <= TRACK.leftX) {
+                    vector = [0, -1]; 
+                    isMovingHorizontal = false;
+                    width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+                    height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+                    angle = tile.isDouble ? 90 : 0;
+
+                    headX = TRACK.leftX;
+                    headY = TRACK.bottomY - (prevTile.h / 2) - (height / 2);
+                } 
+                else if (vector[1] === -1 && nextY <= TRACK.topY) {
+                    vector = [1, 0]; 
+                    isMovingHorizontal = true;
+                    width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+                    height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+                    angle = tile.isDouble ? 0 : 90;
+
+                    headX = TRACK.leftX + (prevTile.w / 2) + (width / 2);
+                    headY = TRACK.topY;
+                } 
+                else {
+                    headX = nextX;
+                    headY = nextY;
+                }
+            } 
+            else if (startDirection === 'right') {
+                if (vector[0] === 1 && nextX >= TRACK.rightX) {
+                    vector = [0, -1]; 
+                    isMovingHorizontal = false;
+                    width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+                    height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+                    angle = tile.isDouble ? 90 : 0;
+
+                    headX = TRACK.rightX;
+                    headY = TRACK.bottomY - (prevTile.h / 2) - (height / 2);
+                } 
+                else if (vector[1] === -1 && nextY <= TRACK.topY) {
+                    vector = [-1, 0]; 
+                    isMovingHorizontal = true;
+                    width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+                    height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+                    angle = tile.isDouble ? 0 : 90;
+
+                    headX = TRACK.rightX - (prevTile.w / 2) - (width / 2);
+                    headY = TRACK.topY;
+                } 
+                else {
+                    headX = nextX;
+                    headY = nextY;
+                }
+            }
+        } else {
+            headX = (startDirection === 'left') ? headX - (width / 2) : headX + (width / 2);
+        }
+
+        layoutMap[tile.id] = { x: headX, y: headY, w: width, h: height, angle: angle };
         prevTile = { w: width, h: height };
     });
 
