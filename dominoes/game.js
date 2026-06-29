@@ -10,9 +10,9 @@ const gameTable = document.getElementById('game-table');
 const canvasW = 597;
 const canvasH = 1171;
 
-// Absolute dimension metrics for a scaled vertical tile asset (~0.2 scale)
-const TILE_BASE_W = 120;
-const TILE_BASE_H = 235;
+// Absolute 75% scaled dimension metrics for a vertical tile asset
+const TILE_BASE_W = 90;
+const TILE_BASE_H = 176;
 
 /* The absolute coordinate definitions.
    hideFor arrays dictate which values require a pip to be obscured.
@@ -77,7 +77,7 @@ function applyPipMasks(tileElement, value, coordinateMap) {
 }
 
 /**
- * Computes layout space step-by-step using strict end-to-end alignment rules
+ * Computes layout space step-by-step using strict 75% end-to-end alignment rules
  */
 function calculateCircuitLayout(deck) {
     const layoutMap = {};
@@ -117,7 +117,7 @@ function calculateCircuitLayout(deck) {
                 : (prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H);
             
             currentY -= (prevHeight / 2) + (height / 2);
-            if (currentY < 250) direction = 'right';
+            if (currentY < 230) direction = 'right';
         } 
         else if (direction === 'right') {
             width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
@@ -160,7 +160,7 @@ function calculateCircuitLayout(deck) {
                 : (prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H);
 
             currentY -= (prevHeight / 2) + (height / 2);
-            if (currentY < 250) direction = 'left';
+            if (currentY < 230) direction = 'left';
         } 
         else if (direction === 'left') {
             width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
