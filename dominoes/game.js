@@ -109,18 +109,16 @@ function calculateCircuitLayout(deck) {
                 const prevWidth = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 currentX -= (prevWidth / 2) + (width / 2);
             } else {
-                // START OVERLAP FIX: Offset the very first left tile outward from the center anchor line
                 currentX -= (width / 2);
             }
             
-            // PROACTIVE BOUNDARY CHECK: If the outer left edge breaches safety line, switch direction up
-            if (currentX - (width / 2) < 410) {
+            // CORNER TRIGGER ADJUSTMENT: Safety line changed from 410 to 320 to allow one more tile to fill the corner gap
+            if (currentX - (width / 2) < 320) {
                 direction = 'up';
                 width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
                 height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 rotationDegrees = tile.isDouble ? 90 : 0;
                 
-                // LEFT CORNER SNAP FIX: Center the climbing tile exactly over the outer face center of the horizontal piece
                 const prevWidth = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 currentX = currentX - (prevWidth / 2) + (TILE_BASE_W / 2);
                 currentY -= (height / 2) + (TILE_BASE_W / 2);
@@ -136,7 +134,6 @@ function calculateCircuitLayout(deck) {
                 currentY -= (prevHeight / 2) + (height / 2);
             }
 
-            // PROACTIVE CEILING CHECK: Turn inward right before hitting top border glow
             if (currentY - (height / 2) < 195) {
                 direction = 'right';
                 width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
@@ -180,18 +177,16 @@ function calculateCircuitLayout(deck) {
                 const prevWidth = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 currentX += (prevWidth / 2) + (width / 2);
             } else {
-                // START OVERLAP FIX: Offset the very first right tile outward from the center anchor line
-                currentX += (width / 2);
+                // STARTING SEPARATION ADJUSTMENT: Added +8px to prevent center tile overlapping
+                currentX += (width / 2) + 8;
             }
             
-            // PROACTIVE BOUNDARY CHECK: If outer right edge breaches safety line, switch direction up
             if (currentX + (width / 2) > 2320) {
                 direction = 'up';
                 width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
                 height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 rotationDegrees = tile.isDouble ? 90 : 0;
                 
-                // RIGHT CORNER SNAP FIX: Center the climbing tile exactly over the outer face center of the horizontal piece
                 const prevWidth = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 currentX = currentX + (prevWidth / 2) - (TILE_BASE_W / 2);
                 currentY -= (height / 2) + (TILE_BASE_W / 2);
@@ -207,7 +202,6 @@ function calculateCircuitLayout(deck) {
                 currentY -= (prevHeight / 2) + (height / 2);
             }
 
-            // PROACTIVE CEILING CHECK: Turn inward left before hitting top border glow
             if (currentY - (height / 2) < 195) {
                 direction = 'left';
                 width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
