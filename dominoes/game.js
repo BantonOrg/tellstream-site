@@ -19,12 +19,12 @@ function renderLiveTable(boardLine) {
                     Room Code: <span id="display-room-code" style="color: #fff; font-weight: bold;">----</span> | Turn: Player <span id="display-active-turn">-</span>
                 </div>
 
-                <div id="domino-track-canvas" style="position: relative; width: 85%; height: 60vh; border: 4px solid #66fcf1; box-shadow: 0 0 20px #66fcf1; background: radial-gradient(circle, #1f2833 0%, #0b0c10 100%); border-radius: 12px; display: flex; justify-content: center; align-items: center;">
+                <div id="domino-track-canvas" style="position: relative; width: 85%; height: 58vh; border: 4px solid #66fcf1; box-shadow: 0 0 20px #66fcf1; background: radial-gradient(circle, #1f2833 0%, #0b0c10 100%); border-radius: 12px; display: flex; justify-content: center; align-items: center;">
                     <div id="empty-track-message" style="color: #c5c6c7; font-family: sans-serif; font-size: 1.1rem; letter-spacing: 1px;">BOARD IS EMPTY - WAITING FOR INITIAL DROP</div>
                     <div id="placed-tiles-container" style="position: absolute; width: 100%; height: 100%;"></div>
                 </div>
 
-                <div id="player-hand-container" style="width: 90%; min-height: 120px; display: flex; justify-content: center; align-items: center; gap: 15px; background: rgba(31, 40, 51, 0.5); border: 1px solid rgba(102, 252, 241, 0.2); border-radius: 10px; padding: 15px; margin-bottom: 20px; box-sizing: border-box;"></div>
+                <div id="player-hand-container" style="width: 90%; min-height: 140px; display: flex; justify-content: center; align-items: center; gap: 15px; background: rgba(31, 40, 51, 0.5); border: 1px solid rgba(102, 252, 241, 0.2); border-radius: 10px; padding: 15px; margin-bottom: 10px; box-sizing: border-box;"></div>
             </div>
         `;
         mat = document.getElementById("game-mat");
@@ -49,7 +49,7 @@ function renderLiveTable(boardLine) {
     // 1. Draw Placed Bones on the Board Line Track
     if (boardLine && boardLine.length > 0) {
         if (emptyMsg) emptyMsg.style.display = "none";
-        // Horseshoe placement math layer goes here next
+        // Horseshoe placement math calculations go here next
     } else {
         if (emptyMsg) emptyMsg.style.display = "block";
     }
@@ -63,20 +63,19 @@ function renderLiveTable(boardLine) {
             playerObj.hand.forEach(tile => {
                 const tileElement = document.createElement("div");
                 tileElement.className = "domino-bone-interactive";
-                tileElement.style.cssText = "width: 50px; height: 90px; background: #fff; border: 2px solid #000; border-radius: 6px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 5px; box-sizing: border-box; cursor: pointer; font-family: sans-serif; font-weight: bold; font-size: 1.4rem; color: #000; box-shadow: 0 5px 10px rgba(0,0,0,0.3); transition: transform 0.2s;";
                 
-                // Add hover effect via JS listener controls
+                // Add hover shift dynamics via event triggers
                 tileElement.onmouseenter = () => tileElement.style.transform = "translateY(-15px)";
                 tileElement.onmouseleave = () => tileElement.style.transform = "translateY(0)";
                 
-                // Temporary textual view setup of pips values
+                // Call our template injector loop to turn numeric codes into active dots
                 tileElement.innerHTML = `
-                    <div>${tile.top}</div>
-                    <div style="width: 100%; border-top: 2px dashed #000;"></div>
-                    <div>${tile.bottom}</div>
+                    ${generateHalfDisplay(tile.top)}
+                    <div class="domino-divider"></div>
+                    ${generateHalfDisplay(tile.bottom)}
                 `;
                 
-                // Clicking triggers bone selection logic
+                // Clicking triggers bone selection logic handler
                 tileElement.addEventListener("click", () => {
                     console.log(`Selected Tile ID: ${tile.id} [${tile.top}|${tile.bottom}]`);
                 });
@@ -85,4 +84,31 @@ function renderLiveTable(boardLine) {
             });
         }
     }
+}
+
+/**
+ * Translates an integer value (0-6) into an authentic 3x3 dot matrix frame
+ */
+function generateHalfDisplay(value) {
+    // Maps which grid slots turn on active dots for numbers 0-6
+    const pipMaps = {
+        0: [],
+        1: [4],
+        2: [1, 7],
+        3: [1, 4, 7],
+        4: [1, 2, 6, 7],
+        5: [1, 2, 4, 6, 7],
+        6: [1, 2, 3, 5, 6, 7]
+    };
+    
+    const activePips = pipMaps[value] || [];
+    let html = `<div class="domino-half">`;
+    
+    // Generate 9 standard layout quadrants, checking if the position should display a dot
+    for (let p = 1; p <= 9; p++) {
+        const isActive = activePips.includes(p) ? 'active' : '';
+        html += `<div class="pip ${isActive} pos-${p}"></div>`;
+    }
+    html += `</div>`;
+    return html;
 }
