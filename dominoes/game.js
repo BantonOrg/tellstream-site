@@ -1,12 +1,12 @@
 // ==========================================================================
-// Tellstream Dominoes - Core Game Engine & Dynamic Board Layout
+// Tellstream Dominoes - Core Game Engine & Precise Mask Layout
 // ==========================================================================
 
 const startBtn = document.getElementById('start-btn');
 const loadingScreen = document.getElementById('loading-screen');
 const gameTable = document.getElementById('game-table');
 
-// Total original canvas dimensions
+// Total original canvas dimensions of dom_front.gif
 const canvasW = 597;
 const canvasH = 1171;
 
@@ -65,6 +65,7 @@ function applyPipMasks(tileElement, value, coordinateMap) {
             const maskPatch = document.createElement('div');
             maskPatch.className = 'pip-mask-patch';
             
+            // Calculate coordinates relative to original canvas sizes
             const leftPercent = (pip.x / canvasW) * 100;
             const topPercent = (pip.y / canvasH) * 100;
             
@@ -96,7 +97,6 @@ function calculateCircuitLayout(deck) {
     let prevTile = null;
 
     leftBranchTiles.forEach((tile, index) => {
-        // Core visual footprints
         let width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
         let height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
         let rotationDegrees = tile.isDouble ? 0 : 90;
@@ -110,7 +110,6 @@ function calculateCircuitLayout(deck) {
         } 
         
         else if (direction === 'up') {
-            // Climbing the left wall: Singles lay vertically relative to the track flow
             width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
             height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
             rotationDegrees = tile.isDouble ? 90 : 0;
@@ -204,6 +203,7 @@ function displayDynamicMatchTable() {
         const coords = layoutCoordinates[tile.id];
         if (!coords) return;
 
+        // The outer bounding wrapper retains the calculated width/height spacing box
         const wrapper = document.createElement('div');
         wrapper.className = 'live-card-wrapper';
         wrapper.style.width = `${coords.w}px`;
@@ -212,16 +212,18 @@ function displayDynamicMatchTable() {
         wrapper.style.top = `${coords.y - (coords.h / 2)}px`;
         wrapper.style.position = 'absolute';
 
+        // The tile asset inside always renders at its native vertical proportions
         const tileElement = document.createElement('div');
         tileElement.className = 'domino-item';
         tileElement.id = tile.id;
+        tileElement.style.width = `${TILE_BASE_W}px`;
+        tileElement.style.height = `${TILE_BASE_H}px`;
         
-        // Use clean native layouts inside the box, applying the rotation dynamically via inline styles
-        tileElement.style.width = '100%';
-        tileElement.style.height = '100%';
+        // Spin the entire asset box smoothly using its center axis
         tileElement.style.transform = `rotate(${coords.angle}deg)`;
+        tileElement.style.transformOrigin = 'center center';
 
-        // Apply masks using native mapping rules
+        // Apply pips directly onto the native aspect ratio
         applyPipMasks(tileElement, tile.top, topPipMap);
         applyPipMasks(tileElement, tile.bottom, bottomPipMap);
 
