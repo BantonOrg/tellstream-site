@@ -73,24 +73,16 @@ html, body {
     display: none !important;
 }
 
+/* Fixed Resolution Game Container utilizing hardware scale matrices */
 .match-board-container {
-    width: 100vw;
-    max-width: 2730px;
-    aspect-ratio: 2730 / 1536; 
     background-image: url('/dominoes/assets/table_bg.jpg');
     background-size: 100% 100%;
     background-position: center;
     background-repeat: no-repeat;
     box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.8);
     border-radius: 8px;
-    position: relative;
-}
-
-@media (min-aspect-ratio: 2730/1536) {
-    .match-board-container {
-        height: 100vh;
-        width: auto;
-    }
+    transform-origin: center center; /* Shrink vector centered in the view frame */
+    flex-shrink: 0;
 }
 
 .live-card-wrapper {
