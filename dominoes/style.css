@@ -8,7 +8,7 @@ html, body {
     padding: 0;
     width: 100%;
     height: 100%;
-    background-color: #1a1a1a; /* Dark background so it's never a blank white screen */
+    background-color: #1a1a1a;
     color: #ffffff;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     overflow: hidden;
@@ -49,24 +49,6 @@ html, body {
 
 .loading-content button:hover {
     transform: scale(1.05);
-}
-
-/* Lounge Dynamic Welcome View Formatting */
-.lounge-welcome {
-    padding: 40px;
-    text-align: center;
-    margin-top: 10vh;
-}
-
-.lounge-welcome h2 {
-    color: #00ffcc;
-    font-size: 36px;
-    margin-bottom: 10px;
-}
-
-.lounge-welcome p {
-    color: #b3b3b3;
-    font-size: 18px;
 }
 
 /* Visibility Control Utility Classes */
