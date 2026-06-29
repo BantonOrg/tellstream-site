@@ -1,165 +1,127 @@
 // ============================================================================
-// GAME.JS - FULL ENGINE LAYOUT & POST-GAME FLOW MANAGEMENT
+// GAME.JS - CORE GAME ENGINE, RENDERING PIPELINES, AND LAYOUT CONSTANTS
 // ============================================================================
 
-// 1. Core Structural Dimensions & 10px Absolute Inner Padding
+// Strict structural canvas coordinate limits matching maximum pixel space rules
 const TABLE_LIMITS = {
-    minX: 187,
-    minY: 169,
-    maxX: 2567,
-    maxY: 1367
-};
-const PADDING = 10;
-
-// Exact pre-calculated render anchor coordinates for text boundaries
-const POSITIONS = {
-    player1: { x: TABLE_LIMITS.minX + PADDING, y: TABLE_LIMITS.maxY - PADDING, align: 'left' },  // Bottom Left (Host)
-    player2: { x: TABLE_LIMITS.minX + PADDING, y: TABLE_LIMITS.minY + PADDING, align: 'left' },  // Top Left
-    player3: { x: TABLE_LIMITS.maxX - PADDING, y: TABLE_LIMITS.minY + PADDING, align: 'right' }, // Top Right
-    player4: { x: TABLE_LIMITS.maxX - PADDING, y: TABLE_LIMITS.maxY - PADDING, align: 'right' }  // Bottom Right
+    WIDTH: 2567,
+    HEIGHT: 1367
 };
 
 /**
- * Initializes the foundational layout structural slots and overlay templates
+ * Generates and appends the 4 player absolute-positioned slot templates to the table
  */
 function initializeTableLayout() {
     const tableContainer = document.getElementById('domino-table-container');
     if (!tableContainer) {
-        console.error("Critical Error: 'domino-table-container' element not found in DOM.");
+        console.warn("Table container mount element missing from active DOM view tree.");
         return;
     }
 
-    // Reset container contents to prevent structural stacking
+    // Clear structural remnants before populating
     tableContainer.innerHTML = '';
 
-    // Create the 4 Corner Player Slots anchored within the layout boundaries
-    Object.keys(POSITIONS).forEach((playerKey) => {
-        const pos = POSITIONS[playerKey];
-        const slot = document.createElement('div');
-        slot.id = `table-slot-${playerKey}`;
-        slot.className = `player-table-slot slot-${pos.align}`;
-        
-        // Apply precise visual spacing rules relative to background boundaries
-        slot.style.position = 'absolute';
-        slot.style.left = pos.align === 'left' ? `${pos.x}px` : 'auto';
-        slot.style.right = pos.align === 'right' ? `${TABLE_LIMITS.maxX - pos.x}px` : 'auto';
-        slot.style.top = `${pos.y}px`;
-        
-        // Correct vertical translation offset for bottom-row elements
-        if (pos.y === TABLE_LIMITS.maxY - PADDING) {
-            slot.style.transform = 'translateY(-100%)';
-        }
+    // Blueprint configuration arrays for the 4 corner slots
+    const configurations = [
+        { id: 'player-slot-1', alignment: 'bottom-left' },
+        { id: 'player-slot-2', alignment: 'top-left' },
+        { id: 'player-slot-3', alignment: 'top-right' },
+        { id: 'player-slot-4', alignment: 'bottom-right' }
+    ];
 
-        tableContainer.appendChild(slot);
+    configurations.forEach(cfg => {
+        const slotElement = document.createElement('div');
+        slotElement.id = cfg.id;
+        slotElement.className = `player-table-slot target-alignment-${cfg.alignment}`;
+        
+        // Append baseline empty structure
+        slotElement.innerHTML = `<span class="no-player">Empty Seat</span>`;
+        tableContainer.appendChild(slotElement);
     });
 
-    // Create the 7-Second Victory Overlay Container (Hidden by default)
-    const victoryOverlay = document.createElement('div');
-    victoryOverlay.id = 'victory-celebration-overlay';
-    victoryOverlay.className = 'hidden-overlay';
-    victoryOverlay.style.display = 'none';
-    
-    tableContainer.appendChild(victoryOverlay);
+    console.log("Table padded coordinates successfully mapped.");
 }
 
 /**
- * Renders or updates the mirrored data strings across the active board positions
- * @param {Array} players - Complete array of active player objects currently assigned to table seats
+ * Updates UI positioning wrappers using incoming raw database player row arrays
+ * @param {Array} playersArray - Seated user list matching backend row states
  */
-function updateTableSeats(players) {
-    // Process all 4 physical positions. Post-start, empty mid-game slots are banned.
-    for (let i = 1; i <= 4; i++) {
-        const slot = document.getElementById(`table-slot-player${i}`);
-        if (!slot) continue;
+function updateTableSeats(playersArray) {
+    for (let i = 0; i < 4; i++) {
+        const targetSlot = document.getElementById(`player-slot-${i + 1}`);
+        if (!targetSlot) continue;
 
-        const player = players[i - 1];
-        const pos = POSITIONS[`player${i}`];
+        const player = playersArray[i];
 
         if (player) {
-            // Build out inline visual pieces for metadata strings
-            const nameSpan = `<span class="player-name">${player.display_name}</span>`;
-            const tileSpan = `<span class="player-tiles">(${player.tiles_left || 7} Tiles)</span>`;
-            const stateSpan = `<span id="signal-player${i}" class="connection-state-indicator connected"></span>`;
-
-            // Enforce cultural asymmetry alignment (Left side points inward right, right side points inward left)
-            if (pos.align === 'left') {
-                slot.innerHTML = `${nameSpan} ${tileSpan} <span class="arrow-indicator">→</span> ${stateSpan}`;
-            } else {
-                slot.innerHTML = `${stateSpan} <span class="arrow-indicator">←</span> ${tileSpan} ${nameSpan}`;
-            }
+            // Determine internal glyph orientations based on seat location parameters
+            const isLeftSide = (i === 0 || i === 1);
+            const arrowGlyph = isLeftSide ? "→" : "←";
+            
+            // Re-render HTML matching the text requirements
+            targetSlot.innerHTML = `
+                <span class="connection-state-indicator connected"></span>
+                <span class="player-name">${player.display_name}</span>
+                <span class="arrow-indicator">${arrowGlyph}</span>
+                <span class="player-tiles">${player.tiles_left} Tiles</span>
+            `;
         } else {
-            // Placeholder text rendered strictly before initial match commitment
-            slot.innerHTML = `<span class="no-player">No player seated</span>`;
+            targetSlot.innerHTML = `<span class="no-player">Empty Seat</span>`;
         }
     }
 }
 
 /**
- * Fires the 7-Second Post-Game Banner Blockade and automatic reset loop
- * @param {string} winnerName - The name of the player who completed their hand
- * @param {boolean} isHost - Boolean check asserting local user room ownership privileges
- * @param {Function} onResetCallback - Critical network dispatch to sync room transition parameters
+ * Updates the network timer view element directly inside a player's layout slot
  */
-function triggerVictorySequence(winnerName, isHost, onResetCallback) {
-    const overlay = document.getElementById('victory-celebration-overlay');
-    if (!overlay) return;
+function updateDisconnectTimerDisplay(playerIndex, countdownText) {
+    const targetSlot = document.getElementById(`player-slot-${playerIndex}`);
+    if (!targetSlot) return;
 
-    // Phase 1: Render Text Message & Absorb Click Captures to prevent mid-turn inputs
-    overlay.innerHTML = `
-        <div class="victory-banner-content">
-            <h1>${winnerName.toUpperCase()} DOMINOED!</h1>
-            <p>Clean Sweep</p>
-        </div>
-    `;
-    overlay.style.display = 'flex';
-    overlay.classList.add('active-overlay');
-
-    // Phase 2: Execute hard 7000ms delay block prior to state restoration
-    setTimeout(() => {
-        overlay.style.display = 'none';
-        overlay.classList.remove('active-overlay');
-
-        // Hand engine control back to system loop for room cleanup/re-seating transitions
-        if (onResetCallback) {
-            onResetCallback();
-        }
-    }, 7000);
+    const indicator = targetSlot.querySelector('.connection-state-indicator');
+    if (indicator) {
+        indicator.className = "connection-state-indicator disconnected-countdown";
+        indicator.textContent = countdownText;
+    }
 }
 
 /**
- * Modifies an active player's connection badge locally to display remaining grace seconds
- * @param {number} playerIndex - Number index identifier of the user who dropped (1-4 base matching UI layout)
- * @param {string} timeString - Parsed text string displaying remaining minutes/seconds (e.g., "1:45")
- */
-function updateDisconnectTimerDisplay(playerIndex, timeString) {
-    const signalBadge = document.getElementById(`signal-player${playerIndex}`);
-    if (!signalBadge) return;
-
-    // Redraw badge style from dot to blinker and inject numeric breakdown text directly
-    signalBadge.className = "connection-state-indicator disconnected-countdown";
-    signalBadge.innerText = timeString;
-}
-
-/**
- * Restores a connection badge style back to safe parameters upon network recovery
- * @param {number} playerIndex - Number index identifier of the user who recovered (1-4 base matching UI layout)
+ * Restores a player slot's connection dot back to its normal green state
  */
 function clearDisconnectTimerDisplay(playerIndex) {
-    const signalBadge = document.getElementById(`signal-player${playerIndex}`);
-    if (!signalBadge) return;
+    const targetSlot = document.getElementById(`player-slot-${playerIndex}`);
+    if (!targetSlot) return;
 
-    // Flush inline countdown data and drop class back to default green parameters
-    signalBadge.className = "connection-state-indicator connected";
-    signalBadge.innerText = "";
+    const indicator = targetSlot.querySelector('.connection-state-indicator');
+    if (indicator) {
+        indicator.className = "connection-state-indicator connected";
+        indicator.textContent = "";
+    }
 }
 
-// Export module logic safely for structural binding access
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        initializeTableLayout,
-        updateTableSeats,
-        triggerVictorySequence,
-        updateDisconnectTimerDisplay,
-        clearDisconnectTimerDisplay
-    };
+/**
+ * Injects a blackout overlay onto the screen to celebrate a domino win
+ */
+function triggerVictorySequence(winnerName) {
+    const tableContainer = document.getElementById('domino-table-container');
+    if (!tableContainer) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = "victory-celebration-overlay";
+    overlay.innerHTML = `
+        <div class="victory-banner-content">
+            <h1>DOMINO!</h1>
+            <p>${winnerName} wins the match</p>
+        </div>
+    `;
+
+    tableContainer.appendChild(overlay);
+
+    // Strict 7-second rollover sequence trigger
+    setTimeout(() => {
+        if (overlay.parentNode) {
+            overlay.parentNode.removeChild(overlay);
+        }
+        console.log("Victory blackout lifted. Rolling over to room lounge parameters.");
+    }, 7000);
 }
