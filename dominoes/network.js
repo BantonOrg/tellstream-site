@@ -2,11 +2,11 @@
 // NETWORK.JS - SKELETON NETWORK LAYER & EVENT HANDLING PIPELINES
 // ============================================================================
 
-// Using a unique variable name 'dominoDb' to completely avoid global clashing on the subdomain
 const supabaseUrl = 'https://vegwferwmyuunwvfqpsf.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZ3dmZXJ3bXl1dW53dmZxcHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODU5NDQsImV4cCI6MjA5Nzk2MTk0NH0.7F3HUEY59BGE5phlD9AukhZzRa3Ied_ZT43j8YZeIy8';
 
-const dominoDb = Supabase.createClient(supabaseUrl, supabaseKey);
+// Declare the variable globally, but do not assign it yet
+let dominoDb;
 
 /**
  * Baseline network entry stub called by the main start button click listener
@@ -15,12 +15,18 @@ function initNetwork() {
     console.log("Network layer initialized. Ready for room connection orchestration.");
     console.log("Database Target URL:", supabaseUrl);
     
-    // Check our unique client instance
-    if (dominoDb) {
-        console.log("✅ Unique Domino database client successfully initialized!");
-        alert("Bridge connected perfectly!");
-    } else {
-        console.error("❌ Critical: The connection instance failed to initialize.");
+    try {
+        // Initialize the client ONLY when the button is clicked
+        if (!dominoDb) {
+            dominoDb = Supabase.createClient(supabaseUrl, supabaseKey);
+        }
+
+        if (dominoDb) {
+            console.log("✅ Unique Domino database client successfully initialized!");
+            alert("Bridge connected perfectly!");
+        }
+    } catch (error) {
+        console.error("❌ Connection setup failed:", error.message);
     }
     
     const lobbyView = document.getElementById('lobby-view');
