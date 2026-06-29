@@ -216,8 +216,10 @@ function displayDynamicMatchTable() {
         const tileElement = document.createElement('div');
         tileElement.className = 'domino-item';
         tileElement.id = tile.id;
-        tileElement.style.width = '100%';
-        tileElement.style.height = '100%';
+        
+        // CRITICAL FIX: Explicitly lock the asset height and width sizes to match the 75% math footprints
+        tileElement.style.width = `${TILE_BASE_W}px`;
+        tileElement.style.height = `${TILE_BASE_H}px`;
         tileElement.style.position = 'absolute';
 
         applyPipMasks(tileElement, tile.top, topPipMap);
@@ -234,6 +236,7 @@ function displayDynamicMatchTable() {
     });
 }
 
+// Doubled the lobby button interface scale size
 setTimeout(() => {
     startBtn.disabled = false;
     startBtn.innerText = "TEST DYNAMIC CIRCUIT GRID";
