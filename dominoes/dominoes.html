@@ -15,7 +15,7 @@
         </div>
     </div>
 
-    <div id="lobby-view" class="screen">
+    <div id="lobby-view" class="screen hidden-layout">
         </div>
 
     <div id="table-view" class="screen hidden-layout">
@@ -34,15 +34,14 @@
     <script src="network.js"></script>
 
     <script>
-        // Safely bind the entry engine once the DOM structure is fully parsed
+        // Primary interactive click anchor to transition into the room state
         document.addEventListener("DOMContentLoaded", () => {
             const startButton = document.getElementById("start-btn");
             if (startButton) {
                 startButton.addEventListener("click", () => {
-                    // Hide the initial loading screen wrapper overlay
-                    document.getElementById("loading-screen").style.display = "none";
-                    // Initialize the network setup state loop
-                    initNetwork();
+                    if (typeof initNetwork === 'function') {
+                        initNetwork();
+                    }
                 });
             }
         });
