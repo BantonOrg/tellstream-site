@@ -16,13 +16,11 @@
     </div>
 
     <div id="lobby-view" class="screen">
-        <!-- Lobby layout content populates here dynamically -->
-    </div>
+        </div>
 
     <div id="table-view" class="screen hidden-layout">
         <div id="game-table">
-            <!-- Game layout container -->
-        </div>
+            </div>
     </div>
 
     <div id="rotation-overlay">
@@ -32,7 +30,6 @@
         </div>
     </div>
 
-    <!-- Correct Loading Sequence: UI & rendering foundation must load before network management -->
     <script src="game.js"></script>
     <script src="network.js"></script>
 
@@ -45,11 +42,7 @@
                     // Hide the initial loading screen wrapper overlay
                     document.getElementById("loading-screen").style.display = "none";
                     // Initialize the network setup state loop
-                    if (typeof initNetwork === 'function') {
-                        initNetwork();
-                    } else {
-                        console.warn("initNetwork function not found. Ensure network.js is loaded correctly.");
-                    }
+                    initNetwork();
                 });
             }
         });
