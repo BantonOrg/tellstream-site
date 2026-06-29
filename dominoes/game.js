@@ -1,5 +1,5 @@
 // ==========================================================================
-// Tellstream Dominoes - Strict Edge-to-Edge Corner Layout (Scenario 1)
+// Tellstream Dominoes - Patched Edge Alignment Corner Test
 // ==========================================================================
 
 const gameTable = document.getElementById('game-table');
@@ -20,15 +20,14 @@ const TRACK = {
     rightX:  2170
 };
 
-// Test Scenario 1: Pure single-to-single sequence
 const TEST_SCENARIO = 1; 
 
 function buildStrictSequence(scenarioNum) {
     return [
         { id: 't1', top: 6, bottom: 5, isDouble: false, isCornerTurner: false },
         { id: 't2', top: 5, bottom: 4, isDouble: false, isCornerTurner: false },
-        { id: 't3', top: 4, bottom: 3, isDouble: false, isCornerTurner: false }, // Base single
-        { id: 't4', top: 3, bottom: 2, isDouble: false, isCornerTurner: true },  // Corner single
+        { id: 't3', top: 4, bottom: 3, isDouble: false, isCornerTurner: false }, 
+        { id: 't4', top: 3, bottom: 2, isDouble: false, isCornerTurner: true },  
         { id: 't5', top: 2, bottom: 1, isDouble: false, isCornerTurner: false },
         { id: 't6', top: 1, bottom: 0, isDouble: false, isCornerTurner: false }
     ];
@@ -44,7 +43,6 @@ function calculateStrictTrack(deck) {
     deck.forEach((tile) => {
         let width, height, angle;
 
-        // Establish proper dimensions based on flow direction and corner state
         if (direction === 'left') {
             if (tile.isCornerTurner) {
                 width = TILE_BASE_W;
@@ -65,18 +63,18 @@ function calculateStrictTrack(deck) {
             if (tile.isCornerTurner) {
                 direction = 'up';
 
-                // Physical Calculation: Determine positions by flushing edges, not center steps
-                // Option A: Stack on top face (Bottom edge touches top edge of previous)
+                // Option A: Stack on top face
+                // Center-X stays aligned with previous center. Center-Y moves up by half of both heights.
                 const optionA_X = currentX;
                 const optionA_Y = currentY - (prevTile.h / 2) - (height / 2);
                 const optionA_Dist = Math.abs(optionA_X - TRACK.leftX);
 
-                // Option B: Snap to left side face (Right edge touches left edge of previous)
+                // Option B: Snap to left side face
+                // Center-X moves left to clear the boundary. Center-Y aligns with previous top edge base.
                 const optionB_X = currentX - (prevTile.w / 2) - (width / 2);
-                const optionB_Y = currentY;
+                const optionB_Y = currentY - (prevTile.h / 2) + (height / 2);
                 const optionB_Dist = Math.abs(optionB_X - TRACK.leftX);
 
-                // Choose the option whose center axis aligns closest to the path line
                 if (optionA_Dist < optionB_Dist) {
                     currentX = optionA_X;
                     currentY = optionA_Y;
@@ -85,7 +83,6 @@ function calculateStrictTrack(deck) {
                     currentY = optionB_Y;
                 }
             } else {
-                // Strict edge-to-edge stepping for continuous lanes
                 if (direction === 'left') {
                     currentX = currentX - (prevTile.w / 2) - (width / 2);
                 } else if (direction === 'up') {
@@ -103,7 +100,7 @@ function calculateStrictTrack(deck) {
     return layoutMap;
 }
 
-// --- RENDERING ENGINE ---
+// --- RENDERING LAYER ---
 const topPipMap = [
     { name: 'top-left',     x: 126, y: 126, hideFor: [0, 1] },
     { name: 'top-right',    x: 469, y: 126, hideFor: [0, 1, 2, 3] },
