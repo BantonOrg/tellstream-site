@@ -131,6 +131,31 @@
 }
 
 /* ============================================================================
+   MOBILE RESPONSIVENESS AND ROTATION HANDLING
+   ============================================================================ */
+
+/* HIDDEN BY DEFAULT on desktop browsers and landscape viewport ratios */
+#rotation-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #ffffff;
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Enforce the warning overlay only when an actual mobile device environment is portrait orientation */
+@media screen and (max-width: 1024px) and (orientation: portrait) {
+    #rotation-overlay {
+        display: flex;
+    }
+}
+
+/* ============================================================================
    SYSTEM ANIMATIONS
    ============================================================================ */
 
