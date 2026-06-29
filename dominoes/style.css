@@ -62,10 +62,11 @@ body, html {
     background-image: url('dom_front.gif');
     background-size: 100% 100%;
     background-repeat: no-repeat;
-    width: 100%;
-    height: 100%;
+    width: 90px;
+    height: 176px;
     display: flex;
     flex-direction: column;
+    justify-content: space-between; /* Secure the 4px space directly around the native center bar */
     overflow: hidden;
     position: relative;
 }
@@ -79,12 +80,13 @@ body, html {
 /* Precise 3x3 Grid Half Alignment matching the gif holes */
 .domino-half {
     width: 90px;
-    height: 87px;
+    height: 86px;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(3, 1fr);
-    padding: 10px 11px; /* Exact inset to line up with the embedded dots */
+    padding: 8px 10px; /* Aligns the grid perfectly with the graphic asset dots */
     box-sizing: border-box;
+    flex-shrink: 0;
 }
 
 .pip-cell {
@@ -97,8 +99,8 @@ body, html {
 
 /* The Masking Asset: Fills the hole with ivory color when a pip is absent */
 .ivory-mask {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
     background-image: url('_DOM_PIPS.png');
     background-size: cover;
     background-repeat: no-repeat;
