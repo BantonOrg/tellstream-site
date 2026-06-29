@@ -4,15 +4,17 @@
 
 const SUPABASE_URL = 'https://your-project-id.supabase.co';
 const SUPABASE_KEY = 'your-public-anon-key';
-let supabase = null;
+let supabaseClient = null; // Renamed to prevent matching conflicts
 
-// Safe client initialization to prevent blank screen crashes
 try {
-    if (typeof Supabase !== 'undefined') {
-        supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // If the CDN injected the global object successfully, use it safely
+    if (typeof supabase !== 'undefined' && supabase.createClient) {
+        if (!SUPABASE_URL.includes('your-project-id')) {
+            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        }
     }
 } catch (e) {
-    console.warn("Supabase is not initialized. Using local fallback mode.");
+    console.warn("Supabase library initialization skipped. Using local demo fallback.");
 }
 
 let currentRoomCode = null;
@@ -28,30 +30,36 @@ function showLobbyUI() {
     if (!lobbyView) return;
     
     lobbyView.innerHTML = `
-        <div class="lobby-panel">
-            <h2>TELLSTREAM LOUNGE MATCH</h2>
-            <p>Create a new table or enter a 4-digit code to join a live match.</p>
+        <div class="lobby-panel" style="z-index: 1000; position: relative; padding: 40px; text-align: center;">
+            <h2 style="color: #66fcf1; font-size: 3rem; margin-bottom: 20px; font-weight: bold; letter-spacing: 2px;">TELLSTREAM LOUNGE MATCH</h2>
+            <p style="color: #c5c6c7; font-size: 1.4rem; margin-bottom: 40px; letter-spacing: 1px;">Create a new table or enter a 4-digit code to join a live match.</p>
             
             <div class="lobby-actions">
-                <button id="create-room-btn" class="lobby-btn primary">Create New Table</button>
+                <button id="create-room-btn" class="lobby-btn primary" style="margin-bottom: 15px; padding: 12px 30px; font-size: 1.2rem; cursor: pointer;">Create New Table</button>
                 
-                <div class="join-input-group">
-                    <input type="text" id="room-code-input" placeholder="ENTER CODE" maxlength="4">
-                    <button id="join-room-btn" class="lobby-btn">Join Match</button>
+                <div class="join-input-group" style="margin-top: 20px;">
+                    <input type="text" id="room-code-input" placeholder="ENTER CODE" maxlength="4" style="padding: 12px; font-size: 1.2rem; text-align: center; text-transform: uppercase;">
+                    <button id="join-room-btn" class="lobby-btn" style="padding: 12px 25px; font-size: 1.2rem; cursor: pointer;">Join Match</button>
                 </div>
             </div>
         </div>
     `;
 
-    document.getElementById("create-room-btn").addEventListener("click", createRoom);
-    document.getElementById("join-room-btn").addEventListener("click", () => {
-        const code = document.getElementById("room-code-input").value.toUpperCase().trim();
-        if (code.length === 4) joinRoom(code);
-    });
+    const createBtn = document.getElementById("create-room-btn");
+    const joinBtn = document.getElementById("join-room-btn");
+
+    if (createBtn) createBtn.addEventListener("click", createRoom);
+    if (joinBtn) {
+        joinBtn.addEventListener("click", () => {
+            const inputNode = document.getElementById("room-code-input");
+            const code = inputNode ? inputNode.value.toUpperCase().trim() : "";
+            if (code.length === 4) joinRoom(code);
+        });
+    }
 }
 
 async function createRoom() {
-    if (!supabase || SUPABASE_URL.includes('your-project-id')) {
+    if (!supabaseClient) {
         switchToGameTableView();
         if (typeof renderLiveTable === 'function') renderLiveTable(null);
         return;
@@ -64,7 +72,7 @@ async function createRoom() {
     }
 
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('domino_rooms')
             .insert([{ 
                 room_code: generatedCode, 
@@ -81,21 +89,21 @@ async function createRoom() {
         currentRoomCode = generatedCode;
         subscribeToRoom(currentRoomCode);
     } catch (err) {
-        console.error("Error creating room:", err);
+        console.error("Database table creation failure:", err);
         switchToGameTableView();
         if (typeof renderLiveTable === 'function') renderLiveTable(null);
     }
 }
 
 async function joinRoom(code) {
-    if (!supabase || SUPABASE_URL.includes('your-project-id')) {
+    if (!supabaseClient) {
         switchToGameTableView();
         if (typeof renderLiveTable === 'function') renderLiveTable(null);
         return;
     }
 
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('domino_rooms')
             .select('*')
             .eq('room_code', code)
@@ -109,15 +117,14 @@ async function joinRoom(code) {
         currentRoomCode = code;
         subscribeToRoom(currentRoomCode);
     } catch (err) {
-        console.error("Error joining room:", err);
+        console.error("Database join error:", err);
     }
 }
 
 function subscribeToRoom(code) {
-    if (!supabase) return;
-    console.log(`Subscribing to Realtime updates for Room: ${code}`);
+    if (!supabaseClient) return;
     
-    roomSubscription = supabase
+    roomSubscription = supabaseClient
         .channel(`room_${code}`)
         .on('postgres_changes', { 
             event: 'UPDATE', 
@@ -141,7 +148,6 @@ function switchToGameTableView() {
 }
 
 function handleRoomUpdate(updatedRoomState) {
-    console.log("Table State Updated:", updatedRoomState);
     if (updatedRoomState.board_line && typeof renderLiveTable === 'function') {
         renderLiveTable(updatedRoomState.board_line);
     }
