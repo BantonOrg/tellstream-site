@@ -1,5 +1,5 @@
 // ==========================================================================
-// Tellstream Dominoes - Core Game Engine & Precise Mask Layout
+// Tellstream Dominoes - Core Game Engine & Dynamic Board Layout
 // ==========================================================================
 
 const startBtn = document.getElementById('start-btn');
@@ -186,9 +186,6 @@ function displayDynamicMatchTable() {
 
     const boardContainer = document.createElement('div');
     boardContainer.className = 'match-board-container';
-    boardContainer.style.width = '2730px';
-    boardContainer.style.height = '1536px';
-    boardContainer.style.position = 'relative';
     gameTable.appendChild(boardContainer);
 
     const masterDeck = buildMasterDeck();
@@ -198,7 +195,6 @@ function displayDynamicMatchTable() {
         const coords = layoutCoordinates[tile.id];
         if (!coords) return;
 
-        // Outer positioning cell box matching calculated layout bounds
         const wrapper = document.createElement('div');
         wrapper.className = 'live-card-wrapper';
         wrapper.style.width = `${coords.w}px`;
@@ -207,7 +203,6 @@ function displayDynamicMatchTable() {
         wrapper.style.top = `${coords.y - (coords.h / 2)}px`;
         wrapper.style.position = 'absolute';
 
-        // Inner structural container to rotate the card cleanly without affecting absolute mask math
         const rotationContainer = document.createElement('div');
         rotationContainer.style.width = `${TILE_BASE_W}px`;
         rotationContainer.style.height = `${TILE_BASE_H}px`;
@@ -215,7 +210,7 @@ function displayDynamicMatchTable() {
         rotationContainer.style.transformOrigin = 'center center';
         rotationContainer.style.position = 'relative';
         rotationContainer.style.display = 'flex';
-        rotationContainer.style.justify = 'center';
+        rotationContainer.style.justifyContent = 'center';
         rotationContainer.style.alignItems = 'center';
 
         const tileElement = document.createElement('div');
@@ -225,7 +220,6 @@ function displayDynamicMatchTable() {
         tileElement.style.height = '100%';
         tileElement.style.position = 'absolute';
 
-        // Direct mask rendering on native upright ratios
         applyPipMasks(tileElement, tile.top, topPipMap);
         applyPipMasks(tileElement, tile.bottom, bottomPipMap);
 
