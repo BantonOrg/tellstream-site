@@ -1,5 +1,5 @@
 // ==========================================================================
-// Tellstream Dominoes - Four-Corner Index-Driven Structural Test
+// Tellstream Dominoes - Unified Four-Corner Structural Path Test
 // ==========================================================================
 
 const gameTable = document.getElementById('game-table');
@@ -20,16 +20,15 @@ const TRACK = {
     rightX:  2170
 };
 
-// Explicit structural sequences for Scenario 1 across all 4 corners
 function buildLeftBranch() {
     return [
         { id: 'l1', top: 6, bottom: 5, isDouble: false, isBottomTurn: false, isTopTurn: false },
         { id: 'l2', top: 5, bottom: 4, isDouble: false, isBottomTurn: false, isTopTurn: false },
         { id: 'l3', top: 4, bottom: 3, isDouble: false, isBottomTurn: false, isTopTurn: false }, 
-        { id: 'l4', top: 3, bottom: 2, isDouble: false, isBottomTurn: true,  isTopTurn: false }, // Bottom-Left
+        { id: 'l4', top: 3, bottom: 2, isDouble: false, isBottomTurn: true,  isTopTurn: false }, 
         { id: 'l5', top: 2, bottom: 1, isDouble: false, isBottomTurn: false, isTopTurn: false }, 
         { id: 'l6', top: 1, bottom: 0, isDouble: false, isBottomTurn: false, isTopTurn: false },
-        { id: 'l7', top: 0, bottom: 0, isDouble: false, isBottomTurn: false, isTopTurn: true  }, // Top-Left
+        { id: 'l7', top: 0, bottom: 0, isDouble: false, isBottomTurn: false, isTopTurn: true  }, 
         { id: 'l8', top: 0, bottom: 1, isDouble: false, isBottomTurn: false, isTopTurn: false }
     ];
 }
@@ -39,10 +38,10 @@ function buildRightBranch() {
         { id: 'r1', top: 6, bottom: 5, isDouble: false, isBottomTurn: false, isTopTurn: false },
         { id: 'r2', top: 5, bottom: 4, isDouble: false, isBottomTurn: false, isTopTurn: false },
         { id: 'r3', top: 4, bottom: 3, isDouble: false, isBottomTurn: false, isTopTurn: false }, 
-        { id: 'r4', top: 3, bottom: 2, isDouble: false, isBottomTurn: true,  isTopTurn: false }, // Bottom-Right
+        { id: 'r4', top: 3, bottom: 2, isDouble: false, isBottomTurn: true,  isTopTurn: false }, 
         { id: 'r5', top: 2, bottom: 1, isDouble: false, isBottomTurn: false, isTopTurn: false }, 
         { id: 'r6', top: 1, bottom: 0, isDouble: false, isBottomTurn: false, isTopTurn: false },
-        { id: 'r7', top: 0, bottom: 0, isDouble: false, isBottomTurn: false, isTopTurn: true  }, // Top-Right
+        { id: 'r7', top: 0, bottom: 0, isDouble: false, isBottomTurn: false, isTopTurn: true  }, 
         { id: 'r8', top: 0, bottom: 1, isDouble: false, isBottomTurn: false, isTopTurn: false }
     ];
 }
@@ -54,75 +53,87 @@ function calculateBranch(deck, startDirection) {
     let direction = startDirection; 
     let prevTile = null;
 
-    deck.forEach((tile) => {
-        let width, height, angle;
+    deck.forEach((tile, index) => {
+        let width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+        let height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+        let angle = tile.isDouble ? 0 : 90;
 
-        // Determine base shape sizes based on structural execution state
-        if (direction === 'left' || direction === 'right' || direction === 'turn-right' || direction === 'turn-left') {
-            width = TILE_BASE_H;
-            height = TILE_BASE_W;
-            angle = 90;
-        } else if (direction === 'up') {
-            width = TILE_BASE_W;
-            height = TILE_BASE_H;
-            angle = 0;
-        }
+        if (index > 0) {
+            if (direction === 'left') {
+                const stepX = currentX - (prevTile.w / 2) - (width / 2);
+                if (tile.isBottomTurn) {
+                    direction = 'up';
+                    width = TILE_BASE_W; height = TILE_BASE_H; angle = 0;
 
-        if (prevTile) {
-            // --- BOTTOM CORNER TURNS ---
-            if (tile.isBottomTurn) {
-                direction = 'up';
-                width = TILE_BASE_W; height = TILE_BASE_H; angle = 0;
-
-                const stepX = (startDirection === 'left') ? currentX - (prevTile.w / 2) - (width / 2) : currentX + (prevTile.w / 2) + (width / 2);
-                const targetX = (startDirection === 'left') ? TRACK.leftX : TRACK.rightX;
-
-                const optionA_X = currentX; 
-                const optionA_Dist = Math.abs(optionA_X - targetX);
-                const optionB_X = stepX;
-                const optionB_Dist = Math.abs(optionB_X - targetX);
-                
-                if (optionA_Dist < optionB_Dist) {
-                    currentX = optionA_X;
-                    currentY = TRACK.bottomY - (prevTile.h / 2) - (height / 2);
+                    const optionA_X = currentX; 
+                    const optionA_X_Dist = Math.abs(optionA_X - TRACK.leftX);
+                    const optionB_X = currentX - (prevTile.w / 2) - (width / 2);
+                    const optionB_X_Dist = Math.abs(optionB_X - TRACK.leftX);
+                    
+                    if (optionA_X_Dist < optionB_X_Dist) {
+                        currentX = optionA_X;
+                        currentY = TRACK.bottomY - (prevTile.h / 2) - (height / 2);
+                    } else {
+                        currentX = optionB_X;
+                        currentY = TRACK.bottomY;
+                    }
                 } else {
-                    currentX = optionB_X;
-                    currentY = TRACK.bottomY;
+                    currentX = stepX;
                 }
             } 
-            // --- TOP CORNER TURNS ---
-            else if (tile.isTopTurn) {
-                direction = (startDirection === 'left') ? 'turn-right' : 'turn-left';
-                width = TILE_BASE_H; height = TILE_BASE_W; angle = 90;
+            else if (direction === 'right') {
+                const stepX = currentX + (prevTile.w / 2) + (width / 2);
+                if (tile.isBottomTurn) {
+                    direction = 'up';
+                    width = TILE_BASE_W; height = TILE_BASE_H; angle = 0;
 
+                    const optionA_X = currentX; 
+                    const optionA_X_Dist = Math.abs(optionA_X - TRACK.rightX);
+                    const optionB_X = currentX + (prevTile.w / 2) + (width / 2);
+                    const optionB_X_Dist = Math.abs(optionB_X - TRACK.rightX);
+                    
+                    if (optionA_X_Dist < optionB_X_Dist) {
+                        currentX = optionA_X;
+                        currentY = TRACK.bottomY - (prevTile.h / 2) - (height / 2);
+                    } else {
+                        currentX = optionB_X;
+                        currentY = TRACK.bottomY;
+                    }
+                } else {
+                    currentX = stepX;
+                }
+            } 
+            else if (direction === 'up') {
+                width = TILE_BASE_W; height = TILE_BASE_H; angle = 0;
                 const stepY = currentY - (prevTile.h / 2) - (height / 2);
 
-                const optionA_Y = currentY;
-                const optionA_Dist = Math.abs(optionA_Y - TRACK.topY);
-                const optionB_Y = stepY;
-                const optionB_Dist = Math.abs(optionB_Y - TRACK.topY);
+                if (tile.isTopTurn) {
+                    direction = (startDirection === 'left') ? 'turn-right' : 'turn-left';
+                    width = TILE_BASE_H; height = TILE_BASE_W; angle = 90;
 
-                if (optionA_Dist < optionB_Dist) {
-                    currentY = optionA_Y;
-                    currentX = (direction === 'turn-right') ? currentX + (prevTile.w / 2) + (width / 2) : currentX - (prevTile.w / 2) - (width / 2);
+                    const optionA_Y = currentY;
+                    const optionA_Y_Dist = Math.abs(optionA_Y - TRACK.topY);
+                    const optionB_Y = currentY - (prevTile.h / 2) - (height / 2);
+                    const optionB_Y_Dist = Math.abs(optionB_Y - TRACK.topY);
+
+                    if (optionA_Y_Dist < optionB_Y_Dist) {
+                        currentY = optionA_Y;
+                        currentX = (direction === 'turn-right') ? currentX + (prevTile.w / 2) + (width / 2) : currentX - (prevTile.w / 2) - (width / 2);
+                    } else {
+                        currentY = optionB_Y;
+                        // Center axis stacks on top of the vertical column
+                        currentX = currentX; 
+                    }
                 } else {
-                    currentY = optionB_Y;
-                    currentX = currentX; // Center axis remains stacked on top of the vertical column
+                    currentY = stepY;
                 }
-            } 
-            // --- STANDARD TRACK STEPS ---
-            else {
-                if (direction === 'left') {
-                    currentX = currentX - (prevTile.w / 2) - (width / 2);
-                } else if (direction === 'right') {
-                    currentX = currentX + (prevTile.w / 2) + (width / 2);
-                } else if (direction === 'up') {
-                    currentY = currentY - (prevTile.h / 2) - (height / 2);
-                } else if (direction === 'turn-right') {
-                    currentX = currentX + (prevTile.w / 2) + (width / 2);
-                } else if (direction === 'turn-left') {
-                    currentX = currentX - (prevTile.w / 2) - (width / 2);
-                }
+            }
+            else if (direction === 'turn-right') {
+                width = TILE_BASE_H; height = TILE_BASE_W; angle = 90;
+                currentX += (prevTile.w / 2) + (width / 2);
+            } else if (direction === 'turn-left') {
+                width = TILE_BASE_H; height = TILE_BASE_W; angle = 90;
+                currentX -= (prevTile.w / 2) + (width / 2);
             }
         } else {
             currentX = (startDirection === 'left') ? currentX - (width / 2) : currentX + (width / 2);
@@ -135,7 +146,6 @@ function calculateBranch(deck, startDirection) {
     return layoutMap;
 }
 
-// --- RENDERING INTEGRATION ---
 function resizeGameTableContainer() {
     const container = document.querySelector('.match-board-container');
     if (!container) return;
