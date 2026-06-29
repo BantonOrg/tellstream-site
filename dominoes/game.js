@@ -1,14 +1,14 @@
 // ==========================================================================
-// Tellstream Dominoes - Clean Array-Driven Structural Corner Test
+// Tellstream Dominoes - Complete Vector Layout Engine & State Manager
 // ==========================================================================
 
 const gameTable = document.getElementById('game-table');
 const loadingScreen = document.getElementById('loading-screen');
+const dominoesLayer = document.getElementById('dominoes-layer');
+const trackCanvas = document.getElementById('track-canvas');
 
 const BOARD_NATIVE_W = 2730;
 const BOARD_NATIVE_H = 1536;
-const canvasW = 597;
-const canvasH = 1171;
 
 const TILE_BASE_W = 90;
 const TILE_BASE_H = 176;
@@ -20,8 +20,8 @@ const TRACK = {
     rightX:  2170
 };
 
+// Complete 28-tile set divided structurally to match your layout baseline
 function buildLeftBranch() {
-    // 13 Tiles total matching out from center
     return [
         { id: 'l1', top: 6, bottom: 5, isDouble: false },
         { id: 'l2', top: 5, bottom: 4, isDouble: false },
@@ -40,7 +40,6 @@ function buildLeftBranch() {
 }
 
 function buildRightBranch() {
-    // 15 Tiles total (including the center starting tile r1)
     return [
         { id: 'r1', top: 6, bottom: 6, isDouble: true },  
         { id: 'r2', top: 6, bottom: 4, isDouble: false },
@@ -161,39 +160,33 @@ function resizeGameTableContainer() {
     container.style.transform = `scale(${fitScale})`;
 }
 
-function initDirectCanvas() {
-    if (loadingScreen) loadingScreen.classList.add('hidden');
-    if (gameTable) gameTable.classList.remove('hidden');
+function drawTrackGuide() {
+    if (!trackCanvas) return;
+    const ctx = trackCanvas.getContext('2d');
+    trackCanvas.width = BOARD_NATIVE_W;
+    trackCanvas.height = BOARD_NATIVE_H;
 
-    gameTable.innerHTML = '';
-    document.body.style.backgroundColor = '#000000';
-    gameTable.style.backgroundColor = '#000000';
-
-    const boardContainer = document.createElement('div');
-    boardContainer.className = 'match-board-container';
-    boardContainer.style.width = `${BOARD_NATIVE_W}px`;
-    boardContainer.style.height = `${BOARD_NATIVE_H}px`;
-    boardContainer.style.position = 'absolute';
-    gameTable.appendChild(boardContainer);
-
-    const canvas = document.createElement('canvas');
-    canvas.width = BOARD_NATIVE_W;
-    canvas.height = BOARD_NATIVE_H;
-    canvas.style.position = 'absolute';
-    canvas.style.zIndex = '1';
-    boardContainer.appendChild(canvas);
-
-    const ctx = canvas.getContext('2d');
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
     ctx.lineWidth = 4;
     ctx.beginPath();
+    
+    // Left side loop track
     ctx.moveTo(1400, TRACK.bottomY);
     ctx.lineTo(TRACK.leftX, TRACK.bottomY);
     ctx.lineTo(TRACK.leftX, TRACK.topY);
+    ctx.lineTo(1400, TRACK.topY);
+    
+    // Right side loop track
     ctx.moveTo(1400, TRACK.bottomY);
     ctx.lineTo(TRACK.rightX, TRACK.bottomY);
     ctx.lineTo(TRACK.rightX, TRACK.topY);
+    ctx.lineTo(1400, TRACK.topY);
+    
     ctx.stroke();
+}
+
+function renderTable() {
+    dominoesLayer.innerHTML = '';
 
     const leftDeck = buildLeftBranch();
     const rightDeck = buildRightBranch();
@@ -213,8 +206,6 @@ function initDirectCanvas() {
         wrapper.style.height = `${coords.h}px`;
         wrapper.style.left = `${coords.x - (coords.w / 2)}px`;
         wrapper.style.top = `${coords.y - (coords.h / 2)}px`;
-        wrapper.style.position = 'absolute';
-        wrapper.style.zIndex = '10';
 
         const rotationContainer = document.createElement('div');
         rotationContainer.style.width = `${TILE_BASE_W}px`;
@@ -222,27 +213,26 @@ function initDirectCanvas() {
         rotationContainer.style.transform = `rotate(${coords.angle}deg)`;
         rotationContainer.style.transformOrigin = 'center center';
         rotationContainer.style.position = 'relative';
-        rotationContainer.style.display = 'flex';
-        rotationContainer.style.justifyContent = 'center';
-        rotationContainer.style.alignItems = 'center';
 
         const tileElement = document.createElement('div');
         tileElement.className = 'domino-item';
-        tileElement.style.width = `${TILE_BASE_W}px`;
-        tileElement.style.height = `${TILE_BASE_H}px`;
-        tileElement.style.position = 'absolute';
 
         rotationContainer.appendChild(tileElement);
         wrapper.appendChild(rotationContainer);
-        boardContainer.appendChild(wrapper);
+        dominoesLayer.appendChild(wrapper);
     });
+}
 
+function initEngine() {
+    if (loadingScreen) loadingScreen.classList.add('hidden');
+    drawTrackGuide();
+    renderTable();
     resizeGameTableContainer();
 }
 
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initDirectCanvas);
+    document.addEventListener('DOMContentLoaded', initEngine);
 } else {
-    initDirectCanvas();
+    initEngine();
 }
 window.addEventListener('resize', resizeGameTableContainer);
