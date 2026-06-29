@@ -1,5 +1,5 @@
 // ==========================================================================
-// Tellstream Dominoes - Refined Track Alignment
+// Tellstream Dominoes - Scenario 1: Single-to-Single Path Test
 // ==========================================================================
 
 const gameTable = document.getElementById('game-table');
@@ -7,14 +7,127 @@ const loadingScreen = document.getElementById('loading-screen');
 
 const BOARD_NATIVE_W = 2730;
 const BOARD_NATIVE_H = 1536;
+const canvasW = 597;
+const canvasH = 1171;
 
-// Left and right channels moved inward precisely according to your visual markers
+const TILE_BASE_W = 90;
+const TILE_BASE_H = 176;
+
+const topPipMap = [
+    { name: 'top-left',     x: 126, y: 126, hideFor: [0, 1] },
+    { name: 'top-right',    x: 469, y: 126, hideFor: [0, 1, 2, 3] },
+    { name: 'mid-left',     x: 126, y: 291, hideFor: [0, 1, 2, 3, 4, 5] },
+    { name: 'mid-center',   x: 298, y: 291, hideFor: [0, 2, 4, 6] },
+    { name: 'mid-right',    x: 469, y: 291, hideFor: [0, 1, 2, 3, 4, 5] },
+    { name: 'bottom-left',  x: 126, y: 453, hideFor: [0, 1, 2, 3] },
+    { name: 'bottom-right', x: 469, y: 453, hideFor: [0, 1] }
+];
+
+const bottomPipMap = [
+    { name: 'top-left',     x: 126, y: 714, hideFor: [0, 1] },
+    { name: 'top-right',    x: 469, y: 714, hideFor: [0, 1, 2, 3] },
+    { name: 'mid-left',     x: 126, y: 881, hideFor: [0, 1, 2, 3, 4, 5] },
+    { name: 'mid-center',   x: 298, y: 881, hideFor: [0, 2, 4, 6] },
+    { name: 'mid-right',    x: 469, y: 881, hideFor: [0, 1, 2, 3, 4, 5] },
+    { name: 'bottom-left',  x: 126, y: 1042, hideFor: [0, 1, 2, 3] },
+    { name: 'bottom-right', x: 469, y: 1042, hideFor: [0, 1] }
+];
+
+// Mapped directly to your customized white path track
 const TRACK = {
-    bottomY: 1160,  // Kept locked to the bottom domino track line
-    topY:    310,   // Kept locked exactly where it was
-    leftX:   560,   // Moved INWARD: Pulled right to match your left marker
-    rightX:  2170   // Moved INWARD: Pulled left to match your right marker
+    bottomY: 1160,
+    topY:    310,
+    leftX:   560,
+    rightX:  2170
 };
+
+// Pure singles sequence approaching and climbing the corner
+function buildTestSequence() {
+    return [
+        { id: 'tile-6-5', top: 6, bottom: 5, isDouble: false },
+        { id: 'tile-5-4', top: 5, bottom: 4, isDouble: false },
+        { id: 'tile-4-3', top: 4, bottom: 3, isDouble: false },
+        { id: 'tile-3-2', top: 3, bottom: 2, isDouble: false }, // Last flat horizontal single
+        { id: 'tile-2-1', top: 2, bottom: 1, isDouble: false }, // The Corner Turner (Single)
+        { id: 'tile-1-0', top: 1, bottom: 0, isDouble: false }, // Up vertical wall
+        { id: 'tile-0-3', top: 0, bottom: 3, isDouble: false }
+    ];
+}
+
+function applyPipMasks(tileElement, value, coordinateMap) {
+    coordinateMap.forEach(pip => {
+        if (pip.hideFor.includes(value)) {
+            const maskPatch = document.createElement('div');
+            maskPatch.className = 'pip-mask-patch';
+            maskPatch.style.left = `${(pip.x / canvasW) * 100}%`;
+            maskPatch.style.top = `${(pip.y / canvasH) * 100}%`;
+            tileElement.appendChild(maskPatch);
+        }
+    });
+}
+
+function calculateSequentialTrack(deck) {
+    const layoutMap = {};
+    let currentX = 1400; 
+    let currentY = TRACK.bottomY;
+    let direction = 'left';
+    let prevTile = null;
+
+    deck.forEach((tile, index) => {
+        // Defaults for flat horizontal singles
+        let width = TILE_BASE_H;
+        let height = TILE_BASE_W;
+        let angle = 90;
+
+        if (index > 0) {
+            if (direction === 'left') {
+                const stepX = currentX - (prevTile.w / 2) - (width / 2);
+                
+                // Trigger when entering the corner zone near left track line
+                if (stepX - (width / 2) <= TRACK.leftX + 50) {
+                    direction = 'up';
+                    
+                    // Stand the single tall for vertical movement
+                    width = TILE_BASE_W;
+                    height = TILE_BASE_H;
+                    angle = 0;
+
+                    // Option A: Stack on top face
+                    const optionA_X = currentX; 
+                    const optionA_X_Dist = Math.abs(optionA_X - TRACK.leftX);
+                    
+                    // Option B: Snap to side face
+                    const optionB_X = currentX - (prevTile.w / 2) - (TILE_BASE_W / 2);
+                    const optionB_X_Dist = Math.abs(optionB_X - TRACK.leftX);
+                    
+                    // Magnet Check: Choose the layout configuration closest to the path line
+                    if (optionA_X_Dist < optionB_X_Dist) {
+                        currentX = optionA_X;
+                        currentY = TRACK.bottomY - (prevTile.h / 2) - (height / 2);
+                    } else {
+                        currentX = optionB_X;
+                        currentY = TRACK.bottomY;
+                    }
+                } else {
+                    currentX = stepX;
+                }
+            } 
+            else if (direction === 'up') {
+                width = TILE_BASE_W;
+                height = TILE_BASE_H;
+                angle = 0;
+                currentY -= (prevTile.h / 2) + (height / 2);
+            }
+        } else {
+            currentX -= (width / 2);
+        }
+
+        layoutMap[tile.id] = { x: currentX, y: currentY, w: width, h: height, angle: angle };
+        prevTile = { w: width, h: height };
+    });
+
+    return layoutMap;
+}
 
 function resizeGameTableContainer() {
     const container = document.querySelector('.match-board-container');
@@ -23,11 +136,15 @@ function resizeGameTableContainer() {
     container.style.transform = `scale(${fitScale})`;
 }
 
-function drawPerfectPathTrack() {
+function initDirectCanvas() {
     if (loadingScreen) loadingScreen.classList.add('hidden');
     if (gameTable) gameTable.classList.remove('hidden');
 
     gameTable.innerHTML = '';
+    
+    document.body.style.backgroundColor = '#000000';
+    gameTable.style.backgroundColor = '#000000';
+    gameTable.style.backgroundImage = 'none';
 
     const boardContainer = document.createElement('div');
     boardContainer.className = 'match-board-container';
@@ -36,55 +153,78 @@ function drawPerfectPathTrack() {
     boardContainer.style.position = 'absolute';
     gameTable.appendChild(boardContainer);
 
+    // Render underlying layout track line
     const canvas = document.createElement('canvas');
     canvas.width = BOARD_NATIVE_W;
     canvas.height = BOARD_NATIVE_H;
     canvas.style.position = 'absolute';
     canvas.style.left = '0';
     canvas.style.top = '0';
-    canvas.style.zIndex = '9999';
+    canvas.style.zIndex = '1';
     boardContainer.appendChild(canvas);
 
     const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, BOARD_NATIVE_W, BOARD_NATIVE_H);
-
-    ctx.strokeStyle = '#FFFFFF';
-    ctx.lineWidth = 6;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'miter';
-    
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.lineWidth = 4;
     ctx.beginPath();
-    
-    // Trace balanced track loop
     ctx.moveTo(TRACK.rightX, TRACK.bottomY);
     ctx.lineTo(TRACK.leftX, TRACK.bottomY);
     ctx.lineTo(TRACK.leftX, TRACK.topY);
-    ctx.lineTo(TRACK.rightX, TRACK.topY);
-    ctx.lineTo(TRACK.rightX, TRACK.bottomY);
-    
     ctx.stroke();
 
-    ctx.fillStyle = '#00FFFF';
-    const corners = [
-        { x: TRACK.leftX, y: TRACK.bottomY },
-        { x: TRACK.leftX, y: TRACK.topY },
-        { x: TRACK.rightX, y: TRACK.topY },
-        { x: TRACK.rightX, y: TRACK.bottomY }
-    ];
-    
-    corners.forEach(corner => {
-        ctx.beginPath();
-        ctx.arc(corner.x, corner.y, 10, 0, 2 * Math.PI);
-        ctx.fill();
+    const testDeck = buildTestSequence();
+    const layoutCoordinates = calculateSequentialTrack(testDeck);
+
+    testDeck.forEach((tile) => {
+        const coords = layoutCoordinates[tile.id];
+        if (!coords) return;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'live-card-wrapper';
+        wrapper.style.width = `${coords.w}px`;
+        wrapper.style.height = `${coords.h}px`;
+        wrapper.style.left = `${coords.x - (coords.w / 2)}px`;
+        wrapper.style.top = `${coords.y - (coords.h / 2)}px`;
+        wrapper.style.position = 'absolute';
+        wrapper.style.zIndex = '10';
+
+        const rotationContainer = document.createElement('div');
+        rotationContainer.style.width = `${TILE_BASE_W}px`;
+        rotationContainer.style.height = `${TILE_BASE_H}px`;
+        rotationContainer.style.transform = `rotate(${coords.angle}deg)`;
+        rotationContainer.style.transformOrigin = 'center center';
+        rotationContainer.style.position = 'relative';
+        rotationContainer.style.display = 'flex';
+        rotationContainer.style.justifyContent = 'center';
+        rotationContainer.style.alignItems = 'center';
+
+        const tileElement = document.createElement('div');
+        tileElement.className = 'domino-item';
+        tileElement.id = tile.id;
+        tileElement.style.width = `${TILE_BASE_W}px`;
+        tileElement.style.height = `${TILE_BASE_H}px`;
+        tileElement.style.position = 'absolute';
+
+        applyPipMasks(tileElement, tile.top, topPipMap);
+        applyPipMasks(tileElement, tile.bottom, bottomPipMap);
+
+        const textLabel = document.createElement('div');
+        textLabel.className = 'debug-label';
+        textLabel.innerText = `[${tile.top}-${tile.bottom}]`;
+
+        rotationContainer.appendChild(tileElement);
+        wrapper.appendChild(rotationContainer);
+        wrapper.appendChild(textLabel);
+        boardContainer.appendChild(wrapper);
     });
 
     resizeGameTableContainer();
 }
 
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', drawPerfectPathTrack);
+    document.addEventListener('DOMContentLoaded', initDirectCanvas);
 } else {
-    drawPerfectPathTrack();
+    initDirectCanvas();
 }
 
 window.addEventListener('resize', resizeGameTableContainer);
