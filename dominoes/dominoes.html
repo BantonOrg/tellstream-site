@@ -2,30 +2,26 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TellStream Lounge Dominoes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tellstream Lounge Dominoes</title>
+    
+    <script>
+        const allowedReferrer = "https://tellstream.banton.org/";
+        if (!document.referrer || !document.referrer.startsWith(allowedReferrer)) {
+            window.location.href = allowedReferrer;
+        }
+    </script>
+
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- 1. LOADING SCREEN -->
-    <div id="loading-screen" class="screen">
-        <div class="loading-content">
-            <!-- Loading assets happen here -->
-            <button id="start-btn" disabled>Loading 100%...</button>
-        </div>
-    </div>
+    <div id="loading-screen" class="hidden">Loading Table...</div>
 
-    <!-- 2. GAME TABLE BACKGROUND (Stretches fullscreen on start) -->
-    <div id="game-table" class="screen hidden">
-        <!-- 10 Display dominoes (7 face up, 3 face down) will inject here -->
-    </div>
-
-    <!-- 3. MOBILE ROTATION GUARD OVERLAY -->
-    <div id="rotation-overlay">
-        <div class="message">
-            <h2>🔄 Please Rotate Your Device</h2>
-            <p>This game requires landscape mode. If your screen doesn't turn, please ensure "Auto-Rotate" is enabled in your phone settings.</p>
+    <div id="game-table">
+        <div class="match-board-container">
+            <canvas id="track-canvas"></canvas>
+            <div id="dominoes-layer"></div>
         </div>
     </div>
 
