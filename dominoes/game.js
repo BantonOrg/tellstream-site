@@ -1,5 +1,5 @@
 // ==========================================================================
-// Tellstream Dominoes - Balanced Visual Path Alignment
+// Tellstream Dominoes - Refined Track Alignment
 // ==========================================================================
 
 const gameTable = document.getElementById('game-table');
@@ -8,12 +8,12 @@ const loadingScreen = document.getElementById('loading-screen');
 const BOARD_NATIVE_W = 2730;
 const BOARD_NATIVE_H = 1536;
 
-// Centerline Tracks balanced between the logo text edges and the outer neon glow
+// Left and right channels moved inward precisely according to your visual markers
 const TRACK = {
-    bottomY: 1160,  // Stays exactly locked to your correct bottom domino track line
-    topY:    310,   // Moved UP: Halfway between the top of the "T" and the top glowing frame
-    leftX:   475,   // Moved LEFT: Halfway between the left side of "T" and the left glowing frame
-    rightX:  2255   // Moved RIGHT: Halfway between the right side of "M" and the right glowing frame
+    bottomY: 1160,  // Kept locked to the bottom domino track line
+    topY:    310,   // Kept locked exactly where it was
+    leftX:   560,   // Moved INWARD: Pulled right to match your left marker
+    rightX:  2170   // Moved INWARD: Pulled left to match your right marker
 };
 
 function resizeGameTableContainer() {
@@ -48,7 +48,6 @@ function drawPerfectPathTrack() {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, BOARD_NATIVE_W, BOARD_NATIVE_H);
 
-    // High visibility white tracking line
     ctx.strokeStyle = '#FFFFFF';
     ctx.lineWidth = 6;
     ctx.lineCap = 'round';
@@ -56,7 +55,7 @@ function drawPerfectPathTrack() {
     
     ctx.beginPath();
     
-    // Track loop configuration
+    // Trace balanced track loop
     ctx.moveTo(TRACK.rightX, TRACK.bottomY);
     ctx.lineTo(TRACK.leftX, TRACK.bottomY);
     ctx.lineTo(TRACK.leftX, TRACK.topY);
@@ -65,7 +64,6 @@ function drawPerfectPathTrack() {
     
     ctx.stroke();
 
-    // Corner alignment anchor points
     ctx.fillStyle = '#00FFFF';
     const corners = [
         { x: TRACK.leftX, y: TRACK.bottomY },
