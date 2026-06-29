@@ -1,5 +1,5 @@
 // ==========================================================================
-// Tellstream Dominoes - Scenario 1: Traveling Right to Bottom-Right Corner
+// Tellstream Dominoes - Four-Corner Unified Structural Path Test
 // ==========================================================================
 
 const gameTable = document.getElementById('game-table');
@@ -13,7 +13,7 @@ const canvasH = 1171;
 const TILE_BASE_W = 90;
 const TILE_BASE_H = 176;
 
-// Mapped path tracks
+// Exact white path track geometries
 const TRACK = {
     bottomY: 1160,
     topY:    310,
@@ -21,47 +21,87 @@ const TRACK = {
     rightX:  2170
 };
 
-// Scenario 1: Pure single-to-single sequence heading right
-function buildStrictSequence() {
+// Two completely separate branches originating from the center (1400, 1160)
+function buildLeftBranch() {
     return [
-        { id: 't1', top: 6, bottom: 5, isDouble: false },
-        { id: 't2', top: 5, bottom: 4, isDouble: false },
-        { id: 't3', top: 4, bottom: 3, isDouble: false }, 
-        { id: 't4', top: 3, bottom: 2, isDouble: false }, // Corner Turner
-        { id: 't5', top: 2, bottom: 1, isDouble: false }, // Up the right wall
-        { id: 't6', top: 1, bottom: 0, isDouble: false }
+        { id: 'l1', top: 6, bottom: 5, isDouble: false },
+        { id: 'l2', top: 5, bottom: 4, isDouble: false },
+        { id: 'l3', top: 4, bottom: 3, isDouble: false }, 
+        { id: 'l4', top: 3, bottom: 2, isDouble: false }, // Bottom-Left Corner Turner
+        { id: 'l5', top: 2, bottom: 1, isDouble: false }, 
+        { id: 'l6', top: 1, bottom: 0, isDouble: false },
+        { id: 'l7', top: 0, bottom: 0, isDouble: false }, // Top-Left Corner Turner
+        { id: 'l8', top: 0, bottom: 1, isDouble: false }  // Heading back toward center
     ];
 }
 
-function calculateStrictTrack(deck) {
+function buildRightBranch() {
+    return [
+        { id: 'r1', top: 6, bottom: 5, isDouble: false },
+        { id: 'r2', top: 5, bottom: 4, isDouble: false },
+        { id: 'r3', top: 4, bottom: 3, isDouble: false }, 
+        { id: 'r4', top: 3, bottom: 2, isDouble: false }, // Bottom-Right Corner Turner
+        { id: 'r5', top: 2, bottom: 1, isDouble: false }, 
+        { id: 'r6', top: 1, bottom: 0, isDouble: false },
+        { id: 'r7', top: 0, bottom: 0, isDouble: false }, // Top-Right Corner Turner
+        { id: 'r8', top: 0, bottom: 1, isDouble: false }  // Heading back toward center
+    ];
+}
+
+function calculateBranch(deck, startDirection) {
     const layoutMap = {};
-    let currentX = 1400; // Start at middle
+    let currentX = 1400; 
     let currentY = TRACK.bottomY;
-    let direction = 'right'; // Heading right
+    let direction = startDirection; 
     let prevTile = null;
 
     deck.forEach((tile, index) => {
-        let width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-        let height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
-        let angle = tile.isDouble ? 0 : 90;
+        let width, height, angle;
+
+        // Set dimensions structurally depending on directional flow segment
+        if (direction === 'left' || direction === 'right') {
+            width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+            height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+            angle = tile.isDouble ? 0 : 90;
+        } else if (direction === 'up') {
+            width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+            height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+            angle = tile.isDouble ? 90 : 0;
+        }
 
         if (index > 0) {
-            if (direction === 'right') {
+            // --- BOTTOM LEFT TURN ---
+            if (direction === 'left') {
+                const stepX = currentX - (prevTile.w / 2) - (width / 2);
+                if (stepX - (width / 2) <= TRACK.leftX + 50) {
+                    direction = 'up';
+                    width = TILE_BASE_W; height = TILE_BASE_H; angle = 0;
+
+                    const optionA_X = currentX; 
+                    const optionA_X_Dist = Math.abs(optionA_X - TRACK.leftX);
+                    const optionB_X = currentX - (prevTile.w / 2) - (width / 2);
+                    const optionB_X_Dist = Math.abs(optionB_X - TRACK.leftX);
+                    
+                    if (optionA_X_Dist < optionB_X_Dist) {
+                        currentX = optionA_X;
+                        currentY = TRACK.bottomY - (prevTile.h / 2) - (height / 2);
+                    } else {
+                        currentX = optionB_X;
+                        currentY = TRACK.bottomY;
+                    }
+                } else {
+                    currentX = stepX;
+                }
+            } 
+            // --- BOTTOM RIGHT TURN ---
+            else if (direction === 'right') {
                 const stepX = currentX + (prevTile.w / 2) + (width / 2);
-                
-                // Proximity trigger for the right-hand corner wall
                 if (stepX + (width / 2) >= TRACK.rightX - 50) {
                     direction = 'up';
-                    
-                    // Stand the corner block up for vertical lane transition
-                    width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
-                    height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-                    angle = tile.isDouble ? 90 : 0;
+                    width = TILE_BASE_W; height = TILE_BASE_H; angle = 0;
 
-                    // Magnet Selection Logic adjusted for Right X alignment
                     const optionA_X = currentX; 
                     const optionA_X_Dist = Math.abs(optionA_X - TRACK.rightX);
-                    
                     const optionB_X = currentX + (prevTile.w / 2) + (width / 2);
                     const optionB_X_Dist = Math.abs(optionB_X - TRACK.rightX);
                     
@@ -76,15 +116,46 @@ function calculateStrictTrack(deck) {
                     currentX = stepX;
                 }
             } 
+            // --- CLIMBING UP AND APPROACHING TOP CORNERS ---
             else if (direction === 'up') {
-                // Climbing up the right-hand wall vertically
-                width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
-                height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-                angle = tile.isDouble ? 90 : 0;
-                currentY -= (prevTile.h / 2) + (height / 2);
+                const stepY = currentY - (prevTile.h / 2) - (height / 2);
+                
+                // Trigger check against top path line
+                if (stepY - (height / 2) <= TRACK.topY + 50) {
+                    // Turn inside toward center depending on which wall we are on
+                    direction = (startDirection === 'left') ? 'turn-right' : 'turn-left';
+                    
+                    // Structural Flip: Corner tile transitions to laying flat horizontally
+                    width = TILE_BASE_H;
+                    height = TILE_BASE_W;
+                    angle = 90;
+
+                    // Top Magnet Selection Logic: Evaluate vertical Y proximity to line
+                    const optionA_Y = currentY;
+                    const optionA_Y_Dist = Math.abs(optionA_Y - TRACK.topY);
+                    
+                    const optionB_Y = currentY - (prevTile.h / 2) - (height / 2);
+                    const optionB_Y_Dist = Math.abs(optionB_Y - TRACK.topY);
+
+                    if (optionA_Y_Dist < optionB_Y_Dist) {
+                        currentY = optionA_Y;
+                        currentX = (direction === 'turn-right') ? currentX + (prevTile.w / 2) + (width / 2) : currentX - (prevTile.w / 2) - (width / 2);
+                    } else {
+                        currentY = optionB_Y;
+                    }
+                } else {
+                    currentY = stepY;
+                }
+            }
+            // --- TOP LANE INTERNAL HEADINGS ---
+            else if (direction === 'turn-right') {
+                currentX += (prevTile.w / 2) + (width / 2);
+            } else if (direction === 'turn-left') {
+                currentX -= (prevTile.w / 2) + (width / 2);
             }
         } else {
-            currentX += (width / 2);
+            // Apply initial offset based on tracking lane side
+            currentX = (startDirection === 'left') ? currentX - (width / 2) : currentX + (width / 2);
         }
 
         layoutMap[tile.id] = { x: currentX, y: currentY, w: width, h: height, angle: angle };
@@ -94,38 +165,9 @@ function calculateStrictTrack(deck) {
     return layoutMap;
 }
 
-// --- RENDERING LAYER ---
-const topPipMap = [
-    { name: 'top-left',     x: 126, y: 126, hideFor: [0, 1] },
-    { name: 'top-right',    x: 469, y: 126, hideFor: [0, 1, 2, 3] },
-    { name: 'mid-left',     x: 126, y: 291, hideFor: [0, 1, 2, 3, 4, 5] },
-    { name: 'mid-center',   x: 298, y: 291, hideFor: [0, 2, 4, 6] },
-    { name: 'mid-right',    x: 469, y: 291, hideFor: [0, 1, 2, 3, 4, 5] },
-    { name: 'bottom-left',  x: 126, y: 453, hideFor: [0, 1, 2, 3] },
-    { name: 'bottom-right', x: 469, y: 453, hideFor: [0, 1] }
-];
-
-const bottomPipMap = [
-    { name: 'top-left',     x: 126, y: 714, hideFor: [0, 1] },
-    { name: 'top-right',    x: 469, y: 714, hideFor: [0, 1, 2, 3] },
-    { name: 'mid-left',     x: 126, y: 881, hideFor: [0, 1, 2, 3, 4, 5] },
-    { name: 'mid-center',   x: 298, y: 881, hideFor: [0, 2, 4, 6] },
-    { name: 'mid-right',    x: 469, y: 881, hideFor: [0, 1, 2, 3, 4, 5] },
-    { name: 'bottom-left',  x: 126, y: 1042, hideFor: [0, 1, 2, 3] },
-    { name: 'bottom-right', x: 469, y: 1042, hideFor: [0, 1] }
-];
-
-function applyPipMasks(tileElement, value, coordinateMap) {
-    coordinateMap.forEach(pip => {
-        if (pip.hideFor.includes(value)) {
-            const maskPatch = document.createElement('div');
-            maskPatch.className = 'pip-mask-patch';
-            maskPatch.style.left = `${(pip.x / canvasW) * 100}%`;
-            maskPatch.style.top = `${(pip.y / canvasH) * 100}%`;
-            tileElement.appendChild(maskPatch);
-        }
-    });
-}
+// --- RENDERING INTEGRATION ---
+const topPipMap = [{ name: 'mid-center', x: 298, y: 291, hideFor: [0, 2, 4, 6] }];
+const bottomPipMap = [{ name: 'mid-center', x: 298, y: 881, hideFor: [0, 2, 4, 6] }];
 
 function resizeGameTableContainer() {
     const container = document.querySelector('.match-board-container');
@@ -149,12 +191,11 @@ function initDirectCanvas() {
     boardContainer.style.position = 'absolute';
     gameTable.appendChild(boardContainer);
 
+    // Track Canvas Guide
     const canvas = document.createElement('canvas');
     canvas.width = BOARD_NATIVE_W;
     canvas.height = BOARD_NATIVE_H;
     canvas.style.position = 'absolute';
-    canvas.style.left = '0';
-    canvas.style.top = '0';
     canvas.style.zIndex = '1';
     boardContainer.appendChild(canvas);
 
@@ -162,16 +203,27 @@ function initDirectCanvas() {
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
     ctx.lineWidth = 4;
     ctx.beginPath();
+    // Complete track layout loop visualization
+    ctx.moveTo(1400, TRACK.bottomY);
+    ctx.lineTo(TRACK.leftX, TRACK.bottomY);
+    ctx.lineTo(TRACK.leftX, TRACK.topY);
+    ctx.lineTo(1400, TRACK.topY);
     ctx.moveTo(1400, TRACK.bottomY);
     ctx.lineTo(TRACK.rightX, TRACK.bottomY);
     ctx.lineTo(TRACK.rightX, TRACK.topY);
+    ctx.lineTo(1400, TRACK.topY);
     ctx.stroke();
 
-    const testDeck = buildStrictSequence();
-    const layoutCoordinates = calculateStrictTrack(testDeck);
+    const leftDeck = buildLeftBranch();
+    const rightDeck = buildRightBranch();
+    
+    const combinedCoordinates = {
+        ...calculateBranch(leftDeck, 'left'),
+        ...calculateBranch(rightDeck, 'right')
+    };
 
-    testDeck.forEach((tile) => {
-        const coords = layoutCoordinates[tile.id];
+    [...leftDeck, ...rightDeck].forEach((tile) => {
+        const coords = combinedCoordinates[tile.id];
         if (!coords) return;
 
         const wrapper = document.createElement('div');
@@ -198,9 +250,6 @@ function initDirectCanvas() {
         tileElement.style.width = `${TILE_BASE_W}px`;
         tileElement.style.height = `${TILE_BASE_H}px`;
         tileElement.style.position = 'absolute';
-
-        applyPipMasks(tileElement, tile.top, topPipMap);
-        applyPipMasks(tileElement, tile.bottom, bottomPipMap);
 
         rotationContainer.appendChild(tileElement);
         wrapper.appendChild(rotationContainer);
