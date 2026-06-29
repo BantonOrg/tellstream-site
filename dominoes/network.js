@@ -1,107 +1,36 @@
 // ============================================================================
-// NETWORK.JS - FULL NETWORK LAYER, COUNTDOWN SYSTEMS, AND ROOM ADMINISTRATIVE FUNCTIONS
+// NETWORK.JS - SKELETON NETWORK LAYER & EVENT HANDLING PIPELINES
 // ============================================================================
 
-// Global Tracking State for Disconnect Windows
-const activeTimers = {};
-
 /**
- * Initializes the network layer and reveals the lobby interface on user entry
+ * Baseline network entry stub called by the main start button click listener
  */
 function initNetwork() {
-    console.log("Entering TellStream Lounge... Initializing state.");
-
-    // 1. Hide the loading screen completely
-    const loadingScreen = document.getElementById("loading-screen");
-    if (loadingScreen) {
-        loadingScreen.style.display = "none";
-    }
-
-    // 2. Safely swap visibility over to your lobby view container
-    const lobbyView = document.getElementById("lobby-view");
+    console.log("Network skeleton layer initialized. Ready for room connection orchestration.");
+    
+    // Simple state visibility toggle check to ensure file is linked properly
+    const lobbyView = document.getElementById('lobby-view');
     if (lobbyView) {
-        lobbyView.style.display = "block";
-        // Dynamic placeholder content to prove the view successfully shifted
-        lobbyView.innerHTML = `
-            <div class="lounge-welcome">
-                <h2>Welcome to the Lounge</h2>
-                <p>Waiting for room parameters or sync configuration... Systems stable.</p>
-            </div>
-        `;
-    }
-
-    // 3. Initialize your 4 padded corner layout slots on the domino table background
-    if (typeof initializeTableLayout === 'function') {
-        initializeTableLayout();
+        console.log("Lobby interface screen element detected.");
     }
 }
 
 /**
- * Handles a network drop event from the WebSocket layer
+ * Handles a network drop event from the connection layer
  * @param {string} roomId - Identifier for the active match group
- * @param {number} droppedPlayerIndex - Position array slot of the dropped user (1-4 base matching UI layout)
- * @param {Array} currentPlayersList - Reference list of current players for local state check
+ * @param {number} droppedPlayerIndex - Position array slot of the dropped user
+ * @param {Array} currentPlayersList - Reference list of current players
  */
 function handlePlayerDisconnect(roomId, droppedPlayerIndex, currentPlayersList) {
-    if (activeTimers[droppedPlayerIndex]) return;
-
-    let timeRemaining = 120; // 2-Minute Grace Limit in Seconds
-    
-    console.warn(`Connection lost with Player ${droppedPlayerIndex}. Freezing game actions.`);
-    lockGameBoardInput(true);
-
-    if (typeof updateDisconnectTimerDisplay === 'function') {
-        updateDisconnectTimerDisplay(droppedPlayerIndex, "2:00");
-    }
-
-    activeTimers[droppedPlayerIndex] = setInterval(() => {
-        timeRemaining--;
-
-        if (timeRemaining > 0) {
-            const mins = Math.floor(timeRemaining / 60);
-            const secs = timeRemaining % 60;
-            const timeString = `${mins}:${secs.toString().padStart(2, '0')}`;
-            
-            if (typeof updateDisconnectTimerDisplay === 'function') {
-                updateDisconnectTimerDisplay(droppedPlayerIndex, timeString);
-            }
-        } else {
-            clearInterval(activeTimers[droppedPlayerIndex]);
-            delete activeTimers[droppedPlayerIndex];
-            
-            handleGracePeriodExpiry(roomId, droppedPlayerIndex);
-        }
-    }, 1000);
+    console.warn(`Connection lost event registered for Player position: ${droppedPlayerIndex}`);
 }
 
 /**
  * Handles network recovery event prior to expiration windows
- * @param {number} recoveredPlayerIndex - Position array slot of the recovered user (1-4 base matching UI layout)
+ * @param {number} recoveredPlayerIndex - Position array slot of the recovered user
  */
 function handlePlayerReconnect(recoveredPlayerIndex) {
-    if (activeTimers[recoveredPlayerIndex]) {
-        clearInterval(activeTimers[recoveredPlayerIndex]);
-        delete activeTimers[recoveredPlayerIndex];
-        
-        if (typeof clearDisconnectTimerDisplay === 'function') {
-            clearDisconnectTimerDisplay(recoveredPlayerIndex);
-        }
-        
-        if (Object.keys(activeTimers).length === 0) {
-            lockGameBoardInput(false);
-            console.log("All players stable. Unfreezing game actions.");
-        }
-    }
-}
-
-/**
- * Grace period closure branch if recovery limits fail
- * @param {string} roomId - Identifier for the active match group
- * @param {number} failedPlayerIndex - Position array slot of the dropped user
- */
-function handleGracePeriodExpiry(roomId, failedPlayerIndex) {
-    console.error(`Player ${failedPlayerIndex} failed to reconnect within the 2-minute buffer.`);
-    exposeLobbyTeardownControls(roomId);
+    console.log(`Connection restored event registered for Player position: ${recoveredPlayerIndex}`);
 }
 
 /**
@@ -111,19 +40,7 @@ function handleGracePeriodExpiry(roomId, failedPlayerIndex) {
  * @param {boolean} isLocalUserHost - Flag tracking room ownership validation
  */
 function movePlayerToSpectator(roomId, targetPlayerId, isLocalUserHost) {
-    if (!isLocalUserHost) {
-        console.error("Permission Denied: Only the host can eject players to spectator slots.");
-        return;
-    }
-
-    const payload = {
-        action: "demote_to_spectator",
-        room: roomId,
-        target: targetPlayerId
-    };
-
-    sendNetworkPayload(payload);
-    console.log(`Host action processed: Moving ${targetPlayerId} to spectator lounge tracking.`);
+    console.log(`Request received to demote user ${targetPlayerId} to spectator.`);
 }
 
 /**
@@ -134,64 +51,7 @@ function movePlayerToSpectator(roomId, targetPlayerId, isLocalUserHost) {
  * @param {boolean} isLocalUserHost - Flag tracking room ownership validation
  */
 function assignSpectatorToSeat(roomId, targetPlayerId, targetedSeatSlot, isLocalUserHost) {
-    if (!isLocalUserHost) {
-         console.error("Permission Denied: Only the host can manage table seating configurations.");
-         return;
-    }
-
-    const payload = {
-        action: "assign_seat",
-        room: roomId,
-        target: targetPlayerId,
-        seat: targetedSeatSlot
-    };
-
-    sendNetworkPayload(payload);
-}
-
-/**
- * Internal Input Anchor Lock Blocks
- * @param {boolean} shouldLock - Toggle boolean setting state parameter values
- */
-function lockGameBoardInput(shouldLock) {
-    const boardArea = document.getElementById('domino-table-container');
-    if (!boardArea) return;
-
-    if (shouldLock) {
-        boardArea.classList.add('network-frozen-state');
-        boardArea.style.pointerEvents = 'none';
-    } else {
-        boardArea.classList.remove('network-frozen-state');
-        boardArea.style.pointerEvents = 'auto';
-    }
-}
-
-/**
- * Outward pipeline transmitter dispatch skeleton wrapper
- * @param {Object} dataPacket - Formatted package settings payload
- */
-function sendNetworkPayload(dataPacket) {
-    if (typeof globalWebSocketClient !== 'undefined' && globalWebSocketClient && globalWebSocketClient.readyState === WebSocket.OPEN) {
-        globalWebSocketClient.send(JSON.stringify(dataPacket));
-    } else {
-        console.warn("Network transmission skipped: WebSocket layer offline or uninitialized.");
-    }
-}
-
-/**
- * Visual control expansion wrapper on dead connection limits
- * @param {string} roomId - Identifier for the active match group
- */
-function exposeLobbyTeardownControls(roomId) {
-    const controlPanel = document.getElementById('lobby-management-controls');
-    if (controlPanel) {
-        controlPanel.innerHTML = `
-            <div class="grace-expiry-alert">
-                <p>A player has left the table completely. Dissolve match and return to lounge?</p>
-                <button onclick="confirmLobbyDissolve('${roomId}')">Return to Lounge</button>
-            </div>
-        `;
-    }
+    console.log(`Request received to assign user ${targetPlayerId} to seat slot ${targetedSeatSlot}.`);
 }
 
 // Export module logic safely for system loop initialization architecture
@@ -201,7 +61,6 @@ if (typeof module !== 'undefined' && module.exports) {
         handlePlayerDisconnect,
         handlePlayerReconnect,
         movePlayerToSpectator,
-        assignSpectatorToSeat,
-        lockGameBoardInput
+        assignSpectatorToSeat
     };
 }
