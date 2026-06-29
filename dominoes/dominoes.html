@@ -16,11 +16,28 @@
     </div>
 
     <div id="lobby-view" class="screen hidden-layout">
+        <div class="lounge-container">
+            <header class="lounge-header">
+                <h1>TellStream Domino Lounge</h1>
+                <p>Select an active room or create a new match to begin playing.</p>
+            </header>
+            
+            <main class="lounge-main-content">
+                <div class="room-management-panel">
+                    <h2>Active Game Rooms</h2>
+                    <div id="rooms-list-container">
+                        <p class="no-rooms-fallback">Searching for active matches in domino_rooms...</p>
+                    </div>
+                </div>
+            </main>
         </div>
+    </div>
 
     <div id="table-view" class="screen hidden-layout">
         <div id="game-table">
-            </div>
+            <div id="domino-table-container">
+                </div>
+        </div>
     </div>
 
     <div id="rotation-overlay">
@@ -34,7 +51,6 @@
     <script src="network.js"></script>
 
     <script>
-        // Primary interactive click anchor to transition into the room state
         document.addEventListener("DOMContentLoaded", () => {
             const startButton = document.getElementById("start-btn");
             if (startButton) {
