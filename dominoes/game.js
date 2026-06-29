@@ -2,13 +2,8 @@
 // Tellstream Dominoes - Clean Array-Driven Structural Corner Test
 // ==========================================================================
 
-const gameTable = document.getElementById('game-table');
-const loadingScreen = document.getElementById('loading-screen');
-
 const BOARD_NATIVE_W = 2730;
 const BOARD_NATIVE_H = 1536;
-const canvasW = 597;
-const canvasH = 1171;
 
 const TILE_BASE_W = 90;
 const TILE_BASE_H = 176;
@@ -21,7 +16,6 @@ const TRACK = {
 };
 
 function buildLeftBranch() {
-    // 13 Tiles total matching out from center
     return [
         { id: 'l1', top: 6, bottom: 5, isDouble: false },
         { id: 'l2', top: 5, bottom: 4, isDouble: false },
@@ -40,7 +34,6 @@ function buildLeftBranch() {
 }
 
 function buildRightBranch() {
-    // 15 Tiles total (including the center starting tile r1)
     return [
         { id: 'r1', top: 6, bottom: 6, isDouble: true },  
         { id: 'r2', top: 6, bottom: 4, isDouble: false },
@@ -62,17 +55,15 @@ function buildRightBranch() {
 
 function calculateBranch(deck, startDirection) {
     const layoutMap = {};
-    
     let headX = 1400; 
     let headY = TRACK.bottomY;
-    
     let vector = (startDirection === 'left') ? [-1, 0] : [1, 0];
     let prevTile = null;
 
     deck.forEach((tile, index) => {
         let isMovingHorizontal = vector[1] === 0;
-        
         let width, height, angle;
+        
         if (tile.isDouble) {
             width = isMovingHorizontal ? TILE_BASE_W : TILE_BASE_H;
             height = isMovingHorizontal ? TILE_BASE_H : TILE_BASE_W;
@@ -98,7 +89,6 @@ function calculateBranch(deck, startDirection) {
                     width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
                     height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                     angle = tile.isDouble ? 90 : 0;
-
                     headX = TRACK.leftX;
                     headY = TRACK.bottomY - (prevTile.h / 2) - (height / 2);
                 } 
@@ -108,7 +98,6 @@ function calculateBranch(deck, startDirection) {
                     width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                     height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
                     angle = tile.isDouble ? 0 : 90;
-
                     headX = TRACK.leftX + (prevTile.w / 2) + (width / 2);
                     headY = TRACK.topY;
                 } 
@@ -124,7 +113,6 @@ function calculateBranch(deck, startDirection) {
                     width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
                     height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                     angle = tile.isDouble ? 90 : 0;
-
                     headX = TRACK.rightX;
                     headY = TRACK.bottomY - (prevTile.h / 2) - (height / 2);
                 } 
@@ -134,7 +122,6 @@ function calculateBranch(deck, startDirection) {
                     width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                     height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
                     angle = tile.isDouble ? 0 : 90;
-
                     headX = TRACK.rightX - (prevTile.w / 2) - (width / 2);
                     headY = TRACK.topY;
                 } 
@@ -161,13 +148,15 @@ function resizeGameTableContainer() {
     container.style.transform = `scale(${fitScale})`;
 }
 
-function initDirectCanvas() {
-    if (loadingScreen) loadingScreen.classList.add('hidden');
-    if (gameTable) gameTable.classList.remove('hidden');
+function renderLiveTable(boardLineArray) {
+    const gameTable = document.getElementById('game-table');
+    if (!gameTable) return;
 
-    gameTable.innerHTML = '';
-    document.body.style.backgroundColor = '#000000';
-    gameTable.style.backgroundColor = '#000000';
+    const leftDeck = boardLineArray ? boardLineArray.filter(t => t.side === 'left') : buildLeftBranch();
+    const rightDeck = boardLineArray ? boardLineArray.filter(t => t.side === 'right') : buildRightBranch();
+    
+    const existingContainer = document.querySelector('.match-board-container');
+    if (existingContainer) existingContainer.remove();
 
     const boardContainer = document.createElement('div');
     boardContainer.className = 'match-board-container';
@@ -195,9 +184,6 @@ function initDirectCanvas() {
     ctx.lineTo(TRACK.rightX, TRACK.topY);
     ctx.stroke();
 
-    const leftDeck = buildLeftBranch();
-    const rightDeck = buildRightBranch();
-    
     const combinedCoordinates = {
         ...calculateBranch(leftDeck, 'left'),
         ...calculateBranch(rightDeck, 'right')
@@ -240,9 +226,25 @@ function initDirectCanvas() {
     resizeGameTableContainer();
 }
 
+function setupClickEvent() {
+    const startBtn = document.getElementById('start-btn');
+    const loadingScreen = document.getElementById('loading-screen');
+    
+    if (startBtn) {
+        startBtn.removeAttribute('disabled');
+        startBtn.innerText = "Click to Enter Lounge";
+        startBtn.addEventListener('click', () => {
+            if (loadingScreen) loadingScreen.classList.add('hidden');
+            if (typeof initNetwork === 'function') {
+                initNetwork();
+            }
+        });
+    }
+}
+
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initDirectCanvas);
+    document.addEventListener('DOMContentLoaded', setupClickEvent);
 } else {
-    initDirectCanvas();
+    setupClickEvent();
 }
 window.addEventListener('resize', resizeGameTableContainer);
