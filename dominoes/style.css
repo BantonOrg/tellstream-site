@@ -1,61 +1,17 @@
-/* ==========================================================================
-   Tellstream Dominoes - Table & Layout UI Core Styles
-   ========================================================================== */
-
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
 }
 
-html, body {
+body, html {
     width: 100%;
     height: 100%;
+    background-color: #000000;
     overflow: hidden;
-    background-color: #050508;
-    color: #c5c6c7;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-#loading-screen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: radial-gradient(circle, #1f2833 0%, #0b0c10 100%);
     display: flex;
-    flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 9999;
-}
-
-#loading-screen.hidden {
-    opacity: 0;
-    pointer-events: none;
-    display: none !important;
-}
-
-.lobby-btn {
-    padding: 30px 80px;
-    font-size: 2.4rem;
-    border-radius: 8px;
-    font-weight: bold;
-    color: #66fcf1;
-    background: transparent;
-    border: 4px solid #66fcf1;
-    cursor: pointer;
-    text-transform: uppercase;
-    letter-spacing: 4px;
-    box-shadow: 0 0 30px rgba(102, 252, 241, 0.3);
-    transition: all 0.2s ease-in-out;
-}
-
-.lobby-btn:hover {
-    background: #66fcf1;
-    color: #0b0c10;
-    box-shadow: 0 0 50px rgba(102, 252, 241, 0.7);
 }
 
 #game-table {
@@ -65,72 +21,51 @@ html, body {
     justify-content: center;
     align-items: center;
     position: relative;
-    overflow: hidden;
-    background-color: #050508;
 }
 
-#game-table.hidden {
-    display: none !important;
-}
-
-/* Fixed Resolution Game Container utilizing hardware scale matrices */
 .match-board-container {
-    background-image: url('/dominoes/assets/table_bg.jpg');
-    background-size: 100% 100%;
-    background-position: center;
-    background-repeat: no-repeat;
-    box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.8);
-    border-radius: 8px;
-    transform-origin: center center; /* Shrink vector centered in the view frame */
-    flex-shrink: 0;
+    width: 2730px;
+    height: 1536px;
+    position: absolute;
+    transform-origin: center center;
+    overflow: hidden;
 }
 
-.live-card-wrapper {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+#track-canvas {
+    width: 2730px;
+    height: 1536px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    pointer-events: none;
+}
+
+#dominoes-layer {
+    width: 2730px;
+    height: 1536px;
+    position: absolute;
+    top: 0;
+    left: 0;
     z-index: 10;
 }
 
+.live-card-wrapper {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 .domino-item {
-    background-image: url('/dominoes/assets/dom_front.gif');
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
+    background-color: #f4edd2;
     border-radius: 8px;
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    border: 2px solid #dcd3b4;
+    width: 100%;
+    height: 100%;
 }
 
-.pip-mask-patch {
-    position: absolute;
-    width: 19px;
-    height: 19px;
-    background-color: #e6dfd3;
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-}
-
-.debug-label {
-    position: absolute;
-    bottom: -24px;
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 10px;
-    font-weight: bold;
-    color: #66fcf1;
-    background-color: rgba(5, 5, 8, 0.9);
-    padding: 1px 5px;
-    border-radius: 3px;
-    border: 1px solid #45f3ff4d;
-    white-space: nowrap;
-    pointer-events: none;
-    z-index: 100;
-}
-
-.orientation-notice, 
-div[class*="rotate-notice"], 
-div[id*="rotate-device"],
-body > div:last-of-type {
+.hidden {
     display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
 }
