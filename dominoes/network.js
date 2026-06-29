@@ -4,6 +4,30 @@
 
 // Global Tracking State for Disconnect Windows
 const activeTimers = {};
+let globalWebSocketClient = null; // Reference placeholder for server streaming
+
+/**
+ * Initializes the network connection setup state loop when entering the lounge
+ */
+function initNetwork() {
+    console.log("Initializing network connection layer...");
+    
+    // 1. Unhide the lobby view container so it isn't a blank screen
+    const lobbyView = document.getElementById("lobby-view");
+    if (lobbyView) {
+        lobbyView.style.display = "block";
+    }
+
+    // 2. Initialize your game layouts locally
+    if (typeof initializeTableLayout === 'function') {
+        initializeTableLayout();
+    }
+
+    // TODO: Connect your Supabase realtime listener or WebSocket connection here
+    // e.g., globalWebSocketClient = new WebSocket("ws://...");
+    
+    console.log("Lounge network systems active.");
+}
 
 /**
  * Handles a network drop event from the WebSocket layer
@@ -22,7 +46,9 @@ function handlePlayerDisconnect(roomId, droppedPlayerIndex, currentPlayersList) 
     lockGameBoardInput(true);
 
     // 2. Trigger UI countdown update immediately
-    updateDisconnectTimerDisplay(droppedPlayerIndex, "2:00");
+    if (typeof updateDisconnectTimerDisplay === 'function') {
+        updateDisconnectTimerDisplay(droppedPlayerIndex, "2:00");
+    }
 
     // 3. Fire ticking clock logic
     activeTimers[droppedPlayerIndex] = setInterval(() => {
@@ -34,7 +60,9 @@ function handlePlayerDisconnect(roomId, droppedPlayerIndex, currentPlayersList) 
             const secs = timeRemaining % 60;
             const timeString = `${mins}:${secs.toString().padStart(2, '0')}`;
             
-            updateDisconnectTimerDisplay(droppedPlayerIndex, timeString);
+            if (typeof updateDisconnectTimerDisplay === 'function') {
+                updateDisconnectTimerDisplay(droppedPlayerIndex, timeString);
+            }
         } else {
             // Grace period expired with zero recovery
             clearInterval(activeTimers[droppedPlayerIndex]);
@@ -55,7 +83,9 @@ function handlePlayerReconnect(recoveredPlayerIndex) {
         delete activeTimers[recoveredPlayerIndex];
         
         // Restore standard inward visual components
-        clearDisconnectTimerDisplay(recoveredPlayerIndex);
+        if (typeof clearDisconnectTimerDisplay === 'function') {
+            clearDisconnectTimerDisplay(recoveredPlayerIndex);
+        }
         
         // If zero other tracking alerts are alive across the remaining seats, unfreeze play
         if (Object.keys(activeTimers).length === 0) {
@@ -147,7 +177,7 @@ function lockGameBoardInput(shouldLock) {
  * @param {Object} dataPacket - Formatted package settings payload
  */
 function sendNetworkPayload(dataPacket) {
-    if (typeof globalWebSocketClient !== 'undefined' && globalWebSocketClient.readyState === WebSocket.OPEN) {
+    if (globalWebSocketClient && globalWebSocketClient.readyState === WebSocket.OPEN) {
         globalWebSocketClient.send(JSON.stringify(dataPacket));
     } else {
         console.warn("Network transmission skipped: WebSocket layer offline or uninitialized.");
@@ -174,6 +204,7 @@ function exposeLobbyTeardownControls(roomId) {
 // Export module logic safely for system loop initialization architecture
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
+        initNetwork,
         handlePlayerDisconnect,
         handlePlayerReconnect,
         movePlayerToSpectator,
