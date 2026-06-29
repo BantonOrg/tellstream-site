@@ -1,5 +1,5 @@
 // ==========================================================================
-// Tellstream Dominoes - Unified Four-Corner Structural Path Test
+// Tellstream Dominoes - Restored Baseline Perfect Bottom Code
 // ==========================================================================
 
 const gameTable = document.getElementById('game-table');
@@ -22,27 +22,23 @@ const TRACK = {
 
 function buildLeftBranch() {
     return [
-        { id: 'l1', top: 6, bottom: 5, isDouble: false, isBottomTurn: false, isTopTurn: false },
-        { id: 'l2', top: 5, bottom: 4, isDouble: false, isBottomTurn: false, isTopTurn: false },
-        { id: 'l3', top: 4, bottom: 3, isDouble: false, isBottomTurn: false, isTopTurn: false }, 
-        { id: 'l4', top: 3, bottom: 2, isDouble: false, isBottomTurn: true,  isTopTurn: false }, 
-        { id: 'l5', top: 2, bottom: 1, isDouble: false, isBottomTurn: false, isTopTurn: false }, 
-        { id: 'l6', top: 1, bottom: 0, isDouble: false, isBottomTurn: false, isTopTurn: false },
-        { id: 'l7', top: 0, bottom: 0, isDouble: false, isBottomTurn: false, isTopTurn: true  }, 
-        { id: 'l8', top: 0, bottom: 1, isDouble: false, isBottomTurn: false, isTopTurn: false }
+        { id: 'l1', top: 6, bottom: 5, isDouble: false },
+        { id: 'l2', top: 5, bottom: 4, isDouble: false },
+        { id: 'l3', top: 4, bottom: 3, isDouble: false }, 
+        { id: 'l4', top: 3, bottom: 2, isDouble: false }, // Bottom-Left Corner
+        { id: 'l5', top: 2, bottom: 1, isDouble: false }, 
+        { id: 'l6', top: 1, bottom: 0, isDouble: false }
     ];
 }
 
 function buildRightBranch() {
     return [
-        { id: 'r1', top: 6, bottom: 5, isDouble: false, isBottomTurn: false, isTopTurn: false },
-        { id: 'r2', top: 5, bottom: 4, isDouble: false, isBottomTurn: false, isTopTurn: false },
-        { id: 'r3', top: 4, bottom: 3, isDouble: false, isBottomTurn: false, isTopTurn: false }, 
-        { id: 'r4', top: 3, bottom: 2, isDouble: false, isBottomTurn: true,  isTopTurn: false }, 
-        { id: 'r5', top: 2, bottom: 1, isDouble: false, isBottomTurn: false, isTopTurn: false }, 
-        { id: 'r6', top: 1, bottom: 0, isDouble: false, isBottomTurn: false, isTopTurn: false },
-        { id: 'r7', top: 0, bottom: 0, isDouble: false, isBottomTurn: false, isTopTurn: true  }, 
-        { id: 'r8', top: 0, bottom: 1, isDouble: false, isBottomTurn: false, isTopTurn: false }
+        { id: 'r1', top: 6, bottom: 5, isDouble: false },
+        { id: 'r2', top: 5, bottom: 4, isDouble: false },
+        { id: 'r3', top: 4, bottom: 3, isDouble: false }, 
+        { id: 'r4', top: 3, bottom: 2, isDouble: false }, // Bottom-Right Corner
+        { id: 'r5', top: 2, bottom: 1, isDouble: false }, 
+        { id: 'r6', top: 1, bottom: 0, isDouble: false }
     ];
 }
 
@@ -61,12 +57,17 @@ function calculateBranch(deck, startDirection) {
         if (index > 0) {
             if (direction === 'left') {
                 const stepX = currentX - (prevTile.w / 2) - (width / 2);
-                if (tile.isBottomTurn) {
+                
+                if (stepX - (width / 2) <= TRACK.leftX + 50) {
                     direction = 'up';
-                    width = TILE_BASE_W; height = TILE_BASE_H; angle = 0;
+                    
+                    width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+                    height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+                    angle = tile.isDouble ? 90 : 0;
 
                     const optionA_X = currentX; 
                     const optionA_X_Dist = Math.abs(optionA_X - TRACK.leftX);
+                    
                     const optionB_X = currentX - (prevTile.w / 2) - (width / 2);
                     const optionB_X_Dist = Math.abs(optionB_X - TRACK.leftX);
                     
@@ -83,12 +84,17 @@ function calculateBranch(deck, startDirection) {
             } 
             else if (direction === 'right') {
                 const stepX = currentX + (prevTile.w / 2) + (width / 2);
-                if (tile.isBottomTurn) {
+                
+                if (stepX + (width / 2) >= TRACK.rightX - 50) {
                     direction = 'up';
-                    width = TILE_BASE_W; height = TILE_BASE_H; angle = 0;
+                    
+                    width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+                    height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+                    angle = tile.isDouble ? 90 : 0;
 
                     const optionA_X = currentX; 
                     const optionA_X_Dist = Math.abs(optionA_X - TRACK.rightX);
+                    
                     const optionB_X = currentX + (prevTile.w / 2) + (width / 2);
                     const optionB_X_Dist = Math.abs(optionB_X - TRACK.rightX);
                     
@@ -102,38 +108,12 @@ function calculateBranch(deck, startDirection) {
                 } else {
                     currentX = stepX;
                 }
-            } 
-            else if (direction === 'up') {
-                width = TILE_BASE_W; height = TILE_BASE_H; angle = 0;
-                const stepY = currentY - (prevTile.h / 2) - (height / 2);
-
-                if (tile.isTopTurn) {
-                    direction = (startDirection === 'left') ? 'turn-right' : 'turn-left';
-                    width = TILE_BASE_H; height = TILE_BASE_W; angle = 90;
-
-                    const optionA_Y = currentY;
-                    const optionA_Y_Dist = Math.abs(optionA_Y - TRACK.topY);
-                    const optionB_Y = currentY - (prevTile.h / 2) - (height / 2);
-                    const optionB_Y_Dist = Math.abs(optionB_Y - TRACK.topY);
-
-                    if (optionA_Y_Dist < optionB_Y_Dist) {
-                        currentY = optionA_Y;
-                        currentX = (direction === 'turn-right') ? currentX + (prevTile.w / 2) + (width / 2) : currentX - (prevTile.w / 2) - (width / 2);
-                    } else {
-                        currentY = optionB_Y;
-                        // Center axis stacks on top of the vertical column
-                        currentX = currentX; 
-                    }
-                } else {
-                    currentY = stepY;
-                }
             }
-            else if (direction === 'turn-right') {
-                width = TILE_BASE_H; height = TILE_BASE_W; angle = 90;
-                currentX += (prevTile.w / 2) + (width / 2);
-            } else if (direction === 'turn-left') {
-                width = TILE_BASE_H; height = TILE_BASE_W; angle = 90;
-                currentX -= (prevTile.w / 2) + (width / 2);
+            else if (direction === 'up') {
+                width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+                height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+                angle = tile.isDouble ? 90 : 0;
+                currentY -= (prevTile.h / 2) + (height / 2);
             }
         } else {
             currentX = (startDirection === 'left') ? currentX - (width / 2) : currentX + (width / 2);
@@ -146,6 +126,7 @@ function calculateBranch(deck, startDirection) {
     return layoutMap;
 }
 
+// --- RENDERING INTEGRATION ---
 function resizeGameTableContainer() {
     const container = document.querySelector('.match-board-container');
     if (!container) return;
@@ -182,11 +163,9 @@ function initDirectCanvas() {
     ctx.moveTo(1400, TRACK.bottomY);
     ctx.lineTo(TRACK.leftX, TRACK.bottomY);
     ctx.lineTo(TRACK.leftX, TRACK.topY);
-    ctx.lineTo(1400, TRACK.topY);
     ctx.moveTo(1400, TRACK.bottomY);
     ctx.lineTo(TRACK.rightX, TRACK.bottomY);
     ctx.lineTo(TRACK.rightX, TRACK.topY);
-    ctx.lineTo(1400, TRACK.topY);
     ctx.stroke();
 
     const leftDeck = buildLeftBranch();
