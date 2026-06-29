@@ -1,250 +1,88 @@
 // ==========================================================================
-// Tellstream Dominoes - Clean Array-Driven Structural Corner Test
+// Tellstream Dominoes - Game Board & Player Hand Rendering Layer
 // ==========================================================================
 
-const BOARD_NATIVE_W = 2730;
-const BOARD_NATIVE_H = 1536;
+/**
+ * Sweeps the screen and renders the current state of the board line track array
+ */
+function renderLiveTable(boardLine) {
+    const tableView = document.getElementById("table-view");
+    if (!tableView) return;
 
-const TILE_BASE_W = 90;
-const TILE_BASE_H = 176;
+    // Check if we need to initialize the core structural layout frame inside the view
+    let mat = document.getElementById("game-mat");
+    if (!mat) {
+        tableView.innerHTML = `
+            <div id="game-mat" style="position: relative; width: 100%; height: 100vh; background: #0b0c10; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 20px; box-sizing: border-box;">
+                
+                <div id="table-status-header" style="color: #66fcf1; font-family: sans-serif; font-size: 1.2rem; letter-spacing: 2px; text-transform: uppercase; margin-top: 10px;">
+                    Room Code: <span id="display-room-code" style="color: #fff; font-weight: bold;">----</span> | Turn: Player <span id="display-active-turn">-</span>
+                </div>
 
-const TRACK = {
-    bottomY: 1160,
-    topY:    310,
-    leftX:   560,
-    rightX:  2170
-};
+                <div id="domino-track-canvas" style="position: relative; width: 85%; height: 60vh; border: 4px solid #66fcf1; box-shadow: 0 0 20px #66fcf1; background: radial-gradient(circle, #1f2833 0%, #0b0c10 100%); border-radius: 12px; display: flex; justify-content: center; align-items: center;">
+                    <div id="empty-track-message" style="color: #c5c6c7; font-family: sans-serif; font-size: 1.1rem; letter-spacing: 1px;">BOARD IS EMPTY - WAITING FOR INITIAL DROP</div>
+                    <div id="placed-tiles-container" style="position: absolute; width: 100%; height: 100%;"></div>
+                </div>
 
-function buildLeftBranch() {
-    return [
-        { id: 'l1', top: 6, bottom: 5, isDouble: false },
-        { id: 'l2', top: 5, bottom: 4, isDouble: false },
-        { id: 'l3', top: 4, bottom: 4, isDouble: true },  
-        { id: 'l4', top: 4, bottom: 3, isDouble: false },
-        { id: 'l5', top: 3, bottom: 2, isDouble: false }, 
-        { id: 'l6', top: 2, bottom: 2, isDouble: true },  
-        { id: 'l7', top: 2, bottom: 1, isDouble: false }, 
-        { id: 'l8', top: 1, bottom: 1, isDouble: true },
-        { id: 'l9', top: 1, bottom: 0, isDouble: false },
-        { id: 'l10', top: 0, bottom: 0, isDouble: true },
-        { id: 'l11', top: 0, bottom: 3, isDouble: false },
-        { id: 'l12', top: 3, bottom: 5, isDouble: false },
-        { id: 'l13', top: 5, bottom: 5, isDouble: true }
-    ];
-}
+                <div id="player-hand-container" style="width: 90%; min-height: 120px; display: flex; justify-content: center; align-items: center; gap: 15px; background: rgba(31, 40, 51, 0.5); border: 1px solid rgba(102, 252, 241, 0.2); border-radius: 10px; padding: 15px; margin-bottom: 20px; box-sizing: border-box;"></div>
+            </div>
+        `;
+        mat = document.getElementById("game-mat");
+    }
 
-function buildRightBranch() {
-    return [
-        { id: 'r1', top: 6, bottom: 6, isDouble: true },  
-        { id: 'r2', top: 6, bottom: 4, isDouble: false },
-        { id: 'r3', top: 4, bottom: 2, isDouble: false },
-        { id: 'r4', top: 2, bottom: 5, isDouble: false },
-        { id: 'r5', top: 5, bottom: 1, isDouble: false },
-        { id: 'r6', top: 1, bottom: 3, isDouble: false },
-        { id: 'r7', top: 3, bottom: 3, isDouble: true },
-        { id: 'r8', top: 3, bottom: 6, isDouble: false },
-        { id: 'r9', top: 6, bottom: 1, isDouble: false },
-        { id: 'r10', top: 1, bottom: 4, isDouble: false }, 
-        { id: 'r11', top: 4, bottom: 5, isDouble: false }, 
-        { id: 'r12', top: 5, bottom: 0, isDouble: false },
-        { id: 'r13', top: 0, bottom: 2, isDouble: false },
-        { id: 'r14', top: 2, bottom: 6, isDouble: false },
-        { id: 'r15', top: 0, bottom: 4, isDouble: false }
-    ];
-}
+    // Dynamic State Updates
+    if (currentRoomCode) {
+        document.getElementById("display-room-code").innerText = currentRoomCode;
+    }
+    if (localGameState) {
+        document.getElementById("display-active-turn").innerText = localGameState.active_turn;
+    }
 
-function calculateBranch(deck, startDirection) {
-    const layoutMap = {};
-    let headX = 1400; 
-    let headY = TRACK.bottomY;
-    let vector = (startDirection === 'left') ? [-1, 0] : [1, 0];
-    let prevTile = null;
+    // Clear previous elements inside containers to prevent duplicates on redraw
+    const trackContainer = document.getElementById("placed-tiles-container");
+    const emptyMsg = document.getElementById("empty-track-message");
+    const handContainer = document.getElementById("player-hand-container");
+    
+    if (trackContainer) trackContainer.innerHTML = "";
+    if (handContainer) handContainer.innerHTML = "";
 
-    deck.forEach((tile, index) => {
-        let isMovingHorizontal = vector[1] === 0;
-        let width, height, angle;
+    // 1. Draw Placed Bones on the Board Line Track
+    if (boardLine && boardLine.length > 0) {
+        if (emptyMsg) emptyMsg.style.display = "none";
+        // Horseshoe placement math layer goes here next
+    } else {
+        if (emptyMsg) emptyMsg.style.display = "block";
+    }
+
+    // 2. Locate and Draw This Current Local Player's Hand
+    if (playerSeatNumber && localGameState.players) {
+        const targetKey = `player${playerSeatNumber}`;
+        const playerObj = localGameState.players[targetKey];
         
-        if (tile.isDouble) {
-            width = isMovingHorizontal ? TILE_BASE_W : TILE_BASE_H;
-            height = isMovingHorizontal ? TILE_BASE_H : TILE_BASE_W;
-            angle = isMovingHorizontal ? 0 : 90;
-        } else {
-            width = isMovingHorizontal ? TILE_BASE_H : TILE_BASE_W;
-            height = isMovingHorizontal ? TILE_BASE_W : TILE_BASE_H;
-            angle = isMovingHorizontal ? 90 : 0;
+        if (playerObj && playerObj.hand) {
+            playerObj.hand.forEach(tile => {
+                const tileElement = document.createElement("div");
+                tileElement.className = "domino-bone-interactive";
+                tileElement.style.cssText = "width: 50px; height: 90px; background: #fff; border: 2px solid #000; border-radius: 6px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 5px; box-sizing: border-box; cursor: pointer; font-family: sans-serif; font-weight: bold; font-size: 1.4rem; color: #000; box-shadow: 0 5px 10px rgba(0,0,0,0.3); transition: transform 0.2s;";
+                
+                // Add hover effect via JS listener controls
+                tileElement.onmouseenter = () => tileElement.style.transform = "translateY(-15px)";
+                tileElement.onmouseleave = () => tileElement.style.transform = "translateY(0)";
+                
+                // Temporary textual view setup of pips values
+                tileElement.innerHTML = `
+                    <div>${tile.top}</div>
+                    <div style="width: 100%; border-top: 2px dashed #000;"></div>
+                    <div>${tile.bottom}</div>
+                `;
+                
+                // Clicking triggers bone selection logic
+                tileElement.addEventListener("click", () => {
+                    console.log(`Selected Tile ID: ${tile.id} [${tile.top}|${tile.bottom}]`);
+                });
+
+                handContainer.appendChild(tileElement);
+            });
         }
-
-        if (index > 0) {
-            let stepDist = isMovingHorizontal 
-                ? (prevTile.w / 2) + (width / 2)
-                : (prevTile.h / 2) + (height / 2);
-
-            let nextX = headX + (vector[0] * stepDist);
-            let nextY = headY + (vector[1] * stepDist);
-
-            if (startDirection === 'left') {
-                if (vector[0] === -1 && nextX <= TRACK.leftX) {
-                    vector = [0, -1]; 
-                    isMovingHorizontal = false;
-                    width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
-                    height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-                    angle = tile.isDouble ? 90 : 0;
-                    headX = TRACK.leftX;
-                    headY = TRACK.bottomY - (prevTile.h / 2) - (height / 2);
-                } 
-                else if (vector[1] === -1 && nextY <= TRACK.topY) {
-                    vector = [1, 0]; 
-                    isMovingHorizontal = true;
-                    width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-                    height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
-                    angle = tile.isDouble ? 0 : 90;
-                    headX = TRACK.leftX + (prevTile.w / 2) + (width / 2);
-                    headY = TRACK.topY;
-                } 
-                else {
-                    headX = nextX;
-                    headY = nextY;
-                }
-            } 
-            else if (startDirection === 'right') {
-                if (vector[0] === 1 && nextX >= TRACK.rightX) {
-                    vector = [0, -1]; 
-                    isMovingHorizontal = false;
-                    width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
-                    height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-                    angle = tile.isDouble ? 90 : 0;
-                    headX = TRACK.rightX;
-                    headY = TRACK.bottomY - (prevTile.h / 2) - (height / 2);
-                } 
-                else if (vector[1] === -1 && nextY <= TRACK.topY) {
-                    vector = [-1, 0]; 
-                    isMovingHorizontal = true;
-                    width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-                    height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
-                    angle = tile.isDouble ? 0 : 90;
-                    headX = TRACK.rightX - (prevTile.w / 2) - (width / 2);
-                    headY = TRACK.topY;
-                } 
-                else {
-                    headX = nextX;
-                    headY = nextY;
-                }
-            }
-        } else {
-            headX = (startDirection === 'left') ? headX - (width / 2) : headX + (width / 2);
-        }
-
-        layoutMap[tile.id] = { x: headX, y: headY, w: width, h: height, angle: angle };
-        prevTile = { w: width, h: height };
-    });
-
-    return layoutMap;
-}
-
-function resizeGameTableContainer() {
-    const container = document.querySelector('.match-board-container');
-    if (!container) return;
-    const fitScale = Math.min(window.innerWidth / BOARD_NATIVE_W, window.innerHeight / BOARD_NATIVE_H);
-    container.style.transform = `scale(${fitScale})`;
-}
-
-function renderLiveTable(boardLineArray) {
-    const gameTable = document.getElementById('game-table');
-    if (!gameTable) return;
-
-    const leftDeck = boardLineArray ? boardLineArray.filter(t => t.side === 'left') : buildLeftBranch();
-    const rightDeck = boardLineArray ? boardLineArray.filter(t => t.side === 'right') : buildRightBranch();
-    
-    const existingContainer = document.querySelector('.match-board-container');
-    if (existingContainer) existingContainer.remove();
-
-    const boardContainer = document.createElement('div');
-    boardContainer.className = 'match-board-container';
-    boardContainer.style.width = `${BOARD_NATIVE_W}px`;
-    boardContainer.style.height = `${BOARD_NATIVE_H}px`;
-    boardContainer.style.position = 'absolute';
-    gameTable.appendChild(boardContainer);
-
-    const canvas = document.createElement('canvas');
-    canvas.width = BOARD_NATIVE_W;
-    canvas.height = BOARD_NATIVE_H;
-    canvas.style.position = 'absolute';
-    canvas.style.zIndex = '1';
-    boardContainer.appendChild(canvas);
-
-    const ctx = canvas.getContext('2d');
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(1400, TRACK.bottomY);
-    ctx.lineTo(TRACK.leftX, TRACK.bottomY);
-    ctx.lineTo(TRACK.leftX, TRACK.topY);
-    ctx.moveTo(1400, TRACK.bottomY);
-    ctx.lineTo(TRACK.rightX, TRACK.bottomY);
-    ctx.lineTo(TRACK.rightX, TRACK.topY);
-    ctx.stroke();
-
-    const combinedCoordinates = {
-        ...calculateBranch(leftDeck, 'left'),
-        ...calculateBranch(rightDeck, 'right')
-    };
-
-    [...leftDeck, ...rightDeck].forEach((tile) => {
-        const coords = combinedCoordinates[tile.id];
-        if (!coords) return;
-
-        const wrapper = document.createElement('div');
-        wrapper.className = 'live-card-wrapper';
-        wrapper.style.width = `${coords.w}px`;
-        wrapper.style.height = `${coords.h}px`;
-        wrapper.style.left = `${coords.x - (coords.w / 2)}px`;
-        wrapper.style.top = `${coords.y - (coords.h / 2)}px`;
-        wrapper.style.position = 'absolute';
-        wrapper.style.zIndex = '10';
-
-        const rotationContainer = document.createElement('div');
-        rotationContainer.style.width = `${TILE_BASE_W}px`;
-        rotationContainer.style.height = `${TILE_BASE_H}px`;
-        rotationContainer.style.transform = `rotate(${coords.angle}deg)`;
-        rotationContainer.style.transformOrigin = 'center center';
-        rotationContainer.style.position = 'relative';
-        rotationContainer.style.display = 'flex';
-        rotationContainer.style.justifyContent = 'center';
-        rotationContainer.style.alignItems = 'center';
-
-        const tileElement = document.createElement('div');
-        tileElement.className = 'domino-item';
-        tileElement.style.width = `${TILE_BASE_W}px`;
-        tileElement.style.height = `${TILE_BASE_H}px`;
-        tileElement.style.position = 'absolute';
-
-        rotationContainer.appendChild(tileElement);
-        wrapper.appendChild(rotationContainer);
-        boardContainer.appendChild(wrapper);
-    });
-
-    resizeGameTableContainer();
-}
-
-function setupClickEvent() {
-    const startBtn = document.getElementById('start-btn');
-    const loadingScreen = document.getElementById('loading-screen');
-    
-    if (startBtn) {
-        startBtn.removeAttribute('disabled');
-        startBtn.innerText = "Click to Enter Lounge";
-        startBtn.addEventListener('click', () => {
-            if (loadingScreen) loadingScreen.classList.add('hidden');
-            if (typeof initNetwork === 'function') {
-                initNetwork();
-            }
-        });
     }
 }
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupClickEvent);
-} else {
-    setupClickEvent();
-}
-window.addEventListener('resize', resizeGameTableContainer);
