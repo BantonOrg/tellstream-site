@@ -86,16 +86,16 @@ function applyPipMasks(tileElement, value, coordinateMap) {
 function calculateCircuitLayout(deck) {
     const layoutMap = {};
     
-    // Core starting coordinates centered underneath the main branding logo
-    const startX = 1365;
-    const startY = 1160;
+    // Core baseline anchor centered underneath the logo
+    const centerAnchorX = 1365;
+    const baselineY = 1160;
     
     const leftBranchTiles = deck.slice(0, 14).reverse();
     const rightBranchTiles = deck.slice(14);
 
-    // --- Process Left Branch (Fanning Left, Up Left Wall, then Inward Right across Top) ---
-    let currentX = startX;
-    let currentY = startY;
+    // --- Process Left Branch (Moving Left, Turning Up Left Wall, Heading Right at Top) ---
+    let currentX = centerAnchorX;
+    let currentY = baselineY;
     let direction = 'left';
     let prevTile = null;
 
@@ -108,20 +108,22 @@ function calculateCircuitLayout(deck) {
             if (index > 0) {
                 const prevWidth = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 currentX -= (prevWidth / 2) + (width / 2);
+            } else {
+                // START OVERLAP FIX: Offset the very first left tile outward from the center anchor line
+                currentX -= (width / 2);
             }
             
-            // PROACTIVE BOUNDARY CHECK: If the absolute left edge of this tile breaches safety line, force turn
+            // PROACTIVE BOUNDARY CHECK: If the outer left edge breaches safety line, switch direction up
             if (currentX - (width / 2) < 410) {
                 direction = 'up';
-                // Recalculate dimensions immediately for the vertical track flow change
                 width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
                 height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 rotationDegrees = tile.isDouble ? 90 : 0;
                 
-                // Pivot Alignment Corner Math: Snap the vertical tile cleanly onto the corner square
+                // LEFT CORNER SNAP FIX: Center the climbing tile exactly over the outer face center of the horizontal piece
                 const prevWidth = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-                currentX = (currentX + (width / 2) + (prevWidth / 2)) - (TILE_BASE_W / 2);
-                currentY -= (TILE_BASE_H / 2);
+                currentX = currentX - (prevWidth / 2) + (TILE_BASE_W / 2);
+                currentY -= (height / 2) + (TILE_BASE_W / 2);
             }
         } 
         else if (direction === 'up') {
@@ -134,14 +136,13 @@ function calculateCircuitLayout(deck) {
                 currentY -= (prevHeight / 2) + (height / 2);
             }
 
-            // CEILING TRIGGER ADAPTATION: Pushed ceiling line check up from 260 to 195 to clear logo text
+            // PROACTIVE CEILING CHECK: Turn inward right before hitting top border glow
             if (currentY - (height / 2) < 195) {
                 direction = 'right';
                 width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
                 rotationDegrees = tile.isDouble ? 0 : 90;
                 
-                // Top Corner Pivot Math: Align centers perfectly to form the crisp flush L-turn
                 const prevHeight = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 currentY = (currentY + (height / 2) + (prevHeight / 2)) - (TILE_BASE_W / 2);
                 currentX += (TILE_BASE_H / 2);
@@ -163,9 +164,9 @@ function calculateCircuitLayout(deck) {
         prevTile = { isDouble: tile.isDouble, dir: direction };
     });
 
-    // --- Process Right Branch (Fanning Right, Up Right Wall, then Inward Left across Top) ---
-    currentX = startX;
-    currentY = startY;
+    // --- Process Right Branch (Moving Right, Turning Up Right Wall, Heading Left at Top) ---
+    currentX = centerAnchorX;
+    currentY = baselineY;
     direction = 'right';
     prevTile = null;
 
@@ -178,19 +179,22 @@ function calculateCircuitLayout(deck) {
             if (index > 0) {
                 const prevWidth = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 currentX += (prevWidth / 2) + (width / 2);
+            } else {
+                // START OVERLAP FIX: Offset the very first right tile outward from the center anchor line
+                currentX += (width / 2);
             }
             
-            // PROACTIVE BOUNDARY CHECK: If absolute right edge breaches safety line, force turn up
+            // PROACTIVE BOUNDARY CHECK: If outer right edge breaches safety line, switch direction up
             if (currentX + (width / 2) > 2320) {
                 direction = 'up';
                 width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
                 height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 rotationDegrees = tile.isDouble ? 90 : 0;
                 
-                // Pivot Alignment Corner Math: Match faces flush for the right-hand corner switch
+                // RIGHT CORNER SNAP FIX: Center the climbing tile exactly over the outer face center of the horizontal piece
                 const prevWidth = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-                currentX = (currentX - (width / 2) - (prevWidth / 2)) + (TILE_BASE_W / 2);
-                currentY -= (TILE_BASE_H / 2);
+                currentX = currentX + (prevWidth / 2) - (TILE_BASE_W / 2);
+                currentY -= (height / 2) + (TILE_BASE_W / 2);
             }
         } 
         else if (direction === 'up') {
@@ -203,14 +207,13 @@ function calculateCircuitLayout(deck) {
                 currentY -= (prevHeight / 2) + (height / 2);
             }
 
-            // CEILING TRIGGER ADAPTATION: Pushed ceiling line check up from 260 to 195 to clear logo text
+            // PROACTIVE CEILING CHECK: Turn inward left before hitting top border glow
             if (currentY - (height / 2) < 195) {
                 direction = 'left';
                 width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
                 rotationDegrees = tile.isDouble ? 0 : 90;
                 
-                // Top Right Corner Pivot Math: Align centers perfectly to run smoothly under the neon strip
                 const prevHeight = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 currentY = (currentY + (height / 2) + (prevHeight / 2)) - (TILE_BASE_W / 2);
                 currentX -= (TILE_BASE_H / 2);
