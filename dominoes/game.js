@@ -1,26 +1,20 @@
 // ==========================================================================
-// Tellstream Dominoes - Core Game Engine & Deterministic Track Layout
+// Tellstream Dominoes - Sequential Track Layout Test Grid
 // ==========================================================================
 
 const startBtn = document.getElementById('start-btn');
 const loadingScreen = document.getElementById('loading-screen');
 const gameTable = document.getElementById('game-table');
 
-// Total native canvas dimensions of your master background image
 const BOARD_NATIVE_W = 2730;
 const BOARD_NATIVE_H = 1536;
-
-// Original asset sizes for dom_front.gif
 const canvasW = 597;
 const canvasH = 1171;
 
-// Crisp 75% scale footprint dimension metrics for vertical tiles
+// 75% Scale Metrics
 const TILE_BASE_W = 90;
 const TILE_BASE_H = 176;
 
-/* The absolute coordinate definitions.
-   hideFor arrays dictate which values require a pip to be obscured.
-*/
 const topPipMap = [
     { name: 'top-left',     x: 126, y: 126, hideFor: [0, 1] },
     { name: 'top-right',    x: 469, y: 126, hideFor: [0, 1, 2, 3] },
@@ -41,9 +35,6 @@ const bottomPipMap = [
     { name: 'bottom-right', x: 469, y: 1042, hideFor: [0, 1] }
 ];
 
-/**
- * Generates the clean data array for all 28 tiles in the deck
- */
 function buildMasterDeck() {
     const deck = [];
     for (let i = 0; i <= 6; i++) {
@@ -60,190 +51,117 @@ function buildMasterDeck() {
     return deck;
 }
 
-/**
- * Drops mask patches precisely onto the scaled tile based on raw coordinate percentages
- */
 function applyPipMasks(tileElement, value, coordinateMap) {
     coordinateMap.forEach(pip => {
         if (pip.hideFor.includes(value)) {
             const maskPatch = document.createElement('div');
             maskPatch.className = 'pip-mask-patch';
-            
-            const leftPercent = (pip.x / canvasW) * 100;
-            const topPercent = (pip.y / canvasH) * 100;
-            
-            maskPatch.style.left = `${leftPercent}%`;
-            maskPatch.style.top = `${topPercent}%`;
-            
+            maskPatch.style.left = `${(pip.x / canvasW) * 100}%`;
+            maskPatch.style.top = `${(pip.y / canvasH) * 100}%`;
             tileElement.appendChild(maskPatch);
         }
     });
 }
 
-/**
- * Computes layout space using structural fixed-step chaining to guarantee stable symmetry
- */
-function calculateCircuitLayout(deck) {
+function calculateSequentialTrack(deck) {
     const layoutMap = {};
     
-    // Core baseline anchor centered underneath the logo
-    const centerAnchorX = 1365;
-    const baselineY = 1160;
-    const topLineY = 175; // Locked height to clear logo glow perfectly
-    
-    const leftBranchTiles = deck.slice(0, 14).reverse();
-    const rightBranchTiles = deck.slice(14);
+    // Exact starting coordinate anchors for rows to frame the neon border perfectly
+    const BOTTOM_ROW_Y = 1160;
+    const TOP_ROW_Y = 175;
+    const LEFT_WALL_X = 415;
+    const RIGHT_WALL_X = 2315;
 
-    // --- Process Left Branch (5 Bottom, 5 Up Left Wall, 4 Right at Top) ---
-    let currentX = centerAnchorX;
-    let currentY = baselineY;
+    let currentX = 2100; // Start far right on the bottom row, moving left
+    let currentY = BOTTOM_ROW_Y;
     let prevTile = null;
 
-    leftBranchTiles.forEach((tile, index) => {
+    deck.forEach((tile, index) => {
         let direction = 'left';
-        if (index >= 5 && index <= 9) direction = 'up';
-        if (index >= 10) direction = 'right';
+        if (index >= 8 && index <= 12) direction = 'up';
+        if (index >= 13 && index <= 22) direction = 'right';
+        if (index >= 23) direction = 'down';
 
         let width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
         let height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
-        let rotationDegrees = tile.isDouble ? 0 : 90;
+        let angle = tile.isDouble ? 0 : 90;
 
         if (direction === 'left') {
             if (index > 0) {
                 const prevWidth = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 currentX -= (prevWidth / 2) + (width / 2);
-            } else {
-                currentX -= (width / 2) + 2; // Tighter initial separation split
             }
-        } 
+            currentY = BOTTOM_ROW_Y;
+        }
         else if (direction === 'up') {
             width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
             height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-            rotationDegrees = tile.isDouble ? 90 : 0;
+            angle = tile.isDouble ? 90 : 0;
 
             if (prevTile.dir === 'left') {
-                // Perfect Corner Pivot Alignment
+                // Bottom-Left Flush L-Corner Snap
                 const prevWidth = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 currentX = currentX - (prevWidth / 2) + (TILE_BASE_W / 2);
-                currentY -= (height / 2) + (TILE_BASE_W / 2);
+                currentY = BOTTOM_ROW_Y - (height / 2) - (TILE_BASE_W / 2);
             } else {
                 const prevHeight = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 currentY -= (prevHeight / 2) + (height / 2);
             }
-        } 
+            currentX = LEFT_WALL_X;
+        }
         else if (direction === 'right') {
-            width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-            height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
-            rotationDegrees = tile.isDouble ? 0 : 90;
-
             if (prevTile.dir === 'up') {
-                // Perfect Top Left Corner Alignment
-                currentY = topLineY;
-                currentX += (width / 2) + (TILE_BASE_W / 2);
+                // Top-Left Flush L-Corner Snap
+                currentX = LEFT_WALL_X + (width / 2) + (TILE_BASE_W / 2);
+                currentY = TOP_ROW_Y;
             } else {
                 const prevWidth = prevTile.isDouble ? TILE_BASE_H : TILE_BASE_W;
                 currentX += (prevWidth / 2) + (width / 2);
-                currentY = topLineY;
             }
+            currentY = TOP_ROW_Y;
         }
-
-        layoutMap[tile.id] = { x: currentX, y: currentY, w: width, h: height, angle: rotationDegrees, dir: direction };
-        prevTile = { isDouble: tile.isDouble, dir: direction };
-    });
-
-    // --- Process Right Branch (5 Bottom, 5 Up Right Wall, 4 Left at Top) ---
-    currentX = centerAnchorX;
-    currentY = baselineY;
-    prevTile = null;
-
-    rightBranchTiles.forEach((tile, index) => {
-        let direction = 'right';
-        if (index >= 5 && index <= 9) direction = 'up';
-        if (index >= 10) direction = 'left';
-
-        let width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-        let height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
-        let rotationDegrees = tile.isDouble ? 0 : 90;
-
-        if (direction === 'right') {
-            if (index > 0) {
-                const prevWidth = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-                currentX += (prevWidth / 2) + (width / 2);
-            } else {
-                currentX += (width / 2) + 2; // Tighter initial separation split
-            }
-        } 
-        else if (direction === 'up') {
+        else if (direction === 'down') {
             width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
             height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-            rotationDegrees = tile.isDouble ? 90 : 0;
+            angle = tile.isDouble ? 90 : 0;
 
             if (prevTile.dir === 'right') {
-                // Perfect Corner Pivot Alignment
+                // Top-Right Flush L-Corner Snap
                 const prevWidth = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 currentX = currentX + (prevWidth / 2) - (TILE_BASE_W / 2);
-                currentY -= (height / 2) + (TILE_BASE_W / 2);
+                currentY = TOP_ROW_Y + (height / 2) + (TILE_BASE_W / 2);
             } else {
                 const prevHeight = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-                currentY -= (prevHeight / 2) + (height / 2);
+                currentY += (prevHeight / 2) + (height / 2);
             }
-        } 
-        else if (direction === 'left') {
-            width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-            height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
-            rotationDegrees = tile.isDouble ? 0 : 90;
-
-            if (prevTile.dir === 'up') {
-                // Perfect Top Right Corner Alignment
-                currentY = topLineY;
-                currentX -= (width / 2) + (TILE_BASE_W / 2);
-            } else {
-                const prevWidth = prevTile.isDouble ? TILE_BASE_H : TILE_BASE_W;
-                currentX -= (prevWidth / 2) + (width / 2);
-                currentY = topLineY;
-            }
+            currentX = RIGHT_WALL_X;
         }
 
-        layoutMap[tile.id] = { x: currentX, y: currentY, w: width, h: height, angle: rotationDegrees, dir: direction };
+        layoutMap[tile.id] = { x: currentX, y: currentY, w: width, h: height, angle: angle, dir: direction };
         prevTile = { isDouble: tile.isDouble, dir: direction };
     });
 
     return layoutMap;
 }
 
-/**
- * Dynamically updates the scale vector matrix to match the current viewport frame bounds
- */
 function resizeGameTableContainer() {
     const container = document.querySelector('.match-board-container');
     if (!container) return;
-
-    const windowW = window.innerWidth;
-    const windowH = window.innerHeight;
-
-    const scaleX = windowW / BOARD_NATIVE_W;
-    const scaleY = windowH / BOARD_NATIVE_H;
-    const fitScale = Math.min(scaleX, scaleY);
-
+    const fitScale = Math.min(window.innerWidth / BOARD_NATIVE_W, window.innerHeight / BOARD_NATIVE_H);
     container.style.transform = `scale(${fitScale})`;
 }
 
-/**
- * Main rendering loop mapping positions cleanly onto the table container
- */
 function displayDynamicMatchTable() {
     gameTable.innerHTML = '';
-
     const boardContainer = document.createElement('div');
     boardContainer.className = 'match-board-container';
-    
     boardContainer.style.width = `${BOARD_NATIVE_W}px`;
     boardContainer.style.height = `${BOARD_NATIVE_H}px`;
     boardContainer.style.position = 'absolute';
     gameTable.appendChild(boardContainer);
 
     const masterDeck = buildMasterDeck();
-    const layoutCoordinates = calculateCircuitLayout(masterDeck);
+    const layoutCoordinates = calculateSequentialTrack(masterDeck);
 
     masterDeck.forEach((tile) => {
         const coords = layoutCoordinates[tile.id];
@@ -294,7 +212,7 @@ window.addEventListener('resize', resizeGameTableContainer);
 
 setTimeout(() => {
     startBtn.disabled = false;
-    startBtn.innerText = "TEST DYNAMIC CIRCUIT GRID";
+    startBtn.innerText = "TEST FIXED TRACK";
 }, 1000);
 
 startBtn.addEventListener('click', () => {
