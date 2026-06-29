@@ -5,7 +5,7 @@
 // Initialize Supabase Client (Replace with your actual project credentials)
 const SUPABASE_URL = 'https://your-project-id.supabase.co';
 const SUPABASE_KEY = 'your-public-anon-key';
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let currentRoomCode = null;
 let playerSeatNumber = null; // 1, 2, 3, or 4
