@@ -1,5 +1,5 @@
 // ==========================================================================
-// Tellstream Dominoes - Core Game Engine & Dynamic Board Layout
+// Tellstream Dominoes - Core Game Engine & Deterministic Track Layout
 // ==========================================================================
 
 const startBtn = document.getElementById('start-btn');
@@ -81,7 +81,7 @@ function applyPipMasks(tileElement, value, coordinateMap) {
 }
 
 /**
- * Computes layout space using dynamic corner anchors and proactive safety edge boundary triggers
+ * Computes layout space using structural fixed-step chaining to guarantee stable symmetry
  */
 function calculateCircuitLayout(deck) {
     const layoutMap = {};
@@ -89,17 +89,21 @@ function calculateCircuitLayout(deck) {
     // Core baseline anchor centered underneath the logo
     const centerAnchorX = 1365;
     const baselineY = 1160;
+    const topLineY = 175; // Locked height to clear logo glow perfectly
     
     const leftBranchTiles = deck.slice(0, 14).reverse();
     const rightBranchTiles = deck.slice(14);
 
-    // --- Process Left Branch (Moving Left, Turning Up Left Wall, Heading Right at Top) ---
+    // --- Process Left Branch (5 Bottom, 5 Up Left Wall, 4 Right at Top) ---
     let currentX = centerAnchorX;
     let currentY = baselineY;
-    let direction = 'left';
     let prevTile = null;
 
     leftBranchTiles.forEach((tile, index) => {
+        let direction = 'left';
+        if (index >= 5 && index <= 9) direction = 'up';
+        if (index >= 10) direction = 'right';
+
         let width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
         let height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
         let rotationDegrees = tile.isDouble ? 0 : 90;
@@ -109,19 +113,7 @@ function calculateCircuitLayout(deck) {
                 const prevWidth = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 currentX -= (prevWidth / 2) + (width / 2);
             } else {
-                currentX -= (width / 2);
-            }
-            
-            // CORNER TRIGGER ADJUSTMENT: Safety line changed from 410 to 320 to allow one more tile to fill the corner gap
-            if (currentX - (width / 2) < 320) {
-                direction = 'up';
-                width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
-                height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-                rotationDegrees = tile.isDouble ? 90 : 0;
-                
-                const prevWidth = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-                currentX = currentX - (prevWidth / 2) + (TILE_BASE_W / 2);
-                currentY -= (height / 2) + (TILE_BASE_W / 2);
+                currentX -= (width / 2) + 2; // Tighter initial separation split
             }
         } 
         else if (direction === 'up') {
@@ -129,20 +121,14 @@ function calculateCircuitLayout(deck) {
             height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
             rotationDegrees = tile.isDouble ? 90 : 0;
 
-            if (prevTile.dir === 'up') {
+            if (prevTile.dir === 'left') {
+                // Perfect Corner Pivot Alignment
+                const prevWidth = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+                currentX = currentX - (prevWidth / 2) + (TILE_BASE_W / 2);
+                currentY -= (height / 2) + (TILE_BASE_W / 2);
+            } else {
                 const prevHeight = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 currentY -= (prevHeight / 2) + (height / 2);
-            }
-
-            if (currentY - (height / 2) < 195) {
-                direction = 'right';
-                width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-                height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
-                rotationDegrees = tile.isDouble ? 0 : 90;
-                
-                const prevHeight = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-                currentY = (currentY + (height / 2) + (prevHeight / 2)) - (TILE_BASE_W / 2);
-                currentX += (TILE_BASE_H / 2);
             }
         } 
         else if (direction === 'right') {
@@ -150,24 +136,31 @@ function calculateCircuitLayout(deck) {
             height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
             rotationDegrees = tile.isDouble ? 0 : 90;
 
-            const prevWidth = prevTile.dir === 'up' 
-                ? (prevTile.isDouble ? TILE_BASE_H : TILE_BASE_W)
-                : (prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H);
-                
-            currentX += (prevWidth / 2) + (width / 2);
+            if (prevTile.dir === 'up') {
+                // Perfect Top Left Corner Alignment
+                currentY = topLineY;
+                currentX += (width / 2) + (TILE_BASE_W / 2);
+            } else {
+                const prevWidth = prevTile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+                currentX += (prevWidth / 2) + (width / 2);
+                currentY = topLineY;
+            }
         }
 
         layoutMap[tile.id] = { x: currentX, y: currentY, w: width, h: height, angle: rotationDegrees, dir: direction };
         prevTile = { isDouble: tile.isDouble, dir: direction };
     });
 
-    // --- Process Right Branch (Moving Right, Turning Up Right Wall, Heading Left at Top) ---
+    // --- Process Right Branch (5 Bottom, 5 Up Right Wall, 4 Left at Top) ---
     currentX = centerAnchorX;
     currentY = baselineY;
-    direction = 'right';
     prevTile = null;
 
     rightBranchTiles.forEach((tile, index) => {
+        let direction = 'right';
+        if (index >= 5 && index <= 9) direction = 'up';
+        if (index >= 10) direction = 'left';
+
         let width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
         let height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
         let rotationDegrees = tile.isDouble ? 0 : 90;
@@ -177,19 +170,7 @@ function calculateCircuitLayout(deck) {
                 const prevWidth = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 currentX += (prevWidth / 2) + (width / 2);
             } else {
-                // STARTING SEPARATION ADJUSTMENT: Added +8px to prevent center tile overlapping
-                currentX += (width / 2) + 8;
-            }
-            
-            if (currentX + (width / 2) > 2320) {
-                direction = 'up';
-                width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
-                height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-                rotationDegrees = tile.isDouble ? 90 : 0;
-                
-                const prevWidth = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-                currentX = currentX + (prevWidth / 2) - (TILE_BASE_W / 2);
-                currentY -= (height / 2) + (TILE_BASE_W / 2);
+                currentX += (width / 2) + 2; // Tighter initial separation split
             }
         } 
         else if (direction === 'up') {
@@ -197,20 +178,14 @@ function calculateCircuitLayout(deck) {
             height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
             rotationDegrees = tile.isDouble ? 90 : 0;
 
-            if (prevTile.dir === 'up') {
+            if (prevTile.dir === 'right') {
+                // Perfect Corner Pivot Alignment
+                const prevWidth = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+                currentX = currentX + (prevWidth / 2) - (TILE_BASE_W / 2);
+                currentY -= (height / 2) + (TILE_BASE_W / 2);
+            } else {
                 const prevHeight = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 currentY -= (prevHeight / 2) + (height / 2);
-            }
-
-            if (currentY - (height / 2) < 195) {
-                direction = 'left';
-                width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-                height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
-                rotationDegrees = tile.isDouble ? 0 : 90;
-                
-                const prevHeight = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-                currentY = (currentY + (height / 2) + (prevHeight / 2)) - (TILE_BASE_W / 2);
-                currentX -= (TILE_BASE_H / 2);
             }
         } 
         else if (direction === 'left') {
@@ -218,11 +193,15 @@ function calculateCircuitLayout(deck) {
             height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
             rotationDegrees = tile.isDouble ? 0 : 90;
 
-            const prevWidth = prevTile.dir === 'up' 
-                ? (prevTile.isDouble ? TILE_BASE_H : TILE_BASE_W)
-                : (prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H);
-                
-            currentX -= (prevWidth / 2) + (width / 2);
+            if (prevTile.dir === 'up') {
+                // Perfect Top Right Corner Alignment
+                currentY = topLineY;
+                currentX -= (width / 2) + (TILE_BASE_W / 2);
+            } else {
+                const prevWidth = prevTile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+                currentX -= (prevWidth / 2) + (width / 2);
+                currentY = topLineY;
+            }
         }
 
         layoutMap[tile.id] = { x: currentX, y: currentY, w: width, h: height, angle: rotationDegrees, dir: direction };
