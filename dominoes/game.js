@@ -1,5 +1,5 @@
 // ==========================================================================
-// Tellstream Dominoes - Perfect Eulerian Matching Circuit Test
+// Tellstream Dominoes - Perfect Geometric Chain Test
 // ==========================================================================
 
 const startBtn = document.getElementById('start-btn');
@@ -35,10 +35,6 @@ const bottomPipMap = [
     { name: 'bottom-right', x: 469, y: 1042, hideFor: [0, 1] }
 ];
 
-/**
- * Builds the mathematically valid unbroken Eulerian loop sequence.
- * Every single adjacent tile matches numbers end-to-end perfectly.
- */
 function buildEulerianSequence() {
     return [
         { id: 'tile-6-6', top: 6, bottom: 6, isDouble: true },
@@ -87,14 +83,14 @@ function applyPipMasks(tileElement, value, coordinateMap) {
 function calculateSequentialTrack(deck) {
     const layoutMap = {};
     
-    const BOTTOM_ROW_Y = 1160;
-    const TOP_ROW_Y = 175;
-    const LEFT_WALL_X = 415;
-    const RIGHT_WALL_X = 2315;
+    // Bounds boundaries based on your framing lanes
+    const LEFT_BOUND_X = 415;
+    const RIGHT_BOUND_X = 2315;
+    const TOP_BOUND_Y = 175;
+    const BOTTOM_BOUND_Y = 1160;
 
-    // Start on the far right baseline, tracking completely end-to-edge seamlessly
     let currentX = 2150;
-    let currentY = BOTTOM_ROW_Y;
+    let currentY = BOTTOM_BOUND_Y;
     let direction = 'left';
     let prevTile = null;
 
@@ -110,57 +106,56 @@ function calculateSequentialTrack(deck) {
         }
 
         if (index > 0) {
-            if (direction === 'left') {
-                const prevWidth = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-                currentX -= (prevWidth / 2) + (width / 2);
+            const prevWidth = prevTile.isDouble ? (prevTile.dir === 'up' || prevTile.dir === 'down' ? TILE_BASE_H : TILE_BASE_W) : (prevTile.dir === 'up' || prevTile.dir === 'down' ? TILE_BASE_W : TILE_BASE_H);
+            const prevHeight = prevTile.isDouble ? (prevTile.dir === 'up' || prevTile.dir === 'down' ? TILE_BASE_W : TILE_BASE_H) : (prevTile.dir === 'up' || prevTile.dir === 'down' ? TILE_BASE_H : TILE_BASE_W);
 
-                // Corner Check: Pivot instantly into left vertical alley when space runs out
-                if (currentX - (width / 2) < LEFT_WALL_X + (TILE_BASE_W / 2)) {
+            if (direction === 'left') {
+                currentX -= (prevWidth / 2) + (width / 2);
+                
+                // Corner Shift Check
+                if (currentX - (width / 2) < LEFT_BOUND_X) {
                     direction = 'up';
+                    // Recalculate dimensions immediately for orientation swap
                     width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
                     height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                     angle = tile.isDouble ? 90 : 0;
 
-                    currentX = LEFT_WALL_X;
-                    currentY = BOTTOM_ROW_Y - (height / 2) - (TILE_BASE_W / 2);
+                    // Re-align perfectly centered on the corner turn square face
+                    currentX = LEFT_BOUND_X;
+                    currentY = BOTTOM_BOUND_Y - (prevHeight / 2) - (height / 2);
                 }
             }
             else if (direction === 'up') {
-                const prevHeight = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 currentY -= (prevHeight / 2) + (height / 2);
 
-                // Ceiling Check: Pivot instantly into top rightward lane before reaching logo bounds
-                if (currentY - (height / 2) < TOP_ROW_Y + (TILE_BASE_W / 2)) {
+                // Top Corner Shift Check
+                if (currentY - (height / 2) < TOP_BOUND_Y) {
                     direction = 'right';
                     width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                     height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
                     angle = tile.isDouble ? 0 : 90;
 
-                    currentY = TOP_ROW_Y;
-                    currentX = LEFT_WALL_X + (width / 2) + (TILE_BASE_W / 2);
+                    currentY = TOP_BOUND_Y;
+                    currentX = LEFT_BOUND_X + (prevWidth / 2) + (width / 2);
                 }
             }
             else if (direction === 'right') {
-                const prevWidth = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 currentX += (prevWidth / 2) + (width / 2);
 
-                // Right Corner Check: Drop downward back toward the baseline
-                if (currentX + (width / 2) > RIGHT_WALL_X - (TILE_BASE_W / 2)) {
+                // Right Corner Shift Check
+                if (currentX + (width / 2) > RIGHT_BOUND_X) {
                     direction = 'down';
                     width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
                     height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                     angle = tile.isDouble ? 90 : 0;
 
-                    currentX = RIGHT_WALL_X;
-                    currentY = TOP_ROW_Y + (height / 2) + (TILE_BASE_W / 2);
+                    currentX = RIGHT_BOUND_X;
+                    currentY = TOP_BOUND_Y + (prevHeight / 2) + (height / 2);
                 }
             }
             else if (direction === 'down') {
-                const prevHeight = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 currentY += (prevHeight / 2) + (height / 2);
             }
-        } else {
-            currentX -= (width / 2);
         }
 
         layoutMap[tile.id] = { x: currentX, y: currentY, w: width, h: height, angle: angle, dir: direction };
