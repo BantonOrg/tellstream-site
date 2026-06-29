@@ -20,7 +20,6 @@ const TRACK = {
     rightX:  2170
 };
 
-// Complete 28-tile set divided structurally to match your layout baseline
 function buildLeftBranch() {
     return [
         { id: 'l1', top: 6, bottom: 5, isDouble: false },
@@ -170,13 +169,11 @@ function drawTrackGuide() {
     ctx.lineWidth = 4;
     ctx.beginPath();
     
-    // Left side loop track
     ctx.moveTo(1400, TRACK.bottomY);
     ctx.lineTo(TRACK.leftX, TRACK.bottomY);
     ctx.lineTo(TRACK.leftX, TRACK.topY);
     ctx.lineTo(1400, TRACK.topY);
     
-    // Right side loop track
     ctx.moveTo(1400, TRACK.bottomY);
     ctx.lineTo(TRACK.rightX, TRACK.bottomY);
     ctx.lineTo(TRACK.rightX, TRACK.topY);
@@ -196,8 +193,9 @@ function renderTable() {
         ...calculateBranch(rightDeck, 'right')
     };
 
-    // Mapping grid positions for standard 3x3 domino pip layouts
-    const pipPositions = {
+    // Active Pip Position Visibility Mapping
+    const activePipIndexMap = {
+        0: [],
         1: [4],
         2: [0, 8],
         3: [0, 4, 8],
@@ -210,13 +208,17 @@ function renderTable() {
         const half = document.createElement('div');
         half.className = 'domino-half';
         
+        const activeIndices = activePipIndexMap[pipCount] || [];
+
         for (let i = 0; i < 9; i++) {
             const cell = document.createElement('div');
             cell.className = 'pip-cell';
-            if (pipPositions[pipCount] && pipPositions[pipCount].includes(i)) {
-                const pip = document.createElement('div');
-                pip.className = 'pip';
-                cell.appendChild(pip);
+            
+            // If the index shouldn't show a dot, drop our ivory masking asset over it
+            if (!activeIndices.includes(i)) {
+                const mask = document.createElement('div');
+                mask.className = 'ivory-mask';
+                cell.appendChild(mask);
             }
             half.appendChild(cell);
         }
@@ -245,14 +247,9 @@ function renderTable() {
         tileElement.className = 'domino-item';
 
         const topHalf = createHalfBlock(tile.top);
-        
-        const centerLine = document.createElement('div');
-        centerLine.className = 'domino-center-line';
-        
         const bottomHalf = createHalfBlock(tile.bottom);
 
         tileElement.appendChild(topHalf);
-        tileElement.appendChild(centerLine);
         tileElement.appendChild(bottomHalf);
 
         rotationContainer.appendChild(tileElement);
