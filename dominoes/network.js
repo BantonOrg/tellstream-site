@@ -5,7 +5,7 @@
 const supabaseUrl = 'https://vegwferwmyuunwvfqpsf.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZ3dmZXJ3bXl1dW53dmZxcHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODU5NDQsImV4cCI6MjA5Nzk2MTk0NH0.7F3HUEY59BGE5phlD9AukhZzRa3Ied_ZT43j8YZeIy8';
 
-// Declare the variable globally, but do not assign it yet
+// Declare our unique local variable for the game database instance
 let dominoDb;
 
 /**
@@ -16,9 +16,9 @@ function initNetwork() {
     console.log("Database Target URL:", supabaseUrl);
     
     try {
-        // Initialize the client ONLY when the button is clicked
+        // Correcting to lowercase 'supabase' as exposed by the CDN script
         if (!dominoDb) {
-            dominoDb = Supabase.createClient(supabaseUrl, supabaseKey);
+            dominoDb = supabase.createClient(supabaseUrl, supabaseKey);
         }
 
         if (dominoDb) {
