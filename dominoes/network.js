@@ -6,7 +6,7 @@ const SUPABASE_URL = 'https://your-project-id.supabase.co';
 const SUPABASE_KEY = 'your-public-anon-key';
 let supabase = null;
 
-// Safe client initialization
+// Safe client initialization to prevent blank screen crashes
 try {
     if (typeof Supabase !== 'undefined') {
         supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
