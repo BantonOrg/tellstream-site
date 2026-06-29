@@ -1,5 +1,5 @@
 // ==========================================================================
-// Tellstream Dominoes - Sequential Track Layout Test Grid
+// Tellstream Dominoes - Perfect Eulerian Matching Circuit Test
 // ==========================================================================
 
 const startBtn = document.getElementById('start-btn');
@@ -35,20 +35,41 @@ const bottomPipMap = [
     { name: 'bottom-right', x: 469, y: 1042, hideFor: [0, 1] }
 ];
 
-function buildMasterDeck() {
-    const deck = [];
-    for (let i = 0; i <= 6; i++) {
-        for (let j = i; j <= 6; j++) {
-            deck.push({
-                id: `tile-${i}-${j}`,
-                label: `[ ${i} - ${j} ]`,
-                top: i,
-                bottom: j,
-                isDouble: i === j
-            });
-        }
-    }
-    return deck;
+/**
+ * Builds the mathematically valid unbroken Eulerian loop sequence.
+ * Every single adjacent tile matches numbers end-to-end perfectly.
+ */
+function buildEulerianSequence() {
+    return [
+        { id: 'tile-6-6', top: 6, bottom: 6, isDouble: true },
+        { id: 'tile-6-5', top: 6, bottom: 5, isDouble: false },
+        { id: 'tile-5-5', top: 5, bottom: 5, isDouble: true },
+        { id: 'tile-5-4', top: 5, bottom: 4, isDouble: false },
+        { id: 'tile-4-4', top: 4, bottom: 4, isDouble: true },
+        { id: 'tile-4-3', top: 4, bottom: 3, isDouble: false },
+        { id: 'tile-3-3', top: 3, bottom: 3, isDouble: true },
+        { id: 'tile-3-2', top: 3, bottom: 2, isDouble: false },
+        { id: 'tile-2-2', top: 2, bottom: 2, isDouble: true },
+        { id: 'tile-2-1', top: 2, bottom: 1, isDouble: false },
+        { id: 'tile-1-1', top: 1, bottom: 1, isDouble: true },
+        { id: 'tile-1-0', top: 1, bottom: 0, isDouble: false },
+        { id: 'tile-0-0', top: 0, bottom: 0, isDouble: true },
+        { id: 'tile-0-2', top: 0, bottom: 2, isDouble: false },
+        { id: 'tile-2-4', top: 2, bottom: 4, isDouble: false },
+        { id: 'tile-4-1', top: 4, bottom: 1, isDouble: false },
+        { id: 'tile-1-3', top: 1, bottom: 3, isDouble: false },
+        { id: 'tile-3-5', top: 3, bottom: 5, isDouble: false },
+        { id: 'tile-5-0', top: 5, bottom: 0, isDouble: false },
+        { id: 'tile-0-3', top: 0, bottom: 3, isDouble: false },
+        { id: 'tile-3-6', top: 3, bottom: 6, isDouble: false },
+        { id: 'tile-6-4', top: 6, bottom: 4, isDouble: false },
+        { id: 'tile-4-2', top: 4, bottom: 2, isDouble: false },
+        { id: 'tile-2-3', top: 2, bottom: 3, isDouble: false },
+        { id: 'tile-3-1', top: 3, bottom: 1, isDouble: false },
+        { id: 'tile-1-5', top: 1, bottom: 5, isDouble: false },
+        { id: 'tile-5-2', top: 5, bottom: 2, isDouble: false },
+        { id: 'tile-2-6', top: 2, bottom: 6, isDouble: false }
+    ];
 }
 
 function applyPipMasks(tileElement, value, coordinateMap) {
@@ -66,75 +87,80 @@ function applyPipMasks(tileElement, value, coordinateMap) {
 function calculateSequentialTrack(deck) {
     const layoutMap = {};
     
-    // Exact starting coordinate anchors for rows to frame the neon border perfectly
     const BOTTOM_ROW_Y = 1160;
     const TOP_ROW_Y = 175;
     const LEFT_WALL_X = 415;
     const RIGHT_WALL_X = 2315;
 
-    let currentX = 2100; // Start far right on the bottom row, moving left
+    // Start on the far right baseline, tracking completely end-to-edge seamlessly
+    let currentX = 2150;
     let currentY = BOTTOM_ROW_Y;
+    let direction = 'left';
     let prevTile = null;
 
     deck.forEach((tile, index) => {
-        let direction = 'left';
-        if (index >= 8 && index <= 12) direction = 'up';
-        if (index >= 13 && index <= 22) direction = 'right';
-        if (index >= 23) direction = 'down';
-
         let width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
         let height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
         let angle = tile.isDouble ? 0 : 90;
 
-        if (direction === 'left') {
-            if (index > 0) {
+        if (direction === 'up' || direction === 'down') {
+            width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+            height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+            angle = tile.isDouble ? 90 : 0;
+        }
+
+        if (index > 0) {
+            if (direction === 'left') {
                 const prevWidth = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 currentX -= (prevWidth / 2) + (width / 2);
-            }
-            currentY = BOTTOM_ROW_Y;
-        }
-        else if (direction === 'up') {
-            width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
-            height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-            angle = tile.isDouble ? 90 : 0;
 
-            if (prevTile.dir === 'left') {
-                // Bottom-Left Flush L-Corner Snap
-                const prevWidth = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-                currentX = currentX - (prevWidth / 2) + (TILE_BASE_W / 2);
-                currentY = BOTTOM_ROW_Y - (height / 2) - (TILE_BASE_W / 2);
-            } else {
+                // Corner Check: Pivot instantly into left vertical alley when space runs out
+                if (currentX - (width / 2) < LEFT_WALL_X + (TILE_BASE_W / 2)) {
+                    direction = 'up';
+                    width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+                    height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+                    angle = tile.isDouble ? 90 : 0;
+
+                    currentX = LEFT_WALL_X;
+                    currentY = BOTTOM_ROW_Y - (height / 2) - (TILE_BASE_W / 2);
+                }
+            }
+            else if (direction === 'up') {
                 const prevHeight = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 currentY -= (prevHeight / 2) + (height / 2);
-            }
-            currentX = LEFT_WALL_X;
-        }
-        else if (direction === 'right') {
-            if (prevTile.dir === 'up') {
-                // Top-Left Flush L-Corner Snap
-                currentX = LEFT_WALL_X + (width / 2) + (TILE_BASE_W / 2);
-                currentY = TOP_ROW_Y;
-            } else {
-                const prevWidth = prevTile.isDouble ? TILE_BASE_H : TILE_BASE_W;
-                currentX += (prevWidth / 2) + (width / 2);
-            }
-            currentY = TOP_ROW_Y;
-        }
-        else if (direction === 'down') {
-            width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
-            height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-            angle = tile.isDouble ? 90 : 0;
 
-            if (prevTile.dir === 'right') {
-                // Top-Right Flush L-Corner Snap
+                // Ceiling Check: Pivot instantly into top rightward lane before reaching logo bounds
+                if (currentY - (height / 2) < TOP_ROW_Y + (TILE_BASE_W / 2)) {
+                    direction = 'right';
+                    width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+                    height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+                    angle = tile.isDouble ? 0 : 90;
+
+                    currentY = TOP_ROW_Y;
+                    currentX = LEFT_WALL_X + (width / 2) + (TILE_BASE_W / 2);
+                }
+            }
+            else if (direction === 'right') {
                 const prevWidth = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
-                currentX = currentX + (prevWidth / 2) - (TILE_BASE_W / 2);
-                currentY = TOP_ROW_Y + (height / 2) + (TILE_BASE_W / 2);
-            } else {
+                currentX += (prevWidth / 2) + (width / 2);
+
+                // Right Corner Check: Drop downward back toward the baseline
+                if (currentX + (width / 2) > RIGHT_WALL_X - (TILE_BASE_W / 2)) {
+                    direction = 'down';
+                    width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+                    height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+                    angle = tile.isDouble ? 90 : 0;
+
+                    currentX = RIGHT_WALL_X;
+                    currentY = TOP_ROW_Y + (height / 2) + (TILE_BASE_W / 2);
+                }
+            }
+            else if (direction === 'down') {
                 const prevHeight = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 currentY += (prevHeight / 2) + (height / 2);
             }
-            currentX = RIGHT_WALL_X;
+        } else {
+            currentX -= (width / 2);
         }
 
         layoutMap[tile.id] = { x: currentX, y: currentY, w: width, h: height, angle: angle, dir: direction };
@@ -160,7 +186,7 @@ function displayDynamicMatchTable() {
     boardContainer.style.position = 'absolute';
     gameTable.appendChild(boardContainer);
 
-    const masterDeck = buildMasterDeck();
+    const masterDeck = buildEulerianSequence();
     const layoutCoordinates = calculateSequentialTrack(masterDeck);
 
     masterDeck.forEach((tile) => {
@@ -197,7 +223,7 @@ function displayDynamicMatchTable() {
 
         const textLabel = document.createElement('div');
         textLabel.className = 'debug-label';
-        textLabel.innerText = tile.label;
+        textLabel.innerText = `[${tile.top}-${tile.bottom}]`;
 
         rotationContainer.appendChild(tileElement);
         wrapper.appendChild(rotationContainer);
@@ -212,7 +238,7 @@ window.addEventListener('resize', resizeGameTableContainer);
 
 setTimeout(() => {
     startBtn.disabled = false;
-    startBtn.innerText = "TEST FIXED TRACK";
+    startBtn.innerText = "TEST MATCHING CIRCUIT";
 }, 1000);
 
 startBtn.addEventListener('click', () => {
