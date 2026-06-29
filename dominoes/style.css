@@ -1,118 +1,151 @@
 /* ==========================================================================
-   1. RESET & VIEWPORT LOCK
+   Tellstream Dominoes - Table & Layout UI Core Styles
    ========================================================================== */
+
+/* Reset & Root Setup */
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
 }
 
-html, body {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    background-color: #000;
-    font-family: sans-serif;
+body {
+    background-color: #0b0c10;
+    color: #c5c6c7;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow-x: hidden;
 }
 
-.screen {
+/* Loading Screen Framework */
+#loading-screen {
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    z-index: 10;
-}
-
-.hidden {
-    display: none !important;
-}
-
-/* ==========================================================================
-   2. GAME SURFACE
-   ========================================================================== */
-#game-table {
-    background: url('assets/table_bg.jpg') center center no-repeat;
-    background-size: 100% 100%;
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-/* ==========================================================================
-   3. THE 28-TILE TESTING SURFACES WITH LABELS
-   ========================================================================== */
-.test-grid-container {
-    width: 85%;
-    height: 80%;
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    grid-template-rows: repeat(4, 1fr);
-    gap: 12px;
-    justify-items: center;
-    align-items: center;
-}
-
-/* Debug Wrapper grouping the tile and text label */
-.debug-card-wrapper {
+    background: radial-gradient(circle, #1f2833 0%, #0b0c10 100%);
     display: flex;
     flex-direction: column;
+    justify-content: center;
     align-items: center;
-    gap: 4px;
+    z-index: 9999;
+    transition: opacity 0.5s ease;
 }
 
-/* Master Tile Container */
-.domino-item {
-    width: 48px;
-    height: 94px;
-    background-image: url('assets/dom_front.gif');
-    background-size: 100% 100%;
-    border-radius: 6px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-    position: relative;
-}
-
-/* The actual _DOM_PIPS patch file placement using absolute centering math */
-.pip-mask-patch {
-    position: absolute;
-    width: 27.8%;  /* 166px / 597px = 27.8% perfect diameter match */
-    height: 14.17%; /* 166px / 1171px = 14.17% perfect height match */
-    background-image: url('assets/_DOM_PIPS.png');
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center center;
-    transform: translate(-50%, -50%); /* Locks the patch dead-center on the X,Y values */
+#loading-screen.hidden {
+    opacity: 0;
     pointer-events: none;
 }
 
-/* Clean text readout styled directly under the card */
-.debug-label {
-    color: #00e5ff;
-    font-size: 0.85rem;
-    font-weight: bold;
-    background: rgba(0, 0, 0, 0.7);
-    padding: 2px 6px;
-    border-radius: 4px;
-    border: 1px solid rgba(0, 229, 255, 0.3);
-}
-
-/* ==========================================================================
-   4. LOADER UI
-   ========================================================================== */
-#loading-screen {
-    background-color: #000;
-    display: flex;
-    padding: 20px;
-}
-
-#start-btn {
+.lobby-btn {
     padding: 15px 40px;
     font-size: 1.2rem;
-    cursor: pointer;
-    background: #00e5ff;
-    border: none;
-    border-radius: 25px;
     font-weight: bold;
-    color: #000;
+    color: #66fcf1;
+    background: transparent;
+    border: 2px solid #66fcf1;
+    border-radius: 4px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    box-shadow: 0 0 15px rgba(102, 252, 241, 0.2);
+    transition: all 0.3s ease;
+}
+
+.lobby-btn:hover:not(:disabled) {
+    background: #66fcf1;
+    color: #0b0c10;
+    box-shadow: 0 0 25px rgba(102, 252, 241, 0.6);
+}
+
+.lobby-btn:disabled {
+    border-color: #45f3ff4d;
+    color: #45f3ff4d;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* Game Table Arena View */
+#game-table {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #050508;
+}
+
+#game-table.hidden {
+    display: none !important;
+}
+
+/* Absolute Sized Match Container Layer */
+.match-board-container {
+    background-image: url('../assets/table_bg.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.8), 0 10px 50px rgba(0, 0, 0, 0.9);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Dynamic Card Wrapper Positioning */
+.live-card-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    z-index: 10;
+}
+
+.live-card-wrapper:hover {
+    transform: scale(1.05);
+    z-index: 50;
+}
+
+/* The Core Domino Asset Instance */
+.domino-item {
+    position: relative;
+    background-image: url('../assets/dom_front.gif');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
+    width: 100%;
+    height: 100%;
+}
+
+/* CSS Rotation Engine Variant */
+.rotated-tile {
+    transform: rotate(90deg);
+}
+
+/* Precision Pixel-to-Percentage Mask Patches */
+.pip-mask-patch {
+    position: absolute;
+    width: 24%;
+    height: 12%;
+    background-color: #e6dfd3; /* Blends flush onto the base asset bone cream hue */
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none; /* Allows click targeting to pass directly through to the card */
+}
+
+/* Debug Labels Mapping under Tiles */
+.debug-label {
+    position: absolute;
+    bottom: -22px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 11px;
+    font-weight: bold;
+    color: #66fcf1;
+    background-color: rgba(5, 5, 8, 0.85);
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid #45f3ff4d;
+    white-space: nowrap;
+    pointer-events: none;
+    letter-spacing: 1px;
 }
