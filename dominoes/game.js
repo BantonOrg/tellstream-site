@@ -81,24 +81,24 @@ function applyPipMasks(tileElement, value, coordinateMap) {
 }
 
 /**
- * Computes layout space step-by-step using strict native resolution coordinates
+ * Computes layout space using dynamic corner anchors and proactive safety edge boundary triggers
  */
 function calculateCircuitLayout(deck) {
     const layoutMap = {};
     
-    // Coordinates perfectly framed against the native 2730x1536 workspace grid
+    // Core starting coordinates centered underneath the main branding logo
     const startX = 1365;
     const startY = 1160;
     
     const leftBranchTiles = deck.slice(0, 14).reverse();
     const rightBranchTiles = deck.slice(14);
 
+    // --- Process Left Branch (Fanning Left, Up Left Wall, then Inward Right across Top) ---
     let currentX = startX;
     let currentY = startY;
     let direction = 'left';
     let prevTile = null;
 
-    // --- Process Left Branch (Fanning Left, Up, then Inward Right) ---
     leftBranchTiles.forEach((tile, index) => {
         let width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
         let height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
@@ -109,26 +109,53 @@ function calculateCircuitLayout(deck) {
                 const prevWidth = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 currentX -= (prevWidth / 2) + (width / 2);
             }
-            if (currentX < 450) direction = 'up';
+            
+            // PROACTIVE BOUNDARY CHECK: If the absolute left edge of this tile breaches safety line, force turn
+            if (currentX - (width / 2) < 410) {
+                direction = 'up';
+                // Recalculate dimensions immediately for the vertical track flow change
+                width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+                height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+                rotationDegrees = tile.isDouble ? 90 : 0;
+                
+                // Pivot Alignment Corner Math: Snap the vertical tile cleanly onto the corner square
+                const prevWidth = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+                currentX = (currentX + (width / 2) + (prevWidth / 2)) - (TILE_BASE_W / 2);
+                currentY -= (TILE_BASE_H / 2);
+            }
         } 
         else if (direction === 'up') {
             width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
             height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
             rotationDegrees = tile.isDouble ? 90 : 0;
 
-            const prevHeight = prevTile.dir === 'left' 
-                ? (prevTile.isDouble ? TILE_BASE_H : TILE_BASE_W)
-                : (prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H);
-            
-            currentY -= (prevHeight / 2) + (height / 2);
-            if (currentY < 230) direction = 'right';
+            if (prevTile.dir === 'up') {
+                const prevHeight = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+                currentY -= (prevHeight / 2) + (height / 2);
+            }
+
+            // PROACTIVE CEILING CHECK: If the top edge breaches the safety line, turn inward right
+            if (currentY - (height / 2) < 260) {
+                direction = 'right';
+                width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+                height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+                rotationDegrees = tile.isDouble ? 0 : 90;
+                
+                // Top Corner Pivot Math: Align centers perfectly to form the crisp flush L-turn
+                const prevHeight = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+                currentY = (currentY + (height / 2) + (prevHeight / 2)) - (TILE_BASE_W / 2);
+                currentX += (TILE_BASE_H / 2);
+            }
         } 
         else if (direction === 'right') {
             width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
             height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
             rotationDegrees = tile.isDouble ? 0 : 90;
 
-            const prevWidth = prevTile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+            const prevWidth = prevTile.dir === 'up' 
+                ? (prevTile.isDouble ? TILE_BASE_H : TILE_BASE_W)
+                : (prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H);
+                
             currentX += (prevWidth / 2) + (width / 2);
         }
 
@@ -136,7 +163,7 @@ function calculateCircuitLayout(deck) {
         prevTile = { isDouble: tile.isDouble, dir: direction };
     });
 
-    // --- Process Right Branch (Fanning Right, Up, then Inward Left) ---
+    // --- Process Right Branch (Fanning Right, Up Right Wall, then Inward Left across Top) ---
     currentX = startX;
     currentY = startY;
     direction = 'right';
@@ -152,26 +179,52 @@ function calculateCircuitLayout(deck) {
                 const prevWidth = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
                 currentX += (prevWidth / 2) + (width / 2);
             }
-            if (currentX > 2280) direction = 'up';
+            
+            // PROACTIVE BOUNDARY CHECK: If absolute right edge breaches safety line, force turn up
+            if (currentX + (width / 2) > 2320) {
+                direction = 'up';
+                width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+                height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+                rotationDegrees = tile.isDouble ? 90 : 0;
+                
+                // Pivot Alignment Corner Math: Match faces flush for the right-hand corner switch
+                const prevWidth = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+                currentX = (currentX - (width / 2) - (prevWidth / 2)) + (TILE_BASE_W / 2);
+                currentY -= (TILE_BASE_H / 2);
+            }
         } 
         else if (direction === 'up') {
             width = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
             height = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
             rotationDegrees = tile.isDouble ? 90 : 0;
 
-            const prevHeight = prevTile.dir === 'right' 
-                ? (prevTile.isDouble ? TILE_BASE_H : TILE_BASE_W)
-                : (prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H);
+            if (prevTile.dir === 'up') {
+                const prevHeight = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+                currentY -= (prevHeight / 2) + (height / 2);
+            }
 
-            currentY -= (prevHeight / 2) + (height / 2);
-            if (currentY < 230) direction = 'left';
+            // PROACTIVE CEILING CHECK: If top edge breaches safety line, turn inward left
+            if (currentY - (height / 2) < 260) {
+                direction = 'left';
+                width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+                height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+                rotationDegrees = tile.isDouble ? 0 : 90;
+                
+                // Top Right Corner Pivot Math: Align centers perfectly to run smoothly under the neon strip
+                const prevHeight = prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H;
+                currentY = (currentY + (height / 2) + (prevHeight / 2)) - (TILE_BASE_W / 2);
+                currentX -= (TILE_BASE_H / 2);
+            }
         } 
         else if (direction === 'left') {
             width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
             height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
             rotationDegrees = tile.isDouble ? 0 : 90;
 
-            const prevWidth = prevTile.isDouble ? TILE_BASE_H : TILE_BASE_W;
+            const prevWidth = prevTile.dir === 'up' 
+                ? (prevTile.isDouble ? TILE_BASE_H : TILE_BASE_W)
+                : (prevTile.isDouble ? TILE_BASE_W : TILE_BASE_H);
+                
             currentX -= (prevWidth / 2) + (width / 2);
         }
 
@@ -192,12 +245,10 @@ function resizeGameTableContainer() {
     const windowW = window.innerWidth;
     const windowH = window.innerHeight;
 
-    // Determine the precise multiplier step to fit the board into the screen bounds
     const scaleX = windowW / BOARD_NATIVE_W;
     const scaleY = windowH / BOARD_NATIVE_H;
     const fitScale = Math.min(scaleX, scaleY);
 
-    // Apply the hardware accelerated transformation scale rule matrix
     container.style.transform = `scale(${fitScale})`;
 }
 
@@ -210,7 +261,6 @@ function displayDynamicMatchTable() {
     const boardContainer = document.createElement('div');
     boardContainer.className = 'match-board-container';
     
-    // Lock the board wrapper container strictly to its intended resolution space
     boardContainer.style.width = `${BOARD_NATIVE_W}px`;
     boardContainer.style.height = `${BOARD_NATIVE_H}px`;
     boardContainer.style.position = 'absolute';
@@ -261,11 +311,9 @@ function displayDynamicMatchTable() {
         boardContainer.appendChild(wrapper);
     });
 
-    // Fire the initial window scale logic step immediately
     resizeGameTableContainer();
 }
 
-// Active window event handling listeners to update game views on the fly
 window.addEventListener('resize', resizeGameTableContainer);
 
 setTimeout(() => {
