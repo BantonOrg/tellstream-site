@@ -1,5 +1,5 @@
 // ==========================================================================
-// Tellstream Dominoes - Scenario 2: Single-to-Double Path Test
+// Tellstream Dominoes - Scenario 3: Double-to-Single Path Test
 // ==========================================================================
 
 const gameTable = document.getElementById('game-table');
@@ -41,16 +41,15 @@ const TRACK = {
     rightX:  2170
 };
 
-// Sequence where a Single is followed by a Double to turn the corner
+// Sequence where a Double is followed by a Single to turn the corner
 function buildTestSequence() {
     return [
         { id: 'tile-6-5', top: 6, bottom: 5, isDouble: false },
         { id: 'tile-5-4', top: 5, bottom: 4, isDouble: false },
-        { id: 'tile-4-3', top: 4, bottom: 3, isDouble: false },
-        { id: 'tile-3-2', top: 3, bottom: 2, isDouble: false }, // Last flat horizontal single
-        { id: 'tile-2-2', top: 2, bottom: 2, isDouble: true },  // The Corner Turner (Double)
-        { id: 'tile-2-1', top: 2, bottom: 1, isDouble: false }, // Up vertical wall
-        { id: 'tile-1-0', top: 1, bottom: 0, isDouble: false }
+        { id: 'tile-4-4', top: 4, bottom: 4, isDouble: true },  // Horizontal Double leading up to corner
+        { id: 'tile-4-3', top: 4, bottom: 3, isDouble: false }, // The Corner Turner (Single)
+        { id: 'tile-3-2', top: 3, bottom: 2, isDouble: false }, // Up vertical wall
+        { id: 'tile-2-1', top: 2, bottom: 1, isDouble: false }
     ];
 }
 
@@ -74,7 +73,7 @@ function calculateSequentialTrack(deck) {
     let prevTile = null;
 
     deck.forEach((tile, index) => {
-        // Default layout parameters for horizontal pieces
+        // Handle initial geometry based on double status layout on bottom lane
         let width = tile.isDouble ? TILE_BASE_W : TILE_BASE_H;
         let height = tile.isDouble ? TILE_BASE_H : TILE_BASE_W;
         let angle = tile.isDouble ? 0 : 90;
@@ -87,17 +86,16 @@ function calculateSequentialTrack(deck) {
                 if (stepX - (width / 2) <= TRACK.leftX + 50) {
                     direction = 'up';
                     
-                    // Incoming tile is a double turning the corner vertically
-                    // Standing double dimension setup (crosswise to vertical flow)
-                    width = TILE_BASE_H;
-                    height = TILE_BASE_W;
-                    angle = 90;
+                    // Incoming single stands tall for vertical layout flow
+                    width = TILE_BASE_W;
+                    height = TILE_BASE_H;
+                    angle = 0;
 
-                    // Option A: Stack on top face of the previous single
+                    // Option A: Stack on top face of the previous double
                     const optionA_X = currentX;
                     const optionA_X_Dist = Math.abs(optionA_X - TRACK.leftX);
                     
-                    // Option B: Snap to side face of the previous single
+                    // Option B: Snap to side face of the previous double
                     const optionB_X = currentX - (prevTile.w / 2) - (width / 2);
                     const optionB_X_Dist = Math.abs(optionB_X - TRACK.leftX);
                     
