@@ -6,11 +6,15 @@ const startBtn = document.getElementById('start-btn');
 const loadingScreen = document.getElementById('loading-screen');
 const gameTable = document.getElementById('game-table');
 
-// Total original canvas dimensions of dom_front.gif
+// Total native canvas dimensions of your master background image
+const BOARD_NATIVE_W = 2730;
+const BOARD_NATIVE_H = 1536;
+
+// Original asset sizes for dom_front.gif
 const canvasW = 597;
 const canvasH = 1171;
 
-// Absolute 75% scaled dimension metrics for a vertical tile asset
+// Crisp 75% scale footprint dimension metrics for vertical tiles
 const TILE_BASE_W = 90;
 const TILE_BASE_H = 176;
 
@@ -77,12 +81,12 @@ function applyPipMasks(tileElement, value, coordinateMap) {
 }
 
 /**
- * Computes layout space step-by-step using strict 75% end-to-end alignment rules
+ * Computes layout space step-by-step using strict native resolution coordinates
  */
 function calculateCircuitLayout(deck) {
     const layoutMap = {};
     
-    // Starting coordinates below logo
+    // Coordinates perfectly framed against the native 2730x1536 workspace grid
     const startX = 1365;
     const startY = 1160;
     
@@ -179,6 +183,25 @@ function calculateCircuitLayout(deck) {
 }
 
 /**
+ * Dynamically updates the scale vector matrix to match the current viewport frame bounds
+ */
+function resizeGameTableContainer() {
+    const container = document.querySelector('.match-board-container');
+    if (!container) return;
+
+    const windowW = window.innerWidth;
+    const windowH = window.innerHeight;
+
+    // Determine the precise multiplier step to fit the board into the screen bounds
+    const scaleX = windowW / BOARD_NATIVE_W;
+    const scaleY = windowH / BOARD_NATIVE_H;
+    const fitScale = Math.min(scaleX, scaleY);
+
+    // Apply the hardware accelerated transformation scale rule matrix
+    container.style.transform = `scale(${fitScale})`;
+}
+
+/**
  * Main rendering loop mapping positions cleanly onto the table container
  */
 function displayDynamicMatchTable() {
@@ -186,6 +209,11 @@ function displayDynamicMatchTable() {
 
     const boardContainer = document.createElement('div');
     boardContainer.className = 'match-board-container';
+    
+    // Lock the board wrapper container strictly to its intended resolution space
+    boardContainer.style.width = `${BOARD_NATIVE_W}px`;
+    boardContainer.style.height = `${BOARD_NATIVE_H}px`;
+    boardContainer.style.position = 'absolute';
     gameTable.appendChild(boardContainer);
 
     const masterDeck = buildMasterDeck();
@@ -216,8 +244,6 @@ function displayDynamicMatchTable() {
         const tileElement = document.createElement('div');
         tileElement.className = 'domino-item';
         tileElement.id = tile.id;
-        
-        // FORCED INLINE BOUNDING: This strips out master texture overflow inheritance
         tileElement.style.width = `${TILE_BASE_W}px`;
         tileElement.style.height = `${TILE_BASE_H}px`;
         tileElement.style.position = 'absolute';
@@ -234,7 +260,13 @@ function displayDynamicMatchTable() {
         wrapper.appendChild(textLabel);
         boardContainer.appendChild(wrapper);
     });
+
+    // Fire the initial window scale logic step immediately
+    resizeGameTableContainer();
 }
+
+// Active window event handling listeners to update game views on the fly
+window.addEventListener('resize', resizeGameTableContainer);
 
 setTimeout(() => {
     startBtn.disabled = false;
