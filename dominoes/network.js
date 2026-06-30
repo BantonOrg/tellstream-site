@@ -21,9 +21,9 @@ let roomSubscription = null;
 let localGameState = {
     room_code: null,
     game_state: 'waiting', // waiting, playing, blocked, finished
-    board_line: [],       // Shared layout track chain array [cite: 9]
-    active_turn: 1,       // Seat turn tracker (1-4) [cite: 9]
-    players: {}           // Dynamic map matching seat details & hand bone arrays [cite: 10]
+    board_line: [],       // Shared layout track chain array
+    active_turn: 1,       // Seat turn tracker (1-4)
+    players: {}           // Dynamic map matching seat details & hand bone arrays
 };
 
 function initNetwork() {
@@ -97,7 +97,6 @@ async function getSupabaseChatIdentity() {
     try {
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (session && session.user) {
-            // Check for display handles inside profile metadata fields
             return session.user.user_metadata.full_name || session.user.user_metadata.name || session.user.email.split('@')[0];
         }
     } catch (err) {
@@ -117,9 +116,9 @@ async function createRoom() {
 
     const initialPlayersObject = {
         player1: { seat: 1, hand: [], name: hostIdentityName }, 
-        player2: { seat: 2, hand: [], name: "Waiting..." }, [cite: 16]
-        player3: { seat: 3, hand: [], name: "Waiting..." }, [cite: 16]
-        player4: { seat: 4, hand: [], name: "Waiting..." }, [cite: 16]
+        player2: { seat: 2, hand: [], name: "Waiting..." },
+        player3: { seat: 3, hand: [], name: "Waiting..." },
+        player4: { seat: 4, hand: [], name: "Waiting..." },
         lobby_roster: [hostIdentityName] 
     };
 
@@ -165,7 +164,6 @@ async function joinRoom(code) {
         return;
     }
 
-    // Fix 1: Automatically fetch name from database session, no popups triggered
     const detectedPlayerName = await getSupabaseChatIdentity();
 
     try {
@@ -218,7 +216,7 @@ function subscribeToRoom(code) {
             event: 'UPDATE', 
             schema: 'public', 
             table: 'domino_rooms', 
-            filter: `room_code=eq.${code}` [cite: 11]
+            filter: `room_code=eq.${code}`
         }, payload => {
             localGameState = payload.new;
             
