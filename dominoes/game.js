@@ -8,15 +8,15 @@ let selectedTileId = null;
 const BG_NATIVE_WIDTH = 2560;
 const BG_NATIVE_HEIGHT = 1440;
 
-// Your precise grid coordinates verified from the midpoints
+// UPDATED: Expanded Boundaries for "Breathing Room"
 const PATH_TRACK = {
-    lowerY: 1180, // Halfway between 920 and 1440
-    upperY: 269,  // Halfway between 92 and 446
-    leftX: 420,   // Strict left vertical boundary
-    rightX: 2220  // Halfway between 1790 and 2650
+    lowerY: 1180, 
+    upperY: 150,  // Raised Top Track by ~120px for breathing room
+    leftX: 300,   // Pushed left boundary further out
+    rightX: 2340  // Pushed right boundary further out
 };
 
-// Absolute center point for the dealt hand tray
+// Absolute center point
 const HAND_CENTER = { x: 1280, y: 720 };
 
 function renderLiveTable(boardLine) {
@@ -39,7 +39,7 @@ function renderLiveTable(boardLine) {
             { id: 'r12', top: 2, bottom: 1, displayTop: 2, displayBottom: 1 },
             { id: 'r13', top: 1, bottom: 0, displayTop: 1, displayBottom: 0 },
             { id: 'r14', top: 0, bottom: 6, displayTop: 0, displayBottom: 6 },
-            { id: 'r15', top: 6, bottom: 6, displayTop: 6, displayBottom: 6 }, // INDEX 14 = Exact Center Anchor
+            { id: 'r15', top: 6, bottom: 6, displayTop: 6, displayBottom: 6 },
             { id: 'r16', top: 6, bottom: 5, displayTop: 6, displayBottom: 5 },
             { id: 'r17', top: 5, bottom: 5, displayTop: 5, displayBottom: 5 },
             { id: 'r18', top: 5, bottom: 4, displayTop: 5, displayBottom: 4 },
@@ -137,22 +137,21 @@ function renderLiveTable(boardLine) {
     }
 
     // ==========================================================================
-    // DYNAMIC A/B BOSS-ANCHOR PATHING ENGINE
+    // A/B BOSS-ANCHOR PATHING ENGINE
     // ==========================================================================
     
     function getCornerChoices(state, prevX, prevY, prevIsDouble, currIsDouble) {
-        // Maps the geometric reality of the 6 diagram permutations 
         let A, B;
         if (state === 'LEFT_BOTTOM_TO_UP_LEFT') {
-            if (!prevIsDouble && !currIsDouble) { // Single to Single
+            if (!prevIsDouble && !currIsDouble) {
                 A = { x: prevX - 43.25, y: prevY - 134.5, isRotated: false, flipVisuals: false };
                 B = { x: prevX + 43.25, y: prevY - 134.5, isRotated: false, flipVisuals: false };
-            } else if (!prevIsDouble && currIsDouble) { // Single to Double (Double caps track)
+            } else if (!prevIsDouble && currIsDouble) {
                 A = { x: prevX - 134.5, y: prevY, isRotated: false, flipVisuals: false };
                 B = A;
-            } else if (prevIsDouble && !currIsDouble) { // Double to Single (Sprouts from Cap)
-                A = { x: prevX + 134.5, y: prevY - 43.25, isRotated: true, flipVisuals: false }; // Side sprout
-                B = { x: prevX, y: prevY - 179, isRotated: false, flipVisuals: false }; // Top Cap
+            } else if (prevIsDouble && !currIsDouble) {
+                A = { x: prevX + 134.5, y: prevY - 43.25, isRotated: true, flipVisuals: false };
+                B = { x: prevX, y: prevY - 179, isRotated: false, flipVisuals: false };
             } else { A = { x: prevX, y: prevY - 179, isRotated: false, flipVisuals: false }; B = A; }
         }
         else if (state === 'RIGHT_BOTTOM_TO_UP_RIGHT') {
@@ -195,7 +194,6 @@ function renderLiveTable(boardLine) {
     }
 
     function pickBestCorner(A, B, boundary, edgeType) {
-        // Evaluates memory coordinates and returns the geometry that obeys the boundary
         let wA = A.isRotated ? 173 : 84; let hA = A.isRotated ? 84 : 173;
         let wB = B.isRotated ? 173 : 84; let hB = B.isRotated ? 84 : 173;
         let distA, distB;
