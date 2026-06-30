@@ -65,80 +65,97 @@ function renderLiveTable(boardLine) {
     if (rightZone) rightZone.style.display = "none";
 
     // ==========================================================================
-    // NATIVE PERIMETER WRAPPING SYSTEM (STARTING BOTTOM CENTER)
+    // FIXED FIXED TRACK LINE ALIGNMENT MAPPING SYSTEM
     // ==========================================================================
     if (boardLine && boardLine.length > 0) {
         const trackCanvas = document.getElementById("domino-track-canvas");
         const canvasWidth = trackCanvas.clientWidth;
         const canvasHeight = trackCanvas.clientHeight;
 
-        // Find the index of your down-bone spinner (e.g. 6:6)
+        // Find the index of the down-bone spinner (6:6)
         let initialIndex = boardLine.findIndex(tile => tile.top === tile.bottom);
         if (initialIndex === -1) initialIndex = 0;
 
-        // Pre-calculate dimensional layout offsets for every bone along the line
         let calculatedCoordinates = new Array(boardLine.length);
 
-        // 1. Establish the down-bone anchor exactly at Bottom Center
-        let startW = (boardLine[initialIndex].top === boardLine[initialIndex].bottom) ? 58 : 119;
-        let startH = (boardLine[initialIndex].top === boardLine[initialIndex].bottom) ? 119 : 58;
-        
+        // 1. Lock the initial down-bone standing upright at bottom center of your track perimeter line
         calculatedCoordinates[initialIndex] = {
-            x: (canvasWidth / 2) - (startW / 2),
-            y: canvasHeight - startH,
-            isRotated: (boardLine[initialIndex].top === boardLine[initialIndex].bottom) ? false : true
+            x: (canvasWidth / 2) - (58 / 2),
+            y: canvasHeight - 119, // Flushed to the bottom of the track line bounds
+            isRotated: false
         };
 
-        // 2. Track left chain layout extensions wrapping clockwise
+        // 2. Track left chain moves out to the left boundary corner, then turn upwards
         for (let i = initialIndex - 1; i >= 0; i--) {
             let nextTile = boardLine[i];
             let prevCoords = calculatedCoordinates[i + 1];
             let isDouble = nextTile.top === nextTile.bottom;
-            let tileW = isDouble ? 58 : 119;
-            let tileH = isDouble ? 119 : 58;
+            
+            let prevTileIsDouble = (boardLine[i + 1].top === boardLine[i + 1].bottom);
+            
+            // If we are moving left horizontally along the line
+            if (prevCoords.y >= canvasHeight - 119) {
+                let tileW = isDouble ? 58 : 119;
+                let nextX = prevCoords.x - tileW - 6; // clean 6px connection gap
+                let nextY = isDouble ? canvasHeight - 119 : canvasHeight - 88; // mid-alignment correction
 
-            let nextX = prevCoords.x - tileW - 6; // clean 6px spacing gap
-            let nextY = prevCoords.y;
-            let forceVertical = false;
-
-            // Turn corner up the left edge
-            if (nextX < 20) {
-                forceVertical = true;
-                tileW = isDouble ? 119 : 58;
-                tileH = isDouble ? 58 : 119;
-                nextX = 20;
-                nextY = prevCoords.y - tileH - 6;
+                // If it hits the left track corner boundary, pivot up the wall
+                if (nextX < 10) {
+                    let verticalW = isDouble ? 119 : 58;
+                    let verticalH = isDouble ? 58 : 119;
+                    calculatedCoordinates[i] = {
+                        x: 10,
+                        y: canvasHeight - 119 - verticalH - 6,
+                        isRotated: isDouble ? false : true
+                    };
+                } else {
+                    calculatedCoordinates[i] = { x: nextX, y: nextY, isRotated: isDouble ? false : true };
+                }
+            } else {
+                // We are climbing up the left wall
+                let tileH = isDouble ? 58 : 119;
+                let nextX = isDouble ? 10 - 30 : 10; // offset double center point nicely
+                let nextY = prevCoords.y - tileH - 6;
+                calculatedCoordinates[i] = { x: nextX, y: nextY, isRotated: isDouble ? false : true };
             }
-
-            calculatedCoordinates[i] = { x: nextX, y: nextY, isRotated: !forceVertical ? !isDouble : isDouble };
         }
 
-        // 3. Track right chain layout extensions wrapping counter-clockwise
+        // 3. Track right chain moves out to the right boundary corner, then turn upwards
         for (let i = initialIndex + 1; i < boardLine.length; i++) {
             let nextTile = boardLine[i];
             let prevCoords = calculatedCoordinates[i - 1];
             let isDouble = nextTile.top === nextTile.bottom;
-            let tileW = isDouble ? 58 : 119;
-            let tileH = isDouble ? 119 : 58;
+            
+            let prevTileWidth = (boardLine[i - 1].top === boardLine[i - 1].bottom) ? 58 : 119;
 
-            let currentTileWidth = (boardLine[i-1].top === boardLine[i-1].bottom) ? 58 : 119;
-            let nextX = prevCoords.x + currentTileWidth + 6;
-            let nextY = prevCoords.y;
-            let forceVertical = false;
+            // If we are moving right horizontally along the line
+            if (prevCoords.y >= canvasHeight - 119) {
+                let nextX = prevCoords.x + prevTileWidth + 6;
+                let nextY = isDouble ? canvasHeight - 119 : canvasHeight - 88;
 
-            // Turn corner up the right edge
-            if (nextX + tileW > canvasWidth - 20) {
-                forceVertical = true;
-                tileW = isDouble ? 119 : 58;
-                tileH = isDouble ? 58 : 119;
-                nextX = canvasWidth - tileW - 20;
-                nextY = prevCoords.y - tileH - 6;
+                // If it hits the right track corner boundary, pivot up the wall
+                let currentTileWidth = isDouble ? 58 : 119;
+                if (nextX + currentTileWidth > canvasWidth - 10) {
+                    let verticalH = isDouble ? 58 : 119;
+                    calculatedCoordinates[i] = {
+                        x: canvasWidth - (isDouble ? 119 : 58) - 10,
+                        y: canvasHeight - 119 - verticalH - 6,
+                        isRotated: isDouble ? false : true
+                    };
+                } else {
+                    calculatedCoordinates[i] = { x: nextX, y: nextY, isRotated: isDouble ? false : true };
+                }
+            } else {
+                // We are climbing up the right wall
+                let tileH = isDouble ? 58 : 119;
+                let verticalW = isDouble ? 119 : 58;
+                let nextX = canvasWidth - verticalW - 10;
+                let nextY = prevCoords.y - tileH - 6;
+                calculatedCoordinates[i] = { x: nextX, y: nextY, isRotated: isDouble ? false : true };
             }
-
-            calculatedCoordinates[i] = { x: nextX, y: nextY, isRotated: !forceVertical ? !isDouble : isDouble };
         }
 
-        // 4. Draw absolute placed track tiles with exact coordinates 
+        // 4. Render elements with absolute mapping rules
         boardLine.forEach((tile, index) => {
             const coords = calculatedCoordinates[index];
             const placedTile = document.createElement("div");
@@ -167,7 +184,7 @@ function renderLiveTable(boardLine) {
         });
     }
 
-    // 2. RENDER PLAYER HAND
+    // 2. RENDER PLAYER HAND (BLUE TRAY ALIGNMENT)
     if (window.localGameState && window.localGameState.players && window.localGameState.players.player1) {
         const hand = window.localGameState.players.player1.hand || [];
         hand.forEach(tile => {
