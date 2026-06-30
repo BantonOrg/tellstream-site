@@ -63,9 +63,9 @@ function renderLiveTable(boardLine) {
 
     let mat = document.getElementById("game-mat");
     if (!mat || !document.getElementById("domino-track-canvas")) {
-        // FIXED: Restored background-image path pointing straight to the assets folder asset
+        // FIXED PATH: Changed to 'assets/table_bg.jpg' so it targets your subfolder asset correctly
         tableView.innerHTML = `
-            <div id="game-mat" style="position: relative; width: 100vw; height: 100vh; background-image: url('dominoes/assets/table_bg.jpg'); background-size: cover; background-repeat: no-repeat; background-position: center; display: flex; justify-content: center; align-items: center; overflow: hidden; box-sizing: border-box;">
+            <div id="game-mat" style="position: relative; width: 100vw; height: 100vh; background-image: url('assets/table_bg.jpg'); background-size: cover; background-repeat: no-repeat; background-position: center; display: flex; justify-content: center; align-items: center; overflow: hidden; box-sizing: border-box;">
                 <div id="scaled-table-canvas-root" style="position: relative; width: 100vw; height: 56.25vw; max-height: 100vh; max-width: 177.77vh;">
                     
                     <div id="seat-block-1" style="position: absolute; top: 12px; left: 12px; padding: 6px 14px; background: rgba(11,12,16,0.85); border: 1px solid rgba(102,252,241,0.2); border-radius: 4px; font-size: 0.85rem; z-index: 10; display: flex; gap: 8px; align-items: center; white-space: nowrap;"></div>
@@ -320,7 +320,7 @@ function processTilePlacement(targetSide) {
             chosenTile.displayBottom = chosenTile.bottom;
         } else if (chosenTile.bottom === openRight) {
             chosenTile.displayTop = chosenTile.bottom;
-            chosenTile.displayBottom = top;
+            chosenTile.displayBottom = chosenTile.top; // FIXED TYPO
         } else return;
         updatedBoardLine.push(chosenTile); 
     }
