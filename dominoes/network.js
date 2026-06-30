@@ -69,7 +69,9 @@ function generateFullDominoSet() {
                 id: `b${idCounter++}`,
                 top: i,
                 bottom: j,
-                isDouble: (i === j)
+                isDouble: (i === j),
+                displayTop: null,    // Added runtime orientation properties
+                displayBottom: null
             });
         }
     }
@@ -94,13 +96,12 @@ async function createRoom() {
         generatedCode += chars.charAt(Math.floor(Math.random() * chars.length));
     }
 
-    // Initialize room with empty hands. Game remains 'waiting' until lineup is selected.
     const initialPlayersObject = {
         player1: { seat: 1, hand: [], name: "Table Host" },
         player2: { seat: 2, hand: [], name: "Waiting..." },
         player3: { seat: 3, hand: [], name: "Waiting..." },
         player4: { seat: 4, hand: [], name: "Waiting..." },
-        lobby_roster: ["Table Host"] // Use internal player JSON space to track present users
+        lobby_roster: ["Table Host"] 
     };
 
     localGameState = {
@@ -168,12 +169,10 @@ async function joinRoom(code) {
             currentPlayers.lobby_roster = ["Table Host"];
         }
 
-        // Add the test player to the active lobby tracking array
         if (!currentPlayers.lobby_roster.includes(testPlayerName)) {
             currentPlayers.lobby_roster.push(testPlayerName);
         }
 
-        // Push lobby list up to Supabase
         const { error: updateError } = await supabaseClient
             .from('domino_rooms')
             .update({ players: currentPlayers })
@@ -181,17 +180,13 @@ async function joinRoom(code) {
 
         if (updateError) throw updateError;
 
-        // Sync local variables
         localGameState = data;
         localGameState.players = currentPlayers;
         
-        // Seat number remains null/unassigned until host selects this player from the menu
         playerSeatNumber = null; 
         currentRoomCode = code;
         
-        // Store our chosen local identity string in session storage to verify seating later
         window.sessionStorage.setItem("tellstream_player_identity", testPlayerName);
-        
         subscribeToRoom(currentRoomCode);
     } catch (err) {
         console.error("Error joining remote table session:", err);
@@ -235,17 +230,15 @@ function switchToGameTableView() {
 async function launchMatchWithLineup(selectedPlayer2Name) {
     if (playerSeatNumber !== 1) return;
 
-    // Secure shuffle execution and slice down into two clean 7-tile hands
     const fullDeck = shuffleBones(generateFullDominoSet());
     const assignedPlayersObject = {
         player1: { seat: 1, hand: fullDeck.slice(0, 7), name: "Table Host" },
         player2: { seat: 2, hand: fullDeck.slice(7, 14), name: selectedPlayer2Name },
         player3: { seat: 3, hand: [], name: "Not In Use" },
         player4: { seat: 4, hand: [], name: "Not In Use" },
-        lobby_roster: localGameState.players.lobby_roster // preserve layout list
+        lobby_roster: localGameState.players.lobby_roster 
     };
 
-    // Evaluate opening double turn stick rules between Player 1 and Player 2
     let startingSeat = 1;
     let highestDouble = -1;
     for (let s = 1; s <= 2; s++) {
@@ -290,7 +283,6 @@ async function pushMoveToDatabase(updatedBoardLine, nextTurnSeatNumber, updatedP
     localGameState.active_turn = nextTurnSeatNumber;
     localGameState.players = updatedPlayersMap;
 
-    // Evaluate if anyone completely ran out of bones (Domino win state)
     let winnerDeclared = null;
     for (let i = 1; i <= 4; i++) {
         if (localGameState.players[`player${i}`] && localGameState.players[`player${i}`].hand && localGameState.players[`player${i}`].hand.length === 0) {
