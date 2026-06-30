@@ -67,7 +67,6 @@ function renderLiveTable(boardLine) {
             <div id="game-mat" style="position: relative; width: 100vw; height: 100vh; background-image: url('assets/table_bg.jpg'); background-size: cover; background-repeat: no-repeat; background-position: center; display: flex; justify-content: center; align-items: center; overflow: hidden; box-sizing: border-box;">
                 <div id="scaled-table-canvas-root" style="position: relative; width: 100vw; height: 56.25vw; max-height: 100vh; max-width: 177.77vh;">
                     
-                    <!-- CORNER SEATING MAP BLOCKS -->
                     <div id="seat-block-1" style="position: absolute; top: 12px; left: 12px; padding: 6px 14px; background: rgba(11,12,16,0.85); border: 1px solid rgba(102,252,241,0.2); border-radius: 4px; font-size: 0.85rem; z-index: 10; display: flex; gap: 8px; align-items: center; white-space: nowrap;"></div>
                     <div id="seat-block-2" style="position: absolute; top: 12px; right: 12px; padding: 6px 14px; background: rgba(11,12,16,0.85); border: 1px solid rgba(102,252,241,0.2); border-radius: 4px; font-size: 0.85rem; z-index: 10; display: flex; gap: 8px; align-items: center; white-space: nowrap;"></div>
                     <div id="seat-block-3" style="position: absolute; bottom: 25px; right: 12px; padding: 6px 14px; background: rgba(11,12,16,0.85); border: 1px solid rgba(102,252,241,0.2); border-radius: 4px; font-size: 0.85rem; z-index: 10; display: flex; gap: 8px; align-items: center; white-space: nowrap;"></div>
@@ -80,7 +79,7 @@ function renderLiveTable(boardLine) {
                     <div id="domino-track-canvas" style="position: absolute; left: ${(BOUNDS_LEFT/BG_NATIVE_WIDTH)*100}%; top: ${(BOUNDS_TOP/BG_NATIVE_HEIGHT)*100}%; width: ${((BOUNDS_RIGHT - BOUNDS_LEFT)/BG_NATIVE_WIDTH)*100}%; height: ${((BOUNDS_BOTTOM - BOUNDS_TOP)/BG_NATIVE_HEIGHT)*100}%;">
                         <div id="left-play-zone" style="display: none; position: absolute; left: 0; top: 0; width: 15%; height: 100%; background: rgba(102, 252, 241, 0.12); justify-content: center; align-items: center; z-index: 20; color: #66fcf1; font-weight: bold; font-size: 0.75rem; border-right: 2px dashed #66fcf1; cursor: pointer;">PLAY LEFT</div>
                         <div id="right-play-zone" style="display: none; position: absolute; right: 0; top: 0; width: 15%; height: 100%; background: rgba(102, 252, 241, 0.12); justify-content: center; align-items: center; z-index: 20; color: #66fcf1; font-weight: bold; font-size: 0.75rem; border-left: 2px dashed #66fcf1; cursor: pointer;">PLAY RIGHT</div>
-                        <div id="placed-tiles-container" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; display: flex; justify-content: center; align-items: center; gap: 6px;"></div>
+                        <div id="placed-tiles-container" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; display: flex; justify-content: center; align-items: center; gap: 8px;"></div>
                     </div>
 
                     <div id="player-hand-container" style="position: absolute; left: 50%; top: 49.5%; transform: translate(-50%, -50%); width: 65%; height: 16%; display: flex; justify-content: center; align-items: center; gap: 16px; background: transparent; padding: 5px; box-sizing: border-box; z-index: 999; filter: drop-shadow(0px 12px 18px rgba(0, 0, 0, 0.95));"></div>
@@ -133,34 +132,29 @@ function renderLiveTable(boardLine) {
         }
     }
 
-    // 1. RENDER PLAYED TRACK (+12% SIZE INCREASE & FIXED ORIENTATION ALIGNMENT)
+    // 1. RENDER PLAYED TRACK (+12% SIZE BUMP WITH HORIZONTAL RESTRUCTURE & PIP EXPLICIT TRANSFORMS)
     if (boardLine && boardLine.length > 0) {
         boardLine.forEach(tile => {
             const placedTile = document.createElement("div");
-            placedTile.className = "domino-bone-interactive";
             placedTile.style.cursor = "default";
             placedTile.style.flexShrink = "0";
             
-            // Fixed layout dimensions +12% scaling factor and layout direction
             if (tile.top === tile.bottom) {
-                // Stand doubles upright natively
-                placedTile.style.width = "58px";
-                placedTile.style.height = "119px";
-                placedTile.style.flexDirection = "column";
+                // Doubles stand upright natively
+                placedTile.className = "domino-bone-interactive";
                 placedTile.innerHTML = `
-                    ${generateHalfDisplay(tile.displayTop)}
-                    <div class="domino-divider-horizontal" style="width:100%; height:2px; background:#000;"></div>
-                    ${generateHalfDisplay(tile.displayBottom)}
+                    ${generateHalfDisplay(tile.displayTop, false)}
+                    <div style="width: 100%; height: 2px; background: #1a1a1a; flex-shrink: 0; position: relative;" class="domino-divider-horizontal"></div>
+                    ${generateHalfDisplay(tile.displayBottom, false)}
                 `;
             } else {
-                // Lay standard bones flat horizontally left-to-right
-                placedTile.style.width = "119px";
-                placedTile.style.height = "58px";
-                placedTile.style.flexDirection = "row";
+                // Standard bones layout flat horizontally left-to-right
+                // Attaches helper class to clear out stylesheet column limits
+                placedTile.className = "domino-bone-interactive horizontal-bone";
                 placedTile.innerHTML = `
-                    ${generateHalfDisplay(tile.displayTop)}
-                    <div class="domino-divider" style="width:2px; height:100%; background:#000;"></div>
-                    ${generateHalfDisplay(tile.displayBottom)}
+                    ${generateHalfDisplay(tile.displayTop, true)}
+                    <div style="width: 2px; height: 100%; background: #1a1a1a; flex-shrink: 0; position: relative;" class="domino-divider"></div>
+                    ${generateHalfDisplay(tile.displayBottom, true)}
                 `;
             }
             
@@ -168,7 +162,7 @@ function renderLiveTable(boardLine) {
         });
     }
 
-    // 2. RENDER PLAYER HAND (+12% SIZE INCREASE)
+    // 2. RENDER PLAYER HAND (+12% SIZE BUMP STOOD UP VERTICALLY)
     if (playerSeatNumber && localGameState.players) {
         const targetKey = `player${playerSeatNumber}`;
         const playerObj = localGameState.players[targetKey];
@@ -178,11 +172,6 @@ function renderLiveTable(boardLine) {
                 const tileElement = document.createElement("div");
                 tileElement.className = "domino-bone-interactive";
                 tileElement.id = `hand-tile-${tile.id}`;
-                
-                // Matched hand size flat layout
-                tileElement.style.width = "58px";
-                tileElement.style.height = "119px";
-                tileElement.style.flexDirection = "column";
                 tileElement.style.flexShrink = "0";
                 
                 if (selectedTileId === tile.id) {
@@ -202,9 +191,9 @@ function renderLiveTable(boardLine) {
                 };
                 
                 tileElement.innerHTML = `
-                    ${generateHalfDisplay(tile.top)}
-                    <div class="domino-divider-horizontal" style="width:100%; height:2px; background:#000;"></div>
-                    ${generateHalfDisplay(tile.bottom)}
+                    ${generateHalfDisplay(tile.top, false)}
+                    <div style="width: 100%; height: 2px; background: #1a1a1a; flex-shrink: 0; position: relative;" class="domino-divider"></div>
+                    ${generateHalfDisplay(tile.bottom, false)}
                 `;
                 
                 tileElement.addEventListener("click", (e) => {
@@ -262,16 +251,27 @@ function updateCornerSeatBlocks() {
     }
 }
 
-function generateHalfDisplay(value) {
+function generateHalfDisplay(value, isHorizontal = false) {
+    // Exact structural translation matrix for standard flat layout dots versus vertical orientation shapes
     const pipMaps = {
-        0: [], 1: [4], 2: [1, 7], 3: [1, 4, 7],
-        4: [1, 2, 6, 7], 5: [1, 2, 4, 6, 7], 6: [1, 2, 3, 5, 6, 7]
+        0: [],
+        1: [4],
+        2: isHorizontal ? [3, 7] : [1, 6], 
+        3: isHorizontal ? [3, 4, 7] : [1, 4, 6],
+        4: [1, 2, 5, 6],
+        5: [1, 2, 4, 5, 6],
+        6: isHorizontal ? [1, 2, 3, 5, 6, 7] : [1, 3, 4, 5, 6, 7]
     };
+    
+    // Remap abstract map indexes straight to your true CSS pos grid classes
+    const layoutMap = isHorizontal ? {1:1, 2:8, 3:2, 4:4, 5:5, 6:3, 7:9, 8:6, 9:7} : {1:1, 2:2, 3:3, 4:4, 5:5, 6:6, 7:7, 8:8, 9:9};
     const activePips = pipMaps[value] || [];
-    let html = `<div class="domino-half" style="width:150px; height:58px; position:relative; display:flex; justify-content:center; align-items:center;">`;
+    
+    let html = `<div class="domino-half">`;
     for (let p = 1; p <= 9; p++) {
+        const targetGridPosition = layoutMap[p];
         const isActive = activePips.includes(p) ? 'active' : '';
-        html += `<div class="pip ${isActive} pos-${p}"></div>`;
+        html += `<div class="pip ${isActive} pos-${targetGridPosition}"></div>`;
     }
     html += `</div>`;
     return html;
