@@ -26,17 +26,29 @@ let localGameState = {
     players: {}           // Dynamic map matching seat details & hand bone arrays
 };
 
-function initNetwork() {
-    showLobbyUI();
+async function initNetwork() {
+    await showLobbyUI();
 }
 
-function showLobbyUI() {
+/**
+ * LOBBY INTERFACE: Now dynamically resolves your active session token and displays it.
+ */
+async function showLobbyUI() {
     const lobbyView = document.getElementById("lobby-view");
     if (!lobbyView) return;
     
+    // Resolve identity first to show it on screen
+    const activeIdentity = await getSupabaseChatIdentity();
+    
     lobbyView.innerHTML = `
         <div class="lobby-panel" style="z-index: 1000; position: relative; padding: 40px; text-align: center;">
-            <h2 style="color: #66fcf1; font-size: 3rem; margin-bottom: 20px; font-weight: bold; letter-spacing: 2px;">TELLSTREAM LOUNGE MATCH</h2>
+            <h2 style="color: #66fcf1; font-size: 3rem; margin-bottom: 5px; font-weight: bold; letter-spacing: 2px;">TELLSTREAM LOUNGE MATCH</h2>
+            
+            <!-- NEW LIVE WELCOME BANNER DISPLAY -->
+            <div id="lobby-welcome-banner" style="color: #fff; font-size: 1.2rem; margin-bottom: 30px; font-weight: 500; background: rgba(102, 252, 241, 0.1); padding: 8px 16px; border-radius: 4px; display: inline-block; border: 1px solid rgba(102, 252, 241, 0.2);">
+                Welcome, <span style="color: #66fcf1; font-weight: bold;">${activeIdentity}</span>
+            </div>
+
             <p style="color: #c5c6c7; font-size: 1.4rem; margin-bottom: 40px; letter-spacing: 1px;">Create a new table or enter a 4-digit code to join a live match.</p>
             
             <div class="lobby-actions">
