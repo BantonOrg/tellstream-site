@@ -9,7 +9,7 @@ let selectedTileId = null;
 const BG_NATIVE_WIDTH = 2560;
 const BG_NATIVE_HEIGHT = 1440;
 
-// Inner Neon Bounds Coordinates relative to image sizing constraints 
+// Inner Neon Bounds Coordinates relative to image sizing constraints
 const BOUNDS_LEFT = 265;
 const BOUNDS_TOP = 523;
 const BOUNDS_RIGHT = 2219;
@@ -80,23 +80,21 @@ function renderLiveTable(boardLine) {
     // --- PHASE 2: MATCH LAUNCHED & ACTIVE PLAY ---
     let mat = document.getElementById("game-mat");
     if (!mat || !document.getElementById("domino-track-canvas")) {
-        // Fix 2 & 3: Background url routed to assets directory, expanded container framework to fill full screens
         tableView.innerHTML = `
             <div id="game-mat" style="position: relative; width: 100vw; height: 100vh; background-image: url('assets/table_bg.jpg'); background-size: cover; background-repeat: no-repeat; background-position: center; display: flex; justify-content: center; align-items: center; overflow: hidden; box-sizing: border-box;">
                 
                 <div id="scaled-table-canvas-root" style="position: relative; width: 100vw; height: 56.25vw; max-height: 100vh; max-width: 177.77vh;">
                     
-                    <div id="seat-block-1" style="position: absolute; top: 10px; left: 10px; padding: 10px; background: rgba(11,12,16,0.85); border: 1px solid #66fcf1; border-radius: 4px; min-width: 120px; font-size: 0.75rem; line-height: 1.2; z-index: 10;"></div>
-                    <div id="seat-block-2" style="position: absolute; top: 10px; right: 10px; padding: 10px; background: rgba(11,12,16,0.85); border: 1px solid rgba(102,252,241,0.4); border-radius: 4px; min-width: 120px; font-size: 0.75rem; line-height: 1.2; z-index: 10;"></div>
-                    <div id="seat-block-3" style="position: absolute; bottom: 10px; right: 10px; padding: 10px; background: rgba(11,12,16,0.85); border: 1px solid rgba(102,252,241,0.4); border-radius: 4px; min-width: 120px; font-size: 0.75rem; line-height: 1.2; z-index: 10;"></div>
-                    <div id="seat-block-4" style="position: absolute; bottom: 10px; left: 10px; padding: 10px; background: rgba(11,12,16,0.85); border: 1px solid rgba(102,252,241,0.4); border-radius: 4px; min-width: 120px; font-size: 0.75rem; line-height: 1.2; z-index: 10;"></div>
+                    <div id="seat-block-1" style="position: absolute; top: 10px; left: 10px; padding: 6px 14px; background: rgba(11,12,16,0.85); border: 1px solid rgba(102,252,241,0.2); border-radius: 4px; font-size: 0.85rem; z-index: 10; display: flex; gap: 8px; align-items: center; white-space: nowrap;"></div>
+                    <div id="seat-block-2" style="position: absolute; top: 10px; right: 10px; padding: 6px 14px; background: rgba(11,12,16,0.85); border: 1px solid rgba(102,252,241,0.2); border-radius: 4px; font-size: 0.85rem; z-index: 10; display: flex; gap: 8px; align-items: center; white-space: nowrap;"></div>
+                    <div id="seat-block-3" style="position: absolute; bottom: 10px; right: 10px; padding: 6px 14px; background: rgba(11,12,16,0.85); border: 1px solid rgba(102,252,241,0.2); border-radius: 4px; font-size: 0.85rem; z-index: 10; display: flex; gap: 8px; align-items: center; white-space: nowrap;"></div>
+                    <div id="seat-block-4" style="position: absolute; bottom: 10px; left: 10px; padding: 6px 14px; background: rgba(11,12,16,0.85); border: 1px solid rgba(102,252,241,0.2); border-radius: 4px; font-size: 0.85rem; z-index: 10; display: flex; gap: 8px; align-items: center; white-space: nowrap;"></div>
 
                     <div id="table-status-header" style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #66fcf1; font-size: 0.9rem; letter-spacing: 1px; text-transform: uppercase; z-index: 10; font-weight: bold; background: rgba(0,0,0,0.6); padding: 4px 12px; border-radius: 20px;">
                         Room: <span id="display-room-code" style="color: #fff;">----</span> | Turn: <span id="display-active-turn">-</span>
                     </div>
 
                     <div id="domino-track-canvas" style="position: absolute; left: ${(BOUNDS_LEFT/BG_NATIVE_WIDTH)*100}%; top: ${(BOUNDS_TOP/BG_NATIVE_HEIGHT)*100}%; width: ${((BOUNDS_RIGHT - BOUNDS_LEFT)/BG_NATIVE_WIDTH)*100}%; height: ${((BOUNDS_BOTTOM - BOUNDS_TOP)/BG_NATIVE_HEIGHT)*100}%;">
-                        <div id="empty-track-message" style="position: absolute; width: 100%; top: 20%; text-align: center; color: rgba(197, 198, 199, 0.6); font-size: 0.8rem; letter-spacing: 1px;">BOARD IS EMPTY - CLICK CONTAINER BOUNDS TO INITIATE INITIAL DROP</div>
                         
                         <div id="left-play-zone" style="display: none; position: absolute; left: 0; top: 0; width: 15%; height: 100%; background: rgba(102, 252, 241, 0.12); justify-content: center; align-items: center; z-index: 20; color: #66fcf1; font-weight: bold; font-size: 0.75rem; border-right: 2px dashed #66fcf1; cursor: pointer;">PLAY LEFT</div>
                         <div id="right-play-zone" style="display: none; position: absolute; right: 0; top: 0; width: 15%; height: 100%; background: rgba(102, 252, 241, 0.12); justify-content: center; align-items: center; z-index: 20; color: #66fcf1; font-weight: bold; font-size: 0.75rem; border-left: 2px dashed #66fcf1; cursor: pointer;">PLAY RIGHT</div>
@@ -104,9 +102,9 @@ function renderLiveTable(boardLine) {
                         <div id="placed-tiles-container" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; display: flex; justify-content: center; align-items: center; gap: 6px;"></div>
                     </div>
 
-                    <div id="player-hand-container" style="position: absolute; left: 50%; top: 32%; transform: translate(-50%, -50%); width: 50%; height: 20%; display: flex; justify-content: center; align-items: center; gap: 8px; background: rgba(11, 40, 51, 0.3); border: 1px solid rgba(102, 252, 241, 0.15); border-radius: 6px; padding: 5px; box-sizing: border-box; z-index: 15;"></div>
+                    <div id="player-hand-container" style="position: absolute; left: 50%; top: 66%; transform: translate(-50%, -50%); width: 48%; height: 14%; display: flex; justify-content: center; align-items: center; gap: 8px; background: rgba(11, 40, 51, 0.4); border: 2px solid #66fcf1; box-shadow: 0 0 20px rgba(102,252,241,0.4); border-radius: 6px; padding: 5px; box-sizing: border-box; z-index: 999;"></div>
 
-                    <div id="turn-alert-message" style="position: absolute; top: 43%; left: 50%; transform: translateX(-50%); color: #ff4a4a; font-weight: bold; font-size: 0.8rem; background: rgba(0,0,0,0.85); padding: 5px 15px; border-radius: 4px; border: 1px solid #ff4a4a; display: none; z-index: 25;"></div>
+                    <div id="turn-alert-message" style="position: absolute; top: 76%; left: 50%; transform: translateX(-50%); color: #ff4a4a; font-weight: bold; font-size: 0.8rem; background: rgba(0,0,0,0.85); padding: 5px 15px; border-radius: 4px; border: 1px solid #ff4a4a; display: none; z-index: 25;"></div>
 
                 </div>
             </div>
@@ -134,7 +132,6 @@ function renderLiveTable(boardLine) {
     }
 
     const trackContainer = document.getElementById("placed-tiles-container");
-    const emptyMsg = document.getElementById("empty-track-message");
     const handContainer = document.getElementById("player-hand-container");
     const leftZone = document.getElementById("left-play-zone");
     const rightZone = document.getElementById("right-play-zone");
@@ -162,13 +159,11 @@ function renderLiveTable(boardLine) {
 
     // 1. Draw Placed Bones inside the Inner Neon Tracking Bounds
     if (boardLine && boardLine.length > 0) {
-        if (emptyMsg) emptyMsg.style.display = "none";
-        
         boardLine.forEach(tile => {
             const placedTile = document.createElement("div");
             placedTile.className = "domino-bone-interactive";
             placedTile.style.cursor = "default";
-            placedTile.style.transform = "rotate(90deg) scale(0.75)"; 
+            placedTile.style.transform = "rotate(90deg) scale(0.72)"; 
             
             placedTile.innerHTML = `
                 ${generateHalfDisplay(tile.displayTop)}
@@ -177,11 +172,9 @@ function renderLiveTable(boardLine) {
             `;
             trackContainer.appendChild(placedTile);
         });
-    } else {
-        if (emptyMsg) emptyMsg.style.display = "block";
     }
 
-    // 2. Draw Local Player's Tray Centered Directly Above Logo Matrix
+    // 2. Draw Local Player's Tray inside the centered container box
     if (playerSeatNumber && localGameState.players) {
         const targetKey = `player${playerSeatNumber}`;
         const playerObj = localGameState.players[targetKey];
@@ -191,12 +184,12 @@ function renderLiveTable(boardLine) {
                 const tileElement = document.createElement("div");
                 tileElement.className = "domino-bone-interactive";
                 tileElement.id = `hand-tile-${tile.id}`;
-                tileElement.style.transform = "scale(0.85)";
+                tileElement.style.transform = "scale(0.82)";
                 
                 if (selectedTileId === tile.id) {
-                    tileElement.style.transform = "translateY(-10px) scale(0.9)";
+                    tileElement.style.transform = "translateY(-12px) scale(0.88)";
                     tileElement.style.borderColor = "#66fcf1";
-                    tileElement.style.boxShadow = "0 0 10px #66fcf1";
+                    tileElement.style.boxShadow = "0 0 12px #66fcf1";
                     
                     if (localGameState.active_turn === playerSeatNumber) {
                         displayValidPlacements(tile);
@@ -204,10 +197,10 @@ function renderLiveTable(boardLine) {
                 }
 
                 tileElement.onmouseenter = () => {
-                    if (selectedTileId !== tile.id) tileElement.style.transform = "translateY(-5px) scale(0.88)";
+                    if (selectedTileId !== tile.id) tileElement.style.transform = "translateY(-6px) scale(0.85)";
                 };
                 tileElement.onmouseleave = () => {
-                    if (selectedTileId !== tile.id) tileElement.style.transform = "translateY(0) scale(0.85)";
+                    if (selectedTileId !== tile.id) tileElement.style.transform = "translateY(0) scale(0.82)";
                 };
                 
                 tileElement.innerHTML = `
@@ -246,34 +239,37 @@ function updateCornerSeatBlocks() {
             continue;
         }
 
-        block.style.display = "block";
+        block.style.display = "flex";
         
+        // Active turns keep dark text readability with a clear, pulsing neon border box
         if (localGameState.active_turn === i && localGameState.game_state === 'playing') {
-            block.style.backgroundColor = "rgba(102, 252, 241, 0.15)";
+            block.style.backgroundColor = "rgba(11, 12, 16, 0.95)";
             block.style.borderColor = "#66fcf1";
+            block.style.boxShadow = "0 0 15px rgba(102, 252, 241, 0.5)";
         } else {
             block.style.backgroundColor = "rgba(11, 12, 16, 0.85)";
-            block.style.borderColor = (player.name === "Waiting..." || player.name === "Not In Use") ? "rgba(255,255,255,0.08)" : "rgba(102, 252, 241, 0.3)";
+            block.style.borderColor = (player.name === "Waiting..." || player.name === "Not In Use") ? "rgba(255,255,255,0.05)" : "rgba(102, 252, 241, 0.2)";
+            block.style.boxShadow = "none";
         }
 
-        const roleStr = (i === 1) ? "Table Host" : `Player ${i}`;
+        const roleStr = (i === 1) ? "Host" : `P${i}`;
         const displayLabel = (player.name === "Table Host" || player.name === `Player ${i}`) ? roleStr : `${player.name}`;
 
-        const tileCount = (player.hand) ? player.hand.length : 0;
-        const capacityStr = (player.name === "Waiting..." || player.name === "Not In Use") ? "" : `<div style="color: #fff; margin-top: 1px;">Bones: <strong>${tileCount}</strong></div>`;
-
-        let healthTag = `<span style="color: #66fcf1; font-weight: bold;">Active</span>`;
+        // Entire dataset formatted cleanly onto ONE SINGLE horizontal line string row
         if (player.name === "Waiting...") {
-            healthTag = `<span style="color: #999; font-style: italic;">Lobby...</span>`;
+            block.innerHTML = `<span style="color: #66fcf1; font-weight: bold;">${roleStr}</span> <span style="color: rgba(255,255,255,0.15); margin: 0 4px;">|</span> <span style="color: #666; font-style: italic;">Lobby...</span>`;
         } else if (player.name === "Not In Use") {
-            healthTag = `<span style="color: #444;">Empty</span>`;
+            block.innerHTML = `<span style="color: #444; font-weight: bold;">${roleStr}</span> <span style="color: rgba(255,255,255,0.15); margin: 0 4px;">|</span> <span style="color: #444;">Empty</span>`;
+        } else {
+            const tileCount = (player.hand) ? player.hand.length : 0;
+            block.innerHTML = `
+                <strong style="color: #66fcf1; max-width: 120px; overflow: hidden; text-overflow: ellipsis;">${displayLabel}</strong>
+                <span style="color: rgba(255,255,255,0.15); margin: 0 3px;">|</span>
+                <span style="color: #fff; font-weight: 500;">Bones: ${tileCount}</span>
+                <span style="color: rgba(255,255,255,0.15); margin: 0 3px;">|</span>
+                <span style="color: #66fcf1; font-weight: bold;">Active</span>
+            `;
         }
-
-        block.innerHTML = `
-            <div style="font-weight: bold; color: #66fcf1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px;">${displayLabel}</div>
-            ${capacityStr}
-            <div style="font-size: 0.65rem; margin-top: 2px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 2px;">${healthTag}</div>
-        `;
     }
 }
 
