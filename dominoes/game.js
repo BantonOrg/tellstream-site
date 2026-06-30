@@ -137,7 +137,9 @@ function renderLiveTable(boardLine) {
             const placedTile = document.createElement("div");
             placedTile.className = "domino-bone-interactive";
             placedTile.style.cursor = "default";
-            placedTile.style.transform = "rotate(90deg) scale(0.68)"; 
+            
+            // FIX 1: Boosted scale to 1.02 (exactly 50% bigger than 0.68)
+            placedTile.style.transform = "rotate(90deg) scale(1.02)"; 
             
             placedTile.innerHTML = `
                 ${generateHalfDisplay(tile.displayTop)}
@@ -301,12 +303,15 @@ function processTilePlacement(targetSide) {
         chosenTile.displayBottom = chosenTile.bottom;
         updatedBoardLine.push(chosenTile);
     } 
+    // FIX 2: Added matching values flip logic so matching numbers always touch ("kiss")
     else if (targetSide === 'left') {
         const openLeft = updatedBoardLine[0].displayTop;
         if (chosenTile.bottom === openLeft) {
+            // Already orientated right way round (Top value remains exposed on left edge)
             chosenTile.displayTop = chosenTile.top;
             chosenTile.displayBottom = chosenTile.bottom;
         } else if (chosenTile.top === openLeft) {
+            // Flip it: Bottom value becomes the outer exposed left edge
             chosenTile.displayTop = chosenTile.bottom;
             chosenTile.displayBottom = chosenTile.top;
         } else return;
@@ -315,9 +320,11 @@ function processTilePlacement(targetSide) {
     else if (targetSide === 'right') {
         const openRight = updatedBoardLine[updatedBoardLine.length - 1].displayBottom;
         if (chosenTile.top === openRight) {
+            // Already orientated right way round (Bottom value remains exposed on right edge)
             chosenTile.displayTop = chosenTile.top;
             chosenTile.displayBottom = chosenTile.bottom;
         } else if (chosenTile.bottom === openRight) {
+            // Flip it: Top value becomes the outer exposed right edge
             chosenTile.displayTop = chosenTile.bottom;
             chosenTile.displayBottom = chosenTile.top;
         } else return;
