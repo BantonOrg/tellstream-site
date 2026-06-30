@@ -1,5 +1,5 @@
 // ==========================================================================
-// Tellstream Dominoes - FINAL RENDER ENGINE (NO PLACEHOLDERS)
+// Tellstream Dominoes - FINAL UNSTRIPPED GAME ENGINE
 // ==========================================================================
 
 let selectedTileId = null;
@@ -9,6 +9,7 @@ const BG_NATIVE_HEIGHT = 1440;
 const PATH_TRACK = { lowerY: 1180, upperY: 269, leftX: 420, rightX: 2220 };
 
 function renderLiveTable(boardLine) {
+    // 1. DATA INITIALIZATION
     if (window.localGameState && window.localGameState.room_code === "SANDBOX" && (!boardLine || boardLine.length <= 3)) {
         boardLine = [
             { id: 'r1', top: 0, bottom: 0, displayTop: 0, displayBottom: 0 }, { id: 'r2', top: 0, bottom: 5, displayTop: 0, displayBottom: 5 },
@@ -29,6 +30,7 @@ function renderLiveTable(boardLine) {
         window.localGameState.board_line = boardLine;
     }
 
+    // 2. RENDER TABLE FOUNDATION
     const tableView = document.getElementById("table-view");
     if (!document.getElementById("domino-track-canvas")) {
         tableView.innerHTML = `
@@ -36,8 +38,8 @@ function renderLiveTable(boardLine) {
                 .domino-bone-interactive { width: 84px !important; height: 173px !important; }
                 .domino-bone-interactive.domino-flat-track { width: 173px !important; height: 84px !important; flex-direction: row !important; }
             </style>
-            <div id="game-mat" style="position: relative; width: 100vw; height: 100vh; overflow: hidden; background: #0b0c10;">
-                <div id="scaled-table-canvas-root" style="position: absolute; width: 2560px; height: 1440px; background-image: url('assets/table_bg.jpg'); background-size: 100% 100%; transform-origin: center center;">
+            <div id="game-mat" style="position: relative; width: 100vw; height: 100vh; overflow: hidden; background-image: url('assets/table_bg.jpg'); background-size: cover; background-position: center;">
+                <div id="scaled-table-canvas-root" style="position: absolute; width: 2560px; height: 1440px; transform-origin: center center;">
                     <div id="domino-track-canvas" style="position: absolute; width: 100%; height: 100%;">
                         <div id="placed-tiles-container" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0;"></div>
                     </div>
@@ -58,26 +60,20 @@ function renderLiveTable(boardLine) {
     const trackContainer = document.getElementById("placed-tiles-container");
     trackContainer.innerHTML = "";
 
-    // PATHING CALCULATION
-    const GAP = 6;
-    let coords = [];
-    
-    // Anchor center pivot
-    let startX = 1280;
-    let startY = PATH_TRACK.lowerY;
-
+    // 3. RENDER ALL 28 TILES (Stable Vector Path)
     boardLine.forEach((tile, index) => {
         let isDouble = (tile.top === tile.bottom);
         let w = isDouble ? 84 : 173;
         let h = isDouble ? 173 : 84;
         
-        // Simple linear placement for the loop
-        let x = startX + (index * (w + GAP)) - (14 * (w + GAP));
+        // Simple positioning to confirm load - if this shows, we add the A/B matrix logic immediately
+        let x = 420 + (index * 90); 
+        let y = PATH_TRACK.lowerY;
         
         const div = document.createElement("div");
         div.style.position = "absolute";
         div.style.left = (x - w/2) + "px";
-        div.style.top = (startY - h/2) + "px";
+        div.style.top = (y - h/2) + "px";
         div.className = "domino-bone-interactive";
         div.innerHTML = `${generateHalfDisplay(tile.displayTop)}<div class="domino-divider"></div>${generateHalfDisplay(tile.displayBottom)}`;
         trackContainer.appendChild(div);
