@@ -67,14 +67,6 @@ function renderLiveTable(boardLine) {
     }
 
     // --- PHASE 2: MATCH LAUNCHED & ACTIVE PLAY ---
-    // Handle late auto-assignment tracking variable for non-host player
-    if (playerSeatNumber !== 1 && localGameState && localGameState.players && localGameState.players.player2) {
-        const localSavedName = window.sessionStorage.setItem("tellstream_player_identity");
-        if (localGameState.players.player2.name === localSavedName) {
-            playerSeatNumber = 2;
-        }
-    }
-
     // Check if we need to initialize the core structural layout frame inside the view
     let mat = document.getElementById("game-mat");
     if (!mat || !document.getElementById("domino-track-canvas")) {
@@ -82,18 +74,20 @@ function renderLiveTable(boardLine) {
             <div id="game-mat" style="position: relative; width: 100%; height: 100vh; background: #0b0c10; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 20px; box-sizing: border-box;">
                 
                 <div id="table-status-header" style="color: #66fcf1; font-family: sans-serif; font-size: 1.2rem; letter-spacing: 2px; text-transform: uppercase; margin-top: 10px;">
-                    Room Code: <span id="display-room-code" style="color: #fff; font-weight: bold;">----</span> | Turn: Player <span id="display-active-turn">-</span>
+                    Room Code: <span id="display-room-code" style="color: #fff; font-weight: bold;">----</span> | Turn: <span id="display-active-turn">-</span>
                 </div>
 
                 <div id="domino-track-canvas" style="position: relative; width: 85%; height: 58vh; border: 4px solid #66fcf1; box-shadow: 0 0 20px #66fcf1; background: radial-gradient(circle, #1f2833 0%, #0b0c10 100%); border-radius: 12px; display: flex; justify-content: center; align-items: center; cursor: pointer;">
                     <div id="empty-track-message" style="color: #c5c6c7; font-family: sans-serif; font-size: 1.1rem; letter-spacing: 1px;">BOARD IS EMPTY - CLICK HERE TO MAKE INITIAL DROP</div>
                     
+                    <!-- Left and Right Play Zones to handle direction selections -->
                     <div id="left-play-zone" style="display: none; position: absolute; left: 0; width: 25%; height: 100%; background: rgba(102, 252, 241, 0.08); justify-content: center; align-items: center; z-index: 5; color: #66fcf1; font-weight: bold; border-right: 2px dashed #66fcf1;">PLAY LEFT</div>
                     <div id="right-play-zone" style="display: none; position: absolute; right: 0; width: 25%; height: 100%; background: rgba(102, 252, 241, 0.08); justify-content: center; align-items: center; z-index: 5; color: #66fcf1; font-weight: bold; border-left: 2px dashed #66fcf1;">PLAY RIGHT</div>
 
                     <div id="placed-tiles-container" style="position: absolute; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; gap: 10px; overflow-x: auto; padding: 0 40px; box-sizing: border-box;"></div>
                 </div>
 
+                <!-- Pass action tray container -->
                 <div id="action-control-bar" style="margin-bottom: 5px;">
                     <button id="pass-turn-btn" class="lobby-btn" style="padding: 8px 20px; font-size: 1rem; display: none;">Pass Turn (No Playable Bones)</button>
                 </div>
