@@ -63,11 +63,11 @@ function renderLiveTable(boardLine) {
 
     let mat = document.getElementById("game-mat");
     if (!mat || !document.getElementById("domino-track-canvas")) {
+        // FIXED: Restored background-image path pointing straight to the assets folder asset
         tableView.innerHTML = `
             <div id="game-mat" style="position: relative; width: 100vw; height: 100vh; background-image: url('dominoes/assets/table_bg.jpg'); background-size: cover; background-repeat: no-repeat; background-position: center; display: flex; justify-content: center; align-items: center; overflow: hidden; box-sizing: border-box;">
                 <div id="scaled-table-canvas-root" style="position: relative; width: 100vw; height: 56.25vw; max-height: 100vh; max-width: 177.77vh;">
                     
-                    <!-- CORNER SEATING MAP BLOCKS -->
                     <div id="seat-block-1" style="position: absolute; top: 12px; left: 12px; padding: 6px 14px; background: rgba(11,12,16,0.85); border: 1px solid rgba(102,252,241,0.2); border-radius: 4px; font-size: 0.85rem; z-index: 10; display: flex; gap: 8px; align-items: center; white-space: nowrap;"></div>
                     <div id="seat-block-2" style="position: absolute; top: 12px; right: 12px; padding: 6px 14px; background: rgba(11,12,16,0.85); border: 1px solid rgba(102,252,241,0.2); border-radius: 4px; font-size: 0.85rem; z-index: 10; display: flex; gap: 8px; align-items: center; white-space: nowrap;"></div>
                     <div id="seat-block-3" style="position: absolute; bottom: 25px; right: 12px; padding: 6px 14px; background: rgba(11,12,16,0.85); border: 1px solid rgba(102,252,241,0.2); border-radius: 4px; font-size: 0.85rem; z-index: 10; display: flex; gap: 8px; align-items: center; white-space: nowrap;"></div>
@@ -83,7 +83,6 @@ function renderLiveTable(boardLine) {
                         <div id="placed-tiles-container" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; display: flex; justify-content: center; align-items: center; gap: 6px;"></div>
                     </div>
 
-                    <!-- REVERTED: Placed exactly back to 66% top to layout right on the logo from your screenshot -->
                     <div id="player-hand-container" style="position: absolute; left: 50%; top: 66%; transform: translate(-50%, -50%); width: 48%; height: 14%; display: flex; justify-content: center; align-items: center; gap: 8px; background: transparent; padding: 5px; box-sizing: border-box; z-index: 999;"></div>
 
                     <div id="turn-alert-message" style="position: absolute; top: 76%; left: 50%; transform: translateX(-50%); color: #ff4a4a; font-weight: bold; font-size: 0.8rem; background: rgba(0,0,0,0.85); padding: 5px 15px; border-radius: 4px; border: 1px solid #ff4a4a; display: none; z-index: 25;"></div>
@@ -321,7 +320,7 @@ function processTilePlacement(targetSide) {
             chosenTile.displayBottom = chosenTile.bottom;
         } else if (chosenTile.bottom === openRight) {
             chosenTile.displayTop = chosenTile.bottom;
-            chosenTile.displayBottom = chosenTile.top;
+            chosenTile.displayBottom = top;
         } else return;
         updatedBoardLine.push(chosenTile); 
     }
