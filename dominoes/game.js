@@ -34,7 +34,7 @@ function renderLiveTable(boardLine) {
                     <div id="domino-track-canvas" style="position: absolute; left: ${(BOUNDS_LEFT/BG_NATIVE_WIDTH)*100}%; top: ${(BOUNDS_TOP/BG_NATIVE_HEIGHT)*100}%; width: ${((BOUNDS_RIGHT - BOUNDS_LEFT)/BG_NATIVE_WIDTH)*100}%; height: ${((BOUNDS_BOTTOM - BOUNDS_TOP)/BG_NATIVE_HEIGHT)*100}%;">
                         <div id="left-play-zone" style="display: none; position: absolute; left: 0; top: 0; width: 15%; height: 100%; background: rgba(102, 252, 241, 0.12); justify-content: center; align-items: center; z-index: 20; color: #66fcf1; font-weight: bold; font-size: 0.75rem; border-right: 2px dashed #66fcf1; cursor: pointer;">PLAY LEFT</div>
                         <div id="right-play-zone" style="display: none; position: absolute; right: 0; top: 0; width: 15%; height: 100%; background: rgba(102, 252, 241, 0.12); justify-content: center; align-items: center; z-index: 20; color: #66fcf1; font-weight: bold; font-size: 0.75rem; border-left: 2px dashed #66fcf1; cursor: pointer;">PLAY RIGHT</div>
-                        <div id="placed-tiles-container" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; display: flex; justify-content: center; align-items: center; gap: 8px;"></div>
+                        <div id="placed-tiles-container" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0;"></div>
                     </div>
 
                     <div id="player-hand-container" style="position: absolute; left: 50%; top: 82%; transform: translate(-50%, -50%); width: 65%; height: 16%; display: flex; justify-content: center; align-items: center; gap: 16px; background: transparent; padding: 5px; box-sizing: border-box; z-index: 999; filter: drop-shadow(0px 12px 18px rgba(0, 0, 0, 0.95));"></div>
@@ -64,34 +64,110 @@ function renderLiveTable(boardLine) {
     if (leftZone) leftZone.style.display = "none";
     if (rightZone) rightZone.style.display = "none";
 
-    // 1. RENDER PLAYED TRACK
+    // ==========================================================================
+    // NATIVE PERIMETER WRAPPING SYSTEM (STARTING BOTTOM CENTER)
+    // ==========================================================================
     if (boardLine && boardLine.length > 0) {
-        boardLine.forEach(tile => {
+        const trackCanvas = document.getElementById("domino-track-canvas");
+        const canvasWidth = trackCanvas.clientWidth;
+        const canvasHeight = trackCanvas.clientHeight;
+
+        // Find the index of your down-bone spinner (e.g. 6:6)
+        let initialIndex = boardLine.findIndex(tile => tile.top === tile.bottom);
+        if (initialIndex === -1) initialIndex = 0;
+
+        // Pre-calculate dimensional layout offsets for every bone along the line
+        let calculatedCoordinates = new Array(boardLine.length);
+
+        // 1. Establish the down-bone anchor exactly at Bottom Center
+        let startW = (boardLine[initialIndex].top === boardLine[initialIndex].bottom) ? 58 : 119;
+        let startH = (boardLine[initialIndex].top === boardLine[initialIndex].bottom) ? 119 : 58;
+        
+        calculatedCoordinates[initialIndex] = {
+            x: (canvasWidth / 2) - (startW / 2),
+            y: canvasHeight - startH,
+            isRotated: (boardLine[initialIndex].top === boardLine[initialIndex].bottom) ? false : true
+        };
+
+        // 2. Track left chain layout extensions wrapping clockwise
+        for (let i = initialIndex - 1; i >= 0; i--) {
+            let nextTile = boardLine[i];
+            let prevCoords = calculatedCoordinates[i + 1];
+            let isDouble = nextTile.top === nextTile.bottom;
+            let tileW = isDouble ? 58 : 119;
+            let tileH = isDouble ? 119 : 58;
+
+            let nextX = prevCoords.x - tileW - 6; // clean 6px spacing gap
+            let nextY = prevCoords.y;
+            let forceVertical = false;
+
+            // Turn corner up the left edge
+            if (nextX < 20) {
+                forceVertical = true;
+                tileW = isDouble ? 119 : 58;
+                tileH = isDouble ? 58 : 119;
+                nextX = 20;
+                nextY = prevCoords.y - tileH - 6;
+            }
+
+            calculatedCoordinates[i] = { x: nextX, y: nextY, isRotated: !forceVertical ? !isDouble : isDouble };
+        }
+
+        // 3. Track right chain layout extensions wrapping counter-clockwise
+        for (let i = initialIndex + 1; i < boardLine.length; i++) {
+            let nextTile = boardLine[i];
+            let prevCoords = calculatedCoordinates[i - 1];
+            let isDouble = nextTile.top === nextTile.bottom;
+            let tileW = isDouble ? 58 : 119;
+            let tileH = isDouble ? 119 : 58;
+
+            let currentTileWidth = (boardLine[i-1].top === boardLine[i-1].bottom) ? 58 : 119;
+            let nextX = prevCoords.x + currentTileWidth + 6;
+            let nextY = prevCoords.y;
+            let forceVertical = false;
+
+            // Turn corner up the right edge
+            if (nextX + tileW > canvasWidth - 20) {
+                forceVertical = true;
+                tileW = isDouble ? 119 : 58;
+                tileH = isDouble ? 58 : 119;
+                nextX = canvasWidth - tileW - 20;
+                nextY = prevCoords.y - tileH - 6;
+            }
+
+            calculatedCoordinates[i] = { x: nextX, y: nextY, isRotated: !forceVertical ? !isDouble : isDouble };
+        }
+
+        // 4. Draw absolute placed track tiles with exact coordinates 
+        boardLine.forEach((tile, index) => {
+            const coords = calculatedCoordinates[index];
             const placedTile = document.createElement("div");
+            placedTile.style.position = "absolute";
+            placedTile.style.left = `${coords.x}px`;
+            placedTile.style.top = `${coords.y}px`;
             placedTile.style.cursor = "default";
-            placedTile.style.flexShrink = "0";
-            
-            if (tile.top === tile.bottom) {
+            placedTile.style.margin = "0";
+
+            if (!coords.isRotated) {
                 placedTile.className = "domino-bone-interactive";
                 placedTile.innerHTML = `
                     ${generateHalfDisplay(tile.displayTop, false)}
-                    <div style="width: 100%; height: 2px; background: #1a1a1a; flex-shrink: 0; position: relative;" class="domino-divider-horizontal"></div>
+                    <div style="width: 100%; height: 2px; background: #1a1a1a; flex-shrink: 0;" class="domino-divider-horizontal"></div>
                     ${generateHalfDisplay(tile.displayBottom, false)}
                 `;
             } else {
                 placedTile.className = "domino-bone-interactive domino-flat-track";
                 placedTile.innerHTML = `
                     ${generateHalfDisplay(tile.displayTop, true)}
-                    <div style="width: 2px; height: 100%; background: #1a1a1a; flex-shrink: 0; position: relative;" class="domino-divider"></div>
+                    <div style="width: 2px; height: 100%; background: #1a1a1a; flex-shrink: 0;" class="domino-divider"></div>
                     ${generateHalfDisplay(tile.displayBottom, true)}
                 `;
             }
-            
             trackContainer.appendChild(placedTile);
         });
     }
 
-    // 2. RENDER PLAYER HAND (READS THE UNIFIED WINDOW SCOPE DECK SAFELY)
+    // 2. RENDER PLAYER HAND
     if (window.localGameState && window.localGameState.players && window.localGameState.players.player1) {
         const hand = window.localGameState.players.player1.hand || [];
         hand.forEach(tile => {
