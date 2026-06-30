@@ -83,9 +83,9 @@ function renderLiveTable(boardLine) {
                         <div id="placed-tiles-container" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; display: flex; justify-content: center; align-items: center; gap: 6px;"></div>
                     </div>
 
-                    <div id="player-hand-container" style="position: absolute; left: 50%; top: 66%; transform: translate(-50%, -50%); width: 48%; height: 14%; display: flex; justify-content: center; align-items: center; gap: 8px; background: transparent; padding: 5px; box-sizing: border-box; z-index: 999;"></div>
+                    <div id="player-hand-container" style="position: absolute; left: 50%; top: 55%; transform: translate(-50%, -50%); width: 48%; height: 14%; display: flex; justify-content: center; align-items: center; gap: 8px; background: transparent; padding: 5px; box-sizing: border-box; z-index: 999;"></div>
 
-                    <div id="turn-alert-message" style="position: absolute; top: 76%; left: 50%; transform: translateX(-50%); color: #ff4a4a; font-weight: bold; font-size: 0.8rem; background: rgba(0,0,0,0.85); padding: 5px 15px; border-radius: 4px; border: 1px solid #ff4a4a; display: none; z-index: 25;"></div>
+                    <div id="turn-alert-message" style="position: absolute; top: 65%; left: 50%; transform: translateX(-50%); color: #ff4a4a; font-weight: bold; font-size: 0.8rem; background: rgba(0,0,0,0.85); padding: 5px 15px; border-radius: 4px; border: 1px solid #ff4a4a; display: none; z-index: 25;"></div>
                 </div>
             </div>
         `;
