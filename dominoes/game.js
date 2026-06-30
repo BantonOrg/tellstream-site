@@ -325,14 +325,15 @@ function updateCornerSeatBlocks() {
 }
 
 function generateHalfDisplay(value, isHorizontal = false) {
+    // CORRECTED PIP MAP: Forces structural rotation for flat tiles
     const pipMaps = {
         0: [],
         1: [4],
-        2: isHorizontal ? [3, 7] : [1, 7],
-        3: isHorizontal ? [3, 4, 7] : [1, 4, 7],
+        2: isHorizontal ? [6, 2] : [1, 7],
+        3: isHorizontal ? [6, 4, 2] : [1, 4, 7],
         4: [1, 2, 6, 7],
         5: [1, 2, 4, 6, 7],
-        6: isHorizontal ? [1, 2, 3, 5, 6, 7] : [1, 2, 3, 5, 6, 7]
+        6: isHorizontal ? [1, 8, 2, 6, 9, 7] : [1, 2, 3, 5, 6, 7]
     };
     
     const activePips = pipMaps[value] || [];
