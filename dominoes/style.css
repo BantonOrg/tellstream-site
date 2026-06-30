@@ -148,8 +148,8 @@ html, body {
     position: relative;
 }
 
-/* FIXED EXPLICIT HELPER: Force standard table bones flat horizontally without layout warping */
-.domino-bone-interactive.horizontal-bone {
+/* NEW FRESH CLASS: Forces the browser to load horizontal track layout styles cleanly */
+.domino-bone-interactive.domino-flat-track {
     width: 119px !important;
     height: 58px !important;
     flex-direction: row !important;
