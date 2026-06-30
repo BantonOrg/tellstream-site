@@ -22,6 +22,7 @@ function renderLiveTable(boardLine) {
             <div id="game-mat" style="position: relative; width: 100vw; height: 100vh; background-image: url('assets/table_bg.jpg'); background-size: cover; background-repeat: no-repeat; background-position: center; display: flex; justify-content: center; align-items: center; overflow: hidden; box-sizing: border-box;">
                 <div id="scaled-table-canvas-root" style="position: relative; width: 100vw; height: 56.25vw; max-height: 100vh; max-width: 177.77vh;">
                     
+                    <!-- CORNER SEATING MAP BLOCKS -->
                     <div id="seat-block-1" style="position: absolute; top: 12px; left: 12px; padding: 6px 14px; background: rgba(11,12,16,0.85); border: 1px solid rgba(102,252,241,0.2); border-radius: 4px; font-size: 0.85rem; z-index: 10; display: flex; gap: 8px; align-items: center; white-space: nowrap;"></div>
                     <div id="seat-block-2" style="position: absolute; top: 12px; right: 12px; padding: 6px 14px; background: rgba(11,12,16,0.85); border: 1px solid rgba(102,252,241,0.2); border-radius: 4px; font-size: 0.85rem; z-index: 10; display: flex; gap: 8px; align-items: center; white-space: nowrap;"></div>
                     <div id="seat-block-3" style="position: absolute; bottom: 25px; right: 12px; padding: 6px 14px; background: rgba(11,12,16,0.85); border: 1px solid rgba(102,252,241,0.2); border-radius: 4px; font-size: 0.85rem; z-index: 10; display: flex; gap: 8px; align-items: center; white-space: nowrap;"></div>
@@ -64,7 +65,7 @@ function renderLiveTable(boardLine) {
     if (leftZone) leftZone.style.display = "none";
     if (rightZone) rightZone.style.display = "none";
 
-    // 1. RENDER PLAYED TRACK (MAPPED TO THE NEW .domino-flat-track OVERRIDE CLASS)
+    // 1. RENDER PLAYED TRACK
     if (boardLine && boardLine.length > 0) {
         boardLine.forEach(tile => {
             const placedTile = document.createElement("div");
@@ -80,7 +81,7 @@ function renderLiveTable(boardLine) {
                     ${generateHalfDisplay(tile.displayBottom, false)}
                 `;
             } else {
-                // Standard bones use the brand new class to completely clear old CSS limits
+                // Standard bones use horizontal flat track layout styling
                 placedTile.className = "domino-bone-interactive domino-flat-track";
                 placedTile.innerHTML = `
                     ${generateHalfDisplay(tile.displayTop, true)}
@@ -93,7 +94,7 @@ function renderLiveTable(boardLine) {
         });
     }
 
-    // 2. RENDER PLAYER HAND SANDBOX DECK
+    // 2. RENDER PLAYER HAND
     if (localGameState && localGameState.players && localGameState.players.player1) {
         const hand = localGameState.players.player1.hand || [];
         hand.forEach(tile => {
@@ -185,9 +186,11 @@ function displayValidPlacements(tile) {
     const rightZone = document.getElementById("right-play-zone");
     if (!line || line.length === 0) return; 
 
+    // Explicitly grab the open numbers on the ends of the line
     const openLeft = line[0].displayTop;
     const openRight = line[line.length - 1].displayBottom;
 
+    // Strict value gate checks: Highlight zones ONLY if numbers match perfectly
     if (tile.top === openLeft || tile.bottom === openLeft) leftZone.style.display = "flex";
     if (tile.top === openRight || tile.bottom === openRight) rightZone.style.display = "flex";
 }
@@ -212,24 +215,38 @@ function processTilePlacement(targetSide) {
     } 
     else if (targetSide === 'left') {
         const openLeft = updatedBoardLine[0].displayTop;
+        
+        // STRICT LEFT CONNECTION VALUE MATCHING VALIDATION
         if (chosenTile.bottom === openLeft) {
+            // e.g. Open left is 5, bone bottom is 5 -> connects flat without turning layout values
             chosenTile.displayTop = chosenTile.top;
             chosenTile.displayBottom = chosenTile.bottom;
         } else if (chosenTile.top === openLeft) {
+            // e.g. Open left is 5, bone top is 5 -> flips internal orientation so 5 touches 5
             chosenTile.displayTop = chosenTile.bottom;
             chosenTile.displayBottom = chosenTile.top;
-        } else return;
+        } else {
+            console.warn("Illegal move blocked: Left target side mismatch.");
+            return; // Hard reject
+        }
         updatedBoardLine.unshift(chosenTile); 
     } 
     else if (targetSide === 'right') {
         const openRight = updatedBoardLine[updatedBoardLine.length - 1].displayBottom;
+        
+        // STRICT RIGHT CONNECTION VALUE MATCHING VALIDATION
         if (chosenTile.top === openRight) {
+            // e.g. Open right is 1, bone top is 1 -> connects straight flat row layout
             chosenTile.displayTop = chosenTile.top;
             chosenTile.displayBottom = chosenTile.bottom;
         } else if (chosenTile.bottom === openRight) {
+            // e.g. Open right is 1, bone bottom is 1 -> flips internal orientation so 1 touches 1
             chosenTile.displayTop = chosenTile.bottom;
             chosenTile.displayBottom = chosenTile.top;
-        } else return;
+        } else {
+            console.warn("Illegal move blocked: Right target side mismatch.");
+            return; // Hard reject
+        }
         updatedBoardLine.push(chosenTile); 
     }
 
