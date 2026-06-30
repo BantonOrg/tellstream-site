@@ -22,7 +22,6 @@ function renderLiveTable(boardLine) {
             <div id="game-mat" style="position: relative; width: 100vw; height: 100vh; background-image: url('assets/table_bg.jpg'); background-size: cover; background-repeat: no-repeat; background-position: center; display: flex; justify-content: center; align-items: center; overflow: hidden; box-sizing: border-box;">
                 <div id="scaled-table-canvas-root" style="position: relative; width: 100vw; height: 56.25vw; max-height: 100vh; max-width: 177.77vh;">
                     
-                    <!-- CORNER SEATING MAP BLOCKS -->
                     <div id="seat-block-1" style="position: absolute; top: 12px; left: 12px; padding: 6px 14px; background: rgba(11,12,16,0.85); border: 1px solid rgba(102,252,241,0.2); border-radius: 4px; font-size: 0.85rem; z-index: 10; display: flex; gap: 8px; align-items: center; white-space: nowrap;"></div>
                     <div id="seat-block-2" style="position: absolute; top: 12px; right: 12px; padding: 6px 14px; background: rgba(11,12,16,0.85); border: 1px solid rgba(102,252,241,0.2); border-radius: 4px; font-size: 0.85rem; z-index: 10; display: flex; gap: 8px; align-items: center; white-space: nowrap;"></div>
                     <div id="seat-block-3" style="position: absolute; bottom: 25px; right: 12px; padding: 6px 14px; background: rgba(11,12,16,0.85); border: 1px solid rgba(102,252,241,0.2); border-radius: 4px; font-size: 0.85rem; z-index: 10; display: flex; gap: 8px; align-items: center; white-space: nowrap;"></div>
@@ -38,7 +37,7 @@ function renderLiveTable(boardLine) {
                         <div id="placed-tiles-container" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; display: flex; justify-content: center; align-items: center; gap: 8px;"></div>
                     </div>
 
-                    <div id="player-hand-container" style="position: absolute; left: 50%; top: 49.5%; transform: translate(-50%, -50%); width: 65%; height: 16%; display: flex; justify-content: center; align-items: center; gap: 16px; background: transparent; padding: 5px; box-sizing: border-box; z-index: 999; filter: drop-shadow(0px 12px 18px rgba(0, 0, 0, 0.95));"></div>
+                    <div id="player-hand-container" style="position: absolute; left: 50%; top: 82%; transform: translate(-50%, -50%); width: 65%; height: 16%; display: flex; justify-content: center; align-items: center; gap: 16px; background: transparent; padding: 5px; box-sizing: border-box; z-index: 999; filter: drop-shadow(0px 12px 18px rgba(0, 0, 0, 0.95));"></div>
 
                     <div id="turn-alert-message" style="position: absolute; top: 59.5%; left: 50%; transform: translateX(-50%); color: #ff4a4a; font-weight: bold; font-size: 0.8rem; background: rgba(0,0,0,0.85); padding: 5px 15px; border-radius: 4px; border: 1px solid #ff4a4a; display: none; z-index: 25;"></div>
                 </div>
@@ -73,7 +72,6 @@ function renderLiveTable(boardLine) {
             placedTile.style.flexShrink = "0";
             
             if (tile.top === tile.bottom) {
-                // Doubles stand vertical natively
                 placedTile.className = "domino-bone-interactive";
                 placedTile.innerHTML = `
                     ${generateHalfDisplay(tile.displayTop, false)}
@@ -81,7 +79,6 @@ function renderLiveTable(boardLine) {
                     ${generateHalfDisplay(tile.displayBottom, false)}
                 `;
             } else {
-                // Standard bones use horizontal flat track layout styling
                 placedTile.className = "domino-bone-interactive domino-flat-track";
                 placedTile.innerHTML = `
                     ${generateHalfDisplay(tile.displayTop, true)}
@@ -94,9 +91,9 @@ function renderLiveTable(boardLine) {
         });
     }
 
-    // 2. RENDER PLAYER HAND
-    if (localGameState && localGameState.players && localGameState.players.player1) {
-        const hand = localGameState.players.player1.hand || [];
+    // 2. RENDER PLAYER HAND (READS THE UNIFIED WINDOW SCOPE DECK SAFELY)
+    if (window.localGameState && window.localGameState.players && window.localGameState.players.player1) {
+        const hand = window.localGameState.players.player1.hand || [];
         hand.forEach(tile => {
             const tileElement = document.createElement("div");
             tileElement.className = "domino-bone-interactive";
@@ -126,7 +123,7 @@ function renderLiveTable(boardLine) {
             tileElement.addEventListener("click", (e) => {
                 e.stopPropagation(); 
                 selectedTileId = (selectedTileId === tile.id) ? null : tile.id;
-                renderLiveTable(localGameState.board_line);
+                renderLiveTable(window.localGameState.board_line);
             });
 
             handContainer.appendChild(tileElement);
@@ -181,32 +178,30 @@ function generateHalfDisplay(value, isHorizontal = false) {
 }
 
 function displayValidPlacements(tile) {
-    const line = localGameState.board_line;
+    const line = window.localGameState.board_line;
     const leftZone = document.getElementById("left-play-zone");
     const rightZone = document.getElementById("right-play-zone");
     if (!line || line.length === 0) return; 
 
-    // Explicitly grab the open numbers on the ends of the line
     const openLeft = line[0].displayTop;
     const openRight = line[line.length - 1].displayBottom;
 
-    // Strict value gate checks: Highlight zones ONLY if numbers match perfectly
     if (tile.top === openLeft || tile.bottom === openLeft) leftZone.style.display = "flex";
     if (tile.top === openRight || tile.bottom === openRight) rightZone.style.display = "flex";
 }
 
 function handleBoardClick() {
-    const line = localGameState.board_line;
+    const line = window.localGameState.board_line;
     if (!line || line.length === 0) processTilePlacement('initial');
 }
 
 function processTilePlacement(targetSide) {
-    const playerHand = localGameState.players.player1.hand;
+    const playerHand = window.localGameState.players.player1.hand;
     const tileIndex = playerHand.findIndex(t => t.id === selectedTileId);
     if (tileIndex === -1) return;
     
     const chosenTile = playerHand[tileIndex];
-    let updatedBoardLine = [...localGameState.board_line];
+    let updatedBoardLine = [...window.localGameState.board_line];
 
     if (targetSide === 'initial') {
         chosenTile.displayTop = chosenTile.top;
@@ -216,44 +211,32 @@ function processTilePlacement(targetSide) {
     else if (targetSide === 'left') {
         const openLeft = updatedBoardLine[0].displayTop;
         
-        // STRICT LEFT CONNECTION VALUE MATCHING VALIDATION
         if (chosenTile.bottom === openLeft) {
-            // e.g. Open left is 5, bone bottom is 5 -> connects flat without turning layout values
             chosenTile.displayTop = chosenTile.top;
             chosenTile.displayBottom = chosenTile.bottom;
         } else if (chosenTile.top === openLeft) {
-            // e.g. Open left is 5, bone top is 5 -> flips internal orientation so 5 touches 5
             chosenTile.displayTop = chosenTile.bottom;
             chosenTile.displayBottom = chosenTile.top;
-        } else {
-            console.warn("Illegal move blocked: Left target side mismatch.");
-            return; // Hard reject
-        }
+        } else return;
         updatedBoardLine.unshift(chosenTile); 
     } 
     else if (targetSide === 'right') {
         const openRight = updatedBoardLine[updatedBoardLine.length - 1].displayBottom;
         
-        // STRICT RIGHT CONNECTION VALUE MATCHING VALIDATION
         if (chosenTile.top === openRight) {
-            // e.g. Open right is 1, bone top is 1 -> connects straight flat row layout
             chosenTile.displayTop = chosenTile.top;
             chosenTile.displayBottom = chosenTile.bottom;
         } else if (chosenTile.bottom === openRight) {
-            // e.g. Open right is 1, bone bottom is 1 -> flips internal orientation so 1 touches 1
             chosenTile.displayTop = chosenTile.bottom;
             chosenTile.displayBottom = chosenTile.top;
-        } else {
-            console.warn("Illegal move blocked: Right target side mismatch.");
-            return; // Hard reject
-        }
+        } else return;
         updatedBoardLine.push(chosenTile); 
     }
 
     playerHand.splice(tileIndex, 1);
-    localGameState.board_line = updatedBoardLine;
-    localGameState.players.player1.hand = playerHand;
+    window.localGameState.board_line = updatedBoardLine;
+    window.localGameState.players.player1.hand = playerHand;
     
     selectedTileId = null;
-    renderLiveTable(localGameState.board_line);
+    renderLiveTable(window.localGameState.board_line);
 }
