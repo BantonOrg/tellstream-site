@@ -12,13 +12,11 @@
     <meta property="og:type" content="website">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <div class="main-content">
-        
         <div class="header-container">
             <div class="header-cell cell-left">
                 <div class="tagline-wrapper">
@@ -39,7 +37,6 @@
         </div>
         
         <div class="columns-container">
-            
             <div class="col-3">
                 <div class="col-title">
                     <span>📘 Facebook Activity</span>
@@ -67,7 +64,6 @@
                     <div class="emoji-grid-list" id="quickEmojiList"></div>
                 </div>
             </div>
-
         </div>
     </div>
 
@@ -96,7 +92,6 @@
             <div class="chat-messages" id="chatBox"></div>
             
             <div id="noticeboard-view-panel">
-                
                 <div class="notice-column-box notice-box-boss">
                     <div class="notice-column-header"><span style="color:#ff3333">👑 Tella Boss Notices</span></div>
                     <div class="notice-cards-feed" id="feed-boss"></div>
@@ -107,7 +102,7 @@
                         </div>
                     </div>
                 </div>
-
+                
                 <div class="notice-column-box notice-box-selectors">
                     <div class="notice-column-header"><span style="color:#ffdd1a">🎧 Selector Audio Feed</span></div>
                     <div class="notice-cards-feed" id="feed-selectors"></div>
@@ -118,7 +113,7 @@
                         </div>
                     </div>
                 </div>
-
+                
                 <div class="notice-column-box notice-box-fambily">
                     <div class="notice-column-header"><span style="color:#22e532">💚 Fambily Column</span></div>
                     <div class="notice-cards-feed" id="feed-fambily"></div>
@@ -129,11 +124,9 @@
                         </div>
                     </div>
                 </div>
-
                 <div id="notice-footer-warning">YOU MUST BE REGISTERED TO COMMENT</div>
-
             </div>
-
+            
             <div class="chat-fs-help-panel">
                 <div class="col-title">💡 Chat help and emoji codes</div>
                 <div class="help-cards-wrapper-fs" id="helpCardsContainerFS" style="display:flex; flex-direction:column; gap:8px;"></div>
@@ -152,7 +145,6 @@
                 <input type="text" id="usernameInput" placeholder="Nickname" oninput="syncDrawerName()">
                 <button class="send-main-btn" id="sendBtn">Send</button>
             </div>
-            
             <button class="lock-toggle-btn" id="lockStatusBtn" onclick="toggleSecurityDrawer()" title="Secure/Verify identity handle">🔒</button>
             <textarea id="messageInput" placeholder="Type a message..." maxlength="120"></textarea>
         </div>
@@ -168,11 +160,22 @@
     <script src="/src/assets/emojis.js"></script>
     <script src="main.js"></script>
 
+    <!-- FIXED OBSERVER SCRIPT: Explicitly tracks login states and binds name data to localStorage for the domino app tab -->
     <script>
         const observer = new MutationObserver(() => {
-            // Check if user is either Banton or TellaSecurity
             const bodyText = document.body.innerText;
-            if (bodyText.includes("Welcome back Banton") || bodyText.includes("Welcome back TellaSecurity")) {
+            let activeUser = null;
+
+            if (bodyText.includes("Welcome back Banton")) {
+                activeUser = "Banton";
+            } else if (bodyText.includes("Welcome back TellaSecurity")) {
+                activeUser = "TellaSecurity";
+            }
+
+            if (activeUser) {
+                // Instantly lock active username into browser storage so dominoes app can read it
+                window.localStorage.setItem('tellstream_active_user', activeUser);
+                
                 const link = document.getElementById('banton-dominoes-link');
                 if (link && link.style.display === 'none') {
                     link.style.display = 'inline-block';
