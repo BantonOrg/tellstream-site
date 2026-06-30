@@ -69,7 +69,7 @@ function renderLiveTable(boardLine) {
     // --- PHASE 2: MATCH LAUNCHED & ACTIVE PLAY ---
     // Handle late auto-assignment tracking variable for non-host player
     if (playerSeatNumber !== 1 && localGameState && localGameState.players && localGameState.players.player2) {
-        const localSavedName = window.sessionStorage.getItem("tellstream_player_identity");
+        const localSavedName = window.sessionStorage.setItem("tellstream_player_identity");
         if (localGameState.players.player2.name === localSavedName) {
             playerSeatNumber = 2;
         }
@@ -87,7 +87,15 @@ function renderLiveTable(boardLine) {
 
                 <div id="domino-track-canvas" style="position: relative; width: 85%; height: 58vh; border: 4px solid #66fcf1; box-shadow: 0 0 20px #66fcf1; background: radial-gradient(circle, #1f2833 0%, #0b0c10 100%); border-radius: 12px; display: flex; justify-content: center; align-items: center; cursor: pointer;">
                     <div id="empty-track-message" style="color: #c5c6c7; font-family: sans-serif; font-size: 1.1rem; letter-spacing: 1px;">BOARD IS EMPTY - CLICK HERE TO MAKE INITIAL DROP</div>
-                    <div id="placed-tiles-container" style="position: absolute; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; gap: 10px;"></div>
+                    
+                    <div id="left-play-zone" style="display: none; position: absolute; left: 0; width: 25%; height: 100%; background: rgba(102, 252, 241, 0.08); justify-content: center; align-items: center; z-index: 5; color: #66fcf1; font-weight: bold; border-right: 2px dashed #66fcf1;">PLAY LEFT</div>
+                    <div id="right-play-zone" style="display: none; position: absolute; right: 0; width: 25%; height: 100%; background: rgba(102, 252, 241, 0.08); justify-content: center; align-items: center; z-index: 5; color: #66fcf1; font-weight: bold; border-left: 2px dashed #66fcf1;">PLAY RIGHT</div>
+
+                    <div id="placed-tiles-container" style="position: absolute; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; gap: 10px; overflow-x: auto; padding: 0 40px; box-sizing: border-box;"></div>
+                </div>
+
+                <div id="action-control-bar" style="margin-bottom: 5px;">
+                    <button id="pass-turn-btn" class="lobby-btn" style="padding: 8px 20px; font-size: 1rem; display: none;">Pass Turn (No Playable Bones)</button>
                 </div>
 
                 <div id="player-hand-container" style="width: 90%; min-height: 140px; display: flex; justify-content: center; align-items: center; gap: 15px; background: rgba(31, 40, 51, 0.5); border: 1px solid rgba(102, 252, 241, 0.2); border-radius: 10px; padding: 15px; margin-bottom: 10px; box-sizing: border-box;"></div>
@@ -95,8 +103,11 @@ function renderLiveTable(boardLine) {
         `;
         mat = document.getElementById("game-mat");
 
-        // Attach click listener to the center track board for placing selected tiles
+        // Attach event actions
         document.getElementById("domino-track-canvas").addEventListener("click", handleBoardClick);
+        document.getElementById("left-play-zone").addEventListener("click", (e) => { e.stopPropagation(); processTilePlacement('left'); });
+        document.getElementById("right-play-zone").addEventListener("click", (e) => { e.stopPropagation(); processTilePlacement('right'); });
+        document.getElementById("pass-turn-btn").addEventListener("click", handlePassTurn);
     }
 
     // Dynamic State Updates
@@ -111,15 +122,27 @@ function renderLiveTable(boardLine) {
         document.getElementById("display-active-turn").innerText = activeNameStr;
     }
 
-    // Clear previous elements inside containers to prevent duplicates on redraw
     const trackContainer = document.getElementById("placed-tiles-container");
     const emptyMsg = document.getElementById("empty-track-message");
     const handContainer = document.getElementById("player-hand-container");
+    const leftZone = document.getElementById("left-play-zone");
+    const rightZone = document.getElementById("right-play-zone");
+    const passBtn = document.getElementById("pass-turn-btn");
     
     if (trackContainer) trackContainer.innerHTML = "";
     if (handContainer) handContainer.innerHTML = "";
+    if (leftZone) leftZone.style.display = "none";
+    if (rightZone) rightZone.style.display = "none";
+    if (passBtn) passBtn.style.display = "none";
 
-    // 1. Draw Placed Bones on the Board Line Track
+    // Show/Hide pass button based on turn eligibility and playability check
+    if (localGameState && localGameState.game_state === 'playing' && localGameState.active_turn === playerSeatNumber) {
+        if (!hasPlayableMoves()) {
+            passBtn.style.display = "block";
+        }
+    }
+
+    // 1. Draw Placed Bones on the Board Line Track (using tracking metadata for alignment)
     if (boardLine && boardLine.length > 0) {
         if (emptyMsg) emptyMsg.style.display = "none";
         
@@ -128,10 +151,12 @@ function renderLiveTable(boardLine) {
             placedTile.className = "domino-bone-interactive";
             placedTile.style.cursor = "default";
             placedTile.style.transform = "rotate(90deg)"; 
+            
+            // Render the visually oriented layout values
             placedTile.innerHTML = `
-                ${generateHalfDisplay(tile.top)}
+                ${generateHalfDisplay(tile.displayTop)}
                 <div class="domino-divider"></div>
-                ${generateHalfDisplay(tile.bottom)}
+                ${generateHalfDisplay(tile.displayBottom)}
             `;
             trackContainer.appendChild(placedTile);
         });
@@ -154,6 +179,11 @@ function renderLiveTable(boardLine) {
                     tileElement.style.transform = "translateY(-20px)";
                     tileElement.style.borderColor = "#66fcf1";
                     tileElement.style.boxShadow = "0 0 15px #66fcf1";
+                    
+                    // Highlight valid board layout directions if it's our turn
+                    if (localGameState.active_turn === playerSeatNumber) {
+                        displayValidPlacements(tile);
+                    }
                 }
 
                 tileElement.onmouseenter = () => {
@@ -205,36 +235,134 @@ function generateHalfDisplay(value) {
 }
 
 /**
- * Handles playing the selected tile onto the board canvas track
+ * Validates tracking match positions to reveal overlay zones
+ */
+function displayValidPlacements(tile) {
+    const line = localGameState.board_line;
+    const leftZone = document.getElementById("left-play-zone");
+    const rightZone = document.getElementById("right-play-zone");
+    
+    if (!line || line.length === 0) {
+        return; // Click anywhere in center to drop opening piece
+    }
+
+    const openLeft = line[0].displayTop;
+    const openRight = line[line.length - 1].displayBottom;
+
+    if (tile.top === openLeft || tile.bottom === openLeft) {
+        leftZone.style.display = "flex";
+    }
+    if (tile.top === openRight || tile.bottom === openRight) {
+        rightZone.style.display = "flex";
+    }
+}
+
+/**
+ * Scans user tray to determine if pass rule handles apply
+ */
+function hasPlayableMoves() {
+    const line = localGameState.board_line;
+    if (!line || line.length === 0) return true; // Can play anything empty
+
+    const openLeft = line[0].displayTop;
+    const openRight = line[line.length - 1].displayBottom;
+    
+    const hand = localGameState.players[`player${playerSeatNumber}`].hand || [];
+    return hand.some(tile => 
+        tile.top === openLeft || tile.bottom === openLeft ||
+        tile.top === openRight || tile.bottom === openRight
+    );
+}
+
+/**
+ * General click handler redirects execution for board drops
  */
 function handleBoardClick() {
     if (localGameState.active_turn !== playerSeatNumber) {
         alert("It's not your turn yet!");
         return;
     }
-
     if (!selectedTileId) {
         alert("Select a domino bone from your hand first!");
         return;
     }
 
+    const line = localGameState.board_line;
+    // If empty, force immediate drop initialization
+    if (!line || line.length === 0) {
+        processTilePlacement('initial');
+    }
+}
+
+/**
+ * Master game mechanics solver: verifies, rotates, and chains bones to track layout
+ */
+function processTilePlacement(targetSide) {
     const targetKey = `player${playerSeatNumber}`;
     const playerHand = localGameState.players[targetKey].hand;
     const tileIndex = playerHand.findIndex(t => t.id === selectedTileId);
     
-    if (tileIndex > -1) {
-        const chosenTile = playerHand[tileIndex];
-        
-        playerHand.splice(tileIndex, 1);
-        const updatedBoardLine = [...localGameState.board_line, chosenTile];
-        
-        // Dynamic turn toggling loops completely between Player 1 and Player 2 for this test
-        let nextTurn = (localGameState.active_turn === 1) ? 2 : 1;
-        
-        const updatedPlayersMap = { ...localGameState.players };
-        updatedPlayersMap[targetKey].hand = playerHand;
-        
-        selectedTileId = null;
-        pushMoveToDatabase(updatedBoardLine, nextTurn, updatedPlayersMap);
+    if (tileIndex === -1) return;
+    const chosenTile = playerHand[tileIndex];
+    let updatedBoardLine = [...localGameState.board_line];
+
+    if (targetSide === 'initial') {
+        // First drop doesn't require rotations; display matches native pips
+        chosenTile.displayTop = chosenTile.top;
+        chosenTile.displayBottom = chosenTile.bottom;
+        updatedBoardLine.push(chosenTile);
+    } 
+    else if (targetSide === 'left') {
+        const openLeft = updatedBoardLine[0].displayTop;
+        if (chosenTile.bottom === openLeft) {
+            chosenTile.displayTop = chosenTile.top;
+            chosenTile.displayBottom = chosenTile.bottom;
+        } else if (chosenTile.top === openLeft) {
+            // Flip the bone to match layout direction requirements
+            chosenTile.displayTop = chosenTile.bottom;
+            chosenTile.displayBottom = chosenTile.top;
+        } else {
+            alert("This rule match path is invalid!");
+            return;
+        }
+        updatedBoardLine.unshift(chosenTile); // Add to the left end
+    } 
+    else if (targetSide === 'right') {
+        const openRight = updatedBoardLine[updatedBoardLine.length - 1].displayBottom;
+        if (chosenTile.top === openRight) {
+            chosenTile.displayTop = chosenTile.top;
+            chosenTile.displayBottom = chosenTile.bottom;
+        } else if (chosenTile.bottom === openRight) {
+            // Flip the bone to match layout direction requirements
+            chosenTile.displayTop = chosenTile.bottom;
+            chosenTile.displayBottom = chosenTile.top;
+        } else {
+            alert("This rule match path is invalid!");
+            return;
+        }
+        updatedBoardLine.push(chosenTile); // Add to the right end
     }
+
+    // Strip tile out of user tray
+    playerHand.splice(tileIndex, 1);
+    
+    let nextTurn = (localGameState.active_turn === 1) ? 2 : 1;
+    const updatedPlayersMap = { ...localGameState.players };
+    updatedPlayersMap[targetKey].hand = playerHand;
+    
+    selectedTileId = null;
+    pushMoveToDatabase(updatedBoardLine, nextTurn, updatedPlayersMap);
+}
+
+/**
+ * Explicitly pass turn execution rule hook
+ */
+function handlePassTurn() {
+    if (localGameState.active_turn !== playerSeatNumber) return;
+    if (hasPlayableMoves()) {
+        alert("You have playable bones in your tray! You cannot pass.");
+        return;
+    }
+    let nextTurn = (localGameState.active_turn === 1) ? 2 : 1;
+    pushMoveToDatabase(localGameState.board_line, nextTurn, localGameState.players);
 }
