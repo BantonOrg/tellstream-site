@@ -23,6 +23,47 @@ const HAND_CENTER = {
 };
 
 function renderLiveTable(boardLine) {
+    // ==========================================================================
+    // SANDBOX 28-TILE CLOSED LOOP INJECTION
+    // Automatically injects a perfect Eulerian Ring to test physical overlap
+    // ==========================================================================
+    if (window.localGameState && window.localGameState.room_code === "SANDBOX" && boardLine && boardLine.length <= 3) {
+        boardLine = [
+            { id: 'r1', top: 0, bottom: 0, displayTop: 0, displayBottom: 0 },
+            { id: 'r2', top: 0, bottom: 5, displayTop: 0, displayBottom: 5 },
+            { id: 'r3', top: 5, bottom: 3, displayTop: 5, displayBottom: 3 },
+            { id: 'r4', top: 3, bottom: 6, displayTop: 3, displayBottom: 6 },
+            { id: 'r5', top: 6, bottom: 2, displayTop: 6, displayBottom: 2 },
+            { id: 'r6', top: 2, bottom: 0, displayTop: 2, displayBottom: 0 },
+            { id: 'r7', top: 0, bottom: 3, displayTop: 0, displayBottom: 3 },
+            { id: 'r8', top: 3, bottom: 4, displayTop: 3, displayBottom: 4 },
+            { id: 'r9', top: 4, bottom: 1, displayTop: 4, displayBottom: 1 },
+            { id: 'r10', top: 1, bottom: 5, displayTop: 1, displayBottom: 5 },
+            { id: 'r11', top: 5, bottom: 2, displayTop: 5, displayBottom: 2 },
+            { id: 'r12', top: 2, bottom: 1, displayTop: 2, displayBottom: 1 },
+            { id: 'r13', top: 1, bottom: 0, displayTop: 1, displayBottom: 0 },
+            { id: 'r14', top: 0, bottom: 6, displayTop: 0, displayBottom: 6 },
+            { id: 'r15', top: 6, bottom: 6, displayTop: 6, displayBottom: 6 }, // INDEX 14 = Exact Center Anchor
+            { id: 'r16', top: 6, bottom: 5, displayTop: 6, displayBottom: 5 },
+            { id: 'r17', top: 5, bottom: 5, displayTop: 5, displayBottom: 5 },
+            { id: 'r18', top: 5, bottom: 4, displayTop: 5, displayBottom: 4 },
+            { id: 'r19', top: 4, bottom: 4, displayTop: 4, displayBottom: 4 },
+            { id: 'r20', top: 4, bottom: 2, displayTop: 4, displayBottom: 2 },
+            { id: 'r21', top: 2, bottom: 2, displayTop: 2, displayBottom: 2 },
+            { id: 'r22', top: 2, bottom: 3, displayTop: 2, displayBottom: 3 },
+            { id: 'r23', top: 3, bottom: 3, displayTop: 3, displayBottom: 3 },
+            { id: 'r24', top: 3, bottom: 1, displayTop: 3, displayBottom: 1 },
+            { id: 'r25', top: 1, bottom: 1, displayTop: 1, displayBottom: 1 },
+            { id: 'r26', top: 1, bottom: 6, displayTop: 1, displayBottom: 6 },
+            { id: 'r27', top: 6, bottom: 4, displayTop: 6, displayBottom: 4 },
+            { id: 'r28', top: 4, bottom: 0, displayTop: 4, displayBottom: 0 }
+        ];
+        window.localGameState.board_line = boardLine;
+        if (window.localGameState.players && window.localGameState.players.player1) {
+            window.localGameState.players.player1.hand = []; // Visually clears floating hand to prevent blocking the track
+        }
+    }
+
     const tableView = document.getElementById("table-view");
     if (!tableView) return;
 
@@ -87,8 +128,13 @@ function renderLiveTable(boardLine) {
     // COMPLETE PATH CORNER TRACK CORRECTION MECHANISM
     // ==========================================================================
     if (boardLine && boardLine.length > 0) {
-        let initialIndex = boardLine.findIndex(tile => tile.top === tile.bottom);
-        if (initialIndex === -1) initialIndex = 0;
+        
+        let initialIndex = 14; 
+        if (boardLine.length !== 28) {
+            // Anchor bug fix: Standardized fallback if not playing the 28-tile demo
+            initialIndex = boardLine.findIndex(tile => tile.top === tile.bottom);
+            if (initialIndex === -1) initialIndex = 0;
+        }
 
         let calculatedCoordinates = new Array(boardLine.length);
 
@@ -99,68 +145,115 @@ function renderLiveTable(boardLine) {
             isRotated: false
         };
 
-        // Track left side chain wrapping out to left boundary, then climb straight up the wall
+        // TRACK LEFT SIDE CHAIN 
         for (let i = initialIndex - 1; i >= 0; i--) {
             let prevCoords = calculatedCoordinates[i + 1];
             let isDouble = boardLine[i].top === boardLine[i].bottom;
+            let prevIsDouble = boardLine[i + 1].top === boardLine[i + 1].bottom;
 
-            // If we are still tracking along the lower horizontal line
-            if (prevCoords.x > PATH_TRACK.leftX + 60) {
-                let tileW = isDouble ? 58 : 119;
-                let nextX = prevCoords.x - tileW - 6;
-                let nextY = PATH_TRACK.lowerY - (isDouble ? 119 / 2 : 58 / 2);
+            if (prevCoords.y > PATH_TRACK.lowerY - 60) {
+                // Currently on Bottom Horizontal Track
+                let currentW = isDouble ? 58 : 119;
+                let nextX = prevCoords.x - currentW - 6;
 
-                // Check corner threshold
                 if (nextX < PATH_TRACK.leftX + 20) {
-                    let verticalH = isDouble ? 58 : 119;
+                    // Turn Corner UP to Left Wall
+                    let currentH = isDouble ? 58 : 119;
                     calculatedCoordinates[i] = {
                         x: PATH_TRACK.leftX - (isDouble ? 119 / 2 : 58 / 2),
-                        y: PATH_TRACK.lowerY - 60 - verticalH - 6,
+                        y: PATH_TRACK.lowerY - 60 - currentH - 6,
+                        isRotated: isDouble ? true : false // standard stands, double lays flat on walls
+                    };
+                } else {
+                    calculatedCoordinates[i] = {
+                        x: nextX,
+                        y: PATH_TRACK.lowerY - (isDouble ? 119 / 2 : 58 / 2),
+                        isRotated: isDouble ? false : true 
+                    };
+                }
+            } else if (prevCoords.x < PATH_TRACK.leftX + 60) {
+                // Currently on Left Vertical Wall
+                let currentH = isDouble ? 58 : 119;
+                let nextY = prevCoords.y - currentH - 6;
+
+                if (nextY < PATH_TRACK.upperY + 20) {
+                    // Turn Corner RIGHT across Top Track
+                    calculatedCoordinates[i] = {
+                        x: PATH_TRACK.leftX + 60 + 6,
+                        y: PATH_TRACK.upperY - (isDouble ? 119 / 2 : 58 / 2),
                         isRotated: isDouble ? false : true
                     };
                 } else {
-                    calculatedCoordinates[i] = { x: nextX, y: nextY, isRotated: isDouble ? false : true };
+                    calculatedCoordinates[i] = {
+                        x: PATH_TRACK.leftX - (isDouble ? 119 / 2 : 58 / 2),
+                        y: nextY,
+                        isRotated: isDouble ? true : false
+                    };
                 }
             } else {
-                // Climb up the left margin wall cleanly
-                let tileH = isDouble ? 58 : 119;
+                // Currently on Top Horizontal Track going RIGHT towards center
+                let currentW = isDouble ? 58 : 119;
                 calculatedCoordinates[i] = {
-                    x: PATH_TRACK.leftX - (isDouble ? 119 / 2 : 58 / 2),
-                    y: prevCoords.y - tileH - 6,
+                    x: prevCoords.x + currentW + 6, 
+                    y: PATH_TRACK.upperY - (isDouble ? 119 / 2 : 58 / 2),
                     isRotated: isDouble ? false : true
                 };
             }
         }
 
-        // Track right side chain wrapping out to right boundary, then climb straight up the wall
+        // TRACK RIGHT SIDE CHAIN 
         for (let i = initialIndex + 1; i < boardLine.length; i++) {
             let prevCoords = calculatedCoordinates[i - 1];
             let isDouble = boardLine[i].top === boardLine[i].bottom;
-            let prevW = (boardLine[i - 1].top === boardLine[i - 1].bottom) ? 58 : 119;
+            let prevIsDouble = boardLine[i - 1].top === boardLine[i - 1].bottom;
 
-            // If we are still tracking along the lower horizontal line
-            if (prevCoords.x < PATH_TRACK.rightX - 140) {
-                let nextX = prevCoords.x + prevW + 6;
-                let nextY = PATH_TRACK.lowerY - (isDouble ? 119 / 2 : 58 / 2);
+            if (prevCoords.y > PATH_TRACK.lowerY - 60) {
+                // Currently on Bottom Horizontal Track
+                let prevW = prevIsDouble ? 58 : 119;
                 let currentW = isDouble ? 58 : 119;
+                let nextX = prevCoords.x + prevW + 6;
 
-                // Check corner threshold
                 if (nextX + currentW > PATH_TRACK.rightX - 20) {
-                    let verticalH = isDouble ? 58 : 119;
+                    // Turn Corner UP to Right Wall
+                    let currentH = isDouble ? 58 : 119;
                     calculatedCoordinates[i] = {
                         x: PATH_TRACK.rightX - (isDouble ? 119 / 2 : 58 / 2),
-                        y: PATH_TRACK.lowerY - 60 - verticalH - 6,
+                        y: PATH_TRACK.lowerY - 60 - currentH - 6,
+                        isRotated: isDouble ? true : false 
+                    };
+                } else {
+                    calculatedCoordinates[i] = {
+                        x: nextX,
+                        y: PATH_TRACK.lowerY - (isDouble ? 119 / 2 : 58 / 2),
+                        isRotated: isDouble ? false : true
+                    };
+                }
+            } else if (prevCoords.x > PATH_TRACK.rightX - 60) {
+                // Currently on Right Vertical Wall
+                let currentH = isDouble ? 58 : 119;
+                let nextY = prevCoords.y - currentH - 6;
+
+                if (nextY < PATH_TRACK.upperY + 20) {
+                    // Turn Corner LEFT across Top Track
+                    let currentW = isDouble ? 58 : 119;
+                    calculatedCoordinates[i] = {
+                        x: PATH_TRACK.rightX - 60 - currentW - 6,
+                        y: PATH_TRACK.upperY - (isDouble ? 119 / 2 : 58 / 2),
                         isRotated: isDouble ? false : true
                     };
                 } else {
-                    calculatedCoordinates[i] = { x: nextX, y: nextY, isRotated: isDouble ? false : true };
+                    calculatedCoordinates[i] = {
+                        x: PATH_TRACK.rightX - (isDouble ? 119 / 2 : 58 / 2),
+                        y: nextY,
+                        isRotated: isDouble ? true : false
+                    };
                 }
             } else {
-                // Climb up the right margin wall cleanly
-                let tileH = isDouble ? 58 : 119;
+                // Currently on Top Horizontal Track going LEFT towards center
+                let currentW = isDouble ? 58 : 119;
                 calculatedCoordinates[i] = {
-                    x: PATH_TRACK.rightX - (isDouble ? 119 / 2 : 58 / 2),
-                    y: prevCoords.y - tileH - 6,
+                    x: prevCoords.x - currentW - 6, 
+                    y: PATH_TRACK.upperY - (isDouble ? 119 / 2 : 58 / 2),
                     isRotated: isDouble ? false : true
                 };
             }
