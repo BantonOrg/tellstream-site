@@ -7,7 +7,7 @@ let selectedTileId = null;
 const BG_NATIVE_WIDTH = 2560;
 const BG_NATIVE_HEIGHT = 1440;
 
-// Corrected boundaries to lift the track baseline cleanly away from the hand zone
+// Path coordinates locked perfectly to the inner neon border area
 const BOUNDS_LEFT = 265;
 const BOUNDS_TOP = 420;
 const BOUNDS_RIGHT = 2219;
@@ -66,40 +66,43 @@ function renderLiveTable(boardLine) {
     if (rightZone) rightZone.style.display = "none";
 
     // ==========================================================================
-    // PERIMETER TRACK MAPPING (FLUSH TO LIFTED CANVAS BASELINE)
+    // TRACK LAYOUT COORDINATE CALCULATION SYSTEM
     // ==========================================================================
     if (boardLine && boardLine.length > 0) {
         const trackCanvas = document.getElementById("domino-track-canvas");
         const canvasWidth = trackCanvas.clientWidth;
         const canvasHeight = trackCanvas.clientHeight;
 
+        // Locate the initial double spinner (e.g., 6:6) as the baseline origin
         let initialIndex = boardLine.findIndex(tile => tile.top === tile.bottom);
         if (initialIndex === -1) initialIndex = 0;
 
         let calculatedCoordinates = new Array(boardLine.length);
 
-        // Position down-bone right at the bottom edge of the lifted canvas container
+        // 1. Place the starting double stood vertical exactly at bottom center of the canvas area
         calculatedCoordinates[initialIndex] = {
             x: (canvasWidth / 2) - (58 / 2),
             y: canvasHeight - 119, 
             isRotated: false
         };
 
-        // Left side chain tracking out and up the left margin wall
+        // 2. Wrap left chain westward along bottom, then upward along the left side
         for (let i = initialIndex - 1; i >= 0; i--) {
             let nextTile = boardLine[i];
             let prevCoords = calculatedCoordinates[i + 1];
             let isDouble = nextTile.top === nextTile.bottom;
 
-            if (prevCoords.y >= canvasHeight - 119) {
+            if (prevCoords.y >= canvasHeight - 119 && prevCoords.x > 80) {
+                // Moving left horizontally
                 let tileW = isDouble ? 58 : 119;
                 let nextX = prevCoords.x - tileW - 6; 
                 let nextY = isDouble ? canvasHeight - 119 : canvasHeight - 88;
 
-                if (nextX < 10) {
+                if (nextX < 15) {
+                    // Turn corner upward along the left border
                     let verticalH = isDouble ? 58 : 119;
                     calculatedCoordinates[i] = {
-                        x: 10,
+                        x: 15,
                         y: canvasHeight - 119 - verticalH - 6,
                         isRotated: isDouble ? false : true
                     };
@@ -107,29 +110,32 @@ function renderLiveTable(boardLine) {
                     calculatedCoordinates[i] = { x: nextX, y: nextY, isRotated: isDouble ? false : true };
                 }
             } else {
+                // Climbing up the left wall area
                 let tileH = isDouble ? 58 : 119;
-                let nextX = isDouble ? 10 - 30 : 10; 
+                let nextX = isDouble ? 15 - 30 : 15; 
                 let nextY = prevCoords.y - tileH - 6;
                 calculatedCoordinates[i] = { x: nextX, y: nextY, isRotated: isDouble ? false : true };
             }
         }
 
-        // Right side chain tracking out and up the right margin wall
+        // 3. Wrap right chain eastward along bottom, then upward along the right side
         for (let i = initialIndex + 1; i < boardLine.length; i++) {
             let nextTile = boardLine[i];
             let prevCoords = calculatedCoordinates[i - 1];
             let isDouble = nextTile.top === nextTile.bottom;
             let prevTileWidth = (boardLine[i - 1].top === boardLine[i - 1].bottom) ? 58 : 119;
 
-            if (prevCoords.y >= canvasHeight - 119) {
+            if (prevCoords.y >= canvasHeight - 119 && prevCoords.x < canvasWidth - 140) {
+                // Moving right horizontally
                 let nextX = prevCoords.x + prevTileWidth + 6;
                 let nextY = isDouble ? canvasHeight - 119 : canvasHeight - 88;
                 let currentTileWidth = isDouble ? 58 : 119;
 
-                if (nextX + currentTileWidth > canvasWidth - 10) {
+                if (nextX + currentTileWidth > canvasWidth - 15) {
+                    // Turn corner upward along the right border
                     let verticalH = isDouble ? 58 : 119;
                     calculatedCoordinates[i] = {
-                        x: canvasWidth - (isDouble ? 119 : 58) - 10,
+                        x: canvasWidth - (isDouble ? 119 : 58) - 15,
                         y: canvasHeight - 119 - verticalH - 6,
                         isRotated: isDouble ? false : true
                     };
@@ -137,15 +143,16 @@ function renderLiveTable(boardLine) {
                     calculatedCoordinates[i] = { x: nextX, y: nextY, isRotated: isDouble ? false : true };
                 }
             } else {
+                // Climbing up the right wall area
                 let tileH = isDouble ? 58 : 119;
                 let verticalW = isDouble ? 119 : 58;
-                let nextX = canvasWidth - verticalW - 10;
+                let nextX = canvasWidth - verticalW - 15;
                 let nextY = prevCoords.y - tileH - 6;
                 calculatedCoordinates[i] = { x: nextX, y: nextY, isRotated: isDouble ? false : true };
             }
         }
 
-        // Draw elements onto track canvas layout
+        // 4. Inject positions into absolute container render layer
         boardLine.forEach((tile, index) => {
             const coords = calculatedCoordinates[index];
             const placedTile = document.createElement("div");
@@ -174,7 +181,7 @@ function renderLiveTable(boardLine) {
         });
     }
 
-    // 2. RENDER PLAYER HAND
+    // 2. RENDER PLAYER HAND (ALIGNED IN LOWER BLUE ZONE BOX)
     if (window.localGameState && window.localGameState.players && window.localGameState.players.player1) {
         const hand = window.localGameState.players.player1.hand || [];
         hand.forEach(tile => {
@@ -294,6 +301,7 @@ function processTilePlacement(targetSide) {
     else if (targetSide === 'left') {
         const openLeft = updatedBoardLine[0].displayTop;
         
+        // Strictly match numbers (e.g., 5 to 5, 1 to 1)
         if (chosenTile.bottom === openLeft) {
             chosenTile.displayTop = chosenTile.top;
             chosenTile.displayBottom = chosenTile.bottom;
@@ -306,6 +314,7 @@ function processTilePlacement(targetSide) {
     else if (targetSide === 'right') {
         const openRight = updatedBoardLine[updatedBoardLine.length - 1].displayBottom;
         
+        // Strictly match numbers (e.g., 5 to 5, 1 to 1)
         if (chosenTile.top === openRight) {
             chosenTile.displayTop = chosenTile.top;
             chosenTile.displayBottom = chosenTile.bottom;
