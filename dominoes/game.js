@@ -7,10 +7,11 @@ let selectedTileId = null;
 const BG_NATIVE_WIDTH = 2560;
 const BG_NATIVE_HEIGHT = 1440;
 
+// Corrected boundaries to lift the track baseline cleanly away from the hand zone
 const BOUNDS_LEFT = 265;
-const BOUNDS_TOP = 523;
+const BOUNDS_TOP = 420;
 const BOUNDS_RIGHT = 2219;
-const BOUNDS_BOTTOM = 1177;
+const BOUNDS_BOTTOM = 1020; 
 
 function renderLiveTable(boardLine) {
     const tableView = document.getElementById("table-view");
@@ -37,7 +38,7 @@ function renderLiveTable(boardLine) {
                         <div id="placed-tiles-container" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0;"></div>
                     </div>
 
-                    <div id="player-hand-container" style="position: absolute; left: 50%; top: 82%; transform: translate(-50%, -50%); width: 65%; height: 16%; display: flex; justify-content: center; align-items: center; gap: 16px; background: transparent; padding: 5px; box-sizing: border-box; z-index: 999; filter: drop-shadow(0px 12px 18px rgba(0, 0, 0, 0.95));"></div>
+                    <div id="player-hand-container" style="position: absolute; left: 50%; top: 85%; transform: translate(-50%, -50%); width: 65%; height: 16%; display: flex; justify-content: center; align-items: center; gap: 16px; background: transparent; padding: 5px; box-sizing: border-box; z-index: 999; filter: drop-shadow(0px 12px 18px rgba(0, 0, 0, 0.95));"></div>
 
                     <div id="turn-alert-message" style="position: absolute; top: 59.5%; left: 50%; transform: translateX(-50%); color: #ff4a4a; font-weight: bold; font-size: 0.8rem; background: rgba(0,0,0,0.85); padding: 5px 15px; border-radius: 4px; border: 1px solid #ff4a4a; display: none; z-index: 25;"></div>
                 </div>
@@ -65,43 +66,37 @@ function renderLiveTable(boardLine) {
     if (rightZone) rightZone.style.display = "none";
 
     // ==========================================================================
-    // FIXED FIXED TRACK LINE ALIGNMENT MAPPING SYSTEM
+    // PERIMETER TRACK MAPPING (FLUSH TO LIFTED CANVAS BASELINE)
     // ==========================================================================
     if (boardLine && boardLine.length > 0) {
         const trackCanvas = document.getElementById("domino-track-canvas");
         const canvasWidth = trackCanvas.clientWidth;
         const canvasHeight = trackCanvas.clientHeight;
 
-        // Find the index of the down-bone spinner (6:6)
         let initialIndex = boardLine.findIndex(tile => tile.top === tile.bottom);
         if (initialIndex === -1) initialIndex = 0;
 
         let calculatedCoordinates = new Array(boardLine.length);
 
-        // 1. Lock the initial down-bone standing upright at bottom center of your track perimeter line
+        // Position down-bone right at the bottom edge of the lifted canvas container
         calculatedCoordinates[initialIndex] = {
             x: (canvasWidth / 2) - (58 / 2),
-            y: canvasHeight - 119, // Flushed to the bottom of the track line bounds
+            y: canvasHeight - 119, 
             isRotated: false
         };
 
-        // 2. Track left chain moves out to the left boundary corner, then turn upwards
+        // Left side chain tracking out and up the left margin wall
         for (let i = initialIndex - 1; i >= 0; i--) {
             let nextTile = boardLine[i];
             let prevCoords = calculatedCoordinates[i + 1];
             let isDouble = nextTile.top === nextTile.bottom;
-            
-            let prevTileIsDouble = (boardLine[i + 1].top === boardLine[i + 1].bottom);
-            
-            // If we are moving left horizontally along the line
+
             if (prevCoords.y >= canvasHeight - 119) {
                 let tileW = isDouble ? 58 : 119;
-                let nextX = prevCoords.x - tileW - 6; // clean 6px connection gap
-                let nextY = isDouble ? canvasHeight - 119 : canvasHeight - 88; // mid-alignment correction
+                let nextX = prevCoords.x - tileW - 6; 
+                let nextY = isDouble ? canvasHeight - 119 : canvasHeight - 88;
 
-                // If it hits the left track corner boundary, pivot up the wall
                 if (nextX < 10) {
-                    let verticalW = isDouble ? 119 : 58;
                     let verticalH = isDouble ? 58 : 119;
                     calculatedCoordinates[i] = {
                         x: 10,
@@ -112,29 +107,25 @@ function renderLiveTable(boardLine) {
                     calculatedCoordinates[i] = { x: nextX, y: nextY, isRotated: isDouble ? false : true };
                 }
             } else {
-                // We are climbing up the left wall
                 let tileH = isDouble ? 58 : 119;
-                let nextX = isDouble ? 10 - 30 : 10; // offset double center point nicely
+                let nextX = isDouble ? 10 - 30 : 10; 
                 let nextY = prevCoords.y - tileH - 6;
                 calculatedCoordinates[i] = { x: nextX, y: nextY, isRotated: isDouble ? false : true };
             }
         }
 
-        // 3. Track right chain moves out to the right boundary corner, then turn upwards
+        // Right side chain tracking out and up the right margin wall
         for (let i = initialIndex + 1; i < boardLine.length; i++) {
             let nextTile = boardLine[i];
             let prevCoords = calculatedCoordinates[i - 1];
             let isDouble = nextTile.top === nextTile.bottom;
-            
             let prevTileWidth = (boardLine[i - 1].top === boardLine[i - 1].bottom) ? 58 : 119;
 
-            // If we are moving right horizontally along the line
             if (prevCoords.y >= canvasHeight - 119) {
                 let nextX = prevCoords.x + prevTileWidth + 6;
                 let nextY = isDouble ? canvasHeight - 119 : canvasHeight - 88;
-
-                // If it hits the right track corner boundary, pivot up the wall
                 let currentTileWidth = isDouble ? 58 : 119;
+
                 if (nextX + currentTileWidth > canvasWidth - 10) {
                     let verticalH = isDouble ? 58 : 119;
                     calculatedCoordinates[i] = {
@@ -146,7 +137,6 @@ function renderLiveTable(boardLine) {
                     calculatedCoordinates[i] = { x: nextX, y: nextY, isRotated: isDouble ? false : true };
                 }
             } else {
-                // We are climbing up the right wall
                 let tileH = isDouble ? 58 : 119;
                 let verticalW = isDouble ? 119 : 58;
                 let nextX = canvasWidth - verticalW - 10;
@@ -155,7 +145,7 @@ function renderLiveTable(boardLine) {
             }
         }
 
-        // 4. Render elements with absolute mapping rules
+        // Draw elements onto track canvas layout
         boardLine.forEach((tile, index) => {
             const coords = calculatedCoordinates[index];
             const placedTile = document.createElement("div");
@@ -184,7 +174,7 @@ function renderLiveTable(boardLine) {
         });
     }
 
-    // 2. RENDER PLAYER HAND (BLUE TRAY ALIGNMENT)
+    // 2. RENDER PLAYER HAND
     if (window.localGameState && window.localGameState.players && window.localGameState.players.player1) {
         const hand = window.localGameState.players.player1.hand || [];
         hand.forEach(tile => {
