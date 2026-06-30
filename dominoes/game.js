@@ -79,10 +79,10 @@ function renderLiveTable(boardLine) {
                     <div id="domino-track-canvas" style="position: absolute; left: ${(BOUNDS_LEFT/BG_NATIVE_WIDTH)*100}%; top: ${(BOUNDS_TOP/BG_NATIVE_HEIGHT)*100}%; width: ${((BOUNDS_RIGHT - BOUNDS_LEFT)/BG_NATIVE_WIDTH)*100}%; height: ${((BOUNDS_BOTTOM - BOUNDS_TOP)/BG_NATIVE_HEIGHT)*100}%;">
                         <div id="left-play-zone" style="display: none; position: absolute; left: 0; top: 0; width: 15%; height: 100%; background: rgba(102, 252, 241, 0.12); justify-content: center; align-items: center; z-index: 20; color: #66fcf1; font-weight: bold; font-size: 0.75rem; border-right: 2px dashed #66fcf1; cursor: pointer;">PLAY LEFT</div>
                         <div id="right-play-zone" style="display: none; position: absolute; right: 0; top: 0; width: 15%; height: 100%; background: rgba(102, 252, 241, 0.12); justify-content: center; align-items: center; z-index: 20; color: #66fcf1; font-weight: bold; font-size: 0.75rem; border-left: 2px dashed #66fcf1; cursor: pointer;">PLAY RIGHT</div>
-                        <div id="placed-tiles-container" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; display: flex; justify-content: center; align-items: center; gap: 6px;"></div>
+                        <div id="placed-tiles-container" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; display: flex; justify-content: center; align-items: center; gap: 20px;"></div>
                     </div>
 
-                    <div id="player-hand-container" style="position: absolute; left: 50%; top: 49.5%; transform: translate(-50%, -50%); width: 48%; height: 14%; display: flex; justify-content: center; align-items: center; gap: 8px; background: transparent; padding: 5px; box-sizing: border-box; z-index: 999; filter: drop-shadow(0px 10px 15px rgba(0, 0, 0, 0.95)) drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.8));"></div>
+                    <div id="player-hand-container" style="position: absolute; left: 50%; top: 49.5%; transform: translate(-50%, -50%); width: 60%; height: 16%; display: flex; justify-content: center; align-items: center; gap: 16px; background: transparent; padding: 5px; box-sizing: border-box; z-index: 999; filter: drop-shadow(0px 12px 18px rgba(0, 0, 0, 0.95));"></div>
 
                     <div id="turn-alert-message" style="position: absolute; top: 59.5%; left: 50%; transform: translateX(-50%); color: #ff4a4a; font-weight: bold; font-size: 0.8rem; background: rgba(0,0,0,0.85); padding: 5px 15px; border-radius: 4px; border: 1px solid #ff4a4a; display: none; z-index: 25;"></div>
                 </div>
@@ -132,14 +132,18 @@ function renderLiveTable(boardLine) {
         }
     }
 
+    // 1. RENDER PLAYED TRACK (HARDCODED 50% BIGGER SIZE PROPORTIONS)
     if (boardLine && boardLine.length > 0) {
         boardLine.forEach(tile => {
             const placedTile = document.createElement("div");
             placedTile.className = "domino-bone-interactive";
             placedTile.style.cursor = "default";
             
-            // FIX 1: Boosted scale to 1.02 (exactly 50% bigger than 0.68)
-            placedTile.style.transform = "rotate(90deg) scale(1.02)"; 
+            // Hardcoded absolute sizing constraints ensures exact 50% scale bump
+            placedTile.style.width = "106px";
+            placedTile.style.height = "52px";
+            placedTile.style.transform = "rotate(90deg)"; 
+            placedTile.style.flexShrink = "0";
             
             placedTile.innerHTML = `
                 ${generateHalfDisplay(tile.displayTop)}
@@ -150,6 +154,7 @@ function renderLiveTable(boardLine) {
         });
     }
 
+    // 2. RENDER PLAYER HAND DEALT TILES (MATCHING 50% BIGGER ENGINE SIZE)
     if (playerSeatNumber && localGameState.players) {
         const targetKey = `player${playerSeatNumber}`;
         const playerObj = localGameState.players[targetKey];
@@ -159,22 +164,26 @@ function renderLiveTable(boardLine) {
                 const tileElement = document.createElement("div");
                 tileElement.className = "domino-bone-interactive";
                 tileElement.id = `hand-tile-${tile.id}`;
-                tileElement.style.transform = "scale(0.78)";
+                
+                // Hardcoded size matched to track exactly
+                tileElement.style.width = "106px";
+                tileElement.style.height = "52px";
+                tileElement.style.flexShrink = "0";
                 
                 if (selectedTileId === tile.id) {
-                    tileElement.style.transform = "translateY(-12px) scale(0.84)";
+                    tileElement.style.transform = "translateY(-16px)";
                     tileElement.style.borderColor = "#66fcf1";
-                    tileElement.style.boxShadow = "0 0 12px #66fcf1";
+                    tileElement.style.boxShadow = "0 0 16px #66fcf1";
                     if (localGameState.active_turn === playerSeatNumber) {
                         displayValidPlacements(tile);
                     }
                 }
 
                 tileElement.onmouseenter = () => {
-                    if (selectedTileId !== tile.id) tileElement.style.transform = "translateY(-6px) scale(0.82)";
+                    if (selectedTileId !== tile.id) tileElement.style.transform = "translateY(-8px)";
                 };
                 tileElement.onmouseleave = () => {
-                    if (selectedTileId !== tile.id) tileElement.style.transform = "translateY(0) scale(0.78)";
+                    if (selectedTileId !== tile.id) tileElement.style.transform = "translateY(0)";
                 };
                 
                 tileElement.innerHTML = `
@@ -244,7 +253,7 @@ function generateHalfDisplay(value) {
         4: [1, 2, 6, 7], 5: [1, 2, 4, 6, 7], 6: [1, 2, 3, 5, 6, 7]
     };
     const activePips = pipMaps[value] || [];
-    let html = `<div class="domino-half">`;
+    let html = `<div class="domino-half" style="width:100%; height:100%; position:relative;">`;
     for (let p = 1; p <= 9; p++) {
         const isActive = activePips.includes(p) ? 'active' : '';
         html += `<div class="pip ${isActive} pos-${p}"></div>`;
@@ -303,15 +312,13 @@ function processTilePlacement(targetSide) {
         chosenTile.displayBottom = chosenTile.bottom;
         updatedBoardLine.push(chosenTile);
     } 
-    // FIX 2: Added matching values flip logic so matching numbers always touch ("kiss")
+    // TRUE DANCEHALL MATCH FLIP: Re-mapped to flip the display values so matching ends explicitly connect "kissing"
     else if (targetSide === 'left') {
         const openLeft = updatedBoardLine[0].displayTop;
         if (chosenTile.bottom === openLeft) {
-            // Already orientated right way round (Top value remains exposed on left edge)
             chosenTile.displayTop = chosenTile.top;
             chosenTile.displayBottom = chosenTile.bottom;
         } else if (chosenTile.top === openLeft) {
-            // Flip it: Bottom value becomes the outer exposed left edge
             chosenTile.displayTop = chosenTile.bottom;
             chosenTile.displayBottom = chosenTile.top;
         } else return;
@@ -320,11 +327,9 @@ function processTilePlacement(targetSide) {
     else if (targetSide === 'right') {
         const openRight = updatedBoardLine[updatedBoardLine.length - 1].displayBottom;
         if (chosenTile.top === openRight) {
-            // Already orientated right way round (Bottom value remains exposed on right edge)
             chosenTile.displayTop = chosenTile.top;
             chosenTile.displayBottom = chosenTile.bottom;
         } else if (chosenTile.bottom === openRight) {
-            // Flip it: Top value becomes the outer exposed right edge
             chosenTile.displayTop = chosenTile.bottom;
             chosenTile.displayBottom = chosenTile.top;
         } else return;
