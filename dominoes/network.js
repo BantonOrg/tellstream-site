@@ -21,9 +21,9 @@ let roomSubscription = null;
 let localGameState = {
     room_code: null,
     game_state: 'waiting', // waiting, playing, blocked, finished
-    board_line: [],       // Shared layout track chain array
-    active_turn: 1,       // Seat turn tracker (1-4)
-    players: {}           // Dynamic map matching seat details & hand bone arrays
+    board_line: [],       // Shared layout track chain array [cite: 9]
+    active_turn: 1,       // Seat turn tracker (1-4) [cite: 9]
+    players: {}           // Dynamic map matching seat details & hand bone arrays [cite: 10]
 };
 
 function initNetwork() {
@@ -70,7 +70,7 @@ function generateFullDominoSet() {
                 top: i,
                 bottom: j,
                 isDouble: (i === j),
-                displayTop: null,    // Added runtime orientation properties
+                displayTop: null,    
                 displayBottom: null
             });
         }
@@ -89,6 +89,23 @@ function shuffleBones(deck) {
     return deck;
 }
 
+/**
+ * Resolves active Supabase identity automatically or defaults gracefully
+ */
+async function getSupabaseChatIdentity() {
+    if (!supabaseClient) return "Table Host";
+    try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session && session.user) {
+            // Check for display handles inside profile metadata fields
+            return session.user.user_metadata.full_name || session.user.user_metadata.name || session.user.email.split('@')[0];
+        }
+    } catch (err) {
+        console.warn("Could not auto-fetch user identity from session:", err);
+    }
+    return "Player " + Math.floor(1000 + Math.random() * 9000);
+}
+
 async function createRoom() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; 
     let generatedCode = '';
@@ -96,12 +113,14 @@ async function createRoom() {
         generatedCode += chars.charAt(Math.floor(Math.random() * chars.length));
     }
 
+    const hostIdentityName = await getSupabaseChatIdentity();
+
     const initialPlayersObject = {
-        player1: { seat: 1, hand: [], name: "Table Host" },
-        player2: { seat: 2, hand: [], name: "Waiting..." },
-        player3: { seat: 3, hand: [], name: "Waiting..." },
-        player4: { seat: 4, hand: [], name: "Waiting..." },
-        lobby_roster: ["Table Host"] 
+        player1: { seat: 1, hand: [], name: hostIdentityName }, 
+        player2: { seat: 2, hand: [], name: "Waiting..." }, [cite: 16]
+        player3: { seat: 3, hand: [], name: "Waiting..." }, [cite: 16]
+        player4: { seat: 4, hand: [], name: "Waiting..." }, [cite: 16]
+        lobby_roster: [hostIdentityName] 
     };
 
     localGameState = {
@@ -146,11 +165,8 @@ async function joinRoom(code) {
         return;
     }
 
-    const testPlayerName = prompt("Enter your Player Name for this test:", "Player 2 Tester");
-    if (!testPlayerName || testPlayerName.trim() === "" || testPlayerName === "Table Host") {
-        alert("Invalid or duplicate testing name.");
-        return;
-    }
+    // Fix 1: Automatically fetch name from database session, no popups triggered
+    const detectedPlayerName = await getSupabaseChatIdentity();
 
     try {
         const { data, error } = await supabaseClient
@@ -169,8 +185,8 @@ async function joinRoom(code) {
             currentPlayers.lobby_roster = ["Table Host"];
         }
 
-        if (!currentPlayers.lobby_roster.includes(testPlayerName)) {
-            currentPlayers.lobby_roster.push(testPlayerName);
+        if (!currentPlayers.lobby_roster.includes(detectedPlayerName)) {
+            currentPlayers.lobby_roster.push(detectedPlayerName);
         }
 
         const { error: updateError } = await supabaseClient
@@ -186,7 +202,7 @@ async function joinRoom(code) {
         playerSeatNumber = null; 
         currentRoomCode = code;
         
-        window.sessionStorage.setItem("tellstream_player_identity", testPlayerName);
+        window.sessionStorage.setItem("tellstream_player_identity", detectedPlayerName);
         subscribeToRoom(currentRoomCode);
     } catch (err) {
         console.error("Error joining remote table session:", err);
@@ -202,11 +218,10 @@ function subscribeToRoom(code) {
             event: 'UPDATE', 
             schema: 'public', 
             table: 'domino_rooms', 
-            filter: `room_code=eq.${code}` 
+            filter: `room_code=eq.${code}` [cite: 11]
         }, payload => {
             localGameState = payload.new;
             
-            // 🌟 SEATING FIX CHECK: Force seat assignment BEFORE firing any UI redraws
             if (playerSeatNumber === null && localGameState.players && localGameState.players.player2) {
                 const identity = window.sessionStorage.getItem("tellstream_player_identity");
                 if (identity && localGameState.players.player2.name === identity) {
@@ -240,9 +255,10 @@ function switchToGameTableView() {
 async function launchMatchWithLineup(selectedPlayer2Name) {
     if (playerSeatNumber !== 1) return;
 
+    const hostIdentityName = localGameState.players.player1.name;
     const fullDeck = shuffleBones(generateFullDominoSet());
     const assignedPlayersObject = {
-        player1: { seat: 1, hand: fullDeck.slice(0, 7), name: "Table Host" },
+        player1: { seat: 1, hand: fullDeck.slice(0, 7), name: hostIdentityName },
         player2: { seat: 2, hand: fullDeck.slice(7, 14), name: selectedPlayer2Name },
         player3: { seat: 3, hand: [], name: "Not In Use" },
         player4: { seat: 4, hand: [], name: "Not In Use" },
@@ -325,5 +341,5 @@ function handleRoomUpdate(updatedRoomState) {
     if (typeof renderLiveTable === 'function') {
         renderLiveTable(updatedRoomState.board_line);
     }
-    console.log(`Match Lounge Synchronized. Active Turn Seat: Player ${updatedRoomState.active_turn}`);
+    console.log("Match Lounge Synchronized.");
 }
