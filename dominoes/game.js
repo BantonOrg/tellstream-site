@@ -64,7 +64,7 @@ function renderLiveTable(boardLine) {
     if (leftZone) leftZone.style.display = "none";
     if (rightZone) rightZone.style.display = "none";
 
-    // 1. RENDER PLAYED TRACK (+12% SIZE BUMP AND ORIENTATION MAPPING RULES)
+    // 1. RENDER PLAYED TRACK (MAPPED TO THE NEW .domino-flat-track OVERRIDE CLASS)
     if (boardLine && boardLine.length > 0) {
         boardLine.forEach(tile => {
             const placedTile = document.createElement("div");
@@ -72,6 +72,7 @@ function renderLiveTable(boardLine) {
             placedTile.style.flexShrink = "0";
             
             if (tile.top === tile.bottom) {
+                // Doubles stand vertical natively
                 placedTile.className = "domino-bone-interactive";
                 placedTile.innerHTML = `
                     ${generateHalfDisplay(tile.displayTop, false)}
@@ -79,7 +80,8 @@ function renderLiveTable(boardLine) {
                     ${generateHalfDisplay(tile.displayBottom, false)}
                 `;
             } else {
-                placedTile.className = "domino-bone-interactive horizontal-bone";
+                // Standard bones use the brand new class to completely clear old CSS limits
+                placedTile.className = "domino-bone-interactive domino-flat-track";
                 placedTile.innerHTML = `
                     ${generateHalfDisplay(tile.displayTop, true)}
                     <div style="width: 2px; height: 100%; background: #1a1a1a; flex-shrink: 0; position: relative;" class="domino-divider"></div>
@@ -91,7 +93,7 @@ function renderLiveTable(boardLine) {
         });
     }
 
-    // 2. RENDER PLAYER HAND SANDBOX DECK (+12% SIZE BUMP VERTICAL)
+    // 2. RENDER PLAYER HAND SANDBOX DECK
     if (localGameState && localGameState.players && localGameState.players.player1) {
         const hand = localGameState.players.player1.hand || [];
         hand.forEach(tile => {
