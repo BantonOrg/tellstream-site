@@ -4,14 +4,23 @@
 
 let selectedTileId = null;
 
+// Absolute master dimensions of table_bg.jpg
 const BG_NATIVE_WIDTH = 2560;
 const BG_NATIVE_HEIGHT = 1440;
 
-// Path coordinates locked perfectly to the inner neon border area
-const BOUNDS_LEFT = 265;
-const BOUNDS_TOP = 420;
-const BOUNDS_RIGHT = 2219;
-const BOUNDS_BOTTOM = 1020; 
+// Your precise grid coordinates verified from the midpoints
+const PATH_TRACK = {
+    lowerY: 1180, // Halfway between 920 and 1440
+    upperY: 269,  // Halfway between 92 and 446
+    leftX: 420,   // Strict left vertical boundary
+    rightX: 2220  // Halfway between 1790 and 2650
+};
+
+// Absolute center point for the dealt hand tray
+const HAND_CENTER = {
+    x: 1280,
+    y: 720
+};
 
 function renderLiveTable(boardLine) {
     const tableView = document.getElementById("table-view");
@@ -32,13 +41,13 @@ function renderLiveTable(boardLine) {
                         Room: <span id="display-room-code" style="color: #fff;">SANDBOX</span> | Turn: <span id="display-active-turn">BANTON</span>
                     </div>
 
-                    <div id="domino-track-canvas" style="position: absolute; left: ${(BOUNDS_LEFT/BG_NATIVE_WIDTH)*100}%; top: ${(BOUNDS_TOP/BG_NATIVE_HEIGHT)*100}%; width: ${((BOUNDS_RIGHT - BOUNDS_LEFT)/BG_NATIVE_WIDTH)*100}%; height: ${((BOUNDS_BOTTOM - BOUNDS_TOP)/BG_NATIVE_HEIGHT)*100}%;">
+                    <div id="domino-track-canvas" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%;">
                         <div id="left-play-zone" style="display: none; position: absolute; left: 0; top: 0; width: 15%; height: 100%; background: rgba(102, 252, 241, 0.12); justify-content: center; align-items: center; z-index: 20; color: #66fcf1; font-weight: bold; font-size: 0.75rem; border-right: 2px dashed #66fcf1; cursor: pointer;">PLAY LEFT</div>
                         <div id="right-play-zone" style="display: none; position: absolute; right: 0; top: 0; width: 15%; height: 100%; background: rgba(102, 252, 241, 0.12); justify-content: center; align-items: center; z-index: 20; color: #66fcf1; font-weight: bold; font-size: 0.75rem; border-left: 2px dashed #66fcf1; cursor: pointer;">PLAY RIGHT</div>
                         <div id="placed-tiles-container" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0;"></div>
                     </div>
 
-                    <div id="player-hand-container" style="position: absolute; left: 50%; top: 85%; transform: translate(-50%, -50%); width: 65%; height: 16%; display: flex; justify-content: center; align-items: center; gap: 16px; background: transparent; padding: 5px; box-sizing: border-box; z-index: 999; filter: drop-shadow(0px 12px 18px rgba(0, 0, 0, 0.95));"></div>
+                    <div id="player-hand-container" style="position: absolute; display: flex; justify-content: center; align-items: center; gap: 16px; background: transparent; box-sizing: border-box; z-index: 999; filter: drop-shadow(0px 12px 18px rgba(0, 0, 0, 0.95));"></div>
 
                     <div id="turn-alert-message" style="position: absolute; top: 59.5%; left: 50%; transform: translateX(-50%); color: #ff4a4a; font-weight: bold; font-size: 0.8rem; background: rgba(0,0,0,0.85); padding: 5px 15px; border-radius: 4px; border: 1px solid #ff4a4a; display: none; z-index: 25;"></div>
                 </div>
@@ -65,100 +74,105 @@ function renderLiveTable(boardLine) {
     if (leftZone) leftZone.style.display = "none";
     if (rightZone) rightZone.style.display = "none";
 
+    // Position Hand Container directly at your exact 1280 x 720 center point coordinates
+    if (handContainer) {
+        handContainer.style.left = `${(HAND_CENTER.x / BG_NATIVE_WIDTH) * 100}%`;
+        handContainer.style.top = `${(HAND_CENTER.y / BG_NATIVE_HEIGHT) * 100}%`;
+        handContainer.style.transform = "translate(-50%, -50%)";
+        handContainer.style.width = "65%";
+        handContainer.style.height = "16%";
+    }
+
     // ==========================================================================
-    // TRACK LAYOUT COORDINATE CALCULATION SYSTEM
+    // COMPLETE PATH CORNER TRACK CORRECTION MECHANISM
     // ==========================================================================
     if (boardLine && boardLine.length > 0) {
-        const trackCanvas = document.getElementById("domino-track-canvas");
-        const canvasWidth = trackCanvas.clientWidth;
-        const canvasHeight = trackCanvas.clientHeight;
-
-        // Locate the initial double spinner (e.g., 6:6) as the baseline origin
         let initialIndex = boardLine.findIndex(tile => tile.top === tile.bottom);
         if (initialIndex === -1) initialIndex = 0;
 
         let calculatedCoordinates = new Array(boardLine.length);
 
-        // 1. Place the starting double stood vertical exactly at bottom center of the canvas area
+        // First Double anchors natively right in the middle of lower horizontal path
         calculatedCoordinates[initialIndex] = {
-            x: (canvasWidth / 2) - (58 / 2),
-            y: canvasHeight - 119, 
+            x: PATH_TRACK.leftX + ((PATH_TRACK.rightX - PATH_TRACK.leftX) / 2) - (58 / 2),
+            y: PATH_TRACK.lowerY - (119 / 2),
             isRotated: false
         };
 
-        // 2. Wrap left chain westward along bottom, then upward along the left side
+        // Track left side chain wrapping out to left boundary, then climb straight up the wall
         for (let i = initialIndex - 1; i >= 0; i--) {
-            let nextTile = boardLine[i];
             let prevCoords = calculatedCoordinates[i + 1];
-            let isDouble = nextTile.top === nextTile.bottom;
+            let isDouble = boardLine[i].top === boardLine[i].bottom;
 
-            if (prevCoords.y >= canvasHeight - 119 && prevCoords.x > 80) {
-                // Moving left horizontally
+            // If we are still tracking along the lower horizontal line
+            if (prevCoords.x > PATH_TRACK.leftX + 60) {
                 let tileW = isDouble ? 58 : 119;
-                let nextX = prevCoords.x - tileW - 6; 
-                let nextY = isDouble ? canvasHeight - 119 : canvasHeight - 88;
+                let nextX = prevCoords.x - tileW - 6;
+                let nextY = PATH_TRACK.lowerY - (isDouble ? 119 / 2 : 58 / 2);
 
-                if (nextX < 15) {
-                    // Turn corner upward along the left border
+                // Check corner threshold
+                if (nextX < PATH_TRACK.leftX + 20) {
                     let verticalH = isDouble ? 58 : 119;
                     calculatedCoordinates[i] = {
-                        x: 15,
-                        y: canvasHeight - 119 - verticalH - 6,
+                        x: PATH_TRACK.leftX - (isDouble ? 119 / 2 : 58 / 2),
+                        y: PATH_TRACK.lowerY - 60 - verticalH - 6,
                         isRotated: isDouble ? false : true
                     };
                 } else {
                     calculatedCoordinates[i] = { x: nextX, y: nextY, isRotated: isDouble ? false : true };
                 }
             } else {
-                // Climbing up the left wall area
+                // Climb up the left margin wall cleanly
                 let tileH = isDouble ? 58 : 119;
-                let nextX = isDouble ? 15 - 30 : 15; 
-                let nextY = prevCoords.y - tileH - 6;
-                calculatedCoordinates[i] = { x: nextX, y: nextY, isRotated: isDouble ? false : true };
+                calculatedCoordinates[i] = {
+                    x: PATH_TRACK.leftX - (isDouble ? 119 / 2 : 58 / 2),
+                    y: prevCoords.y - tileH - 6,
+                    isRotated: isDouble ? false : true
+                };
             }
         }
 
-        // 3. Wrap right chain eastward along bottom, then upward along the right side
+        // Track right side chain wrapping out to right boundary, then climb straight up the wall
         for (let i = initialIndex + 1; i < boardLine.length; i++) {
-            let nextTile = boardLine[i];
             let prevCoords = calculatedCoordinates[i - 1];
-            let isDouble = nextTile.top === nextTile.bottom;
-            let prevTileWidth = (boardLine[i - 1].top === boardLine[i - 1].bottom) ? 58 : 119;
+            let isDouble = boardLine[i].top === boardLine[i].bottom;
+            let prevW = (boardLine[i - 1].top === boardLine[i - 1].bottom) ? 58 : 119;
 
-            if (prevCoords.y >= canvasHeight - 119 && prevCoords.x < canvasWidth - 140) {
-                // Moving right horizontally
-                let nextX = prevCoords.x + prevTileWidth + 6;
-                let nextY = isDouble ? canvasHeight - 119 : canvasHeight - 88;
-                let currentTileWidth = isDouble ? 58 : 119;
+            // If we are still tracking along the lower horizontal line
+            if (prevCoords.x < PATH_TRACK.rightX - 140) {
+                let nextX = prevCoords.x + prevW + 6;
+                let nextY = PATH_TRACK.lowerY - (isDouble ? 119 / 2 : 58 / 2);
+                let currentW = isDouble ? 58 : 119;
 
-                if (nextX + currentTileWidth > canvasWidth - 15) {
-                    // Turn corner upward along the right border
+                // Check corner threshold
+                if (nextX + currentW > PATH_TRACK.rightX - 20) {
                     let verticalH = isDouble ? 58 : 119;
                     calculatedCoordinates[i] = {
-                        x: canvasWidth - (isDouble ? 119 : 58) - 15,
-                        y: canvasHeight - 119 - verticalH - 6,
+                        x: PATH_TRACK.rightX - (isDouble ? 119 / 2 : 58 / 2),
+                        y: PATH_TRACK.lowerY - 60 - verticalH - 6,
                         isRotated: isDouble ? false : true
                     };
                 } else {
                     calculatedCoordinates[i] = { x: nextX, y: nextY, isRotated: isDouble ? false : true };
                 }
             } else {
-                // Climbing up the right wall area
+                // Climb up the right margin wall cleanly
                 let tileH = isDouble ? 58 : 119;
-                let verticalW = isDouble ? 119 : 58;
-                let nextX = canvasWidth - verticalW - 15;
-                let nextY = prevCoords.y - tileH - 6;
-                calculatedCoordinates[i] = { x: nextX, y: nextY, isRotated: isDouble ? false : true };
+                calculatedCoordinates[i] = {
+                    x: PATH_TRACK.rightX - (isDouble ? 119 / 2 : 58 / 2),
+                    y: prevCoords.y - tileH - 6,
+                    isRotated: isDouble ? false : true
+                };
             }
         }
 
-        // 4. Inject positions into absolute container render layer
+        // Render everything directly as precise background image percentage mappings
         boardLine.forEach((tile, index) => {
             const coords = calculatedCoordinates[index];
             const placedTile = document.createElement("div");
             placedTile.style.position = "absolute";
-            placedTile.style.left = `${coords.x}px`;
-            placedTile.style.top = `${coords.y}px`;
+            placedTile.style.left = `${(coords.x / BG_NATIVE_WIDTH) * 100}%`;
+            placedTile.style.top = `${(coords.y / BG_NATIVE_HEIGHT) * 100}%`;
             placedTile.style.cursor = "default";
             placedTile.style.margin = "0";
 
@@ -181,7 +195,7 @@ function renderLiveTable(boardLine) {
         });
     }
 
-    // 2. RENDER PLAYER HAND (ALIGNED IN LOWER BLUE ZONE BOX)
+    // 2. RENDER PLAYER HAND
     if (window.localGameState && window.localGameState.players && window.localGameState.players.player1) {
         const hand = window.localGameState.players.player1.hand || [];
         hand.forEach(tile => {
@@ -301,7 +315,6 @@ function processTilePlacement(targetSide) {
     else if (targetSide === 'left') {
         const openLeft = updatedBoardLine[0].displayTop;
         
-        // Strictly match numbers (e.g., 5 to 5, 1 to 1)
         if (chosenTile.bottom === openLeft) {
             chosenTile.displayTop = chosenTile.top;
             chosenTile.displayBottom = chosenTile.bottom;
@@ -314,7 +327,6 @@ function processTilePlacement(targetSide) {
     else if (targetSide === 'right') {
         const openRight = updatedBoardLine[updatedBoardLine.length - 1].displayBottom;
         
-        // Strictly match numbers (e.g., 5 to 5, 1 to 1)
         if (chosenTile.top === openRight) {
             chosenTile.displayTop = chosenTile.top;
             chosenTile.displayBottom = chosenTile.bottom;
