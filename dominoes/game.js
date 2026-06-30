@@ -9,7 +9,7 @@ let selectedTileId = null;
 const BG_NATIVE_WIDTH = 2560;
 const BG_NATIVE_HEIGHT = 1440;
 
-// Inner Neon Bounds Coordinates relative to image sizing constraints
+// Inner Neon Bounds Coordinates relative to image sizing constraints 
 const BOUNDS_LEFT = 265;
 const BOUNDS_TOP = 523;
 const BOUNDS_RIGHT = 2219;
@@ -24,11 +24,12 @@ function renderLiveTable(boardLine) {
 
     // --- PHASE 1: ACTIVE LOBBY SELECTION SCREEN ---
     if (localGameState && localGameState.game_state === 'waiting') {
-        const roster = (localGameState.players && localGameState.players.lobby_roster) ? localGameState.players.lobby_roster : ["Table Host"];
+        const hostName = localGameState.players && localGameState.players.player1 ? localGameState.players.player1.name : "Table Host";
+        const roster = (localGameState.players && localGameState.players.lobby_roster) ? localGameState.players.lobby_roster : [hostName];
         
         if (playerSeatNumber === 1) {
             // Host Configuration Interface Layout
-            const filteredPlayers = roster.filter(name => name !== "Table Host");
+            const filteredPlayers = roster.filter(name => name !== hostName);
             let dropdownOptions = filteredPlayers.map(name => `<option value="${name}">${name}</option>`).join("");
 
             tableView.innerHTML = `
@@ -79,18 +80,18 @@ function renderLiveTable(boardLine) {
     // --- PHASE 2: MATCH LAUNCHED & ACTIVE PLAY ---
     let mat = document.getElementById("game-mat");
     if (!mat || !document.getElementById("domino-track-canvas")) {
-        // Build responsive graphic wrapper centered inside the master frame layout
+        // Fix 2 & 3: Background url routed to assets directory, expanded container framework to fill full screens
         tableView.innerHTML = `
-            <div id="game-mat" style="position: relative; width: 100vw; height: 100vh; background: #000; display: flex; justify-content: center; align-items: center; overflow: hidden; box-sizing: border-box;">
+            <div id="game-mat" style="position: relative; width: 100vw; height: 100vh; background-image: url('assets/table_bg.jpg'); background-size: cover; background-repeat: no-repeat; background-position: center; display: flex; justify-content: center; align-items: center; overflow: hidden; box-sizing: border-box;">
                 
-                <div id="scaled-table-canvas-root" style="position: relative; width: 100vmin; height: 56.25vmin; background-image: url('assets/table_bg.jpg'); background-size: contain; background-repeat: no-repeat; background-position: center; box-shadow: 0 0 50px rgba(0,0,0,0.8);">
+                <div id="scaled-table-canvas-root" style="position: relative; width: 100vw; height: 56.25vw; max-height: 100vh; max-width: 177.77vh;">
                     
                     <div id="seat-block-1" style="position: absolute; top: 10px; left: 10px; padding: 10px; background: rgba(11,12,16,0.85); border: 1px solid #66fcf1; border-radius: 4px; min-width: 120px; font-size: 0.75rem; line-height: 1.2; z-index: 10;"></div>
                     <div id="seat-block-2" style="position: absolute; top: 10px; right: 10px; padding: 10px; background: rgba(11,12,16,0.85); border: 1px solid rgba(102,252,241,0.4); border-radius: 4px; min-width: 120px; font-size: 0.75rem; line-height: 1.2; z-index: 10;"></div>
                     <div id="seat-block-3" style="position: absolute; bottom: 10px; right: 10px; padding: 10px; background: rgba(11,12,16,0.85); border: 1px solid rgba(102,252,241,0.4); border-radius: 4px; min-width: 120px; font-size: 0.75rem; line-height: 1.2; z-index: 10;"></div>
                     <div id="seat-block-4" style="position: absolute; bottom: 10px; left: 10px; padding: 10px; background: rgba(11,12,16,0.85); border: 1px solid rgba(102,252,241,0.4); border-radius: 4px; min-width: 120px; font-size: 0.75rem; line-height: 1.2; z-index: 10;"></div>
 
-                    <div id="table-status-header" style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #66fcf1; font-size: 0.9rem; letter-spacing: 1px; text-transform: uppercase; z-index: 10; font-weight: bold; background: rgba(0,0,0,0.5); padding: 4px 12px; border-radius: 20px;">
+                    <div id="table-status-header" style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #66fcf1; font-size: 0.9rem; letter-spacing: 1px; text-transform: uppercase; z-index: 10; font-weight: bold; background: rgba(0,0,0,0.6); padding: 4px 12px; border-radius: 20px;">
                         Room: <span id="display-room-code" style="color: #fff;">----</span> | Turn: <span id="display-active-turn">-</span>
                     </div>
 
@@ -167,7 +168,7 @@ function renderLiveTable(boardLine) {
             const placedTile = document.createElement("div");
             placedTile.className = "domino-bone-interactive";
             placedTile.style.cursor = "default";
-            placedTile.style.transform = "rotate(90deg) scale(0.75)"; // Scaled down to cleanly fit inner tracking zone
+            placedTile.style.transform = "rotate(90deg) scale(0.75)"; 
             
             placedTile.innerHTML = `
                 ${generateHalfDisplay(tile.displayTop)}
