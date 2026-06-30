@@ -16,51 +16,6 @@ function renderLiveTable(boardLine) {
     const tableView = document.getElementById("table-view");
     if (!tableView) return;
 
-    if (localGameState && localGameState.game_state === 'waiting') {
-        const hostName = localGameState.players && localGameState.players.player1 ? localGameState.players.player1.name : "Table Host";
-        const roster = (localGameState.players && localGameState.players.lobby_roster) ? localGameState.players.lobby_roster : [hostName];
-        
-        if (playerSeatNumber === 1) {
-            const filteredPlayers = roster.filter(name => name !== hostName);
-            let dropdownOptions = filteredPlayers.map(name => `<option value="${name}">${name}</option>`).join("");
-
-            tableView.innerHTML = `
-                <div id="game-mat" style="position: relative; width: 100%; height: 100vh; background: #0b0c10; display: flex; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box;">
-                    <div class="lobby-panel" style="padding: 40px; text-align: center; border: 2px solid #66fcf1; background: rgba(31, 40, 51, 0.9); border-radius: 12px; max-width: 500px; width: 100%;">
-                        <h2 style="color: #66fcf1; font-size: 2rem; margin-bottom: 15px; letter-spacing: 1px;">TABLE LINEUP</h2>
-                        <p style="color: #c5c6c7; margin-bottom: 25px; font-size: 1.1rem;">Room Code: <strong style="color: #fff;">${currentRoomCode}</strong></p>
-                        <div style="margin-bottom: 35px; text-align: left;">
-                            <label style="color: #66fcf1; font-weight: bold; display: block; margin-bottom: 8px; font-size: 1rem;">CHOOSE SEAT 2 OPPONENT:</label>
-                            <select id="lineup-seat2-select" style="width: 100%; padding: 12px; font-size: 1.1rem; background: #0b0c10; color: #fff; border: 1px solid #66fcf1; border-radius: 4px;">
-                                ${dropdownOptions ? dropdownOptions : '<option value="" disabled selected>Waiting for players...</option>'}
-                            </select>
-                        </div>
-                        <button id="launch-match-action-btn" class="lobby-btn primary" style="padding: 12px 35px; font-size: 1.2rem; cursor: pointer; width: 100%;" ${!dropdownOptions ? 'disabled' : ''}>START MATCH</button>
-                    </div>
-                </div>
-            `;
-
-            const launchBtn = document.getElementById("launch-match-action-btn");
-            if (launchBtn && dropdownOptions) {
-                launchBtn.addEventListener("click", () => {
-                    const selectedName = document.getElementById("lineup-seat2-select").value;
-                    if (selectedName) launchMatchWithLineup(selectedName);
-                });
-            }
-        } else {
-            tableView.innerHTML = `
-                <div id="game-mat" style="position: relative; width: 100%; height: 100vh; background: #0b0c10; display: flex; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box;">
-                    <div style="text-align: center; max-width: 500px;">
-                        <h2 style="color: #66fcf1; font-size: 2.2rem; margin-bottom: 15px; letter-spacing: 1px;">CONNECTED</h2>
-                        <p style="color: #fff; font-size: 1.4rem; font-weight: bold; margin-bottom: 20px;">CODE: ${currentRoomCode}</p>
-                        <p style="color: #c5c6c7; font-size: 1.1rem;">Waiting for host to organize lineup deck...</p>
-                    </div>
-                </div>
-            `;
-        }
-        return; 
-    }
-
     let mat = document.getElementById("game-mat");
     if (!mat || !document.getElementById("domino-track-canvas")) {
         tableView.innerHTML = `
@@ -73,7 +28,7 @@ function renderLiveTable(boardLine) {
                     <div id="seat-block-4" style="position: absolute; bottom: 25px; left: 12px; padding: 6px 14px; background: rgba(11,12,16,0.85); border: 1px solid rgba(102,252,241,0.2); border-radius: 4px; font-size: 0.85rem; z-index: 10; display: flex; gap: 8px; align-items: center; white-space: nowrap;"></div>
 
                     <div id="table-status-header" style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #66fcf1; font-size: 0.9rem; letter-spacing: 1px; text-transform: uppercase; z-index: 10; font-weight: bold; background: rgba(0,0,0,0.6); padding: 4px 12px; border-radius: 20px;">
-                        Room: <span id="display-room-code" style="color: #fff;">----</span> | Turn: <span id="display-active-turn">-</span>
+                        Room: <span id="display-room-code" style="color: #fff;">SANDBOX</span> | Turn: <span id="display-active-turn">BANTON</span>
                     </div>
 
                     <div id="domino-track-canvas" style="position: absolute; left: ${(BOUNDS_LEFT/BG_NATIVE_WIDTH)*100}%; top: ${(BOUNDS_TOP/BG_NATIVE_HEIGHT)*100}%; width: ${((BOUNDS_RIGHT - BOUNDS_LEFT)/BG_NATIVE_WIDTH)*100}%; height: ${((BOUNDS_BOTTOM - BOUNDS_TOP)/BG_NATIVE_HEIGHT)*100}%;">
@@ -95,17 +50,9 @@ function renderLiveTable(boardLine) {
         document.getElementById("right-play-zone").addEventListener("click", (e) => { e.stopPropagation(); processTilePlacement('right'); });
     }
 
-    if (currentRoomCode) {
-        document.getElementById("display-room-code").innerText = currentRoomCode;
-    }
-    if (localGameState) {
-        let activeNameStr = `Player ${localGameState.active_turn}`;
-        if (localGameState.players && localGameState.players[`player${localGameState.active_turn}`]) {
-            activeNameStr = localGameState.players[`player${localGameState.active_turn}`].name;
-        }
-        document.getElementById("display-active-turn").innerText = activeNameStr;
-        updateCornerSeatBlocks();
-    }
+    document.getElementById("display-room-code").innerText = "SANDBOX";
+    document.getElementById("display-active-turn").innerText = "BANTON";
+    updateCornerSeatBlocks();
 
     const trackContainer = document.getElementById("placed-tiles-container");
     const handContainer = document.getElementById("player-hand-container");
@@ -117,22 +64,7 @@ function renderLiveTable(boardLine) {
     if (leftZone) leftZone.style.display = "none";
     if (rightZone) rightZone.style.display = "none";
 
-    if (localGameState && localGameState.game_state === 'playing' && localGameState.active_turn === playerSeatNumber) {
-        if (!hasPlayableMoves()) {
-            const alertBox = document.getElementById("turn-alert-message");
-            if (alertBox) {
-                alertBox.innerText = "NO PLAYABLE BONES - SKIPPING YOUR TURN...";
-                alertBox.style.display = "block";
-            }
-            setTimeout(() => {
-                if (alertBox) alertBox.style.display = "none";
-                handleAutoPassTurn();
-            }, 2000);
-            return;
-        }
-    }
-
-    // 1. RENDER PLAYED TRACK (+12% SIZE BUMP WITH HORIZONTAL RESTRUCTURE & PIP EXPLICIT TRANSFORMS)
+    // 1. RENDER PLAYED TRACK (+12% SIZE BUMP AND ORIENTATION MAPPING RULES)
     if (boardLine && boardLine.length > 0) {
         boardLine.forEach(tile => {
             const placedTile = document.createElement("div");
@@ -140,7 +72,6 @@ function renderLiveTable(boardLine) {
             placedTile.style.flexShrink = "0";
             
             if (tile.top === tile.bottom) {
-                // Doubles stand upright natively
                 placedTile.className = "domino-bone-interactive";
                 placedTile.innerHTML = `
                     ${generateHalfDisplay(tile.displayTop, false)}
@@ -148,8 +79,6 @@ function renderLiveTable(boardLine) {
                     ${generateHalfDisplay(tile.displayBottom, false)}
                 `;
             } else {
-                // Standard bones layout flat horizontally left-to-right
-                // Attaches helper class to clear out stylesheet column limits
                 placedTile.className = "domino-bone-interactive horizontal-bone";
                 placedTile.innerHTML = `
                     ${generateHalfDisplay(tile.displayTop, true)}
@@ -162,49 +91,43 @@ function renderLiveTable(boardLine) {
         });
     }
 
-    // 2. RENDER PLAYER HAND (+12% SIZE BUMP STOOD UP VERTICALLY)
-    if (playerSeatNumber && localGameState.players) {
-        const targetKey = `player${playerSeatNumber}`;
-        const playerObj = localGameState.players[targetKey];
-        
-        if (playerObj && playerObj.hand) {
-            playerObj.hand.forEach(tile => {
-                const tileElement = document.createElement("div");
-                tileElement.className = "domino-bone-interactive";
-                tileElement.id = `hand-tile-${tile.id}`;
-                tileElement.style.flexShrink = "0";
-                
-                if (selectedTileId === tile.id) {
-                    tileElement.style.transform = "translateY(-16px)";
-                    tileElement.style.borderColor = "#66fcf1";
-                    tileElement.style.boxShadow = "0 0 16px #66fcf1";
-                    if (localGameState.active_turn === playerSeatNumber) {
-                        displayValidPlacements(tile);
-                    }
-                }
+    // 2. RENDER PLAYER HAND SANDBOX DECK (+12% SIZE BUMP VERTICAL)
+    if (localGameState && localGameState.players && localGameState.players.player1) {
+        const hand = localGameState.players.player1.hand || [];
+        hand.forEach(tile => {
+            const tileElement = document.createElement("div");
+            tileElement.className = "domino-bone-interactive";
+            tileElement.id = `hand-tile-${tile.id}`;
+            tileElement.style.flexShrink = "0";
+            
+            if (selectedTileId === tile.id) {
+                tileElement.style.transform = "translateY(-16px)";
+                tileElement.style.borderColor = "#66fcf1";
+                tileElement.style.boxShadow = "0 0 16px #66fcf1";
+                displayValidPlacements(tile);
+            }
 
-                tileElement.onmouseenter = () => {
-                    if (selectedTileId !== tile.id) tileElement.style.transform = "translateY(-8px)";
-                };
-                tileElement.onmouseleave = () => {
-                    if (selectedTileId !== tile.id) tileElement.style.transform = "translateY(0)";
-                };
-                
-                tileElement.innerHTML = `
-                    ${generateHalfDisplay(tile.top, false)}
-                    <div style="width: 100%; height: 2px; background: #1a1a1a; flex-shrink: 0; position: relative;" class="domino-divider"></div>
-                    ${generateHalfDisplay(tile.bottom, false)}
-                `;
-                
-                tileElement.addEventListener("click", (e) => {
-                    e.stopPropagation(); 
-                    selectedTileId = (selectedTileId === tile.id) ? null : tile.id;
-                    renderLiveTable(localGameState.board_line);
-                });
-
-                handContainer.appendChild(tileElement);
+            tileElement.onmouseenter = () => {
+                if (selectedTileId !== tile.id) tileElement.style.transform = "translateY(-8px)";
+            };
+            tileElement.onmouseleave = () => {
+                if (selectedTileId !== tile.id) tileElement.style.transform = "translateY(0)";
+            };
+            
+            tileElement.innerHTML = `
+                ${generateHalfDisplay(tile.top, false)}
+                <div style="width: 100%; height: 2px; background: #1a1a1a; flex-shrink: 0; position: relative;" class="domino-divider"></div>
+                ${generateHalfDisplay(tile.bottom, false)}
+            `;
+            
+            tileElement.addEventListener("click", (e) => {
+                e.stopPropagation(); 
+                selectedTileId = (selectedTileId === tile.id) ? null : tile.id;
+                renderLiveTable(localGameState.board_line);
             });
-        }
+
+            handContainer.appendChild(tileElement);
+        });
     }
 }
 
@@ -212,66 +135,43 @@ function updateCornerSeatBlocks() {
     for (let i = 1; i <= 4; i++) {
         const block = document.getElementById(`seat-block-${i}`);
         if (!block) continue;
-
-        const player = localGameState.players[`player${i}`];
-        if (!player) {
-            block.style.display = "none";
-            continue;
-        }
-
         block.style.display = "flex";
         
-        if (localGameState.active_turn === i && localGameState.game_state === 'playing') {
+        if (i === 1) {
             block.style.backgroundColor = "rgba(11, 12, 16, 0.95)";
             block.style.borderColor = "#66fcf1";
             block.style.boxShadow = "0 0 15px rgba(102, 252, 241, 0.5)";
+            block.innerHTML = `<strong style="color: #66fcf1;">Banton</strong><span style="color: rgba(255,255,255,0.15); margin: 0 3px;">|</span><span style="color: #fff;">Bones: 7</span>`;
+        } else if (i === 2) {
+            block.style.backgroundColor = "rgba(11, 12, 16, 0.85)";
+            block.style.borderColor = "rgba(102, 252, 241, 0.2)";
+            block.style.boxShadow = "none";
+            block.innerHTML = `<strong style="color: #66fcf1;">TellaSecurity</strong><span style="color: rgba(255,255,255,0.15); margin: 0 3px;">|</span><span style="color: #fff;">Bones: 7</span>`;
         } else {
             block.style.backgroundColor = "rgba(11, 12, 16, 0.85)";
-            block.style.borderColor = (player.name === "Waiting..." || player.name === "Not In Use") ? "rgba(255,255,255,0.05)" : "rgba(102, 252, 241, 0.2)";
+            block.style.borderColor = "rgba(255,255,255,0.05)";
             block.style.boxShadow = "none";
-        }
-
-        const roleStr = (i === 1) ? "Host" : `P${i}`;
-        const displayLabel = (player.name === "Table Host" || player.name === `Player ${i}`) ? roleStr : `${player.name}`;
-
-        if (player.name === "Waiting...") {
-            block.innerHTML = `<span style="color: #66fcf1; font-weight: bold;">${roleStr}</span> <span style="color: rgba(255,255,255,0.15); margin: 0 4px;">|</span> <span style="color: #666; font-style: italic;">Lobby...</span>`;
-        } else if (player.name === "Not In Use") {
-            block.innerHTML = `<span style="color: #444; font-weight: bold;">${roleStr}</span> <span style="color: rgba(255,255,255,0.15); margin: 0 4px;">|</span> <span style="color: #444;">Empty</span>`;
-        } else {
-            const tileCount = (player.hand) ? player.hand.length : 0;
-            block.innerHTML = `
-                <strong style="color: #66fcf1; max-width: 120px; overflow: hidden; text-overflow: ellipsis;">${displayLabel}</strong>
-                <span style="color: rgba(255,255,255,0.15); margin: 0 3px;">|</span>
-                <span style="color: #fff; font-weight: 500;">Bones: ${tileCount}</span>
-                <span style="color: rgba(255,255,255,0.15); margin: 0 3px;">|</span>
-                <span style="color: #66fcf1; font-weight: bold;">Active</span>
-            `;
+            block.innerHTML = `<span style="color: #444; font-weight: bold;">P${i}</span><span style="color: rgba(255,255,255,0.15); margin: 0 4px;">|</span><span style="color: #444;">Empty</span>`;
         }
     }
 }
 
 function generateHalfDisplay(value, isHorizontal = false) {
-    // Exact structural translation matrix for standard flat layout dots versus vertical orientation shapes
     const pipMaps = {
         0: [],
         1: [4],
-        2: isHorizontal ? [3, 7] : [1, 6], 
-        3: isHorizontal ? [3, 4, 7] : [1, 4, 6],
-        4: [1, 2, 5, 6],
-        5: [1, 2, 4, 5, 6],
-        6: isHorizontal ? [1, 2, 3, 5, 6, 7] : [1, 3, 4, 5, 6, 7]
+        2: isHorizontal ? [3, 7] : [1, 7],
+        3: isHorizontal ? [3, 4, 7] : [1, 4, 7],
+        4: [1, 2, 6, 7],
+        5: [1, 2, 4, 6, 7],
+        6: isHorizontal ? [1, 2, 3, 5, 6, 7] : [1, 2, 3, 5, 6, 7]
     };
     
-    // Remap abstract map indexes straight to your true CSS pos grid classes
-    const layoutMap = isHorizontal ? {1:1, 2:8, 3:2, 4:4, 5:5, 6:3, 7:9, 8:6, 9:7} : {1:1, 2:2, 3:3, 4:4, 5:5, 6:6, 7:7, 8:8, 9:9};
     const activePips = pipMaps[value] || [];
-    
     let html = `<div class="domino-half">`;
     for (let p = 1; p <= 9; p++) {
-        const targetGridPosition = layoutMap[p];
         const isActive = activePips.includes(p) ? 'active' : '';
-        html += `<div class="pip ${isActive} pos-${targetGridPosition}"></div>`;
+        html += `<div class="pip ${isActive} pos-${p}"></div>`;
     }
     html += `</div>`;
     return html;
@@ -290,32 +190,13 @@ function displayValidPlacements(tile) {
     if (tile.top === openRight || tile.bottom === openRight) rightZone.style.display = "flex";
 }
 
-function hasPlayableMoves() {
-    const line = localGameState.board_line;
-    if (!line || line.length === 0) return true; 
-
-    const openLeft = line[0].displayTop;
-    const openRight = line[line.length - 1].displayBottom;
-    const hand = localGameState.players[`player${playerSeatNumber}`].hand || [];
-    return hand.some(tile => 
-        tile.top === openLeft || tile.bottom === openLeft ||
-        tile.top === openRight || tile.bottom === openRight
-    );
-}
-
 function handleBoardClick() {
-    if (localGameState.active_turn !== playerSeatNumber) return;
-    if (!selectedTileId) {
-        alert("Select a domino bone from your hand first!");
-        return;
-    }
     const line = localGameState.board_line;
     if (!line || line.length === 0) processTilePlacement('initial');
 }
 
 function processTilePlacement(targetSide) {
-    const targetKey = `player${playerSeatNumber}`;
-    const playerHand = localGameState.players[targetKey].hand;
+    const playerHand = localGameState.players.player1.hand;
     const tileIndex = playerHand.findIndex(t => t.id === selectedTileId);
     if (tileIndex === -1) return;
     
@@ -351,28 +232,9 @@ function processTilePlacement(targetSide) {
     }
 
     playerHand.splice(tileIndex, 1);
-    let nextTurn = calculateNextEligibleTurn(localGameState.active_turn);
-    const updatedPlayersMap = { ...localGameState.players };
-    updatedPlayersMap[targetKey].hand = playerHand;
+    localGameState.board_line = updatedBoardLine;
+    localGameState.players.player1.hand = playerHand;
     
     selectedTileId = null;
-    pushMoveToDatabase(updatedBoardLine, nextTurn, updatedPlayersMap);
-}
-
-function calculateNextEligibleTurn(currentTurn) {
-    let checkSeat = currentTurn;
-    for (let i = 0; i < 4; i++) {
-        checkSeat = checkSeat + 1;
-        if (checkSeat > 4) checkSeat = 1;
-        const nextPlayerObj = localGameState.players[`player${checkSeat}`];
-        if (nextPlayerObj && nextPlayerObj.name !== "Waiting..." && nextPlayerObj.name !== "Not In Use") {
-            return checkSeat;
-        }
-    }
-    return 1;
-}
-
-function handleAutoPassTurn() {
-    let nextTurn = calculateNextEligibleTurn(localGameState.active_turn);
-    pushMoveToDatabase(localGameState.board_line, nextTurn, localGameState.players);
+    renderLiveTable(localGameState.board_line);
 }
