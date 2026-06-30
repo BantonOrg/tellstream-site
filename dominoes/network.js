@@ -57,9 +57,6 @@ function showLobbyUI() {
     });
 }
 
-/**
- * Generates standard double-six set array (28 bones)
- */
 function generateFullDominoSet() {
     const bones = [];
     let idCounter = 1;
@@ -78,9 +75,6 @@ function generateFullDominoSet() {
     return bones;
 }
 
-/**
- * Shuffles deck securely using Fisher-Yates algorithm
- */
 function shuffleBones(deck) {
     for (let i = deck.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -90,12 +84,12 @@ function shuffleBones(deck) {
 }
 
 /**
- * ROOT SESSION SYNC: Safely reads the locked username token straight from the local domain.
+ * ROOT SESSION SYNC: Reads the locked username token saved by the main dashboard.
  */
 async function getSupabaseChatIdentity() {
     try {
-        if (window.localStorage && window.localStorage.getItem('username')) {
-            const rawHandle = window.localStorage.getItem('username');
+        if (window.localStorage && window.localStorage.getItem('tellstream_active_user')) {
+            const rawHandle = window.localStorage.getItem('tellstream_active_user');
             if (rawHandle && rawHandle.trim() !== "") {
                 return rawHandle.replace(/<[^>]*>/g, "").trim();
             }
@@ -248,9 +242,6 @@ function switchToGameTableView() {
     if (tableView) tableView.classList.remove("hidden-layout");
 }
 
-/**
- * Triggered exclusively by the Host to build the 2-player dealt deck
- */
 async function launchMatchWithLineup(selectedPlayer2Name) {
     if (playerSeatNumber !== 1) return;
 
@@ -300,9 +291,6 @@ async function launchMatchWithLineup(selectedPlayer2Name) {
     }
 }
 
-/**
- * Core dynamic action: Dispatches state modifications straight to Supabase data layer
- */
 async function pushMoveToDatabase(updatedBoardLine, nextTurnSeatNumber, updatedPlayersMap) {
     localGameState.board_line = updatedBoardLine;
     localGameState.active_turn = nextTurnSeatNumber;
