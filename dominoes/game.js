@@ -12,9 +12,72 @@ function renderLiveTable(boardLine) {
     const tableView = document.getElementById("table-view");
     if (!tableView) return;
 
+    // --- PHASE 1: ACTIVE LOBBY SELECTION SCREEN ---
+    if (localGameState && localGameState.game_state === 'waiting') {
+        const roster = (localGameState.players && localGameState.players.lobby_roster) ? localGameState.players.lobby_roster : ["Table Host"];
+        
+        if (playerSeatNumber === 1) {
+            // Host Configuration Interface Layout
+            const filteredPlayers = roster.filter(name => name !== "Table Host");
+            let dropdownOptions = filteredPlayers.map(name => `<option value="${name}">${name}</option>`).join("");
+
+            tableView.innerHTML = `
+                <div id="game-mat" style="position: relative; width: 100%; height: 100vh; background: #0b0c10; display: flex; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box;">
+                    <div class="lobby-panel" style="padding: 40px; text-align: center; border: 2px solid #66fcf1; background: rgba(31, 40, 51, 0.9); border-radius: 12px; max-width: 500px; width: 100%;">
+                        <h2 style="color: #66fcf1; font-size: 2rem; margin-bottom: 15px; letter-spacing: 1px;">TABLE LINEUP</h2>
+                        <p style="color: #c5c6c7; margin-bottom: 25px; font-size: 1.1rem;">Room Code: <strong style="color: #fff;">${currentRoomCode}</strong></p>
+                        
+                        <div style="margin-bottom: 35px; text-align: left;">
+                            <label style="color: #66fcf1; font-weight: bold; display: block; margin-bottom: 8px; font-size: 1rem;">CHOOSE SEAT 2 OPPONENT:</label>
+                            <select id="lineup-seat2-select" style="width: 100%; padding: 12px; font-size: 1.1rem; background: #0b0c10; color: #fff; border: 1px solid #66fcf1; border-radius: 4px;">
+                                ${dropdownOptions ? dropdownOptions : '<option value="" disabled selected>Waiting for players to join room...</option>'}
+                            </select>
+                        </div>
+
+                        <button id="launch-match-action-btn" class="lobby-btn primary" style="padding: 12px 35px; font-size: 1.2rem; cursor: pointer; width: 100%;" ${!dropdownOptions ? 'disabled' : ''}>
+                            START MATCH
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            const launchBtn = document.getElementById("launch-match-action-btn");
+            if (launchBtn && dropdownOptions) {
+                launchBtn.addEventListener("click", () => {
+                    const selectedName = document.getElementById("lineup-seat2-select").value;
+                    if (selectedName) {
+                        launchMatchWithLineup(selectedName);
+                    }
+                });
+            }
+        } else {
+            // Guest Loading Status screen placeholder layout
+            tableView.innerHTML = `
+                <div id="game-mat" style="position: relative; width: 100%; height: 100vh; background: #0b0c10; display: flex; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box;">
+                    <div style="text-align: center; max-width: 500px;">
+                        <h2 style="color: #66fcf1; font-size: 2.2rem; margin-bottom: 15px; letter-spacing: 1px;">CONNECTED TO ROOM</h2>
+                        <p style="color: #fff; font-size: 1.4rem; font-weight: bold; margin-bottom: 20px;">CODE: ${currentRoomCode}</p>
+                        <p style="color: #c5c6c7; font-size: 1.1rem;">Hold tight! The Table Host is matching names and organizing the lineup deck now...</p>
+                        <div class="domino-divider" style="width: 60px; margin: 30px auto 0 auto;"></div>
+                    </div>
+                </div>
+            `;
+        }
+        return; 
+    }
+
+    // --- PHASE 2: MATCH LAUNCHED & ACTIVE PLAY ---
+    // Handle late auto-assignment tracking variable for non-host player
+    if (playerSeatNumber !== 1 && localGameState && localGameState.players && localGameState.players.player2) {
+        const localSavedName = window.sessionStorage.getItem("tellstream_player_identity");
+        if (localGameState.players.player2.name === localSavedName) {
+            playerSeatNumber = 2;
+        }
+    }
+
     // Check if we need to initialize the core structural layout frame inside the view
     let mat = document.getElementById("game-mat");
-    if (!mat) {
+    if (!mat || !document.getElementById("domino-track-canvas")) {
         tableView.innerHTML = `
             <div id="game-mat" style="position: relative; width: 100%; height: 100vh; background: #0b0c10; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 20px; box-sizing: border-box;">
                 
@@ -41,7 +104,11 @@ function renderLiveTable(boardLine) {
         document.getElementById("display-room-code").innerText = currentRoomCode;
     }
     if (localGameState) {
-        document.getElementById("display-active-turn").innerText = localGameState.active_turn;
+        let activeNameStr = `Player ${localGameState.active_turn}`;
+        if (localGameState.players && localGameState.players[`player${localGameState.active_turn}`]) {
+            activeNameStr = localGameState.players[`player${localGameState.active_turn}`].name;
+        }
+        document.getElementById("display-active-turn").innerText = activeNameStr;
     }
 
     // Clear previous elements inside containers to prevent duplicates on redraw
@@ -56,12 +123,11 @@ function renderLiveTable(boardLine) {
     if (boardLine && boardLine.length > 0) {
         if (emptyMsg) emptyMsg.style.display = "none";
         
-        // Simple starting render logic: draw bones horizontally in the center
         boardLine.forEach(tile => {
             const placedTile = document.createElement("div");
             placedTile.className = "domino-bone-interactive";
             placedTile.style.cursor = "default";
-            placedTile.style.transform = "rotate(90deg)"; // Lay them down flat on the track line
+            placedTile.style.transform = "rotate(90deg)"; 
             placedTile.innerHTML = `
                 ${generateHalfDisplay(tile.top)}
                 <div class="domino-divider"></div>
@@ -84,14 +150,12 @@ function renderLiveTable(boardLine) {
                 tileElement.className = "domino-bone-interactive";
                 tileElement.id = `hand-tile-${tile.id}`;
                 
-                // Keep highlighted style persistent if this specific tile is currently selected
                 if (selectedTileId === tile.id) {
                     tileElement.style.transform = "translateY(-20px)";
                     tileElement.style.borderColor = "#66fcf1";
                     tileElement.style.boxShadow = "0 0 15px #66fcf1";
                 }
 
-                // Add hover shift dynamics via event triggers (only if not selected)
                 tileElement.onmouseenter = () => {
                     if (selectedTileId !== tile.id) tileElement.style.transform = "translateY(-15px)";
                 };
@@ -99,25 +163,19 @@ function renderLiveTable(boardLine) {
                     if (selectedTileId !== tile.id) tileElement.style.transform = "translateY(0)";
                 };
                 
-                // Inject the pip matrix dots layout
                 tileElement.innerHTML = `
                     ${generateHalfDisplay(tile.top)}
                     <div class="domino-divider"></div>
                     ${generateHalfDisplay(tile.bottom)}
                 `;
                 
-                // Clicking selects/unselects a specific tile
                 tileElement.addEventListener("click", (e) => {
-                    e.stopPropagation(); // Stop click from bubbling to layout elements
-                    
-                    // Toggle selection state
+                    e.stopPropagation(); 
                     if (selectedTileId === tile.id) {
                         selectedTileId = null;
                     } else {
                         selectedTileId = tile.id;
                     }
-                    
-                    // Instantly redraw the hand tray to update visual borders
                     renderLiveTable(localGameState.board_line);
                 });
 
@@ -150,13 +208,11 @@ function generateHalfDisplay(value) {
  * Handles playing the selected tile onto the board canvas track
  */
 function handleBoardClick() {
-    // If it's not our turn, block action
     if (localGameState.active_turn !== playerSeatNumber) {
         alert("It's not your turn yet!");
         return;
     }
 
-    // If no tile is highlighted, do nothing
     if (!selectedTileId) {
         alert("Select a domino bone from your hand first!");
         return;
@@ -169,24 +225,16 @@ function handleBoardClick() {
     if (tileIndex > -1) {
         const chosenTile = playerHand[tileIndex];
         
-        // 1. Remove tile from hand array
         playerHand.splice(tileIndex, 1);
-        
-        // 2. Add tile to the board track line array
         const updatedBoardLine = [...localGameState.board_line, chosenTile];
         
-        // 3. Cycle turn to next seating placement position (1 -> 2 -> 3 -> 4 -> 1)
-        let nextTurn = localGameState.active_turn + 1;
-        if (nextTurn > 4) nextTurn = 1;
+        // Dynamic turn toggling loops completely between Player 1 and Player 2 for this test
+        let nextTurn = (localGameState.active_turn === 1) ? 2 : 1;
         
-        // 4. Update memory object mapping
         const updatedPlayersMap = { ...localGameState.players };
         updatedPlayersMap[targetKey].hand = playerHand;
         
-        // Reset selection tracker
         selectedTileId = null;
-        
-        // 5. Fire changes directly up to your Supabase backend
         pushMoveToDatabase(updatedBoardLine, nextTurn, updatedPlayersMap);
     }
 }
