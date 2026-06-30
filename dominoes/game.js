@@ -76,7 +76,6 @@ function renderLiveTable(boardLine) {
 
             <div id="game-mat" style="position: relative; width: 100vw; height: 100vh; background-image: url('assets/table_bg.jpg'); background-size: cover; background-repeat: no-repeat; background-position: center; display: flex; justify-content: center; align-items: center; overflow: hidden; box-sizing: border-box;">
                 <div id="scaled-table-canvas-root" style="position: absolute; display: flex; justify-content: center; align-items: center;">
-                    
                     <div id="seat-block-1" style="position: absolute; top: 30px; left: 30px; padding: 12px 28px; background: rgba(11,12,16,0.85); border: 2px solid rgba(102,252,241,0.2); border-radius: 8px; font-size: 1.5rem; z-index: 10; display: flex; gap: 16px; align-items: center; white-space: nowrap;"></div>
                     <div id="seat-block-2" style="position: absolute; top: 30px; right: 30px; padding: 12px 28px; background: rgba(11,12,16,0.85); border: 2px solid rgba(102,252,241,0.2); border-radius: 8px; font-size: 1.5rem; z-index: 10; display: flex; gap: 16px; align-items: center; white-space: nowrap;"></div>
                     <div id="seat-block-3" style="position: absolute; bottom: 50px; right: 30px; padding: 12px 28px; background: rgba(11,12,16,0.85); border: 2px solid rgba(102,252,241,0.2); border-radius: 8px; font-size: 1.5rem; z-index: 10; display: flex; gap: 16px; align-items: center; white-space: nowrap;"></div>
@@ -138,8 +137,85 @@ function renderLiveTable(boardLine) {
     }
 
     // ==========================================================================
-    // DYNAMIC LOOKAHEAD CURSOR ENGINE (Prevents Overshoot at corners)
+    // DYNAMIC A/B BOSS-ANCHOR PATHING ENGINE
     // ==========================================================================
+    
+    function getCornerChoices(state, prevX, prevY, prevIsDouble, currIsDouble) {
+        // Maps the geometric reality of the 6 diagram permutations 
+        let A, B;
+        if (state === 'LEFT_BOTTOM_TO_UP_LEFT') {
+            if (!prevIsDouble && !currIsDouble) { // Single to Single
+                A = { x: prevX - 43.25, y: prevY - 134.5, isRotated: false, flipVisuals: false };
+                B = { x: prevX + 43.25, y: prevY - 134.5, isRotated: false, flipVisuals: false };
+            } else if (!prevIsDouble && currIsDouble) { // Single to Double (Double caps track)
+                A = { x: prevX - 134.5, y: prevY, isRotated: false, flipVisuals: false };
+                B = A;
+            } else if (prevIsDouble && !currIsDouble) { // Double to Single (Sprouts from Cap)
+                A = { x: prevX + 134.5, y: prevY - 43.25, isRotated: true, flipVisuals: false }; // Side sprout
+                B = { x: prevX, y: prevY - 179, isRotated: false, flipVisuals: false }; // Top Cap
+            } else { A = { x: prevX, y: prevY - 179, isRotated: false, flipVisuals: false }; B = A; }
+        }
+        else if (state === 'RIGHT_BOTTOM_TO_UP_RIGHT') {
+            if (!prevIsDouble && !currIsDouble) { 
+                A = { x: prevX + 43.25, y: prevY - 134.5, isRotated: false, flipVisuals: true };
+                B = { x: prevX - 43.25, y: prevY - 134.5, isRotated: false, flipVisuals: true };
+            } else if (!prevIsDouble && currIsDouble) { 
+                A = { x: prevX + 134.5, y: prevY, isRotated: false, flipVisuals: true };
+                B = A;
+            } else if (prevIsDouble && !currIsDouble) { 
+                A = { x: prevX - 134.5, y: prevY - 43.25, isRotated: true, flipVisuals: true }; 
+                B = { x: prevX, y: prevY - 179, isRotated: false, flipVisuals: true };
+            } else { A = { x: prevX, y: prevY - 179, isRotated: false, flipVisuals: true }; B = A; }
+        }
+        else if (state === 'UP_LEFT_TO_RIGHT_TOP') {
+            if (!prevIsDouble && !currIsDouble) {
+                A = { x: prevX + 134.5, y: prevY - 43.25, isRotated: true, flipVisuals: true };
+                B = { x: prevX + 134.5, y: prevY + 43.25, isRotated: true, flipVisuals: true };
+            } else if (!prevIsDouble && currIsDouble) {
+                A = { x: prevX, y: prevY - 134.5, isRotated: true, flipVisuals: true };
+                B = A;
+            } else if (prevIsDouble && !currIsDouble) {
+                A = { x: prevX + 43.25, y: prevY + 134.5, isRotated: false, flipVisuals: true };
+                B = { x: prevX + 179, y: prevY, isRotated: true, flipVisuals: true };
+            } else { A = { x: prevX + 179, y: prevY, isRotated: true, flipVisuals: true }; B = A; }
+        }
+        else if (state === 'UP_RIGHT_TO_LEFT_TOP') {
+            if (!prevIsDouble && !currIsDouble) {
+                A = { x: prevX - 134.5, y: prevY - 43.25, isRotated: true, flipVisuals: true };
+                B = { x: prevX - 134.5, y: prevY + 43.25, isRotated: true, flipVisuals: true };
+            } else if (!prevIsDouble && currIsDouble) {
+                A = { x: prevX, y: prevY - 134.5, isRotated: true, flipVisuals: true };
+                B = A;
+            } else if (prevIsDouble && !currIsDouble) {
+                A = { x: prevX - 43.25, y: prevY + 134.5, isRotated: false, flipVisuals: true };
+                B = { x: prevX - 179, y: prevY, isRotated: true, flipVisuals: true };
+            } else { A = { x: prevX - 179, y: prevY, isRotated: true, flipVisuals: true }; B = A; }
+        }
+        return [A, B];
+    }
+
+    function pickBestCorner(A, B, boundary, edgeType) {
+        // Evaluates memory coordinates and returns the geometry that obeys the boundary
+        let wA = A.isRotated ? 173 : 84; let hA = A.isRotated ? 84 : 173;
+        let wB = B.isRotated ? 173 : 84; let hB = B.isRotated ? 84 : 173;
+        let distA, distB;
+
+        if (edgeType === 'leftX') {
+            let edgeA = A.x - wA/2; let edgeB = B.x - wB/2;
+            distA = edgeA >= boundary ? edgeA - boundary : boundary - edgeA + 1000;
+            distB = edgeB >= boundary ? edgeB - boundary : boundary - edgeB + 1000;
+        } else if (edgeType === 'rightX') {
+            let edgeA = A.x + wA/2; let edgeB = B.x + wB/2;
+            distA = edgeA <= boundary ? boundary - edgeA : edgeA - boundary + 1000;
+            distB = edgeB <= boundary ? boundary - edgeB : edgeB - boundary + 1000;
+        } else if (edgeType === 'upperY') {
+            let edgeA = A.y - hA/2; let edgeB = B.y - hB/2;
+            distA = edgeA >= boundary ? edgeA - boundary : boundary - edgeA + 1000;
+            distB = edgeB >= boundary ? edgeB - boundary : boundary - edgeB + 1000;
+        }
+        return distA <= distB ? A : B;
+    }
+
     if (boardLine && boardLine.length > 0) {
         let initialIndex = 14; 
         if (boardLine.length !== 28) {
@@ -150,98 +226,94 @@ function renderLiveTable(boardLine) {
         let calculatedCoordinates = new Array(boardLine.length);
         const GAP = 6;
         
-        // 1. PLACE ANCHOR
         let anchorIsDouble = boardLine[initialIndex].top === boardLine[initialIndex].bottom;
         calculatedCoordinates[initialIndex] = {
             x: 1280, y: PATH_TRACK.lowerY,
-            isRotated: anchorIsDouble ? false : true,
-            flipVisuals: false
+            isRotated: anchorIsDouble ? false : true, flipVisuals: false,
+            w: anchorIsDouble ? 84 : 173, h: anchorIsDouble ? 173 : 84,
+            isDouble: anchorIsDouble
         };
 
-        let anchorW = anchorIsDouble ? 84 : 173;
-        let anchorH = anchorIsDouble ? 173 : 84;
-
-        // 2. RUN LEFT CHAIN
+        // RUN LEFT CHAIN
         let stateL = 'LEFT_BOTTOM';
-        let prevXL = 1280, prevYL = PATH_TRACK.lowerY, prevWL = anchorW, prevHL = anchorH;
-
         for (let i = initialIndex - 1; i >= 0; i--) {
-            let isDouble = boardLine[i].top === boardLine[i].bottom;
-            let w, h, x, y, rot, flip;
+            let prev = calculatedCoordinates[i + 1];
+            let currIsDouble = boardLine[i].top === boardLine[i].bottom;
+            let currW, currH, nextX, nextY, rot, flip;
 
             if (stateL === 'LEFT_BOTTOM') {
-                w = isDouble ? 84 : 173; h = isDouble ? 173 : 84; rot = isDouble ? false : true; flip = false;
-                let nextX = prevXL - (prevWL/2) - GAP - (w/2);
-                if (nextX - (w/2) < PATH_TRACK.leftX) {
+                currW = currIsDouble ? 84 : 173; currH = currIsDouble ? 173 : 84; rot = currIsDouble ? false : true; flip = false;
+                nextX = prev.x - prev.w/2 - GAP - currW/2;
+                if (nextX - currW/2 < PATH_TRACK.leftX) {
                     stateL = 'UP_LEFT';
-                    w = isDouble ? 173 : 84; h = isDouble ? 84 : 173; rot = isDouble ? true : false; flip = false;
-                    x = PATH_TRACK.leftX;
-                    y = prevYL - (prevHL/2) - GAP - (h/2);
-                } else { x = nextX; y = PATH_TRACK.lowerY; }
+                    let [optA, optB] = getCornerChoices('LEFT_BOTTOM_TO_UP_LEFT', prev.x, prev.y, prev.isDouble, currIsDouble);
+                    let best = pickBestCorner(optA, optB, PATH_TRACK.leftX, 'leftX');
+                    calculatedCoordinates[i] = { x: best.x, y: best.y, isRotated: best.isRotated, flipVisuals: best.flipVisuals, w: best.isRotated ? 173 : 84, h: best.isRotated ? 84 : 173, isDouble: currIsDouble };
+                } else {
+                    calculatedCoordinates[i] = { x: nextX, y: PATH_TRACK.lowerY, isRotated: rot, flipVisuals: flip, w: currW, h: currH, isDouble: currIsDouble };
+                }
             } else if (stateL === 'UP_LEFT') {
-                w = isDouble ? 173 : 84; h = isDouble ? 84 : 173; rot = isDouble ? true : false; flip = false;
-                let nextY = prevYL - (prevHL/2) - GAP - (h/2);
-                if (nextY - (h/2) < PATH_TRACK.upperY) {
+                currW = currIsDouble ? 173 : 84; currH = currIsDouble ? 84 : 173; rot = currIsDouble ? true : false; flip = false;
+                nextY = prev.y - prev.h/2 - GAP - currH/2;
+                if (nextY - currH/2 < PATH_TRACK.upperY) {
                     stateL = 'RIGHT_TOP';
-                    w = isDouble ? 84 : 173; h = isDouble ? 173 : 84; rot = isDouble ? false : true; flip = true;
-                    x = prevXL + (prevWL/2) + GAP + (w/2);
-                    y = PATH_TRACK.upperY;
-                } else { x = PATH_TRACK.leftX; y = nextY; }
+                    let [optA, optB] = getCornerChoices('UP_LEFT_TO_RIGHT_TOP', prev.x, prev.y, prev.isDouble, currIsDouble);
+                    let best = pickBestCorner(optA, optB, PATH_TRACK.upperY, 'upperY');
+                    calculatedCoordinates[i] = { x: best.x, y: best.y, isRotated: best.isRotated, flipVisuals: best.flipVisuals, w: best.isRotated ? 173 : 84, h: best.isRotated ? 84 : 173, isDouble: currIsDouble };
+                } else {
+                    calculatedCoordinates[i] = { x: prev.x, y: nextY, isRotated: rot, flipVisuals: flip, w: currW, h: currH, isDouble: currIsDouble };
+                }
             } else if (stateL === 'RIGHT_TOP') {
-                w = isDouble ? 84 : 173; h = isDouble ? 173 : 84; rot = isDouble ? false : true; flip = true;
-                x = prevXL + (prevWL/2) + GAP + (w/2); y = PATH_TRACK.upperY;
+                currW = currIsDouble ? 84 : 173; currH = currIsDouble ? 173 : 84; rot = currIsDouble ? false : true; flip = true;
+                nextX = prev.x + prev.w/2 + GAP + currW/2;
+                calculatedCoordinates[i] = { x: nextX, y: prev.y, isRotated: rot, flipVisuals: flip, w: currW, h: currH, isDouble: currIsDouble };
             }
-
-            calculatedCoordinates[i] = { x, y, isRotated: rot, flipVisuals: flip };
-            prevXL = x; prevYL = y; prevWL = w; prevHL = h;
         }
 
-        // 3. RUN RIGHT CHAIN
+        // RUN RIGHT CHAIN
         let stateR = 'RIGHT_BOTTOM';
-        let prevXR = 1280, prevYR = PATH_TRACK.lowerY, prevWR = anchorW, prevHR = anchorH;
-
         for (let i = initialIndex + 1; i < boardLine.length; i++) {
-            let isDouble = boardLine[i].top === boardLine[i].bottom;
-            let w, h, x, y, rot, flip;
+            let prev = calculatedCoordinates[i - 1];
+            let currIsDouble = boardLine[i].top === boardLine[i].bottom;
+            let currW, currH, nextX, nextY, rot, flip;
 
             if (stateR === 'RIGHT_BOTTOM') {
-                w = isDouble ? 84 : 173; h = isDouble ? 173 : 84; rot = isDouble ? false : true; flip = false;
-                let nextX = prevXR + (prevWR/2) + GAP + (w/2);
-                if (nextX + (w/2) > PATH_TRACK.rightX) {
+                currW = currIsDouble ? 84 : 173; currH = currIsDouble ? 173 : 84; rot = currIsDouble ? false : true; flip = false;
+                nextX = prev.x + prev.w/2 + GAP + currW/2;
+                if (nextX + currW/2 > PATH_TRACK.rightX) {
                     stateR = 'UP_RIGHT';
-                    w = isDouble ? 173 : 84; h = isDouble ? 84 : 173; rot = isDouble ? true : false; flip = true;
-                    x = PATH_TRACK.rightX;
-                    y = prevYR - (prevHR/2) - GAP - (h/2);
-                } else { x = nextX; y = PATH_TRACK.lowerY; }
+                    let [optA, optB] = getCornerChoices('RIGHT_BOTTOM_TO_UP_RIGHT', prev.x, prev.y, prev.isDouble, currIsDouble);
+                    let best = pickBestCorner(optA, optB, PATH_TRACK.rightX, 'rightX');
+                    calculatedCoordinates[i] = { x: best.x, y: best.y, isRotated: best.isRotated, flipVisuals: best.flipVisuals, w: best.isRotated ? 173 : 84, h: best.isRotated ? 84 : 173, isDouble: currIsDouble };
+                } else {
+                    calculatedCoordinates[i] = { x: nextX, y: prev.y, isRotated: rot, flipVisuals: flip, w: currW, h: currH, isDouble: currIsDouble };
+                }
             } else if (stateR === 'UP_RIGHT') {
-                w = isDouble ? 173 : 84; h = isDouble ? 84 : 173; rot = isDouble ? true : false; flip = true;
-                let nextY = prevYR - (prevHR/2) - GAP - (h/2);
-                if (nextY - (h/2) < PATH_TRACK.upperY) {
+                currW = currIsDouble ? 173 : 84; currH = currIsDouble ? 84 : 173; rot = currIsDouble ? true : false; flip = true;
+                nextY = prev.y - prev.h/2 - GAP - currH/2;
+                if (nextY - currH/2 < PATH_TRACK.upperY) {
                     stateR = 'LEFT_TOP';
-                    w = isDouble ? 84 : 173; h = isDouble ? 173 : 84; rot = isDouble ? false : true; flip = true;
-                    x = prevXR - (prevWR/2) - GAP - (w/2);
-                    y = PATH_TRACK.upperY;
-                } else { x = PATH_TRACK.rightX; y = nextY; }
+                    let [optA, optB] = getCornerChoices('UP_RIGHT_TO_LEFT_TOP', prev.x, prev.y, prev.isDouble, currIsDouble);
+                    let best = pickBestCorner(optA, optB, PATH_TRACK.upperY, 'upperY');
+                    calculatedCoordinates[i] = { x: best.x, y: best.y, isRotated: best.isRotated, flipVisuals: best.flipVisuals, w: best.isRotated ? 173 : 84, h: best.isRotated ? 84 : 173, isDouble: currIsDouble };
+                } else {
+                    calculatedCoordinates[i] = { x: prev.x, y: nextY, isRotated: rot, flipVisuals: flip, w: currW, h: currH, isDouble: currIsDouble };
+                }
             } else if (stateR === 'LEFT_TOP') {
-                w = isDouble ? 84 : 173; h = isDouble ? 173 : 84; rot = isDouble ? false : true; flip = true;
-                x = prevXR - (prevWR/2) - GAP - (w/2); y = PATH_TRACK.upperY;
+                currW = currIsDouble ? 84 : 173; currH = currIsDouble ? 173 : 84; rot = currIsDouble ? false : true; flip = true;
+                nextX = prev.x - prev.w/2 - GAP - currW/2;
+                calculatedCoordinates[i] = { x: nextX, y: prev.y, isRotated: rot, flipVisuals: flip, w: currW, h: currH, isDouble: currIsDouble };
             }
-
-            calculatedCoordinates[i] = { x, y, isRotated: rot, flipVisuals: flip };
-            prevXR = x; prevYR = y; prevWR = w; prevHR = h;
         }
 
-        // 4. RENDER EXACT COORDINATES
+        // RENDER PIXEL-PERFECT COORDINATES
         boardLine.forEach((tile, index) => {
             const coords = calculatedCoordinates[index];
             const placedTile = document.createElement("div");
             placedTile.style.position = "absolute";
             
-            let width = coords.isRotated ? 173 : 84;
-            let height = coords.isRotated ? 84 : 173;
-            
-            placedTile.style.left = Math.round(coords.x - width / 2) + "px";
-            placedTile.style.top = Math.round(coords.y - height / 2) + "px";
+            placedTile.style.left = Math.round(coords.x - coords.w / 2) + "px";
+            placedTile.style.top = Math.round(coords.y - coords.h / 2) + "px";
             placedTile.style.cursor = "default";
             placedTile.style.margin = "0";
             placedTile.className = coords.isRotated ? "domino-bone-interactive domino-flat-track" : "domino-bone-interactive";
@@ -325,7 +397,6 @@ function updateCornerSeatBlocks() {
 }
 
 function generateHalfDisplay(value, isHorizontal = false) {
-    // CORRECTED PIP MAP: Forces structural rotation for flat tiles
     const pipMaps = {
         0: [],
         1: [4],
