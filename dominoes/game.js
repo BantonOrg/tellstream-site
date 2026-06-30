@@ -83,7 +83,7 @@ function renderLiveTable(boardLine) {
         tableView.innerHTML = `
             <div id="game-mat" style="position: relative; width: 100vw; height: 100vh; background: #000; display: flex; justify-content: center; align-items: center; overflow: hidden; box-sizing: border-box;">
                 
-                <div id="scaled-table-canvas-root" style="position: relative; width: 100vmin; height: 56.25vmin; background-image: url('table_bg.jpg'); background-size: contain; background-repeat: no-repeat; background-position: center; box-shadow: 0 0 50px rgba(0,0,0,0.8);">
+                <div id="scaled-table-canvas-root" style="position: relative; width: 100vmin; height: 56.25vmin; background-image: url('assets/table_bg.jpg'); background-size: contain; background-repeat: no-repeat; background-position: center; box-shadow: 0 0 50px rgba(0,0,0,0.8);">
                     
                     <div id="seat-block-1" style="position: absolute; top: 10px; left: 10px; padding: 10px; background: rgba(11,12,16,0.85); border: 1px solid #66fcf1; border-radius: 4px; min-width: 120px; font-size: 0.75rem; line-height: 1.2; z-index: 10;"></div>
                     <div id="seat-block-2" style="position: absolute; top: 10px; right: 10px; padding: 10px; background: rgba(11,12,16,0.85); border: 1px solid rgba(102,252,241,0.4); border-radius: 4px; min-width: 120px; font-size: 0.75rem; line-height: 1.2; z-index: 10;"></div>
