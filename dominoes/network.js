@@ -205,6 +205,16 @@ function subscribeToRoom(code) {
             filter: `room_code=eq.${code}` 
         }, payload => {
             localGameState = payload.new;
+            
+            // 🌟 SEATING FIX CHECK: Force seat assignment BEFORE firing any UI redraws
+            if (playerSeatNumber === null && localGameState.players && localGameState.players.player2) {
+                const identity = window.sessionStorage.getItem("tellstream_player_identity");
+                if (identity && localGameState.players.player2.name === identity) {
+                    playerSeatNumber = 2;
+                    console.log("Successfully seated local user as Player 2! Seat assignment locked down.");
+                }
+            }
+            
             handleRoomUpdate(localGameState);
         })
         .subscribe();
