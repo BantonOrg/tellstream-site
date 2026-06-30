@@ -141,18 +141,17 @@ function renderLiveTable(boardLine) {
     // ==========================================================================
     
     function getCornerChoices(state, prevX, prevY, prevIsDouble, currIsDouble) {
-        // Maps the geometric reality of the 6 diagram permutations 
         let A, B;
         if (state === 'LEFT_BOTTOM_TO_UP_LEFT') {
-            if (!prevIsDouble && !currIsDouble) { // Single to Single
+            if (!prevIsDouble && !currIsDouble) {
                 A = { x: prevX - 43.25, y: prevY - 134.5, isRotated: false, flipVisuals: false };
                 B = { x: prevX + 43.25, y: prevY - 134.5, isRotated: false, flipVisuals: false };
-            } else if (!prevIsDouble && currIsDouble) { // Single to Double (Double caps track)
+            } else if (!prevIsDouble && currIsDouble) {
                 A = { x: prevX - 134.5, y: prevY, isRotated: false, flipVisuals: false };
                 B = A;
-            } else if (prevIsDouble && !currIsDouble) { // Double to Single (Sprouts from Cap)
-                A = { x: prevX + 134.5, y: prevY - 43.25, isRotated: true, flipVisuals: false }; // Side sprout
-                B = { x: prevX, y: prevY - 179, isRotated: false, flipVisuals: false }; // Top Cap
+            } else if (prevIsDouble && !currIsDouble) {
+                A = { x: prevX + 134.5, y: prevY - 43.25, isRotated: true, flipVisuals: false };
+                B = { x: prevX, y: prevY - 179, isRotated: false, flipVisuals: false };
             } else { A = { x: prevX, y: prevY - 179, isRotated: false, flipVisuals: false }; B = A; }
         }
         else if (state === 'RIGHT_BOTTOM_TO_UP_RIGHT') {
@@ -195,7 +194,6 @@ function renderLiveTable(boardLine) {
     }
 
     function pickBestCorner(A, B, boundary, edgeType) {
-        // Evaluates memory coordinates and returns the geometry that obeys the boundary
         let wA = A.isRotated ? 173 : 84; let hA = A.isRotated ? 84 : 173;
         let wB = B.isRotated ? 173 : 84; let hB = B.isRotated ? 84 : 173;
         let distA, distB;
