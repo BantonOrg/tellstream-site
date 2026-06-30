@@ -94,34 +94,21 @@ async function createRoom() {
         generatedCode += chars.charAt(Math.floor(Math.random() * chars.length));
     }
 
-    // Backend Execution: Shuffling & Dealing Loop Logic
-    const fullDeck = shuffleBones(generateFullDominoSet());
-    const assignedPlayersObject = {
-        player1: { seat: 1, hand: fullDeck.slice(0, 7), name: "Table Host" },
-        player2: { seat: 2, hand: fullDeck.slice(7, 14), name: "Waiting..." },
-        player3: { seat: 3, hand: fullDeck.slice(14, 21), name: "Waiting..." },
-        player4: { seat: 4, hand: fullDeck.slice(21, 28), name: "Waiting..." }
+    // Initialize room with empty hands. Game remains 'waiting' until lineup is selected.
+    const initialPlayersObject = {
+        player1: { seat: 1, hand: [], name: "Table Host" },
+        player2: { seat: 2, hand: [], name: "Waiting..." },
+        player3: { seat: 3, hand: [], name: "Waiting..." },
+        player4: { seat: 4, hand: [], name: "Waiting..." },
+        lobby_roster: ["Table Host"] // Use internal player JSON space to track present users
     };
-
-    // Locate starting turn option (Whoever owns highest double starts down)
-    let startingSeat = 1;
-    let highestDouble = -1;
-    for (let s = 1; s <= 4; s++) {
-        const playerHand = assignedPlayersObject[`player${s}`].hand;
-        playerHand.forEach(tile => {
-            if (tile.isDouble && tile.top > highestDouble) {
-                highestDouble = tile.top;
-                startingSeat = s;
-            }
-        });
-    }
 
     localGameState = {
         room_code: generatedCode,
         game_state: 'waiting',
         board_line: [],
-        active_turn: startingSeat,
-        players: assignedPlayersObject
+        active_turn: 1,
+        players: initialPlayersObject
     };
 
     if (!supabaseClient) {
@@ -158,6 +145,12 @@ async function joinRoom(code) {
         return;
     }
 
+    const testPlayerName = prompt("Enter your Player Name for this test:", "Player 2 Tester");
+    if (!testPlayerName || testPlayerName.trim() === "" || testPlayerName === "Table Host") {
+        alert("Invalid or duplicate testing name.");
+        return;
+    }
+
     try {
         const { data, error } = await supabaseClient
             .from('domino_rooms')
@@ -170,24 +163,17 @@ async function joinRoom(code) {
             return;
         }
 
-        let assignedSeat = null;
         const currentPlayers = data.players;
-
-        // Auto-assign open player seat vectors cleanly
-        for (let i = 2; i <= 4; i++) {
-            if (currentPlayers[`player${i}`].name === "Waiting...") {
-                assignedSeat = i;
-                currentPlayers[`player${i}`].name = `Player ${i}`;
-                break;
-            }
+        if (!currentPlayers.lobby_roster) {
+            currentPlayers.lobby_roster = ["Table Host"];
         }
 
-        if (!assignedSeat) {
-            alert("This table session is completely full up!");
-            return;
+        // Add the test player to the active lobby tracking array
+        if (!currentPlayers.lobby_roster.includes(testPlayerName)) {
+            currentPlayers.lobby_roster.push(testPlayerName);
         }
 
-        // Push seat registry updates to database
+        // Push lobby list up to Supabase
         const { error: updateError } = await supabaseClient
             .from('domino_rooms')
             .update({ players: currentPlayers })
@@ -195,12 +181,17 @@ async function joinRoom(code) {
 
         if (updateError) throw updateError;
 
-        // Update local memory states with the raw table dataset we downloaded
+        // Sync local variables
         localGameState = data;
         localGameState.players = currentPlayers;
-
-        playerSeatNumber = assignedSeat;
+        
+        // Seat number remains null/unassigned until host selects this player from the menu
+        playerSeatNumber = null; 
         currentRoomCode = code;
+        
+        // Store our chosen local identity string in session storage to verify seating later
+        window.sessionStorage.setItem("tellstream_player_identity", testPlayerName);
+        
         subscribeToRoom(currentRoomCode);
     } catch (err) {
         console.error("Error joining remote table session:", err);
@@ -225,7 +216,6 @@ function subscribeToRoom(code) {
 
     switchToGameTableView();
     
-    // 🌟 THE FIX: Instantly paint the board layout on load using the data in memory!
     if (typeof renderLiveTable === 'function') {
         renderLiveTable(localGameState.board_line);
     }
@@ -240,6 +230,59 @@ function switchToGameTableView() {
 }
 
 /**
+ * Triggered exclusively by the Host to build the 2-player dealt deck
+ */
+async function launchMatchWithLineup(selectedPlayer2Name) {
+    if (playerSeatNumber !== 1) return;
+
+    // Secure shuffle execution and slice down into two clean 7-tile hands
+    const fullDeck = shuffleBones(generateFullDominoSet());
+    const assignedPlayersObject = {
+        player1: { seat: 1, hand: fullDeck.slice(0, 7), name: "Table Host" },
+        player2: { seat: 2, hand: fullDeck.slice(7, 14), name: selectedPlayer2Name },
+        player3: { seat: 3, hand: [], name: "Not In Use" },
+        player4: { seat: 4, hand: [], name: "Not In Use" },
+        lobby_roster: localGameState.players.lobby_roster // preserve layout list
+    };
+
+    // Evaluate opening double turn stick rules between Player 1 and Player 2
+    let startingSeat = 1;
+    let highestDouble = -1;
+    for (let s = 1; s <= 2; s++) {
+        const playerHand = assignedPlayersObject[`player${s}`].hand;
+        playerHand.forEach(tile => {
+            if (tile.isDouble && tile.top > highestDouble) {
+                highestDouble = tile.top;
+                startingSeat = s;
+            }
+        });
+    }
+
+    localGameState.players = assignedPlayersObject;
+    localGameState.game_state = 'playing';
+    localGameState.active_turn = startingSeat;
+
+    if (!supabaseClient) {
+        handleRoomUpdate(localGameState);
+        return;
+    }
+
+    try {
+        await supabaseClient
+            .from('domino_rooms')
+            .update({
+                players: localGameState.players,
+                game_state: localGameState.game_state,
+                active_turn: localGameState.active_turn,
+                board_line: []
+            })
+            .eq('room_code', currentRoomCode);
+    } catch (err) {
+        console.error("Failed launching game room sequence:", err);
+    }
+}
+
+/**
  * Core dynamic action: Dispatches state modifications straight to Supabase data layer
  */
 async function pushMoveToDatabase(updatedBoardLine, nextTurnSeatNumber, updatedPlayersMap) {
@@ -250,7 +293,7 @@ async function pushMoveToDatabase(updatedBoardLine, nextTurnSeatNumber, updatedP
     // Evaluate if anyone completely ran out of bones (Domino win state)
     let winnerDeclared = null;
     for (let i = 1; i <= 4; i++) {
-        if (localGameState.players[`player${i}`].hand.length === 0) {
+        if (localGameState.players[`player${i}`] && localGameState.players[`player${i}`].hand && localGameState.players[`player${i}`].hand.length === 0) {
             winnerDeclared = i;
             localGameState.game_state = 'finished';
         }
@@ -278,10 +321,7 @@ async function pushMoveToDatabase(updatedBoardLine, nextTurnSeatNumber, updatedP
 
 function handleRoomUpdate(updatedRoomState) {
     if (typeof renderLiveTable === 'function') {
-        // Redraws the horseshoe path with the true updated array from the server
         renderLiveTable(updatedRoomState.board_line);
     }
-    
-    // Developer validation debugging tracker hook layout
     console.log(`Match Lounge Synchronized. Active Turn Seat: Player ${updatedRoomState.active_turn}`);
 }
