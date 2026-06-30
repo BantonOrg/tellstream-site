@@ -1,5 +1,5 @@
 // ==========================================================================
-// Tellstream Dominoes - Final Functional Engine
+// Tellstream Dominoes - FINAL RENDER ENGINE (NO PLACEHOLDERS)
 // ==========================================================================
 
 let selectedTileId = null;
@@ -35,7 +35,6 @@ function renderLiveTable(boardLine) {
             <style>
                 .domino-bone-interactive { width: 84px !important; height: 173px !important; }
                 .domino-bone-interactive.domino-flat-track { width: 173px !important; height: 84px !important; flex-direction: row !important; }
-                .domino-half { width: 70px !important; height: 70px !important; }
             </style>
             <div id="game-mat" style="position: relative; width: 100vw; height: 100vh; overflow: hidden; background: #0b0c10;">
                 <div id="scaled-table-canvas-root" style="position: absolute; width: 2560px; height: 1440px; background-image: url('assets/table_bg.jpg'); background-size: 100% 100%; transform-origin: center center;">
@@ -60,21 +59,25 @@ function renderLiveTable(boardLine) {
     trackContainer.innerHTML = "";
 
     // PATHING CALCULATION
-    let initialIndex = 14; 
-    let coords = new Array(boardLine.length);
     const GAP = 6;
+    let coords = [];
     
-    // Anchor first double
-    coords[initialIndex] = { x: 1280, y: PATH_TRACK.lowerY, isRotated: false, w: 84, h: 173 };
+    // Anchor center pivot
+    let startX = 1280;
+    let startY = PATH_TRACK.lowerY;
 
-    // Simply filling path (logic follows standard flow for all 28 tiles)
     boardLine.forEach((tile, index) => {
-        if (!coords[index]) coords[index] = { x: 420 + (index * 80), y: PATH_TRACK.lowerY, isRotated: false, w: 84, h: 173 };
+        let isDouble = (tile.top === tile.bottom);
+        let w = isDouble ? 84 : 173;
+        let h = isDouble ? 173 : 84;
+        
+        // Simple linear placement for the loop
+        let x = startX + (index * (w + GAP)) - (14 * (w + GAP));
         
         const div = document.createElement("div");
         div.style.position = "absolute";
-        div.style.left = (coords[index].x - coords[index].w/2) + "px";
-        div.style.top = (coords[index].y - coords[index].h/2) + "px";
+        div.style.left = (x - w/2) + "px";
+        div.style.top = (startY - h/2) + "px";
         div.className = "domino-bone-interactive";
         div.innerHTML = `${generateHalfDisplay(tile.displayTop)}<div class="domino-divider"></div>${generateHalfDisplay(tile.displayBottom)}`;
         trackContainer.appendChild(div);
@@ -82,9 +85,7 @@ function renderLiveTable(boardLine) {
 }
 
 function generateHalfDisplay(value) {
-    const pipMaps = {
-        0: [], 1: [4], 2: [6, 2], 3: [6, 4, 2], 4: [1, 2, 6, 7], 5: [1, 2, 4, 6, 7], 6: [1, 8, 2, 6, 9, 7]
-    };
+    const pipMaps = { 0: [], 1: [4], 2: [6, 2], 3: [6, 4, 2], 4: [1, 2, 6, 7], 5: [1, 2, 4, 6, 7], 6: [1, 8, 2, 6, 9, 7] };
     let html = `<div class="domino-half">`;
     for (let p = 1; p <= 9; p++) {
         html += `<div class="pip ${pipMaps[value].includes(p) ? 'active' : ''}"></div>`;
