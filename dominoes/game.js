@@ -193,25 +193,10 @@ function renderLiveTable(boardLine) {
         return [A, B];
     }
 
-    function pickBestCorner(A, B, boundary, edgeType) {
-        let wA = A.isRotated ? 173 : 84; let hA = A.isRotated ? 84 : 173;
-        let wB = B.isRotated ? 173 : 84; let hB = B.isRotated ? 84 : 173;
-        let distA, distB;
-
-        if (edgeType === 'leftX') {
-            let edgeA = A.x - wA/2; let edgeB = B.x - wB/2;
-            distA = edgeA >= boundary ? edgeA - boundary : boundary - edgeA + 1000;
-            distB = edgeB >= boundary ? edgeB - boundary : boundary - edgeB + 1000;
-        } else if (edgeType === 'rightX') {
-            let edgeA = A.x + wA/2; let edgeB = B.x + wB/2;
-            distA = edgeA <= boundary ? boundary - edgeA : edgeA - boundary + 1000;
-            distB = edgeB <= boundary ? boundary - edgeB : edgeB - boundary + 1000;
-        } else if (edgeType === 'upperY') {
-            let edgeA = A.y - hA/2; let edgeB = B.y - hB/2;
-            distA = edgeA >= boundary ? edgeA - boundary : boundary - edgeA + 1000;
-            distB = edgeB >= boundary ? edgeB - boundary : boundary - edgeB + 1000;
-        }
-        return distA <= distB ? A : B;
+    // Guarantees perfect geometric continuation and prevents track from folding backwards over itself
+    function getForwardCorner(optA, optB, prevIsDouble, currIsDouble) {
+        if (prevIsDouble && !currIsDouble) return optB;
+        return optA;
     }
 
     if (boardLine && boardLine.length > 0) {
@@ -245,7 +230,7 @@ function renderLiveTable(boardLine) {
                 if (nextX - currW/2 < PATH_TRACK.leftX) {
                     stateL = 'UP_LEFT';
                     let [optA, optB] = getCornerChoices('LEFT_BOTTOM_TO_UP_LEFT', prev.x, prev.y, prev.isDouble, currIsDouble);
-                    let best = pickBestCorner(optA, optB, PATH_TRACK.leftX, 'leftX');
+                    let best = getForwardCorner(optA, optB, prev.isDouble, currIsDouble);
                     calculatedCoordinates[i] = { x: best.x, y: best.y, isRotated: best.isRotated, flipVisuals: best.flipVisuals, w: best.isRotated ? 173 : 84, h: best.isRotated ? 84 : 173, isDouble: currIsDouble };
                 } else {
                     calculatedCoordinates[i] = { x: nextX, y: PATH_TRACK.lowerY, isRotated: rot, flipVisuals: flip, w: currW, h: currH, isDouble: currIsDouble };
@@ -256,7 +241,7 @@ function renderLiveTable(boardLine) {
                 if (nextY - currH/2 < PATH_TRACK.upperY) {
                     stateL = 'RIGHT_TOP';
                     let [optA, optB] = getCornerChoices('UP_LEFT_TO_RIGHT_TOP', prev.x, prev.y, prev.isDouble, currIsDouble);
-                    let best = pickBestCorner(optA, optB, PATH_TRACK.upperY, 'upperY');
+                    let best = getForwardCorner(optA, optB, prev.isDouble, currIsDouble);
                     calculatedCoordinates[i] = { x: best.x, y: best.y, isRotated: best.isRotated, flipVisuals: best.flipVisuals, w: best.isRotated ? 173 : 84, h: best.isRotated ? 84 : 173, isDouble: currIsDouble };
                 } else {
                     calculatedCoordinates[i] = { x: prev.x, y: nextY, isRotated: rot, flipVisuals: flip, w: currW, h: currH, isDouble: currIsDouble };
@@ -281,7 +266,7 @@ function renderLiveTable(boardLine) {
                 if (nextX + currW/2 > PATH_TRACK.rightX) {
                     stateR = 'UP_RIGHT';
                     let [optA, optB] = getCornerChoices('RIGHT_BOTTOM_TO_UP_RIGHT', prev.x, prev.y, prev.isDouble, currIsDouble);
-                    let best = pickBestCorner(optA, optB, PATH_TRACK.rightX, 'rightX');
+                    let best = getForwardCorner(optA, optB, prev.isDouble, currIsDouble);
                     calculatedCoordinates[i] = { x: best.x, y: best.y, isRotated: best.isRotated, flipVisuals: best.flipVisuals, w: best.isRotated ? 173 : 84, h: best.isRotated ? 84 : 173, isDouble: currIsDouble };
                 } else {
                     calculatedCoordinates[i] = { x: nextX, y: prev.y, isRotated: rot, flipVisuals: flip, w: currW, h: currH, isDouble: currIsDouble };
@@ -292,7 +277,7 @@ function renderLiveTable(boardLine) {
                 if (nextY - currH/2 < PATH_TRACK.upperY) {
                     stateR = 'LEFT_TOP';
                     let [optA, optB] = getCornerChoices('UP_RIGHT_TO_LEFT_TOP', prev.x, prev.y, prev.isDouble, currIsDouble);
-                    let best = pickBestCorner(optA, optB, PATH_TRACK.upperY, 'upperY');
+                    let best = getForwardCorner(optA, optB, prev.isDouble, currIsDouble);
                     calculatedCoordinates[i] = { x: best.x, y: best.y, isRotated: best.isRotated, flipVisuals: best.flipVisuals, w: best.isRotated ? 173 : 84, h: best.isRotated ? 84 : 173, isDouble: currIsDouble };
                 } else {
                     calculatedCoordinates[i] = { x: prev.x, y: nextY, isRotated: rot, flipVisuals: flip, w: currW, h: currH, isDouble: currIsDouble };
