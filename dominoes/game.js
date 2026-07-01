@@ -1,4 +1,3 @@
-// new updated file - this line proves it to me and you
 // ==========================================================================
 // Tellstream Dominoes - Game Board & Player Hand Rendering Layer
 // ==========================================================================
@@ -11,14 +10,14 @@ const BG_NATIVE_HEIGHT = 1440;
 
 // Your precise grid coordinates verified from the midpoints
 const PATH_TRACK = {
-    lowerY: 1266, // Lowered by ~half a tile (from 1180)
+    lowerY: 1180, // Halfway between 920 and 1440
     upperY: 269,  // Halfway between 92 and 446
-    leftX: 240,   // Widened left by 1 tile width (from 420)
-    rightX: 2400  // Widened right by 1 tile width (from 2220)
+    leftX: 420,   // Strict left vertical boundary
+    rightX: 2220  // Halfway between 1790 and 2650
 };
 
-// Absolute center point for the dealt hand tray (moved down between graphic and bottom track)
-const HAND_CENTER = { x: 1280, y: 1020 };
+// Absolute center point for the dealt hand tray
+const HAND_CENTER = { x: 1280, y: 720 };
 
 function renderLiveTable(boardLine) {
     // ==========================================================================
@@ -75,8 +74,8 @@ function renderLiveTable(boardLine) {
                 .domino-divider::after { width: 6px !important; height: 6px !important; }
             </style>
 
-            <div id="game-mat" style="position: relative; width: 100vw; height: 100vh; background-color: #0b0c10; display: flex; justify-content: center; align-items: center; overflow: hidden; box-sizing: border-box;">
-                <div id="scaled-table-canvas-root" style="position: absolute; display: flex; justify-content: center; align-items: center; background-image: url('assets/table_bg.jpg'); background-size: 100% 100%; background-repeat: no-repeat; background-position: center;">
+            <div id="game-mat" style="position: relative; width: 100vw; height: 100vh; background-image: url('assets/table_bg.jpg'); background-size: cover; background-repeat: no-repeat; background-position: center; display: flex; justify-content: center; align-items: center; overflow: hidden; box-sizing: border-box;">
+                <div id="scaled-table-canvas-root" style="position: absolute; display: flex; justify-content: center; align-items: center;">
                     <div id="seat-block-1" style="position: absolute; top: 30px; left: 30px; padding: 12px 28px; background: rgba(11,12,16,0.85); border: 2px solid rgba(102,252,241,0.2); border-radius: 8px; font-size: 1.5rem; z-index: 10; display: flex; gap: 16px; align-items: center; white-space: nowrap;"></div>
                     <div id="seat-block-2" style="position: absolute; top: 30px; right: 30px; padding: 12px 28px; background: rgba(11,12,16,0.85); border: 2px solid rgba(102,252,241,0.2); border-radius: 8px; font-size: 1.5rem; z-index: 10; display: flex; gap: 16px; align-items: center; white-space: nowrap;"></div>
                     <div id="seat-block-3" style="position: absolute; bottom: 50px; right: 30px; padding: 12px 28px; background: rgba(11,12,16,0.85); border: 2px solid rgba(102,252,241,0.2); border-radius: 8px; font-size: 1.5rem; z-index: 10; display: flex; gap: 16px; align-items: center; white-space: nowrap;"></div>
@@ -131,7 +130,7 @@ function renderLiveTable(boardLine) {
 
     if (handContainer) {
         handContainer.style.left = "1280px";
-        handContainer.style.top = "1020px";
+        handContainer.style.top = "720px";
         handContainer.style.transform = "translate(-50%, -50%)";
         handContainer.style.width = "1664px";
         handContainer.style.height = "230px";
@@ -194,10 +193,25 @@ function renderLiveTable(boardLine) {
         return [A, B];
     }
 
-    // Guarantees perfect geometric continuation and prevents track from folding backwards over itself
-    function getForwardCorner(optA, optB, prevIsDouble, currIsDouble) {
-        if (prevIsDouble && !currIsDouble) return optB;
-        return optA;
+    function pickBestCorner(A, B, boundary, edgeType) {
+        let wA = A.isRotated ? 173 : 84; let hA = A.isRotated ? 84 : 173;
+        let wB = B.isRotated ? 173 : 84; let hB = B.isRotated ? 84 : 173;
+        let distA, distB;
+
+        if (edgeType === 'leftX') {
+            let edgeA = A.x - wA/2; let edgeB = B.x - wB/2;
+            distA = edgeA >= boundary ? edgeA - boundary : boundary - edgeA + 1000;
+            distB = edgeB >= boundary ? edgeB - boundary : boundary - edgeB + 1000;
+        } else if (edgeType === 'rightX') {
+            let edgeA = A.x + wA/2; let edgeB = B.x + wB/2;
+            distA = edgeA <= boundary ? boundary - edgeA : edgeA - boundary + 1000;
+            distB = edgeB <= boundary ? boundary - edgeB : edgeB - boundary + 1000;
+        } else if (edgeType === 'upperY') {
+            let edgeA = A.y - hA/2; let edgeB = B.y - hB/2;
+            distA = edgeA >= boundary ? edgeA - boundary : boundary - edgeA + 1000;
+            distB = edgeB >= boundary ? edgeB - boundary : boundary - edgeB + 1000;
+        }
+        return distA <= distB ? A : B;
     }
 
     if (boardLine && boardLine.length > 0) {
@@ -231,7 +245,7 @@ function renderLiveTable(boardLine) {
                 if (nextX - currW/2 < PATH_TRACK.leftX) {
                     stateL = 'UP_LEFT';
                     let [optA, optB] = getCornerChoices('LEFT_BOTTOM_TO_UP_LEFT', prev.x, prev.y, prev.isDouble, currIsDouble);
-                    let best = getForwardCorner(optA, optB, prev.isDouble, currIsDouble);
+                    let best = pickBestCorner(optA, optB, PATH_TRACK.leftX, 'leftX');
                     calculatedCoordinates[i] = { x: best.x, y: best.y, isRotated: best.isRotated, flipVisuals: best.flipVisuals, w: best.isRotated ? 173 : 84, h: best.isRotated ? 84 : 173, isDouble: currIsDouble };
                 } else {
                     calculatedCoordinates[i] = { x: nextX, y: PATH_TRACK.lowerY, isRotated: rot, flipVisuals: flip, w: currW, h: currH, isDouble: currIsDouble };
@@ -242,7 +256,7 @@ function renderLiveTable(boardLine) {
                 if (nextY - currH/2 < PATH_TRACK.upperY) {
                     stateL = 'RIGHT_TOP';
                     let [optA, optB] = getCornerChoices('UP_LEFT_TO_RIGHT_TOP', prev.x, prev.y, prev.isDouble, currIsDouble);
-                    let best = getForwardCorner(optA, optB, prev.isDouble, currIsDouble);
+                    let best = pickBestCorner(optA, optB, PATH_TRACK.upperY, 'upperY');
                     calculatedCoordinates[i] = { x: best.x, y: best.y, isRotated: best.isRotated, flipVisuals: best.flipVisuals, w: best.isRotated ? 173 : 84, h: best.isRotated ? 84 : 173, isDouble: currIsDouble };
                 } else {
                     calculatedCoordinates[i] = { x: prev.x, y: nextY, isRotated: rot, flipVisuals: flip, w: currW, h: currH, isDouble: currIsDouble };
@@ -267,7 +281,7 @@ function renderLiveTable(boardLine) {
                 if (nextX + currW/2 > PATH_TRACK.rightX) {
                     stateR = 'UP_RIGHT';
                     let [optA, optB] = getCornerChoices('RIGHT_BOTTOM_TO_UP_RIGHT', prev.x, prev.y, prev.isDouble, currIsDouble);
-                    let best = getForwardCorner(optA, optB, prev.isDouble, currIsDouble);
+                    let best = pickBestCorner(optA, optB, PATH_TRACK.rightX, 'rightX');
                     calculatedCoordinates[i] = { x: best.x, y: best.y, isRotated: best.isRotated, flipVisuals: best.flipVisuals, w: best.isRotated ? 173 : 84, h: best.isRotated ? 84 : 173, isDouble: currIsDouble };
                 } else {
                     calculatedCoordinates[i] = { x: nextX, y: prev.y, isRotated: rot, flipVisuals: flip, w: currW, h: currH, isDouble: currIsDouble };
@@ -278,7 +292,7 @@ function renderLiveTable(boardLine) {
                 if (nextY - currH/2 < PATH_TRACK.upperY) {
                     stateR = 'LEFT_TOP';
                     let [optA, optB] = getCornerChoices('UP_RIGHT_TO_LEFT_TOP', prev.x, prev.y, prev.isDouble, currIsDouble);
-                    let best = getForwardCorner(optA, optB, prev.isDouble, currIsDouble);
+                    let best = pickBestCorner(optA, optB, PATH_TRACK.upperY, 'upperY');
                     calculatedCoordinates[i] = { x: best.x, y: best.y, isRotated: best.isRotated, flipVisuals: best.flipVisuals, w: best.isRotated ? 173 : 84, h: best.isRotated ? 84 : 173, isDouble: currIsDouble };
                 } else {
                     calculatedCoordinates[i] = { x: prev.x, y: nextY, isRotated: rot, flipVisuals: flip, w: currW, h: currH, isDouble: currIsDouble };
@@ -307,4 +321,160 @@ function renderLiveTable(boardLine) {
             let divStyle = coords.isRotated ? "width: 2px; height: 100%;" : "width: 100%; height: 2px;";
             
             if (coords.flipVisuals) {
-                placedTile.innerHTML = `${bottomHalf}<div style="${divStyle} background: #1a1a1a; flex-shrink: 0;" class="domino
+                placedTile.innerHTML = `${bottomHalf}<div style="${divStyle} background: #1a1a1a; flex-shrink: 0;" class="domino-divider"></div>${topHalf}`;
+            } else {
+                placedTile.innerHTML = `${topHalf}<div style="${divStyle} background: #1a1a1a; flex-shrink: 0;" class="domino-divider"></div>${bottomHalf}`;
+            }
+            trackContainer.appendChild(placedTile);
+        });
+    }
+
+    // 2. RENDER PLAYER HAND
+    if (window.localGameState && window.localGameState.players && window.localGameState.players.player1) {
+        const hand = window.localGameState.players.player1.hand || [];
+        hand.forEach(tile => {
+            const tileElement = document.createElement("div");
+            tileElement.className = "domino-bone-interactive";
+            tileElement.id = `hand-tile-${tile.id}`;
+            tileElement.style.flexShrink = "0";
+            
+            if (selectedTileId === tile.id) {
+                tileElement.style.transform = "translateY(-16px)";
+                tileElement.style.borderColor = "#66fcf1";
+                tileElement.style.boxShadow = "0 0 20px #66fcf1";
+                displayValidPlacements(tile);
+            }
+
+            tileElement.onmouseenter = () => {
+                if (selectedTileId !== tile.id) tileElement.style.transform = "translateY(-8px)";
+            };
+            tileElement.onmouseleave = () => {
+                if (selectedTileId !== tile.id) tileElement.style.transform = "translateY(0)";
+            };
+            
+            tileElement.innerHTML = `
+                ${generateHalfDisplay(tile.top, false)}
+                <div style="width: 100%; height: 2px; background: #1a1a1a; flex-shrink: 0; position: relative;" class="domino-divider"></div>
+                ${generateHalfDisplay(tile.bottom, false)}
+            `;
+            
+            tileElement.addEventListener("click", (e) => {
+                e.stopPropagation(); 
+                selectedTileId = (selectedTileId === tile.id) ? null : tile.id;
+                renderLiveTable(window.localGameState.board_line);
+            });
+
+            handContainer.appendChild(tileElement);
+        });
+    }
+}
+
+function updateCornerSeatBlocks() {
+    for (let i = 1; i <= 4; i++) {
+        const block = document.getElementById(`seat-block-${i}`);
+        if (!block) continue;
+        block.style.display = "flex";
+        
+        if (i === 1) {
+            block.style.backgroundColor = "rgba(11, 12, 16, 0.95)";
+            block.style.borderColor = "#66fcf1";
+            block.style.boxShadow = "0 0 15px rgba(102, 252, 241, 0.5)";
+            block.innerHTML = `<strong style="color: #66fcf1;">Banton</strong><span style="color: rgba(255,255,255,0.15); margin: 0 3px;">|</span><span style="color: #fff;">Bones: 7</span>`;
+        } else if (i === 2) {
+            block.style.backgroundColor = "rgba(11, 12, 16, 0.85)";
+            block.style.borderColor = "rgba(102, 252, 241, 0.2)";
+            block.style.boxShadow = "none";
+            block.innerHTML = `<strong style="color: #66fcf1;">TellaSecurity</strong><span style="color: rgba(255,255,255,0.15); margin: 0 3px;">|</span><span style="color: #fff;">Bones: 7</span>`;
+        } else {
+            block.style.backgroundColor = "rgba(11, 12, 16, 0.85)";
+            block.style.borderColor = "rgba(255,255,255,0.05)";
+            block.style.boxShadow = "none";
+            block.innerHTML = `<span style="color: #444; font-weight: bold;">P${i}</span><span style="color: rgba(255,255,255,0.15); margin: 0 4px;">|</span><span style="color: #444;">Empty</span>`;
+        }
+    }
+}
+
+function generateHalfDisplay(value, isHorizontal = false) {
+    const pipMaps = {
+        0: [],
+        1: [4],
+        2: isHorizontal ? [6, 2] : [1, 7],
+        3: isHorizontal ? [6, 4, 2] : [1, 4, 7],
+        4: [1, 2, 6, 7],
+        5: [1, 2, 4, 6, 7],
+        6: isHorizontal ? [1, 8, 2, 6, 9, 7] : [1, 2, 3, 5, 6, 7]
+    };
+    
+    const activePips = pipMaps[value] || [];
+    let html = `<div class="domino-half">`;
+    for (let p = 1; p <= 9; p++) {
+        const isActive = activePips.includes(p) ? 'active' : '';
+        html += `<div class="pip ${isActive} pos-${p}"></div>`;
+    }
+    html += `</div>`;
+    return html;
+}
+
+function displayValidPlacements(tile) {
+    const line = window.localGameState.board_line;
+    const leftZone = document.getElementById("left-play-zone");
+    const rightZone = document.getElementById("right-play-zone");
+    if (!line || line.length === 0) return; 
+
+    const openLeft = line[0].displayTop;
+    const openRight = line[line.length - 1].displayBottom;
+
+    if (tile.top === openLeft || tile.bottom === openLeft) leftZone.style.display = "flex";
+    if (tile.top === openRight || tile.bottom === openRight) rightZone.style.display = "flex";
+}
+
+function handleBoardClick() {
+    const line = window.localGameState.board_line;
+    if (!line || line.length === 0) processTilePlacement('initial');
+}
+
+function processTilePlacement(targetSide) {
+    const playerHand = window.localGameState.players.player1.hand;
+    const tileIndex = playerHand.findIndex(t => t.id === selectedTileId);
+    if (tileIndex === -1) return;
+    
+    const chosenTile = playerHand[tileIndex];
+    let updatedBoardLine = [...window.localGameState.board_line];
+
+    if (targetSide === 'initial') {
+        chosenTile.displayTop = chosenTile.top;
+        chosenTile.displayBottom = chosenTile.bottom;
+        updatedBoardLine.push(chosenTile);
+    } 
+    else if (targetSide === 'left') {
+        const openLeft = updatedBoardLine[0].displayTop;
+        
+        if (chosenTile.bottom === openLeft) {
+            chosenTile.displayTop = chosenTile.top;
+            chosenTile.displayBottom = chosenTile.bottom;
+        } else if (chosenTile.top === openLeft) {
+            chosenTile.displayTop = chosenTile.bottom;
+            chosenTile.displayBottom = chosenTile.top;
+        } else return;
+        updatedBoardLine.unshift(chosenTile); 
+    } 
+    else if (targetSide === 'right') {
+        const openRight = updatedBoardLine[updatedBoardLine.length - 1].displayBottom;
+        
+        if (chosenTile.top === openRight) {
+            chosenTile.displayTop = chosenTile.top;
+            chosenTile.displayBottom = chosenTile.bottom;
+        } else if (chosenTile.bottom === openRight) {
+            chosenTile.displayTop = chosenTile.bottom;
+            chosenTile.displayBottom = chosenTile.top;
+        } else return;
+        updatedBoardLine.push(chosenTile); 
+    }
+
+    playerHand.splice(tileIndex, 1);
+    window.localGameState.board_line = updatedBoardLine;
+    window.localGameState.players.player1.hand = playerHand;
+    
+    selectedTileId = null;
+    renderLiveTable(window.localGameState.board_line);
+}
