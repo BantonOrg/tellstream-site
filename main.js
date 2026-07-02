@@ -40,16 +40,17 @@ function renderStreamHeader(showName) {
     const wrapper = document.querySelector('.tagline-wrapper');
     
     if (wrapper) {
-        // Fix standard nowrap layout limits to allow multi-line text wraps up to 4 lines
+        // Force multi-line flexibility on the tagline block to safely handle up to 50 chars
         wrapper.style.whiteSpace = 'normal';
         wrapper.style.display = 'flex';
         wrapper.style.flexDirection = 'column';
         wrapper.style.justifyContent = 'center';
         
+        // Dynamically create the paragraph tag safely if it doesn't exist in the HTML template yet
         if (!display) {
             display = document.createElement('p');
             display.id = 'stream-name-display';
-            display.style.color = '#ffdd1a'; // Your classic yellow style asset color code
+            display.style.color = '#ffdd1a'; // Classic Tellstream golden yellow brand asset color
             display.style.fontSize = '1.1rem';
             display.style.fontWeight = 'bold';
             display.style.marginTop = '4px';
@@ -72,14 +73,16 @@ function renderStreamHeader(showName) {
     }
 }
 
+// Push the updated show text parameters cleanly into your Supabase lookup table
 async function updateDatabaseStreamStatus(showName) {
     try {
         await supabase_db.from('stream_status').upsert([{ id: 1, current_show: showName }]);
     } catch (err) {
-        console.error("Database status write failed:", err);
+        console.error("Database stream status write execution failed:", err);
     }
 }
 
+// Read the initial broadcast text state straight out of your database row on boot run
 async function loadInitialStreamStatus() {
     try {
         const { data, error } = await supabase_db.from('stream_status').select('current_show').eq('id', 1).single();
@@ -87,7 +90,7 @@ async function loadInitialStreamStatus() {
             renderStreamHeader(data.current_show);
         }
     } catch (err) {
-        console.error("Failed loading initial header stream text state parameter:", err);
+        console.error("Failed loading baseline header stream text state parameter:", err);
     }
 }
 
@@ -673,7 +676,7 @@ supabase_db.channel('public:notice_board').on('postgres_changes', { event: 'INSE
 supabase_db.channel('public:banned_words').on('postgres_changes', { event: '*', pattern: 'public', table: 'banned_words' }, async () => { await syncBannedWordsMap(); }).subscribe();
 supabase_db.channel('public:banned_users').on('postgres_changes', { event: '*', pattern: 'public', table: 'banned_users' }, async () => { await syncBannedUsersMap(); }).subscribe();
 
-// Realtime subscription for live header show updates
+// Real-time subscription path listening directly for live header show changes globally
 supabase_db.channel('public:stream_status').on('postgres_changes', { event: '*', pattern: 'public', table: 'stream_status' }, payload => {
     if (payload.new && payload.new.current_show) {
         renderStreamHeader(payload.new.current_show);
@@ -689,9 +692,9 @@ async function sendMessage() {
         const profile = profilesCache[user];
         if (profile && parseInt(profile.power_level || 0) >= 1) { 
             
-            // Intercept and process the custom live show broadcast command sequence
+            // Intercept custom live set layout broadcast codes instantly before database distribution
             if (text.startsWith('/show ')) {
-                // Read everything after the command, hard-capped cleanly at 50 characters max limit
+                // Extracts text string after space, cleanly hard-capped at 50 characters maximum
                 const showNameInput = text.substring(6).trim().substring(0, 50);
                 if (showNameInput) {
                     messageInput.value = '';
@@ -753,7 +756,7 @@ messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.s
     // Await historical messages completely before firing greeting layouts
     await loadMessages();
     
-    // Pull the active show name straight out of the status table on system initialization boot run
+    // Fetch and display active broadcast details instantly from your own server on page paint loop
     await loadInitialStreamStatus();
     
     // Synchronize UI locks based on the fully loaded session state parameters
