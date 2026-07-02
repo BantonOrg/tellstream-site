@@ -34,6 +34,45 @@ let bannedWordsCache = [];
 let bannedUsersCache = {}; 
 let isNoticeBoardActive = false;
 
+// Stream Scraping Function
+async function updateStreamDisplay() {
+    try {
+        const response = await fetch('https://a3.asurahosting.com/listen/tellstream/index.html?sid=1');
+        const text = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(text, 'text/html');
+        
+        let streamName = "";
+        const tds = doc.querySelectorAll('td');
+        for (let i = 0; i < tds.length; i++) {
+            if (tds[i].innerText.includes("Stream Name:")) {
+                streamName = tds[i+1].innerText.trim();
+                break;
+            }
+        }
+        
+        const display = document.getElementById('stream-name-display');
+        if (display && streamName) {
+            display.innerText = streamName;
+            
+            // For future compiling of actions determined by the result string
+            console.log("Stream validation match: ", streamName);
+            
+            // Conditional background updates matching the display rule
+            const leftCell = document.querySelector('.cell-left');
+            if (leftCell) {
+                if (streamName === "BIGJOHN NU 000") {
+                    leftCell.style.backgroundImage = "url('/src/assets/header-bg-bigjohn.jpg')";
+                } else {
+                    leftCell.style.backgroundImage = "url('/src/assets/header-bg1.jpg')";
+                }
+            }
+        }
+    } catch (error) { 
+        console.log("Direct stream status fetch restricted by remote CORS configuration rules."); 
+    }
+}
+
 // Populate saved handle from memory immediately on start
 if (usernameInput) {
     const savedName = localStorage.getItem('tellstream_saved_username');
@@ -664,6 +703,9 @@ sendBtn.addEventListener('click', sendMessage);
 messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
 
 (async function initSystem() {
+    // Fire the stream metadata execution scrape step immediately on core boot run
+    updateStreamDisplay();
+
     renderFacebookFeed();
     renderActiveFlyers();
     renderHelpContent(false);
