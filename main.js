@@ -58,7 +58,7 @@ const djHelpInstructions = [
     { title: "⚔️ Console Moderation Shortcuts", text: "Manage chat rules live using: '/add [word]' to expand filters, '/del [word]' to drop filters, or '/unban [username]' to restore access to struck listener handles." }
 ];
 
-// PROPORTION-LOCKED CELL OVERLAY ENGINE (LAYER ORDER & POSITIONING FIXED)
+// PROPORTION-LOCKED CELL OVERLAY ENGINE (ASPECT SQUASH & LAYERING FIXED)
 function renderStreamHeader(showName) {
     const cellLeft = document.querySelector('.cell-left');
     const wrapper = document.querySelector('.cell-left .tagline-wrapper');
@@ -79,9 +79,9 @@ function renderStreamHeader(showName) {
         logoImg.style.width = '100%';
         logoImg.style.height = '100%';
         
-        // PROPORTION ENCODING: Preserves exact canvas ratios without distortion
-        logoImg.style.objectFit = 'contain'; 
-        logoImg.style.objectPosition = 'center'; 
+        // FIX: 'cover' fills out the mobile block height, 'left center' keeps the DJ cartoon pinned perfectly in the frame
+        logoImg.style.objectFit = 'cover'; 
+        logoImg.style.objectPosition = 'left center'; 
         
         logoImg.style.zIndex = '1'; // Low background layer assignment
         logoImg.style.display = 'none';      
@@ -115,18 +115,18 @@ function renderStreamHeader(showName) {
         imageProbe.src = imgCloudUrl;
 
         imageProbe.onload = function() {
-            // Success! Hide baseline text inside tagline-wrapper safely
+            // Success! Hide baseline text lines inside tagline-wrapper safely
             if (wrapper) {
                 wrapper.querySelectorAll('h1, p').forEach(el => el.style.display = 'none');
             }
             
-            // LAYER FIX: Force text to append AFTER the image so it physically paints on top
+            // LAYER FIX: Re-append text element AFTER the image so it physical mounts on the frontmost layer
             cellLeft.appendChild(display);
             
             logoImg.src = imgCloudUrl;
             logoImg.style.display = 'block';
 
-            // POSITION FIX: Clear out inherited top coordinates and anchor text tightly to the bottom edge
+            // POSITION FIX: Wipe out any inherited top coordinates and lock text tightly to the lower edge
             display.style.position = 'absolute';
             display.style.top = 'auto'; 
             display.style.bottom = '12px';
@@ -135,7 +135,7 @@ function renderStreamHeader(showName) {
             display.style.marginTop = '0px';
             display.style.width = '100%';
             display.style.textAlign = 'center';
-            display.style.zIndex = '9999'; // Max safety layer dominance override
+            display.style.zIndex = '9999'; // Ironclad visibility safety layer dominance override
             display.style.display = 'block';
 
             if (cleanName.toLowerCase() === 'tellstream') {
@@ -146,7 +146,7 @@ function renderStreamHeader(showName) {
         };
 
         imageProbe.onerror = function() {
-            // Fallback: Drop overlay settings, clear graphic node, and restore cell flow parameters
+            // Fallback: Clear dynamic nodes and restore initial static text positioning flow variables
             logoImg.style.display = 'none';
             
             if (wrapper) {
@@ -213,7 +213,6 @@ function anchorChatToBottom() {
     }
 }
 
-// REST OF THE ARCHITECTURE CONTINUES WITHOUT MODIFICATION
 function containsSwearWords(text) {
     if (bannedWordsCache.length === 0) return false;
     const escapedWords = bannedWordsCache.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
@@ -468,6 +467,11 @@ function initQuickEmojiCloud() {
     `).join('');
     quickEmojiList.innerHTML = html;
     quickEmojiListFS.innerHTML = html;
+}
+
+function insertEmojiCode(code) {
+    messageInput.value += ` :${code}: `;
+    messageInput.focus();
 }
 
 function toggleNoticeBoardView() {
