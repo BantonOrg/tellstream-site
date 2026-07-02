@@ -688,13 +688,15 @@ async function sendMessage() {
     let text = messageInput.value.trim();
     if (!text) return;
 
+    // Strict Command Gatekeeper for any character strings beginning with a forward slash
     if (text.startsWith('/')) {
         const profile = profilesCache[user];
+        
+        // Gate 1: Check if the profile is verified as Level 1 (DJ) or Level 2 (Admin)
         if (profile && parseInt(profile.power_level || 0) >= 1) { 
             
-            // Intercept custom live set layout broadcast codes instantly before database distribution
+            // Validate and intercept the custom layout update broadcast sequence
             if (text.startsWith('/show ')) {
-                // Extracts text string after space, cleanly hard-capped at 50 characters maximum
                 const showNameInput = text.substring(6).trim().substring(0, 50);
                 if (showNameInput) {
                     messageInput.value = '';
@@ -703,8 +705,22 @@ async function sendMessage() {
                 }
             }
             
+            // Validate existing explicit console management keywords
+            if (text.startsWith('/add ') || text.startsWith('/del ') || text.startsWith('/unban ') || text === '/listwords') {
+                messageInput.value = '';
+                await handleAdminFilterCommand(text);
+                return;
+            }
+            
+            // Reject unauthorized command syntax keywords attempted by an Admin or DJ handle
             messageInput.value = '';
-            await handleAdminFilterCommand(text);
+            alert("❓ Unknown Command: That slash command does not exist. Use /show [name] to update the header layout column.");
+            return;
+
+        } else {
+            // Gate 2: Drop the connection block instantly if a regular listener attempts any command line tracking path
+            messageInput.value = '';
+            alert("🔒 Access Denied: Only Station Admins and Authorized DJs can run command scripts.");
             return;
         }
     }
