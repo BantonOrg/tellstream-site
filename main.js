@@ -34,6 +34,63 @@ let bannedWordsCache = [];
 let bannedUsersCache = {}; 
 let isNoticeBoardActive = false;
 
+// Dynamic real-time header text rendering layout function
+function renderStreamHeader(showName) {
+    let display = document.getElementById('stream-name-display');
+    const wrapper = document.querySelector('.tagline-wrapper');
+    
+    if (wrapper) {
+        // Fix standard nowrap layout limits to allow multi-line text wraps up to 4 lines
+        wrapper.style.whiteSpace = 'normal';
+        wrapper.style.display = 'flex';
+        wrapper.style.flexDirection = 'column';
+        wrapper.style.justifyContent = 'center';
+        
+        if (!display) {
+            display = document.createElement('p');
+            display.id = 'stream-name-display';
+            display.style.color = '#ffdd1a'; // Your classic yellow style asset color code
+            display.style.fontSize = '1.1rem';
+            display.style.fontWeight = 'bold';
+            display.style.marginTop = '4px';
+            display.style.webkitTextStroke = '1px #000000';
+            display.style.textShadow = '2px 2px 4px rgba(0, 0, 0, 0.9)';
+            display.style.textTransform = 'uppercase';
+            display.style.lineHeight = '1.2';
+            display.style.maxWidth = '95%';
+            wrapper.appendChild(display);
+        }
+    }
+    
+    if (display && showName) {
+        const cleanName = showName.trim();
+        if (cleanName.toLowerCase() === 'tellstream') {
+            display.innerText = "TELLSTREAM NONE STOP";
+        } else {
+            display.innerText = `${cleanName} - LIVE`;
+        }
+    }
+}
+
+async function updateDatabaseStreamStatus(showName) {
+    try {
+        await supabase_db.from('stream_status').upsert([{ id: 1, current_show: showName }]);
+    } catch (err) {
+        console.error("Database status write failed:", err);
+    }
+}
+
+async function loadInitialStreamStatus() {
+    try {
+        const { data, error } = await supabase_db.from('stream_status').select('current_show').eq('id', 1).single();
+        if (!error && data) {
+            renderStreamHeader(data.current_show);
+        }
+    } catch (err) {
+        console.error("Failed loading initial header stream text state parameter:", err);
+    }
+}
+
 // Populate saved handle from memory immediately on start
 if (usernameInput) {
     const savedName = localStorage.getItem('tellstream_saved_username');
@@ -616,6 +673,13 @@ supabase_db.channel('public:notice_board').on('postgres_changes', { event: 'INSE
 supabase_db.channel('public:banned_words').on('postgres_changes', { event: '*', pattern: 'public', table: 'banned_words' }, async () => { await syncBannedWordsMap(); }).subscribe();
 supabase_db.channel('public:banned_users').on('postgres_changes', { event: '*', pattern: 'public', table: 'banned_users' }, async () => { await syncBannedUsersMap(); }).subscribe();
 
+// Realtime subscription for live header show updates
+supabase_db.channel('public:stream_status').on('postgres_changes', { event: '*', pattern: 'public', table: 'stream_status' }, payload => {
+    if (payload.new && payload.new.current_show) {
+        renderStreamHeader(payload.new.current_show);
+    }
+}).subscribe();
+
 async function sendMessage() {
     const user = usernameInput.value.trim() || 'Listener';
     let text = messageInput.value.trim();
@@ -624,6 +688,18 @@ async function sendMessage() {
     if (text.startsWith('/')) {
         const profile = profilesCache[user];
         if (profile && parseInt(profile.power_level || 0) >= 1) { 
+            
+            // Intercept and process the custom live show broadcast command sequence
+            if (text.startsWith('/show ')) {
+                // Read everything after the command, hard-capped cleanly at 50 characters max limit
+                const showNameInput = text.substring(6).trim().substring(0, 50);
+                if (showNameInput) {
+                    messageInput.value = '';
+                    await updateDatabaseStreamStatus(showNameInput);
+                    return;
+                }
+            }
+            
             messageInput.value = '';
             await handleAdminFilterCommand(text);
             return;
@@ -676,6 +752,9 @@ messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.s
     
     // Await historical messages completely before firing greeting layouts
     await loadMessages();
+    
+    // Pull the active show name straight out of the status table on system initialization boot run
+    await loadInitialStreamStatus();
     
     // Synchronize UI locks based on the fully loaded session state parameters
     const currentUser = usernameInput.value.trim();
