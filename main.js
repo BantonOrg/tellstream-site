@@ -53,21 +53,19 @@ const noticeboardHelpInstructions = [
 
 const djHelpInstructions = [
     { title: "🎛️ Live Broadcast: /show live", text: "Type '/show live' to instantly pull your active Nickname handle and update the golden header logo across all global listeners' screens." },
-    { title: "🖼️ Cloud Logo Management", text: "Type '/upload [Show Name]' to open your local device image explorer. Any selected transparent PNG graphic will be automatically renamed and overwrite existing assets instantly." },
-    { title: "🗑️ Cloud Logo Deletion", text: "Type '/delete [Show Name]' to permanently delete a graphic asset from your cloud bucket storage." },
+    { title: "🖼️ Cloud Logo Status", text: "Transparent PNG show graphics are explicitly managed by Station Admins to preserve header background alignment." },
     { title: "🔄 Off-Air Sign Off Script", text: "When closing down your live set, type '/show tellstream' to cleanly wipe your on-screen graphic profile and restore the automated non-stop system banner text." },
     { title: "🚨 Emergency Stream Fixes", text: "The audio player contains automated reconnect flags. If a listener reports a layout freeze or dead air, instruct them to execute a hard page refresh (Ctrl + F5)." },
     { title: "⚔️ Console Moderation Shortcuts", text: "Manage chat rules live using: '/add [word]' to expand filters, '/del [word]' to drop filters, or '/unban [username]' to restore access to struck listener handles." }
 ];
 
-// Dynamic real-time header layout engine with automated cloud asset parsing and text overlay logic
+// Dynamic real-time header layout engine matching the exact dimensions of headerbg1
 function renderStreamHeader(showName) {
     let display = document.getElementById('stream-name-display');
     let logoImg = document.getElementById('stream-logo-display');
     const wrapper = document.querySelector('.tagline-wrapper');
     
     if (wrapper) {
-        // Force explicit relative anchor parameters for parent container alignment references
         wrapper.style.position = 'relative';
         wrapper.style.whiteSpace = 'normal';
         wrapper.style.display = 'flex';
@@ -89,16 +87,20 @@ function renderStreamHeader(showName) {
             display.style.lineHeight = '1.2';
             display.style.maxWidth = '95%';
             display.style.textAlign = 'center';
-            display.style.zIndex = '10'; // Force overlay typography layers cleanly on top of transparent paths
+            display.style.zIndex = '10'; // Overlays text on top of the logo cleanly
             wrapper.appendChild(display);
         }
 
         if (!logoImg) {
             logoImg = document.createElement('img');
             logoImg.id = 'stream-logo-display';
-            logoImg.style.maxHeight = '90%';     
-            logoImg.style.maxWidth = '90%';      
-            logoImg.style.objectFit = 'contain';  
+            
+            // Layout Lock: Force image to occupy 100% bounds to precisely mirror headerbg1 sizing
+            logoImg.style.position = 'absolute';
+            logoImg.style.top = '0';
+            logoImg.style.left = '0';
+            logoImg.style.width = '100%';
+            logoImg.style.height = '100%';
             logoImg.style.display = 'none';      
             wrapper.appendChild(logoImg);
         }
@@ -106,7 +108,6 @@ function renderStreamHeader(showName) {
     
     if (showName && wrapper) {
         const cleanName = showName.trim();
-        // Clinical normalization link routing straight to transparent asset extensions (.png)
         const safeFileName = cleanName.toLowerCase().replace(/\s+/g, '_') + '.png';
         
         const { data } = supabase_db.storage.from('dj-logos').getPublicUrl(safeFileName);
@@ -116,12 +117,12 @@ function renderStreamHeader(showName) {
         imageProbe.src = imgCloudUrl;
 
         imageProbe.onload = function() {
-            // SUCCESS: Custom transparent graphic found. Turn off background layout descriptions
+            // SUCCESS: Custom graphic matches coordinates perfectly. Hide standard text lines.
             wrapper.querySelectorAll('h1, p:not(#stream-name-display)').forEach(el => el.style.display = 'none');
             logoImg.src = imgCloudUrl;
             logoImg.style.display = 'block';
 
-            // Pin signature branding typography coordinates precisely over lower bounding paths
+            // Pin signature overlay branding text cleanly near the bottom edge
             display.style.position = 'absolute';
             display.style.bottom = '6px';
             display.style.marginTop = '0px';
@@ -135,7 +136,7 @@ function renderStreamHeader(showName) {
         };
 
         imageProbe.onerror = function() {
-            // FALLBACK MODE: Clear graphic frames and restore absolute code stack defaults cleanly
+            // FALLBACK MODE: Hide graphic frame and snap text rules back into normal vertical stacking flow
             logoImg.style.display = 'none';
             display.style.position = 'static';
             display.style.marginTop = '4px';
@@ -746,15 +747,16 @@ async function sendMessage() {
     // Strict Command Gatekeeper Loop checking for forward slash strings
     if (text.startsWith('/')) {
         const profile = profilesCache[user];
+        const userPowerLevel = parseInt(profile?.power_level || 0);
         
-        // Gate 1: Enforce level 1 authorized studio profiles validation locks
-        if (profile && parseInt(profile.power_level || 0) >= 1) { 
+        // Gate 1: Enforce level 1 authorized studio profiles validation locks for basic broadcast control
+        if (profile && userPowerLevel >= 1) { 
             
-            // Refactored live broadcast layout command triggers
+            // Live broadcast layout command triggers (DJs Level 1 and Admins Level 2 can use this)
             if (text.startsWith('/show')) {
                 let showNameInput = "";
                 if (text.trim() === '/show live') {
-                    showNameInput = user; // Automatically pull their active handle block
+                    showNameInput = user; 
                 } else if (text.startsWith('/show ')) {
                     showNameInput = text.substring(6).trim().substring(0, 50);
                 }
@@ -766,33 +768,42 @@ async function sendMessage() {
                 }
             }
             
-            // Intercept cloud uploader script executions targeting transparent PNG streams
-            if (text.startsWith('/upload ')) {
-                const uploadNameInput = text.substring(8).trim().substring(0, 50);
-                if (uploadNameInput) {
+            // STRICT SECURITY WALL: Restrict /upload and /delete commands exclusively to Level 2 (Admins) at this stage
+            if (text.startsWith('/upload ') || text.startsWith('/delete ')) {
+                if (userPowerLevel < 2) {
                     messageInput.value = '';
-                    pendingLogoTargetName = uploadNameInput.toLowerCase().replace(/\s+/g, '_');
-                    const hiddenUploader = document.getElementById('studioLogoHiddenFilePicker');
-                    if (hiddenUploader) hiddenUploader.click();
+                    alert("🔒 Access Denied: Only Station Admins (Level 2) have authorization to manage cloud image assets.");
                     return;
                 }
-            }
 
-            // Target and wipe transparent graphics straight out of the active storage bucket
-            if (text.startsWith('/delete ')) {
-                const deleteNameInput = text.substring(8).trim().substring(0, 50);
-                if (deleteNameInput) {
-                    messageInput.value = '';
-                    const targetFileName = deleteNameInput.toLowerCase().replace(/\s+/g, '_') + '.png';
-                    try {
-                        const { error } = await supabase_db.storage.from('dj-logos').remove([targetFileName]);
-                        if (error) throw error;
-                        alert(`🗑️ Logo successfully deleted for: "${deleteNameInput}"`);
-                        await loadInitialStreamStatus();
-                    } catch (err) {
-                        alert("Cloud Deletion Failure: " + err.message);
+                // If they are level 2, run the uploader pipeline
+                if (text.startsWith('/upload ')) {
+                    const uploadNameInput = text.substring(8).trim().substring(0, 50);
+                    if (uploadNameInput) {
+                        messageInput.value = '';
+                        pendingLogoTargetName = uploadNameInput.toLowerCase().replace(/\s+/g, '_');
+                        const hiddenUploader = document.getElementById('studioLogoHiddenFilePicker');
+                        if (hiddenUploader) hiddenUploader.click();
+                        return;
                     }
-                    return;
+                }
+
+                // If they are level 2, run the deletion pipeline
+                if (text.startsWith('/delete ')) {
+                    const deleteNameInput = text.substring(8).trim().substring(0, 50);
+                    if (deleteNameInput) {
+                        messageInput.value = '';
+                        const targetFileName = deleteNameInput.toLowerCase().replace(/\s+/g, '_') + '.png';
+                        try {
+                            const { error } = await supabase_db.storage.from('dj-logos').remove([targetFileName]);
+                            if (error) throw error;
+                            alert(`🗑️ Logo successfully deleted for: "${deleteNameInput}"`);
+                            await loadInitialStreamStatus();
+                        } catch (err) {
+                            alert("Cloud Deletion Failure: " + err.message);
+                        }
+                        return;
+                    }
                 }
             }
 
@@ -803,7 +814,7 @@ async function sendMessage() {
             }
             
             messageInput.value = '';
-            alert("❓ Unknown Command: That command does not exist. Use /show live, /upload [name], or /delete [name].");
+            alert("❓ Unknown Command: That command does not exist. Use /show live to switch banners.");
             return;
         } else {
             // Gate 2: Drop standard listener console command tracking attempts instantly
@@ -824,7 +835,7 @@ async function sendMessage() {
     const banCheck = checkBanStatus(user);
     if (banCheck.isBanned) { alert(banCheck.message); return; }
 
-    if (containsSwearWords(text)) {
+    if (containsSwwearWords(text)) {
         messageInput.value = '';
         await handleUserStrike(user, text);
         return; 
@@ -846,7 +857,7 @@ messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.s
     renderHelpContent(false);
     setTimeout(initQuickEmojiCloud, 500);
     
-    // Inject and bound hidden file picker nodes mapped strictly for .png images
+    // Inject hidden file picker nodes mapped strictly for transparent .png streams
     const hiddenInputFileTag = document.createElement('input');
     hiddenInputFileTag.type = 'file';
     hiddenInputFileTag.id = 'studioLogoHiddenFilePicker';
