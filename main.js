@@ -34,12 +34,34 @@ let bannedWordsCache = [];
 let bannedUsersCache = {}; 
 let isNoticeBoardActive = false;
 
-// Populate saved handle from memory immediately on start
+// --- DYNAMIC HEADER IDENTITY LOGIC ---
+async function updateHeaderIdentity() {
+    try {
+        const response = await fetch('https://a3.asurahosting.com/listen/tellstream/stats.xml');
+        const text = await response.text();
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(text, "text/xml");
+        const streamName = xmlDoc.getElementsByTagName("STREAMNAME")[0]?.textContent;
+        
+        const identityMap = {
+            "Tellstream": "header-bg1.jpg",
+            "BIGJOHN NU 000": "header-bg-bigjohn.jpg" 
+        };
+
+        const targetImage = identityMap[streamName] || "header-bg1.jpg";
+        const leftCell = document.querySelector('.cell-left');
+        if (leftCell) {
+            leftCell.style.backgroundImage = `url('${targetImage}')`;
+        }
+    } catch (error) {
+        console.log("Header update skipped:", error);
+    }
+}
+
+// --- EXISTING CHAT LOGIC ---
 if (usernameInput) {
     const savedName = localStorage.getItem('tellstream_saved_username');
     if (savedName) usernameInput.value = savedName;
-    
-    // Save handle automatically if they manually type/change it
     usernameInput.addEventListener('input', () => {
         localStorage.setItem('tellstream_saved_username', usernameInput.value.trim());
         syncDrawerName();
@@ -92,11 +114,9 @@ function cleanSwearWords(text) {
 function checkBanStatus(username) {
     const userBan = bannedUsersCache[username.toLowerCase()];
     if (!userBan) return { isBanned: false };
-
     if (userBan.is_permanent) {
         return { isBanned: true, message: "You have been permanently banned from the Tellstream Lounge." };
     }
-
     if (userBan.ban_expires_at) {
         const expiration = new Date(userBan.ban_expires_at);
         if (expiration > new Date()) {
@@ -104,7 +124,6 @@ function checkBanStatus(username) {
             return { isBanned: true, message: `You are temporarily banned for swearing. Ban expires in ${remainingHours} hours.` };
         }
     }
-
     return { isBanned: false };
 }
 
@@ -121,7 +140,6 @@ function appendPrivateWelcomeGreeting(compiledMessageText) {
 
 function appendPrivateWarning(user, text, strikeCount, customMessage = null) {
     if (!chatBox) return;
-
     let warningMsg = customMessage;
     if (!warningMsg) {
         warningMsg = `⚠️ PRIVATE WARNING: Strike ${strikeCount}/3. Bad language detected.`;
@@ -131,19 +149,16 @@ function appendPrivateWarning(user, text, strikeCount, customMessage = null) {
             warningMsg = "🚫 PERMANENT LIFETIME LOCKOUT: Repeat offense detected. Your handle access is permanently revoked.";
         }
     }
-
     const systemDiv = document.createElement('div');
     systemDiv.className = 'msg';
     systemDiv.style.borderLeft = '4px solid #ff3333';
     systemDiv.style.background = 'rgba(255, 51, 51, 0.08)';
     systemDiv.innerHTML = `<div class="user" style="color: #ff3333; font-weight: 900;">TELLA SECURITY</div><div style="color: #ffdddd; font-style: italic; font-size: 0.85rem;">${warningMsg} <br><span style="opacity: 0.6;">(Only you can see this message)</span></div>`;
     chatBox.appendChild(systemDiv);
-
     if (text) {
         const maskedText = cleanSwearWords(text);
         const msgDiv = document.createElement('div');
         msgDiv.className = 'msg';
-        
         const profile = profilesCache[user];
         let nameClass = "user-unregistered";
         let hoverAttribute = "";
@@ -151,25 +166,20 @@ function appendPrivateWarning(user, text, strikeCount, customMessage = null) {
             nameClass = (profile.power_level >= 1) ? "user-admin" : "user-registered";
             if (profile.hover_title) hoverAttribute = `title="${escapeHTML(profile.hover_title)}"`;
         }
-
         msgDiv.innerHTML = `<div class="user ${nameClass}" ${hoverAttribute}>${escapeHTML(user)}</div><div>${escapeHTML(maskedText)}</div>`;
         chatBox.appendChild(msgDiv);
     }
-    
     anchorChatToBottom();
 }
 
 async function handleUserStrike(username, originalText) {
     const lowerUser = username.toLowerCase();
     const existingRecord = bannedUsersCache[lowerUser];
-    
     let currentStrikes = existingRecord ? existingRecord.strikes : 0;
     let apologyUsed = existingRecord ? existingRecord.apology_used : false;
     currentStrikes += 1;
-
     let banExpiresAt = null;
     let isPermanent = false;
-
     if (currentStrikes === 3) {
         const tomorrow = new Date();
         tomorrow.setHours(tomorrow.getHours() + 24);
@@ -177,7 +187,6 @@ async function handleUserStrike(username, originalText) {
     } else if (currentStrikes > 3) {
         isPermanent = true;
     }
-
     await supabase_db.from('banned_users').upsert({
         username: lowerUser,
         strikes: currentStrikes,
@@ -186,20 +195,16 @@ async function handleUserStrike(username, originalText) {
         apology_used: apologyUsed,
         updated_at: new Date().toISOString()
     });
-
     appendPrivateWarning(username, originalText, currentStrikes);
 }
 
 async function checkAndProcessApology(username, text) {
     const lowerUser = username.toLowerCase();
     const existingRecord = bannedUsersCache[lowerUser];
-    
     if (!existingRecord || existingRecord.strikes === 0 || existingRecord.apology_used) return false;
-
     const apologyRegex = /\b(sorry|apologise|apologize)\b/i;
     if (apologyRegex.test(text)) {
         let currentStrikes = existingRecord.strikes - 1;
-        
         await supabase_db.from('banned_users').upsert({
             username: lowerUser,
             strikes: currentStrikes,
@@ -208,7 +213,6 @@ async function checkAndProcessApology(username, text) {
             apology_used: true,
             updated_at: new Date().toISOString()
         });
-
         appendPrivateWarning(username, null, currentStrikes, `✅ APOLOGY ACCEPTED: Your one-time grace apology has been processed. One strike removed! Current strikes: ${currentStrikes}/3.`);
         return true;
     }
@@ -252,14 +256,11 @@ async function renderActiveFlyers() {
     const today = new Date();
     today.setDate(today.getDate() - 1);
     today.setHours(0,0,0,0);
-
     const { data: files, error } = await supabase_db.storage.from('flyers').list('', { limit: 100 });
-
     if (error || !files || files.length === 0) {
         flyerContainer.innerHTML = `<p style="color:#666; text-align:center; padding-top:20px;">No current event flyers listed.</p>`;
         return;
     }
-
     let renderedHtml = "";
     for (let file of files) {
         if (file.name === ".emptyFolderPlaceholder") continue;
@@ -310,7 +311,6 @@ function closeFlyerLightbox() {
     modalTargetImg.src = "";
 }
 
-// Fullscreen toggle
 function toggleChatFullscreen() {
     if (isNoticeBoardActive) toggleNoticeBoardView();
     document.body.classList.toggle('chat-is-fullscreen');
@@ -339,7 +339,6 @@ function toggleNoticeBoardView() {
     const mainTitle = document.getElementById('sidebarPanelTitle');
     const toggleBtn = document.getElementById('toggle-notice-btn');
     const emojiSectionFS = quickEmojiListFS.parentElement;
-
     if (!isNoticeBoardActive) {
         document.body.classList.add('chat-is-fullscreen');
         streamChat.style.display = 'none';
@@ -373,13 +372,11 @@ function evaluateNoticeBoardForms() {
     const profile = profilesCache[currentUser];
     const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
     const isVerified = profile && profile.passkey === authorizedKey;
-
     if (!isVerified) {
         warningBanner.style.display = 'block';
         document.querySelectorAll('.notice-input-form-block').forEach(form => form.style.display = 'none');
         return;
     }
-
     warningBanner.style.display = 'none';
     const powerLevel = parseInt(profile.power_level || 0);
     document.getElementById('form-boss').style.display = (powerLevel >= 2) ? 'block' : 'none';
@@ -410,39 +407,32 @@ async function submitNoticeUpdate(boardType) {
     const inputField = document.getElementById(`input-${boardType}`);
     let textContent = inputField.value.trim();
     if (!textContent) return;
-
     const profile = profilesCache[currentUser];
     const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
     if (!profile || profile.passkey !== authorizedKey) return;
-
     const pLevel = parseInt(profile.power_level || 0);
     if (boardType === 'boss' && pLevel < 2) return;
     if (boardType === 'selectors' && pLevel < 1) return;
-
     const banCheck = checkBanStatus(currentUser);
     if (banCheck.isBanned) {
         alert(banCheck.message);
         return;
     }
-
     if (containsSwearWords(textContent)) {
         await handleUserStrike(currentUser, textContent);
         inputField.value = "";
         return; 
     }
-
     const wasApology = await checkAndProcessApology(currentUser, textContent);
     if (wasApology) {
         inputField.value = "";
         return;
     }
-
     const { error } = await supabase_db.from('notice_board').insert([{
         username: currentUser,
         notice_text: textContent,
         board_type: boardType
     }]);
-
     if (!error) {
         inputField.value = "";
         fetchNoticeBoardRecords();
@@ -455,7 +445,6 @@ function syncDrawerName() {
     const currentName = usernameInput.value.trim();
     regNameInput.value = currentName;
     reminderHintDisplay.style.display = "none";
-    
     if (profilesCache[currentName]) {
         lockStatusBtn.innerText = "🔒";
         drawerTitle.innerText = "Name is Secured: Log In";
@@ -484,12 +473,10 @@ async function handleSecuritySubmit() {
     const passkey = regPasskeyInput.value.trim();
     const reminder = regReminderInput.value.trim();
     const email = regEmailInput.value.trim();
-
     if (!currentName || !passkey) {
         alert("Please fill in both Name and a Passkey string.");
         return;
     }
-
     if (profilesCache[currentName]) {
         if (profilesCache[currentName].passkey === passkey) {
             localStorage.setItem('tellstream_key_' + currentName, passkey);
@@ -512,7 +499,6 @@ async function handleSecuritySubmit() {
         if (currentName === "Banton") { assignedLevel = 2; assignedHover = "banton.org"; }
         else if (currentName === "BIG JOHN NEW000") { assignedLevel = 2; assignedHover = "the boss"; }
         else if (currentName === "Perfection") { assignedLevel = 2; assignedHover = "You done know"; }
-
         const { error } = await supabase_db.from('secured_profiles').insert([{
             username: currentName,
             passkey: passkey,
@@ -521,7 +507,6 @@ async function handleSecuritySubmit() {
             power_level: assignedLevel,
             hover_title: assignedHover
         }]);
-
         if (error) {
             alert("Could not claim this name block profile target.");
         } else {
@@ -575,7 +560,6 @@ function appendMessage(data) {
     const msgDiv = document.createElement('div');
     msgDiv.className = 'msg';
     let messageContent = escapeHTML(data.message);
-
     messageContent = messageContent.replace(/:([a-zA-Z0-9_-]+):/g, (match, code) => {
         const lowerCode = code.toLowerCase();
         if (window.emojiMapping && window.emojiMapping[lowerCode]) {
@@ -583,20 +567,16 @@ function appendMessage(data) {
         }
         return match;
     });
-
     const profile = profilesCache[data.username];
     let nameClass = "user-unregistered";
     let hoverAttribute = "";
-
     if (profile) {
         nameClass = (profile.power_level >= 1) ? "user-admin" : "user-registered";
         if (profile.hover_title) hoverAttribute = `title="${escapeHTML(profile.hover_title)}"`;
     }
-
     msgDiv.innerHTML = `<div class="user ${nameClass}" ${hoverAttribute}>${escapeHTML(data.username)}</div><div>${messageContent}</div>`;
     chatBox.appendChild(msgDiv);
     anchorChatToBottom();
-    
     while (chatBox.children.length > 50) chatBox.removeChild(chatBox.firstChild);
 }
 
@@ -609,7 +589,6 @@ async function loadMessages() {
     if (data) { data.forEach(appendMessage); anchorChatToBottom(); }
 }
 
-// Subscriptions
 supabase_db.channel('public:messages').on('postgres_changes', { event: 'INSERT', pattern: 'public', table: 'messages' }, payload => { appendMessage(payload.new); }).subscribe();
 supabase_db.channel('public:secured_profiles').on('postgres_changes', { event: '*', pattern: 'public', table: 'secured_profiles' }, async () => { await syncProfilesMap(); }).subscribe();
 supabase_db.channel('public:notice_board').on('postgres_changes', { event: 'INSERT', pattern: 'public', table: 'notice_board' }, payload => { if (isNoticeBoardActive) fetchNoticeBoardRecords(); }).subscribe();
@@ -620,7 +599,6 @@ async function sendMessage() {
     const user = usernameInput.value.trim() || 'Listener';
     let text = messageInput.value.trim();
     if (!text) return;
-
     if (text.startsWith('/')) {
         const profile = profilesCache[user];
         if (profile && parseInt(profile.power_level || 0) >= 1) { 
@@ -629,7 +607,6 @@ async function sendMessage() {
             return;
         }
     }
-
     if (profilesCache[user]) {
         if (localStorage.getItem('tellstream_key_' + user) !== profilesCache[user].passkey) {
             alert("This handle name has been secured! Please unlock the identity box.");
@@ -637,25 +614,21 @@ async function sendMessage() {
             return;
         }
     }
-
     const banCheck = checkBanStatus(user);
     if (banCheck.isBanned) {
         alert(banCheck.message);
         return;
     }
-
     if (containsSwearWords(text)) {
         messageInput.value = '';
         await handleUserStrike(user, text);
         return; 
     }
-
     const wasApology = await checkAndProcessApology(user, text);
     if (wasApology) {
         messageInput.value = '';
         return;
     }
-
     messageInput.value = '';
     await supabase_db.from('messages').insert([{ username: user, message: text }]);
 }
@@ -669,42 +642,35 @@ messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.s
     renderHelpContent(false);
     setTimeout(initQuickEmojiCloud, 500);
     
-    // Explicitly await every database profile and configuration mapping sequence completely
+    // Header Identity Polling
+    updateHeaderIdentity();
+    setInterval(updateHeaderIdentity, 60000);
+
     await syncProfilesMap();
     await syncBannedWordsMap();
     await syncBannedUsersMap();
-    
-    // Await historical messages completely before firing greeting layouts
     await loadMessages();
     
-    // Synchronize UI locks based on the fully loaded session state parameters
     const currentUser = usernameInput.value.trim();
     syncDrawerName();
 
-    // Small timeout ensures the DOM has completely rendered the back history messages
     setTimeout(() => {
         const profile = profilesCache[currentUser];
         const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
         const isLoggedIn = profile && profile.passkey === authorizedKey;
-
         const mainBody = "Greetings and welcome to Tellstream Chat. Please help keep this experience a positive blessing for one and all. Remember, at any time, users may have children around them. Bad blessings will be removed. One love from Tellstream.";
-
         if (isLoggedIn) {
             const prefix = `Welcome back ${currentUser}, we are blessed you are here. Please continue to fulljoy the vibes. `;
             const lastSeenKey = `tellstream_greeting_${currentUser.toLowerCase()}`;
             const lastSeenDate = localStorage.getItem(lastSeenKey);
             const todayDateStr = new Date().toDateString();
-
             if (lastSeenDate === todayDateStr) {
-                // Return visit same day: ONLY show the custom prefix message string
                 appendPrivateWelcomeGreeting(prefix);
             } else {
-                // First visit of the day: Combined Prefix + Main Core rules layout block
                 appendPrivateWelcomeGreeting(prefix + mainBody);
                 localStorage.setItem(lastSeenKey, todayDateStr);
             }
         } else {
-            // Unregistered users always receive full guidelines body text tracking cards
             appendPrivateWelcomeGreeting(mainBody);
         }
     }, 200);
