@@ -22,7 +22,6 @@
                 <div class="tagline-wrapper">
                     <h1>Great Music</h1>
                     <p>ALL DAY • EVERY DAY</p>
-                    <div id="stream-name-display" style="color: #00adb5; font-size: 0.9rem; font-weight: bold; margin-top: 5px;"></div>
                 </div>
             </div>
             
@@ -161,16 +160,27 @@
     <script src="/src/assets/emojis.js"></script>
     <script src="main.js"></script>
 
+    <!-- FIXED OBSERVER SCRIPT: Explicitly tracks login states and binds name data to localStorage for the domino app tab -->
     <script>
         const observer = new MutationObserver(() => {
             const bodyText = document.body.innerText;
             let activeUser = null;
-            if (bodyText.includes("Welcome back Banton")) { activeUser = "Banton"; } 
-            else if (bodyText.includes("Welcome back TellaSecurity")) { activeUser = "TellaSecurity"; }
+
+            if (bodyText.includes("Welcome back Banton")) {
+                activeUser = "Banton";
+            } else if (bodyText.includes("Welcome back TellaSecurity")) {
+                activeUser = "TellaSecurity";
+            }
+
             if (activeUser) {
+                // Instantly lock active username into browser storage so dominoes app can read it
                 window.localStorage.setItem('tellstream_active_user', activeUser);
+                
                 const link = document.getElementById('banton-dominoes-link');
-                if (link && link.style.display === 'none') { link.style.display = 'inline-block'; observer.disconnect(); }
+                if (link && link.style.display === 'none') {
+                    link.style.display = 'inline-block';
+                    observer.disconnect(); // Stop checking once revealed
+                }
             }
         });
         observer.observe(document.body, { childList: true, subtree: true });

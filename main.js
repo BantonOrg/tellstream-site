@@ -34,30 +34,6 @@ let bannedWordsCache = [];
 let bannedUsersCache = {}; 
 let isNoticeBoardActive = false;
 
-// Stream Name Display Logic
-async function updateStreamDisplay() {
-    try {
-        const response = await fetch('https://a3.asurahosting.com/listen/tellstream/index.html?sid=1');
-        const text = await response.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(text, 'text/html');
-        
-        let streamName = "";
-        const tds = doc.querySelectorAll('td');
-        for (let i = 0; i < tds.length; i++) {
-            if (tds[i].innerText.includes("Stream Name:")) {
-                streamName = tds[i+1].innerText.trim();
-                break;
-            }
-        }
-        
-        const display = document.getElementById('stream-name-display');
-        if (display && streamName) {
-            display.innerText = streamName;
-        }
-    } catch (error) { console.log("Stream update skip"); }
-}
-
 // Populate saved handle from memory immediately on start
 if (usernameInput) {
     const savedName = localStorage.getItem('tellstream_saved_username');
@@ -705,6 +681,7 @@ messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.s
     const currentUser = usernameInput.value.trim();
     syncDrawerName();
 
+    // Small timeout ensures the DOM has completely rendered the back history messages
     setTimeout(() => {
         const profile = profilesCache[currentUser];
         const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
@@ -719,12 +696,15 @@ messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.s
             const todayDateStr = new Date().toDateString();
 
             if (lastSeenDate === todayDateStr) {
+                // Return visit same day: ONLY show the custom prefix message string
                 appendPrivateWelcomeGreeting(prefix);
             } else {
+                // First visit of the day: Combined Prefix + Main Core rules layout block
                 appendPrivateWelcomeGreeting(prefix + mainBody);
                 localStorage.setItem(lastSeenKey, todayDateStr);
             }
         } else {
+            // Unregistered users always receive full guidelines body text tracking cards
             appendPrivateWelcomeGreeting(mainBody);
         }
     }, 200);
