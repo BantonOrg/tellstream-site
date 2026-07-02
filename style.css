@@ -26,7 +26,7 @@ body {
 }
 
 /* ==========================================================================
-   🧱 THE 3-CELL HEADER SYSTEM (DESKTOP MODE)
+   🧩 THE 3-CELL HEADER SYSTEM (DESKTOP MODE)
    ========================================================================== */
 .header-container {
     display: flex;
@@ -92,7 +92,7 @@ body {
 }
 
 /* ==========================================================================
-   🚀 MAIN LAYOUT WORKSPACE COLUMNS
+   📊 MAIN LAYOUT WORKSPACE COLUMNS
    ========================================================================== */
 .columns-container {
     flex: 1;
@@ -507,7 +507,7 @@ body {
 .drawer-action-btn:hover { background: #008c94; }
 
 /* ==========================================================================
-   🎮 CONSOLE INPUT HUB (TEXTAREA FLUSH-LEFT POSITIONING)
+   🎮 CONSOLE INPUT HUB (SWAPPED LAYER ORDER FOR TEXTAREA FLUSH-LEFT POSITIONING)
    ========================================================================== */
 .chat-input-area {
     padding: 12px;
@@ -521,9 +521,10 @@ body {
     flex-shrink: 0;
 }
 
+/* Textarea now expands first on the left side */
 .chat-input-area textarea#messageInput {
     flex: 1;
-    order: 1; 
+    order: 1; /* Left position sorting priority */
     background: #2d2d2d;
     border: 1px solid rgba(255, 255, 255, 0.05);
     padding: 8px 12px;
@@ -540,8 +541,9 @@ body {
     border-color: rgba(0, 173, 181, 0.4);
 }
 
+/* Lock toggle sits perfectly in between components */
 .lock-toggle-btn {
-    order: 2; 
+    order: 2; /* Centered layout placement */
     background: transparent;
     border: none;
     font-size: 1.1rem;
@@ -554,13 +556,14 @@ body {
     flex-shrink: 0;
 }
 
+/* Control stack containing username and send button maps cleanly to the far right side */
 .left-control-stack {
     display: flex;
     flex-direction: column;
     gap: 6px; 
     width: 85px;
     flex-shrink: 0;
-    order: 3; 
+    order: 3; /* Right alignment stack routing */
 }
 
 .left-control-stack input#usernameInput {
@@ -599,7 +602,7 @@ body.chat-is-fullscreen .main-content {
 }
 
 /* ==========================================================================
-   🎮 THE PERFECT 4-COLUMN FULLSCREEN ENGINE (NO LAYOUT OVERLAPS)
+   🧩 THE PERFECT 4-COLUMN FULLSCREEN ENGINE (NO LAYOUT OVERLAPS)
    ========================================================================== */
 body.chat-is-fullscreen .chat-sidebar {
     width: 100% !important;
@@ -657,6 +660,7 @@ body.chat-is-fullscreen .chat-fs-help-panel {
     flex-shrink: 0 !important;
 }
 
+/* 🛑 FIXED OVERLAY: Locks layout paths completely into a fixed space stack layer */
 .flyer-modal-overlay {
     position: fixed !important;
     top: 0 !important;
@@ -711,7 +715,7 @@ body.chat-is-fullscreen .chat-fs-help-panel {
 }
 
 /* ==========================================================================
-   📱 MOBILE & NARROW SCREEN ROW ENGINE (ACTIVE UNDER 1024PX WIDTH)
+   📱 MOBILE & NARROW SCREEN STACK OVERRIDES (ACTIVE UNDER 1024PX WIDTH)
    ========================================================================== */
 @media (max-width: 1024px) {
     body {
@@ -754,49 +758,37 @@ body.chat-is-fullscreen .chat-fs-help-panel {
         padding: 10px;
     }
     
-    /* FIX: Force the header container to remain a clean, single horizontal row on small screens */
     .header-container {
-        flex-direction: row !important;
-        height: 95px !important;
-        gap: 10px;
+        flex-direction: column !important;
+        height: auto !important;
     }
     
     .header-cell {
-        height: 100% !important;
-        padding: 8px !important;
+        width: 100% !important;
+        height: 180px !important; 
+        justify-content: center !important;
+        text-align: center !important;
+        padding: 20px !important;
     }
     
-    /* Left Cell: Holds the responsive brand name overlay or transparent DJ graphics */
     .cell-left {
-        flex: 1.3 !important;
-        width: auto !important;
         background-image: url('header-bg1m.jpg') !important;
         background-position: center center !important;
-        background-size: cover !important;
-        justify-content: flex-start !important;
+        background-size: 100% 100% !important;
     }
-    
-    /* Middle Cell: Completely hidden on small screens to optimize layout real estate */
     .cell-middle {
-        display: none !important; 
+        background-image: url('header-bg2m.jpg') !important;
+        background-position: center center !important;
+        background-size: 100% 100% !important;
     }
-    
-    /* Right Cell: Securely snaps the global audio player stream widget to the right side */
     .cell-right {
-        flex: 1 !important;
-        width: auto !important;
         background-image: url('header-bg3m.jpg') !important;
         background-position: center center !important;
-        background-size: cover !important;
+        background-size: 100% 100% !important;
         justify-content: center !important;
+        padding-right: 0px !important;
     }
     
-    /* Fix the inner HTML audio tag dimensions so it nests beautifully inside the low-profile row */
-    .cell-right audio#radioPlayer {
-        max-width: 100% !important;
-        height: 45px !important;
-    }
-
     .columns-container {
         flex-direction: column;
         height: auto;
