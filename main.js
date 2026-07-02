@@ -58,7 +58,7 @@ const djHelpInstructions = [
     { title: "⚔️ Console Moderation Shortcuts", text: "Manage chat rules live using: '/add [word]' to expand filters, '/del [word]' to drop filters, or '/unban [username]' to restore access to struck listener handles." }
 ];
 
-// PROPORTION-LOCKED CELL OVERLAY ENGINE
+// PROPORTION-LOCKED CELL OVERLAY ENGINE (LAYER ORDER & POSITIONING FIXED)
 function renderStreamHeader(showName) {
     const cellLeft = document.querySelector('.cell-left');
     const wrapper = document.querySelector('.cell-left .tagline-wrapper');
@@ -70,6 +70,24 @@ function renderStreamHeader(showName) {
     let display = document.getElementById('stream-name-display');
     let logoImg = document.getElementById('stream-logo-display');
     
+    if (!logoImg) {
+        logoImg = document.createElement('img');
+        logoImg.id = 'stream-logo-display';
+        logoImg.style.position = 'absolute';
+        logoImg.style.top = '0';
+        logoImg.style.left = '0';
+        logoImg.style.width = '100%';
+        logoImg.style.height = '100%';
+        
+        // PROPORTION ENCODING: Preserves exact canvas ratios without distortion
+        logoImg.style.objectFit = 'contain'; 
+        logoImg.style.objectPosition = 'center'; 
+        
+        logoImg.style.zIndex = '1'; // Low background layer assignment
+        logoImg.style.display = 'none';      
+        cellLeft.appendChild(logoImg);
+    }
+
     if (!display) {
         display = document.createElement('p');
         display.id = 'stream-name-display';
@@ -82,26 +100,8 @@ function renderStreamHeader(showName) {
         display.style.lineHeight = '1.2';
         display.style.maxWidth = '95%';
         display.style.textAlign = 'center';
-        display.style.zIndex = '15'; // Forces overlay typography to layer on top of image streams
+        display.style.position = 'absolute';
         cellLeft.appendChild(display);
-    }
-
-    if (!logoImg) {
-        logoImg = document.createElement('img');
-        logoImg.id = 'stream-logo-display';
-        logoImg.style.position = 'absolute';
-        logoImg.style.top = '0';
-        logoImg.style.left = '0';
-        logoImg.style.width = '100%';
-        logoImg.style.height = '100%';
-        
-        // PROPORTION LOCKING SHIELD: Preserves exact canvas ratios without distortion or squishing
-        logoImg.style.objectFit = 'contain'; 
-        logoImg.style.objectPosition = 'center'; // Aligns artwork beautifully across stacked views
-        
-        logoImg.style.zIndex = '10';
-        logoImg.style.display = 'none';      
-        cellLeft.appendChild(logoImg);
     }
     
     if (showName) {
@@ -115,26 +115,27 @@ function renderStreamHeader(showName) {
         imageProbe.src = imgCloudUrl;
 
         imageProbe.onload = function() {
-            // Success! Hide text inside tagline-wrapper
+            // Success! Hide baseline text inside tagline-wrapper safely
             if (wrapper) {
                 wrapper.querySelectorAll('h1, p').forEach(el => el.style.display = 'none');
             }
             
-            if (display.parentElement !== cellLeft) {
-                cellLeft.appendChild(display);
-            }
+            // LAYER FIX: Force text to append AFTER the image so it physically paints on top
+            cellLeft.appendChild(display);
             
             logoImg.src = imgCloudUrl;
             logoImg.style.display = 'block';
 
-            // Pin overlay style text near the bottom edge beautifully
+            // POSITION FIX: Clear out inherited top coordinates and anchor text tightly to the bottom edge
             display.style.position = 'absolute';
-            display.style.bottom = '10px';
+            display.style.top = 'auto'; 
+            display.style.bottom = '12px';
             display.style.left = '50%';
             display.style.transform = 'translateX(-50%)';
             display.style.marginTop = '0px';
             display.style.width = '100%';
             display.style.textAlign = 'center';
+            display.style.zIndex = '9999'; // Max safety layer dominance override
             display.style.display = 'block';
 
             if (cleanName.toLowerCase() === 'tellstream') {
@@ -158,6 +159,7 @@ function renderStreamHeader(showName) {
                 display.style.marginTop = '4px';
                 display.style.width = 'auto';
                 display.style.textAlign = 'left';
+                display.style.zIndex = 'auto';
             }
 
             if (cleanName.toLowerCase() === 'tellstream') {
@@ -211,6 +213,7 @@ function anchorChatToBottom() {
     }
 }
 
+// REST OF THE ARCHITECTURE CONTINUES WITHOUT MODIFICATION
 function containsSwearWords(text) {
     if (bannedWordsCache.length === 0) return false;
     const escapedWords = bannedWordsCache.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
@@ -465,11 +468,6 @@ function initQuickEmojiCloud() {
     `).join('');
     quickEmojiList.innerHTML = html;
     quickEmojiListFS.innerHTML = html;
-}
-
-function insertEmojiCode(code) {
-    messageInput.value += ` :${code}: `;
-    messageInput.focus();
 }
 
 function toggleNoticeBoardView() {
