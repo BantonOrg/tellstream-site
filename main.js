@@ -34,7 +34,6 @@ let bannedWordsCache = [];
 let bannedUsersCache = {}; 
 let isNoticeBoardActive = false;
 
-// Global variable tracking active cloud storage destinations
 let pendingLogoTargetName = "";
 
 const helpInstructions = [
@@ -59,54 +58,53 @@ const djHelpInstructions = [
     { title: "⚔️ Console Moderation Shortcuts", text: "Manage chat rules live using: '/add [word]' to expand filters, '/del [word]' to drop filters, or '/unban [username]' to restore access to struck listener handles." }
 ];
 
-// Dynamic real-time header layout engine matching the exact dimensions of headerbg1
+// PROPORTION-LOCKED CELL OVERLAY ENGINE
 function renderStreamHeader(showName) {
+    const cellLeft = document.querySelector('.cell-left');
+    const wrapper = document.querySelector('.cell-left .tagline-wrapper');
+    if (!cellLeft) return;
+
+    // Force relative layout context onto the cell container boundaries directly
+    cellLeft.style.position = 'relative';
+
     let display = document.getElementById('stream-name-display');
     let logoImg = document.getElementById('stream-logo-display');
-    const wrapper = document.querySelector('.tagline-wrapper');
     
-    if (wrapper) {
-        wrapper.style.position = 'relative';
-        wrapper.style.whiteSpace = 'normal';
-        wrapper.style.display = 'flex';
-        wrapper.style.flexDirection = 'column';
-        wrapper.style.justifyContent = 'center';
-        wrapper.style.alignItems = 'center';
-        wrapper.style.height = '100%';
-        wrapper.style.width = '100%';
-        
-        if (!display) {
-            display = document.createElement('p');
-            display.id = 'stream-name-display';
-            display.style.color = '#ffdd1a';
-            display.style.fontSize = '1.1rem';
-            display.style.fontWeight = 'bold';
-            display.style.webkitTextStroke = '1px #000000';
-            display.style.textShadow = '2px 2px 4px rgba(0, 0, 0, 0.9)';
-            display.style.textTransform = 'uppercase';
-            display.style.lineHeight = '1.2';
-            display.style.maxWidth = '95%';
-            display.style.textAlign = 'center';
-            display.style.zIndex = '10'; // Overlays text on top of the logo cleanly
-            wrapper.appendChild(display);
-        }
+    if (!display) {
+        display = document.createElement('p');
+        display.id = 'stream-name-display';
+        display.style.color = '#ffdd1a';
+        display.style.fontSize = '1.1rem';
+        display.style.fontWeight = 'bold';
+        display.style.webkitTextStroke = '1px #000000';
+        display.style.textShadow = '2px 2px 4px rgba(0, 0, 0, 0.9)';
+        display.style.textTransform = 'uppercase';
+        display.style.lineHeight = '1.2';
+        display.style.maxWidth = '95%';
+        display.style.textAlign = 'center';
+        display.style.zIndex = '15'; // Forces overlay typography to layer on top of image streams
+        cellLeft.appendChild(display);
+    }
 
-        if (!logoImg) {
-            logoImg = document.createElement('img');
-            logoImg.id = 'stream-logo-display';
-            
-            // Layout Lock: Force image to occupy 100% bounds to precisely mirror headerbg1 sizing
-            logoImg.style.position = 'absolute';
-            logoImg.style.top = '0';
-            logoImg.style.left = '0';
-            logoImg.style.width = '100%';
-            logoImg.style.height = '100%';
-            logoImg.style.display = 'none';      
-            wrapper.appendChild(logoImg);
-        }
+    if (!logoImg) {
+        logoImg = document.createElement('img');
+        logoImg.id = 'stream-logo-display';
+        logoImg.style.position = 'absolute';
+        logoImg.style.top = '0';
+        logoImg.style.left = '0';
+        logoImg.style.width = '100%';
+        logoImg.style.height = '100%';
+        
+        // PROPORTION LOCKING SHIELD: Preserves exact canvas ratios without distortion or squishing
+        logoImg.style.objectFit = 'contain'; 
+        logoImg.style.objectPosition = 'center'; // Aligns artwork beautifully across stacked views
+        
+        logoImg.style.zIndex = '10';
+        logoImg.style.display = 'none';      
+        cellLeft.appendChild(logoImg);
     }
     
-    if (showName && wrapper) {
+    if (showName) {
         const cleanName = showName.trim();
         const safeFileName = cleanName.toLowerCase().replace(/\s+/g, '_') + '.png';
         
@@ -117,15 +115,26 @@ function renderStreamHeader(showName) {
         imageProbe.src = imgCloudUrl;
 
         imageProbe.onload = function() {
-            // SUCCESS: Custom graphic matches coordinates perfectly. Hide standard text lines.
-            wrapper.querySelectorAll('h1, p:not(#stream-name-display)').forEach(el => el.style.display = 'none');
+            // Success! Hide text inside tagline-wrapper
+            if (wrapper) {
+                wrapper.querySelectorAll('h1, p').forEach(el => el.style.display = 'none');
+            }
+            
+            if (display.parentElement !== cellLeft) {
+                cellLeft.appendChild(display);
+            }
+            
             logoImg.src = imgCloudUrl;
             logoImg.style.display = 'block';
 
-            // Pin signature overlay branding text cleanly near the bottom edge
+            // Pin overlay style text near the bottom edge beautifully
             display.style.position = 'absolute';
-            display.style.bottom = '6px';
+            display.style.bottom = '10px';
+            display.style.left = '50%';
+            display.style.transform = 'translateX(-50%)';
             display.style.marginTop = '0px';
+            display.style.width = '100%';
+            display.style.textAlign = 'center';
             display.style.display = 'block';
 
             if (cleanName.toLowerCase() === 'tellstream') {
@@ -136,12 +145,20 @@ function renderStreamHeader(showName) {
         };
 
         imageProbe.onerror = function() {
-            // FALLBACK MODE: Hide graphic frame and snap text rules back into normal vertical stacking flow
+            // Fallback: Drop overlay settings, clear graphic node, and restore cell flow parameters
             logoImg.style.display = 'none';
-            display.style.position = 'static';
-            display.style.marginTop = '4px';
             
-            wrapper.querySelectorAll('h1, p').forEach(el => el.style.display = 'block');
+            if (wrapper) {
+                wrapper.querySelectorAll('h1, p').forEach(el => el.style.display = 'block');
+                if (display.parentElement !== wrapper) {
+                    wrapper.appendChild(display);
+                }
+                display.style.position = 'static';
+                display.style.transform = 'none';
+                display.style.marginTop = '4px';
+                display.style.width = 'auto';
+                display.style.textAlign = 'left';
+            }
 
             if (cleanName.toLowerCase() === 'tellstream') {
                 display.innerText = "TELLSTREAM NONE STOP";
@@ -182,7 +199,7 @@ if (usernameInput) {
 }
 
 const facebookPosts = [
-    { id: 1, date: "Just now", text: "Big John is locked and loaded live in the studio! Lock into tellstream.banton.org right now and fire up the lounge chat! 🎚️🔥", link: "https://www.facebook.com/tellstream.dem" },
+    { id: 1, date: "Just now", text: "Big John is locked and loaded live in the studio! Lock into tellstream.banton.org right now and fire up the lounge chat! 🎚️👑", link: "https://www.facebook.com/tellstream.dem" },
     { id: 2, date: "Yesterday", text: "Big respect to all the listeners locking in from around the globe. Drop your shoutouts and tell-a-wheel selectors directly inside the main chat line! 🔊🎧", link: "https://www.facebook.com/tellstream.dem" },
     { id: 3, date: "2 days ago", text: "Weekend scheduling updates coming soon. Keep your locked eyes locked onto the central flyer board for upcoming live dance clashes.", link: "https://www.facebook.com/tellstream.dem" }
 ];
@@ -728,7 +745,6 @@ async function loadMessages() {
     if (data) { data.forEach(appendMessage); anchorChatToBottom(); }
 }
 
-// Subscriptions
 supabase_db.channel('public:messages').on('postgres_changes', { event: 'INSERT', pattern: 'public', table: 'messages' }, payload => { appendMessage(payload.new); }).subscribe();
 supabase_db.channel('public:secured_profiles').on('postgres_changes', { event: '*', pattern: 'public', table: 'secured_profiles' }, async () => { await syncProfilesMap(); }).subscribe();
 supabase_db.channel('public:notice_board').on('postgres_changes', { event: 'INSERT', pattern: 'public', table: 'notice_board' }, payload => { if (isNoticeBoardActive) fetchNoticeBoardRecords(); }).subscribe();
@@ -744,15 +760,12 @@ async function sendMessage() {
     let text = messageInput.value.trim();
     if (!text) return;
 
-    // Strict Command Gatekeeper Loop checking for forward slash strings
     if (text.startsWith('/')) {
         const profile = profilesCache[user];
         const userPowerLevel = parseInt(profile?.power_level || 0);
         
-        // Gate 1: Enforce level 1 authorized studio profiles validation locks for basic broadcast control
         if (profile && userPowerLevel >= 1) { 
             
-            // Live broadcast layout command triggers (DJs Level 1 and Admins Level 2 can use this)
             if (text.startsWith('/show')) {
                 let showNameInput = "";
                 if (text.trim() === '/show live') {
@@ -768,7 +781,6 @@ async function sendMessage() {
                 }
             }
             
-            // STRICT SECURITY WALL: Restrict /upload and /delete commands exclusively to Level 2 (Admins) at this stage
             if (text.startsWith('/upload ') || text.startsWith('/delete ')) {
                 if (userPowerLevel < 2) {
                     messageInput.value = '';
@@ -776,7 +788,6 @@ async function sendMessage() {
                     return;
                 }
 
-                // If they are level 2, run the uploader pipeline
                 if (text.startsWith('/upload ')) {
                     const uploadNameInput = text.substring(8).trim().substring(0, 50);
                     if (uploadNameInput) {
@@ -788,7 +799,6 @@ async function sendMessage() {
                     }
                 }
 
-                // If they are level 2, run the deletion pipeline
                 if (text.startsWith('/delete ')) {
                     const deleteNameInput = text.substring(8).trim().substring(0, 50);
                     if (deleteNameInput) {
@@ -817,7 +827,6 @@ async function sendMessage() {
             alert("❓ Unknown Command: That command does not exist. Use /show live to switch banners.");
             return;
         } else {
-            // Gate 2: Drop standard listener console command tracking attempts instantly
             messageInput.value = '';
             alert("🔒 Access Denied: Only Station Admins and Authorized DJs can run command scripts.");
             return;
@@ -835,7 +844,7 @@ async function sendMessage() {
     const banCheck = checkBanStatus(user);
     if (banCheck.isBanned) { alert(banCheck.message); return; }
 
-    if (containsSwwearWords(text)) {
+    if (containsSwearWords(text)) {
         messageInput.value = '';
         await handleUserStrike(user, text);
         return; 
@@ -857,7 +866,6 @@ messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.s
     renderHelpContent(false);
     setTimeout(initQuickEmojiCloud, 500);
     
-    // Inject hidden file picker nodes mapped strictly for transparent .png streams
     const hiddenInputFileTag = document.createElement('input');
     hiddenInputFileTag.type = 'file';
     hiddenInputFileTag.id = 'studioLogoHiddenFilePicker';
