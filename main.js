@@ -34,83 +34,8 @@ let bannedWordsCache = [];
 let bannedUsersCache = {}; 
 let isNoticeBoardActive = false;
 
-// Dynamic real-time header text rendering layout function
-function renderStreamHeader(showName) {
-    let display = document.getElementById('stream-name-display');
-    const wrapper = document.querySelector('.tagline-wrapper');
-    
-    if (wrapper) {
-        // Force multi-line flexibility on the tagline block to safely handle up to 50 chars
-        wrapper.style.whiteSpace = 'normal';
-        wrapper.style.display = 'flex';
-        wrapper.style.flexDirection = 'column';
-        wrapper.style.justifyContent = 'center';
-        
-        // Dynamically create the paragraph tag safely if it doesn't exist in the HTML template yet
-        if (!display) {
-            display = document.createElement('p');
-            display.id = 'stream-name-display';
-            display.style.color = '#ffdd1a'; // Classic Tellstream golden yellow brand asset color
-            display.style.fontSize = '1.1rem';
-            display.style.fontWeight = 'bold';
-            display.style.marginTop = '4px';
-            display.style.webkitTextStroke = '1px #000000';
-            display.style.textShadow = '2px 2px 4px rgba(0, 0, 0, 0.9)';
-            display.style.textTransform = 'uppercase';
-            display.style.lineHeight = '1.2';
-            display.style.maxWidth = '95%';
-            wrapper.appendChild(display);
-        }
-    }
-    
-    if (display && showName) {
-        const cleanName = showName.trim();
-        if (cleanName.toLowerCase() === 'tellstream') {
-            display.innerText = "TELLSTREAM NONE STOP";
-        } else {
-            display.innerText = `${cleanName} - LIVE`;
-        }
-    }
-}
-
-// Push the updated show text parameters cleanly into your Supabase lookup table
-async function updateDatabaseStreamStatus(showName) {
-    try {
-        await supabase_db.from('stream_status').upsert([{ id: 1, current_show: showName }]);
-    } catch (err) {
-        console.error("Database stream status write execution failed:", err);
-    }
-}
-
-// Read the initial broadcast text state straight out of your database row on boot run
-async function loadInitialStreamStatus() {
-    try {
-        const { data, error } = await supabase_db.from('stream_status').select('current_show').eq('id', 1).single();
-        if (!error && data) {
-            renderStreamHeader(data.current_show);
-        }
-    } catch (err) {
-        console.error("Failed loading baseline header stream text state parameter:", err);
-    }
-}
-
-// Populate saved handle from memory immediately on start
-if (usernameInput) {
-    const savedName = localStorage.getItem('tellstream_saved_username');
-    if (savedName) usernameInput.value = savedName;
-    
-    // Save handle automatically if they manually type/change it
-    usernameInput.addEventListener('input', () => {
-        localStorage.setItem('tellstream_saved_username', usernameInput.value.trim());
-        syncDrawerName();
-    });
-}
-
-const facebookPosts = [
-    { id: 1, date: "Just now", text: "Big John is locked and loaded live in the studio! Lock into tellstream.banton.org right now and fire up the lounge chat! 🎚️🔥", link: "https://www.facebook.com/tellstream.dem" },
-    { id: 2, date: "Yesterday", text: "Big respect to all the listeners locking in from around the globe. Drop your shoutouts and tell-a-wheel selectors directly inside the main chat line! 🔊🎧", link: "https://www.facebook.com/tellstream.dem" },
-    { id: 3, date: "2 days ago", text: "Weekend scheduling updates coming soon. Keep your locked eyes locked onto the central flyer board for upcoming live dance clashes.", link: "https://www.facebook.com/tellstream.dem" }
-];
+// Global variable tracking active cloud storage destinations
+let pendingLogoTargetName = "";
 
 const helpInstructions = [
     { title: "Setting Nickname", text: "Fill in the Nickname block before typing to claim your handle in the Lounge panel." },
@@ -126,12 +51,145 @@ const noticeboardHelpInstructions = [
     { title: "⚠️ Noticeboard Enforcement", text: "The dynamic global blocklist active in the Lounge chat applies directly to noticeboard columns. Posting restricted keywords increments your profile strikes and can lead to an automated 24-hour column ban or permanent lifetime removal." }
 ];
 
+const djHelpInstructions = [
+    { title: "🎛️ Live Broadcast: /show live", text: "Type '/show live' to instantly pull your active Nickname handle and update the golden header logo across all global listeners' screens." },
+    { title: "🖼️ Cloud Logo Management", text: "Type '/upload [Show Name]' to open your local device image explorer. Any selected transparent PNG graphic will be automatically renamed and overwrite existing assets instantly." },
+    { title: "🗑️ Cloud Logo Deletion", text: "Type '/delete [Show Name]' to permanently delete a graphic asset from your cloud bucket storage." },
+    { title: "🔄 Off-Air Sign Off Script", text: "When closing down your live set, type '/show tellstream' to cleanly wipe your on-screen graphic profile and restore the automated non-stop system banner text." },
+    { title: "🚨 Emergency Stream Fixes", text: "The audio player contains automated reconnect flags. If a listener reports a layout freeze or dead air, instruct them to execute a hard page refresh (Ctrl + F5)." },
+    { title: "⚔️ Console Moderation Shortcuts", text: "Manage chat rules live using: '/add [word]' to expand filters, '/del [word]' to drop filters, or '/unban [username]' to restore access to struck listener handles." }
+];
+
+// Dynamic real-time header layout engine with automated cloud asset parsing and text overlay logic
+function renderStreamHeader(showName) {
+    let display = document.getElementById('stream-name-display');
+    let logoImg = document.getElementById('stream-logo-display');
+    const wrapper = document.querySelector('.tagline-wrapper');
+    
+    if (wrapper) {
+        // Force explicit relative anchor parameters for parent container alignment references
+        wrapper.style.position = 'relative';
+        wrapper.style.whiteSpace = 'normal';
+        wrapper.style.display = 'flex';
+        wrapper.style.flexDirection = 'column';
+        wrapper.style.justifyContent = 'center';
+        wrapper.style.alignItems = 'center';
+        wrapper.style.height = '100%';
+        wrapper.style.width = '100%';
+        
+        if (!display) {
+            display = document.createElement('p');
+            display.id = 'stream-name-display';
+            display.style.color = '#ffdd1a';
+            display.style.fontSize = '1.1rem';
+            display.style.fontWeight = 'bold';
+            display.style.webkitTextStroke = '1px #000000';
+            display.style.textShadow = '2px 2px 4px rgba(0, 0, 0, 0.9)';
+            display.style.textTransform = 'uppercase';
+            display.style.lineHeight = '1.2';
+            display.style.maxWidth = '95%';
+            display.style.textAlign = 'center';
+            display.style.zIndex = '10'; // Force overlay typography layers cleanly on top of transparent paths
+            wrapper.appendChild(display);
+        }
+
+        if (!logoImg) {
+            logoImg = document.createElement('img');
+            logoImg.id = 'stream-logo-display';
+            logoImg.style.maxHeight = '90%';     
+            logoImg.style.maxWidth = '90%';      
+            logoImg.style.objectFit = 'contain';  
+            logoImg.style.display = 'none';      
+            wrapper.appendChild(logoImg);
+        }
+    }
+    
+    if (showName && wrapper) {
+        const cleanName = showName.trim();
+        // Clinical normalization link routing straight to transparent asset extensions (.png)
+        const safeFileName = cleanName.toLowerCase().replace(/\s+/g, '_') + '.png';
+        
+        const { data } = supabase_db.storage.from('dj-logos').getPublicUrl(safeFileName);
+        const imgCloudUrl = data.publicUrl;
+
+        const imageProbe = new Image();
+        imageProbe.src = imgCloudUrl;
+
+        imageProbe.onload = function() {
+            // SUCCESS: Custom transparent graphic found. Turn off background layout descriptions
+            wrapper.querySelectorAll('h1, p:not(#stream-name-display)').forEach(el => el.style.display = 'none');
+            logoImg.src = imgCloudUrl;
+            logoImg.style.display = 'block';
+
+            // Pin signature branding typography coordinates precisely over lower bounding paths
+            display.style.position = 'absolute';
+            display.style.bottom = '6px';
+            display.style.marginTop = '0px';
+            display.style.display = 'block';
+
+            if (cleanName.toLowerCase() === 'tellstream') {
+                display.innerText = "TELLSTREAM NONE STOP";
+            } else {
+                display.innerText = `${cleanName} - LIVE`;
+            }
+        };
+
+        imageProbe.onerror = function() {
+            // FALLBACK MODE: Clear graphic frames and restore absolute code stack defaults cleanly
+            logoImg.style.display = 'none';
+            display.style.position = 'static';
+            display.style.marginTop = '4px';
+            
+            wrapper.querySelectorAll('h1, p').forEach(el => el.style.display = 'block');
+
+            if (cleanName.toLowerCase() === 'tellstream') {
+                display.innerText = "TELLSTREAM NONE STOP";
+            } else {
+                display.innerText = `${cleanName} - LIVE`;
+            }
+        };
+    }
+}
+
+async function updateDatabaseStreamStatus(showName) {
+    try {
+        await supabase_db.from('stream_status').upsert([{ id: 1, current_show: showName }]);
+    } catch (err) {
+        console.error("Database stream status write execution failed:", err);
+    }
+}
+
+async function loadInitialStreamStatus() {
+    try {
+        const { data, error } = await supabase_db.from('stream_status').select('current_show').eq('id', 1).single();
+        if (!error && data) {
+            renderStreamHeader(data.current_show);
+        }
+    } catch (err) {
+        console.error("Failed loading baseline header stream text state parameter:", err);
+    }
+}
+
+if (usernameInput) {
+    const savedName = localStorage.getItem('tellstream_saved_username');
+    if (savedName) usernameInput.value = savedName;
+    
+    usernameInput.addEventListener('input', () => {
+        localStorage.setItem('tellstream_saved_username', usernameInput.value.trim());
+        syncDrawerName();
+    });
+}
+
+const facebookPosts = [
+    { id: 1, date: "Just now", text: "Big John is locked and loaded live in the studio! Lock into tellstream.banton.org right now and fire up the lounge chat! 🎚️🔥", link: "https://www.facebook.com/tellstream.dem" },
+    { id: 2, date: "Yesterday", text: "Big respect to all the listeners locking in from around the globe. Drop your shoutouts and tell-a-wheel selectors directly inside the main chat line! 🔊🎧", link: "https://www.facebook.com/tellstream.dem" },
+    { id: 3, date: "2 days ago", text: "Weekend scheduling updates coming soon. Keep your locked eyes locked onto the central flyer board for upcoming live dance clashes.", link: "https://www.facebook.com/tellstream.dem" }
+];
+
 function anchorChatToBottom() {
     const chatContainer = document.querySelector('.chat-messages') || chatBox;
     if (chatContainer) {
-        setTimeout(() => {
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }, 50);
+        setTimeout(() => { chatContainer.scrollTop = chatContainer.scrollHeight; }, 50);
     }
 }
 
@@ -164,7 +222,6 @@ function checkBanStatus(username) {
             return { isBanned: true, message: `You are temporarily banned for swearing. Ban expires in ${remainingHours} hours.` };
         }
     }
-
     return { isBanned: false };
 }
 
@@ -181,7 +238,6 @@ function appendPrivateWelcomeGreeting(compiledMessageText) {
 
 function appendPrivateWarning(user, text, strikeCount, customMessage = null) {
     if (!chatBox) return;
-
     let warningMsg = customMessage;
     if (!warningMsg) {
         warningMsg = `⚠️ PRIVATE WARNING: Strike ${strikeCount}/3. Bad language detected.`;
@@ -203,7 +259,6 @@ function appendPrivateWarning(user, text, strikeCount, customMessage = null) {
         const maskedText = cleanSwearWords(text);
         const msgDiv = document.createElement('div');
         msgDiv.className = 'msg';
-        
         const profile = profilesCache[user];
         let nameClass = "user-unregistered";
         let hoverAttribute = "";
@@ -211,18 +266,15 @@ function appendPrivateWarning(user, text, strikeCount, customMessage = null) {
             nameClass = (profile.power_level >= 1) ? "user-admin" : "user-registered";
             if (profile.hover_title) hoverAttribute = `title="${escapeHTML(profile.hover_title)}"`;
         }
-
         msgDiv.innerHTML = `<div class="user ${nameClass}" ${hoverAttribute}>${escapeHTML(user)}</div><div>${escapeHTML(maskedText)}</div>`;
         chatBox.appendChild(msgDiv);
     }
-    
     anchorChatToBottom();
 }
 
 async function handleUserStrike(username, originalText) {
     const lowerUser = username.toLowerCase();
     const existingRecord = bannedUsersCache[lowerUser];
-    
     let currentStrikes = existingRecord ? existingRecord.strikes : 0;
     let apologyUsed = existingRecord ? existingRecord.apology_used : false;
     currentStrikes += 1;
@@ -246,20 +298,17 @@ async function handleUserStrike(username, originalText) {
         apology_used: apologyUsed,
         updated_at: new Date().toISOString()
     });
-
     appendPrivateWarning(username, originalText, currentStrikes);
 }
 
 async function checkAndProcessApology(username, text) {
     const lowerUser = username.toLowerCase();
     const existingRecord = bannedUsersCache[lowerUser];
-    
     if (!existingRecord || existingRecord.strikes === 0 || existingRecord.apology_used) return false;
 
     const apologyRegex = /\b(sorry|apologise|apologize)\b/i;
     if (apologyRegex.test(text)) {
         let currentStrikes = existingRecord.strikes - 1;
-        
         await supabase_db.from('banned_users').upsert({
             username: lowerUser,
             strikes: currentStrikes,
@@ -268,7 +317,6 @@ async function checkAndProcessApology(username, text) {
             apology_used: true,
             updated_at: new Date().toISOString()
         });
-
         appendPrivateWarning(username, null, currentStrikes, `✅ APOLOGY ACCEPTED: Your one-time grace apology has been processed. One strike removed! Current strikes: ${currentStrikes}/3.`);
         return true;
     }
@@ -314,7 +362,6 @@ async function renderActiveFlyers() {
     today.setHours(0,0,0,0);
 
     const { data: files, error } = await supabase_db.storage.from('flyers').list('', { limit: 100 });
-
     if (error || !files || files.length === 0) {
         flyerContainer.innerHTML = `<p style="color:#666; text-align:center; padding-top:20px;">No current event flyers listed.</p>`;
         return;
@@ -348,15 +395,31 @@ async function renderActiveFlyers() {
 
 function renderHelpContent(useNoticeboardGuide = false) {
     const activeDataset = useNoticeboardGuide ? noticeboardHelpInstructions : helpInstructions;
-    const currentTitle = useNoticeboardGuide ? "📋 Noticeboard Help Guide" : "💡 Chat help and emoji codes";
-    const html = activeDataset.map(item => `
+    let html = activeDataset.map(item => `
         <div class="help-item-card">
             <h5>${item.title}</h5>
             <p>${item.text}</p>
         </div>
     `).join('');
+
+    const currentUser = usernameInput.value.trim();
+    const profile = profilesCache[currentUser];
+    const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
+    const isVerifiedDJ = profile && profile.passkey === authorizedKey && parseInt(profile.power_level || 0) >= 1;
+
+    if (isVerifiedDJ && !useNoticeboardGuide) {
+        const djHtml = djHelpInstructions.map(item => `
+            <div class="help-item-card" style="border-left: 4px solid #ffdd1a; background: rgba(255, 221, 26, 0.05);">
+                <h5 style="color: #ffdd1a; font-weight: bold;">${item.title}</h5>
+                <p style="color: #fffbdf;">${item.text}</p>
+            </div>
+        `).join('');
+        html = djHtml + html; 
+    }
+
     helpCardsContainer.innerHTML = html;
     helpCardsContainerFS.innerHTML = html;
+    const currentTitle = useNoticeboardGuide ? "📋 Noticeboard Help Guide" : "💡 Chat help and emoji codes";
     const fsTitleNode = helpCardsContainerFS.previousElementSibling;
     if (fsTitleNode && fsTitleNode.classList.contains('col-title')) fsTitleNode.innerHTML = currentTitle;
 }
@@ -370,7 +433,6 @@ function closeFlyerLightbox() {
     modalTargetImg.src = "";
 }
 
-// Fullscreen toggle
 function toggleChatFullscreen() {
     if (isNoticeBoardActive) toggleNoticeBoardView();
     document.body.classList.toggle('chat-is-fullscreen');
@@ -530,6 +592,7 @@ function syncDrawerName() {
         drawerSubmitBtn.innerText = "Lock Name Globally";
     }
     if (isNoticeBoardActive) evaluateNoticeBoardForms();
+    renderHelpContent(isNoticeBoardActive);
 }
 
 async function toggleSecurityDrawer() {
@@ -612,11 +675,7 @@ async function syncBannedWordsMap() {
 async function syncBannedUsersMap() {
     const { data } = await supabase_db.from('banned_users').select('*');
     bannedUsersCache = {};
-    if (data) {
-        data.forEach(u => {
-            bannedUsersCache[u.username.toLowerCase()] = u;
-        });
-    }
+    if (data) data.forEach(u => { bannedUsersCache[u.username.toLowerCase()] = u; });
 }
 
 audioPlayer.addEventListener('stalled', () => { recoverStream(); });
@@ -656,7 +715,6 @@ function appendMessage(data) {
     msgDiv.innerHTML = `<div class="user ${nameClass}" ${hoverAttribute}>${escapeHTML(data.username)}</div><div>${messageContent}</div>`;
     chatBox.appendChild(msgDiv);
     anchorChatToBottom();
-    
     while (chatBox.children.length > 50) chatBox.removeChild(chatBox.firstChild);
 }
 
@@ -676,11 +734,8 @@ supabase_db.channel('public:notice_board').on('postgres_changes', { event: 'INSE
 supabase_db.channel('public:banned_words').on('postgres_changes', { event: '*', pattern: 'public', table: 'banned_words' }, async () => { await syncBannedWordsMap(); }).subscribe();
 supabase_db.channel('public:banned_users').on('postgres_changes', { event: '*', pattern: 'public', table: 'banned_users' }, async () => { await syncBannedUsersMap(); }).subscribe();
 
-// Real-time subscription path listening directly for live header show changes globally
 supabase_db.channel('public:stream_status').on('postgres_changes', { event: '*', pattern: 'public', table: 'stream_status' }, payload => {
-    if (payload.new && payload.new.current_show) {
-        renderStreamHeader(payload.new.current_show);
-    }
+    if (payload.new && payload.new.current_show) { renderStreamHeader(payload.new.current_show); }
 }).subscribe();
 
 async function sendMessage() {
@@ -688,16 +743,22 @@ async function sendMessage() {
     let text = messageInput.value.trim();
     if (!text) return;
 
-    // Strict Command Gatekeeper for any character strings beginning with a forward slash
+    // Strict Command Gatekeeper Loop checking for forward slash strings
     if (text.startsWith('/')) {
         const profile = profilesCache[user];
         
-        // Gate 1: Check if the profile is verified as Level 1 (DJ) or Level 2 (Admin)
+        // Gate 1: Enforce level 1 authorized studio profiles validation locks
         if (profile && parseInt(profile.power_level || 0) >= 1) { 
             
-            // Validate and intercept the custom layout update broadcast sequence
-            if (text.startsWith('/show ')) {
-                const showNameInput = text.substring(6).trim().substring(0, 50);
+            // Refactored live broadcast layout command triggers
+            if (text.startsWith('/show')) {
+                let showNameInput = "";
+                if (text.trim() === '/show live') {
+                    showNameInput = user; // Automatically pull their active handle block
+                } else if (text.startsWith('/show ')) {
+                    showNameInput = text.substring(6).trim().substring(0, 50);
+                }
+
                 if (showNameInput) {
                     messageInput.value = '';
                     await updateDatabaseStreamStatus(showNameInput);
@@ -705,20 +766,47 @@ async function sendMessage() {
                 }
             }
             
-            // Validate existing explicit console management keywords
+            // Intercept cloud uploader script executions targeting transparent PNG streams
+            if (text.startsWith('/upload ')) {
+                const uploadNameInput = text.substring(8).trim().substring(0, 50);
+                if (uploadNameInput) {
+                    messageInput.value = '';
+                    pendingLogoTargetName = uploadNameInput.toLowerCase().replace(/\s+/g, '_');
+                    const hiddenUploader = document.getElementById('studioLogoHiddenFilePicker');
+                    if (hiddenUploader) hiddenUploader.click();
+                    return;
+                }
+            }
+
+            // Target and wipe transparent graphics straight out of the active storage bucket
+            if (text.startsWith('/delete ')) {
+                const deleteNameInput = text.substring(8).trim().substring(0, 50);
+                if (deleteNameInput) {
+                    messageInput.value = '';
+                    const targetFileName = deleteNameInput.toLowerCase().replace(/\s+/g, '_') + '.png';
+                    try {
+                        const { error } = await supabase_db.storage.from('dj-logos').remove([targetFileName]);
+                        if (error) throw error;
+                        alert(`🗑️ Logo successfully deleted for: "${deleteNameInput}"`);
+                        await loadInitialStreamStatus();
+                    } catch (err) {
+                        alert("Cloud Deletion Failure: " + err.message);
+                    }
+                    return;
+                }
+            }
+
             if (text.startsWith('/add ') || text.startsWith('/del ') || text.startsWith('/unban ') || text === '/listwords') {
                 messageInput.value = '';
                 await handleAdminFilterCommand(text);
                 return;
             }
             
-            // Reject unauthorized command syntax keywords attempted by an Admin or DJ handle
             messageInput.value = '';
-            alert("❓ Unknown Command: That slash command does not exist. Use /show [name] to update the header layout column.");
+            alert("❓ Unknown Command: That command does not exist. Use /show live, /upload [name], or /delete [name].");
             return;
-
         } else {
-            // Gate 2: Drop the connection block instantly if a regular listener attempts any command line tracking path
+            // Gate 2: Drop standard listener console command tracking attempts instantly
             messageInput.value = '';
             alert("🔒 Access Denied: Only Station Admins and Authorized DJs can run command scripts.");
             return;
@@ -734,10 +822,7 @@ async function sendMessage() {
     }
 
     const banCheck = checkBanStatus(user);
-    if (banCheck.isBanned) {
-        alert(banCheck.message);
-        return;
-    }
+    if (banCheck.isBanned) { alert(banCheck.message); return; }
 
     if (containsSwearWords(text)) {
         messageInput.value = '';
@@ -746,10 +831,7 @@ async function sendMessage() {
     }
 
     const wasApology = await checkAndProcessApology(user, text);
-    if (wasApology) {
-        messageInput.value = '';
-        return;
-    }
+    if (wasApology) { messageInput.value = ''; return; }
 
     messageInput.value = '';
     await supabase_db.from('messages').insert([{ username: user, message: text }]);
@@ -764,27 +846,44 @@ messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.s
     renderHelpContent(false);
     setTimeout(initQuickEmojiCloud, 500);
     
-    // Explicitly await every database profile and configuration mapping sequence completely
+    // Inject and bound hidden file picker nodes mapped strictly for .png images
+    const hiddenInputFileTag = document.createElement('input');
+    hiddenInputFileTag.type = 'file';
+    hiddenInputFileTag.id = 'studioLogoHiddenFilePicker';
+    hiddenInputFileTag.accept = 'image/png';
+    hiddenInputFileTag.style.display = 'none';
+    document.body.appendChild(hiddenInputFileTag);
+
+    hiddenInputFileTag.addEventListener('change', async function(e) {
+        const file = e.target.files[0];
+        if (!file || !pendingLogoTargetName) return;
+        try {
+            const uploadFileName = `${pendingLogoTargetName}.png`;
+            const { error } = await supabase_db.storage.from('dj-logos').upload(uploadFileName, file, { upsert: true });
+            if (error) throw error;
+            alert(`✅ Success! Transparent logo saved for: "${pendingLogoTargetName.replace(/_/g, ' ')}"`);
+            await loadInitialStreamStatus();
+        } catch (err) {
+            alert("Cloud Upload Failure: " + err.message);
+        } finally {
+            hiddenInputFileTag.value = '';
+            pendingLogoTargetName = "";
+        }
+    });
+
     await syncProfilesMap();
     await syncBannedWordsMap();
     await syncBannedUsersMap();
-    
-    // Await historical messages completely before firing greeting layouts
     await loadMessages();
-    
-    // Fetch and display active broadcast details instantly from your own server on page paint loop
     await loadInitialStreamStatus();
     
-    // Synchronize UI locks based on the fully loaded session state parameters
     const currentUser = usernameInput.value.trim();
     syncDrawerName();
 
-    // Small timeout ensures the DOM has completely rendered the back history messages
     setTimeout(() => {
         const profile = profilesCache[currentUser];
         const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
         const isLoggedIn = profile && profile.passkey === authorizedKey;
-
         const mainBody = "Greetings and welcome to Tellstream Chat. Please help keep this experience a positive blessing for one and all. Remember, at any time, users may have children around them. Bad blessings will be removed. One love from Tellstream.";
 
         if (isLoggedIn) {
@@ -794,15 +893,12 @@ messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.s
             const todayDateStr = new Date().toDateString();
 
             if (lastSeenDate === todayDateStr) {
-                // Return visit same day: ONLY show the custom prefix message string
                 appendPrivateWelcomeGreeting(prefix);
             } else {
-                // First visit of the day: Combined Prefix + Main Core rules layout block
                 appendPrivateWelcomeGreeting(prefix + mainBody);
                 localStorage.setItem(lastSeenKey, todayDateStr);
             }
         } else {
-            // Unregistered users always receive full guidelines body text tracking cards
             appendPrivateWelcomeGreeting(mainBody);
         }
     }, 200);
