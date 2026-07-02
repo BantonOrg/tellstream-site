@@ -34,11 +34,16 @@ let bannedWordsCache = [];
 let bannedUsersCache = {}; 
 let isNoticeBoardActive = false;
 
-// Stream Scraping Function
+// Stream Scraping Function via Free AllOrigins Proxy
 async function updateStreamDisplay() {
     try {
-        const response = await fetch('https://a3.asurahosting.com/listen/tellstream/index.html?sid=1');
-        const text = await response.text();
+        // Using allorigins.win to bypass CORS for free without any paid tiers
+        const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://a3.asurahosting.com/listen/tellstream/index.html?sid=1');
+        
+        const response = await fetch(proxyUrl);
+        const data = await response.json(); // AllOrigins wraps the result in a JSON object
+        const text = data.contents; // The actual HTML string is inside the 'contents' property
+        
         const parser = new DOMParser();
         const doc = parser.parseFromString(text, 'text/html');
         
@@ -55,7 +60,6 @@ async function updateStreamDisplay() {
         if (display && streamName) {
             display.innerText = streamName;
             
-            // For future compiling of actions determined by the result string
             console.log("Stream validation match: ", streamName);
             
             // Conditional background updates matching the display rule
@@ -69,7 +73,7 @@ async function updateStreamDisplay() {
             }
         }
     } catch (error) { 
-        console.log("Direct stream status fetch restricted by remote CORS configuration rules."); 
+        console.log("Automated stream status fetch failed:", error); 
     }
 }
 
