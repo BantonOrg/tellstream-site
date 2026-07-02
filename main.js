@@ -58,14 +58,14 @@ const djHelpInstructions = [
     { title: "⚔️ Console Moderation Shortcuts", text: "Manage chat rules live using: '/add [word]' to expand filters, '/del [word]' to drop filters, or '/unban [username]' to restore access to struck listener handles." }
 ];
 
-// PROPORTION-LOCKED CELL OVERLAY ENGINE (ASPECT SQUASH & LAYERING FIXED)
+// GLOBAL PANORAMIC SKIN ENGINE (ROW CONTAINER TARGETED)
 function renderStreamHeader(showName) {
-    const cellLeft = document.querySelector('.cell-left');
+    const headerContainer = document.querySelector('.header-container');
     const wrapper = document.querySelector('.cell-left .tagline-wrapper');
-    if (!cellLeft) return;
+    if (!headerContainer) return;
 
-    // Force relative layout context onto the cell container boundaries directly
-    cellLeft.style.position = 'relative';
+    // Force relative layout boundary mapping onto the main row card
+    headerContainer.style.position = 'relative';
 
     let display = document.getElementById('stream-name-display');
     let logoImg = document.getElementById('stream-logo-display');
@@ -78,14 +78,9 @@ function renderStreamHeader(showName) {
         logoImg.style.left = '0';
         logoImg.style.width = '100%';
         logoImg.style.height = '100%';
-        
-        // FIX: 'cover' fills out the mobile block height, 'left center' keeps the DJ cartoon pinned perfectly in the frame
-        logoImg.style.objectFit = 'cover'; 
-        logoImg.style.objectPosition = 'left center'; 
-        
-        logoImg.style.zIndex = '1'; // Low background layer assignment
+        logoImg.style.zIndex = '10'; // Above background layout layers, below text layers
         logoImg.style.display = 'none';      
-        cellLeft.appendChild(logoImg);
+        headerContainer.appendChild(logoImg);
     }
 
     if (!display) {
@@ -101,7 +96,8 @@ function renderStreamHeader(showName) {
         display.style.maxWidth = '95%';
         display.style.textAlign = 'center';
         display.style.position = 'absolute';
-        cellLeft.appendChild(display);
+        display.style.zIndex = '9999'; // Absolute frontmost paint priority
+        headerContainer.appendChild(display);
     }
     
     if (showName) {
@@ -115,28 +111,39 @@ function renderStreamHeader(showName) {
         imageProbe.src = imgCloudUrl;
 
         imageProbe.onload = function() {
-            // Success! Hide baseline text lines inside tagline-wrapper safely
+            // Hide default text layers safely
             if (wrapper) {
                 wrapper.querySelectorAll('h1, p').forEach(el => el.style.display = 'none');
             }
             
-            // LAYER FIX: Re-append text element AFTER the image so it physical mounts on the frontmost layer
-            cellLeft.appendChild(display);
+            // Re-mount to DOM hierarchy to preserve frontmost layering
+            headerContainer.appendChild(logoImg);
+            headerContainer.appendChild(display);
             
             logoImg.src = imgCloudUrl;
             logoImg.style.display = 'block';
 
-            // POSITION FIX: Wipe out any inherited top coordinates and lock text tightly to the lower edge
+            // ADAPTIVE LAYER ENGINE: Swaps positioning modes seamlessly between desktop rows and vertical columns
             display.style.position = 'absolute';
-            display.style.top = 'auto'; 
-            display.style.bottom = '12px';
             display.style.left = '50%';
             display.style.transform = 'translateX(-50%)';
-            display.style.marginTop = '0px';
             display.style.width = '100%';
             display.style.textAlign = 'center';
-            display.style.zIndex = '9999'; // Ironclad visibility safety layer dominance override
             display.style.display = 'block';
+
+            if (window.innerWidth <= 1024) {
+                // Mobile Mode Stack Safety: Use cover scale tracking and pin typography to the absolute top
+                logoImg.style.objectFit = 'cover';
+                logoImg.style.objectPosition = 'center center';
+                display.style.top = '12px';
+                display.style.bottom = 'auto';
+            } else {
+                // Desktop Mode Custom Skin: Map 1:1 pixel-for-pixel across row fields and pin text to bottom
+                logoImg.style.objectFit = 'fill';
+                logoImg.style.objectPosition = 'center center';
+                display.style.top = 'auto';
+                display.style.bottom = '12px';
+            }
 
             if (cleanName.toLowerCase() === 'tellstream') {
                 display.innerText = "TELLSTREAM NONE STOP";
@@ -146,7 +153,7 @@ function renderStreamHeader(showName) {
         };
 
         imageProbe.onerror = function() {
-            // Fallback: Clear dynamic nodes and restore initial static text positioning flow variables
+            // Fallback Core: Remove image layers and return text elements to left tagline block
             logoImg.style.display = 'none';
             
             if (wrapper) {
@@ -655,6 +662,7 @@ async function handleSecuritySubmit() {
         if (currentName === "Banton") { assignedLevel = 2; assignedHover = "banton.org"; }
         else if (currentName === "BIG JOHN NEW000") { assignedLevel = 2; assignedHover = "the boss"; }
         else if (currentName === "Perfection") { assignedLevel = 2; assignedHover = "You done know"; }
+        else if (currentName === "Milo Medina Int") { assignedLevel = 2; assignedHover = "Milo Medina Int"; }
 
         const { error } = await supabase_db.from('secured_profiles').insert([{
             username: currentName,
