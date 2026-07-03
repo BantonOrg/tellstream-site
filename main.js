@@ -1064,17 +1064,21 @@ async function fetchAndRenderWeeklyTimetable() {
                 sortDay: dayOrder[localDayStr.toLowerCase()],
                 sortTime: localStartStr,
                 html: `
-                    <div class="fb-post-card" style="border-left: 4px solid #00adb5; margin-bottom: 12px; background: rgba(0, 173, 181, 0.03); padding: 14px; border-radius: 4px;">
-                        <div style="font-weight: 900; color: #00adb5; text-transform: uppercase; font-size: 0.95rem; letter-spacing: 1px; display: flex; justify-content: space-between;">
-                            <span>📅 ${localDayStr}</span>
-                            <span style="color: #555; font-size: 0.75rem; text-transform: none; font-weight: normal;">📍 Auto-Translated</span>
+                    <div class="fb-post-card" style="border-left: 4px solid #00adb5; margin-bottom: 10px; background: rgba(0, 173, 181, 0.03); padding: 12px; border-radius: 4px;">
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-weight: 900; color: #00adb5; text-transform: uppercase; font-size: 0.95rem; letter-spacing: 1px;">
+                                📅 ${localDayStr}
+                            </span>
+                            <span style="color: #ffffff; font-size: 1.2rem; font-weight: 900; letter-spacing: 0.5px;">
+                                ⏰ ${localStartStr} - ${localEndStr}
+                            </span>
                         </div>
-                        <div style="color: #ffffff; margin-top: 6px; font-size: 1.25rem; font-weight: 900; letter-spacing: 0.5px;">
-                            ⏰ ${localStartStr} - ${localEndStr}
+
+                        <div style="color: #a0a0a0; font-size: 0.88rem; margin-top: 8px; border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 8px;">
+                            🎙️ <span style="margin-left: 4px;">Presenter: <strong style="color:#fff; font-weight:800;">${currentDJ}</strong></span> ${noteLabel}
                         </div>
-                        <div style="color: #a0a0a0; font-size: 0.88rem; margin-top: 8px; border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 8px; display: flex; align-items: center;">
-                            🎙️ <span style="margin-left: 6px;">Presenter: <strong style="color:#fff; font-weight:800;">${currentDJ}</strong></span> ${noteLabel}
-                        </div>
+
                     </div>
                 `
             };
