@@ -55,7 +55,7 @@ const djHelpInstructions = [
     { title: "🖼️ Presenter Image Upload", text: "PNG are the only files accepted. The imag emust be good quality and sized : 930 x 434px, if you need help, speak to management. To upload your image simply type /upload Your Name" },
     { title: "🔄 Last Presenter of the Night ?", text: "When closing down your live set, type '/show tellstream' to cleanly wipe your on-screen graphic profile and restore the automated non-stop system banner text." },
     { title: "🚨 Emergency Stream Fixes", text: "The audio player contains automated reconnect flags. If a listener reports a layout freeze or dead air, instruct them to execute a hard page refresh (Ctrl + F5)." },
-    { title: "⚔️ Console Moderation Shortcuts", text: "Manage chat rules live using: '/add [word]' to expand filters, '/del [word]' to drop filters, or '/unban [username]' to restore access to struck listener handles." }
+    { title: "⚔️ Console Moderation Shortcuts", text: "Manage chat word usage rules live using: '/add [word]' to expand filters, '/del [word]' to drop filters, or '/unban [username]' to restore access to struck listener handles." }
 ];
 
 // CELL-LEFT ISOLATED ENGINE (DYNAMIC BOUNDS & AUTOMATED MODE SWITCH)
