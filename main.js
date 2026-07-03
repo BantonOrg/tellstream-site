@@ -67,24 +67,24 @@ function renderStreamHeader(showName) {
     let display = document.getElementById('stream-name-display');
     let logoImg = document.getElementById('stream-logo-display');
     
+    // 1. Structural Setup: Build components if they don't exist yet
     if (!logoImg) {
         logoImg = document.createElement('img');
         logoImg.id = 'stream-logo-display';
         logoImg.style.width = '100%';
-        logoImg.style.height = 'auto'; 
+        logoImg.style.height = 'auto'; // Fluid scaling allows image aspect ratio to dictate cell height
         logoImg.style.display = 'none';      
         cellLeft.appendChild(logoImg);
     }
 
-    if (!display) {
+if (!display) {
         display = document.createElement('p');
         display.id = 'stream-name-display';
         display.style.color = '#ffffff'; 
         display.style.fontSize = '1.1rem';
-        display.style.fontWeight = '900'; 
-        display.style.webkitTextStroke = '1.8px #000000'; 
-        display.style.textShadow = '3px 3px 6px rgba(0, 0, 0, 0.95), -2px -2px 4px rgba(0, 0, 0, 0.8)';
-        display.style.textTransform = 'uppercase';
+        display.style.fontWeight = '900'; // Changed from 'bold' to ultra-heavy '900'
+        display.style.webkitTextStroke = '1.8px #000000'; // Thickened black outline edge definition
+        display.style.textShadow = '3px 3px 6px rgba(0, 0, 0, 0.95), -2px -2px 4px rgba(0, 0, 0, 0.8)';        display.style.textTransform = 'uppercase';
         display.style.lineHeight = '1.2';
         display.style.maxWidth = '95%';
         display.style.textAlign = 'center';
@@ -102,19 +102,20 @@ function renderStreamHeader(showName) {
         imageProbe.src = imgCloudUrl;
 
         imageProbe.onload = function() {
+            // STATE B: IMAGE FOUND -> Switch to image-driven physics matching the middle cell
             if (wrapper) {
                 wrapper.querySelectorAll('h1, p').forEach(el => el.style.display = 'none');
             }
             
+            // Strip text absolute constraints; let the natural image flow control the container height
             cellLeft.style.position = 'relative';
             cellLeft.style.height = 'auto'; 
             
             logoImg.src = imgCloudUrl;
-            logoImg.style.position = 'relative'; 
+            logoImg.style.position = 'relative'; // Removes absolute locking
             logoImg.style.display = 'block';
 
-            // FORCE VISIBILITY AND COORDS ON SHIFT
-            display.style.display = 'block';
+            // Pin text overlay absolutely over the natural fluid image background
             display.style.position = 'absolute';
             display.style.left = '50%';
             display.style.transform = 'translateX(-50%)';
@@ -130,17 +131,18 @@ function renderStreamHeader(showName) {
         };
 
         imageProbe.onerror = function() {
+            // STATE A: NO IMAGE FOUND -> Fallback completely to structural text parameters
             logoImg.style.display = 'none';
             logoImg.style.position = 'absolute';
             
-            cellLeft.style.height = ''; 
+            cellLeft.style.height = ''; // Clear forced rules, return to base CSS flow
             
             if (wrapper) {
                 wrapper.querySelectorAll('h1, p').forEach(el => el.style.display = 'block');
                 if (display.parentElement !== wrapper) {
                     wrapper.appendChild(display);
                 }
-                display.style.display = 'block';
+                // Normalize text behavior for normal text boxes
                 display.style.position = 'static';
                 display.style.transform = 'none';
                 display.style.marginTop = '4px';
@@ -187,59 +189,180 @@ if (usernameInput) {
     });
 }
 
-// EXPANDED POST LIST (WITH OPTIONAL IMAGE CAPABILITY LOGIC)
 const facebookPosts = [
-    { 
-        id: 1, 
-        date: "Just now", 
-        text: "Big John is locked and loaded live in the studio! Lock into tellstream.banton.org right now and fire up the lounge chat! 🎚️👑", 
-        link: "https://www.facebook.com/tellstream.dem",
-        img: "" 
-    },
-    { 
-        id: 2, 
-        date: "Yesterday", 
-        text: "Big respect to all the listeners locking in from around the globe. Drop your shoutouts and tell-a-wheel selectors directly inside the main chat line! 🔊🎧", 
-        link: "https://www.facebook.com/tellstream.dem",
-        img: ""
-    },
-    { 
-        id: 3, 
-        date: "2 days ago", 
-        text: "Weekend scheduling updates coming soon. Keep your locked eyes locked onto the central flyer board for upcoming live dance clashes.", 
-        link: "https://www.facebook.com/tellstream.dem",
-        img: "" 
-    },
-    { 
-        id: 4, 
-        date: "4 days ago", 
-        text: "Heavy digital selections dropping all afternoon. Lock in, get your requests ready, and step into the sound system chamber.", 
-        link: "https://www.facebook.com/tellstream.dem",
-        img: ""
-    },
-    { 
-        id: 5, 
-        date: "1 week ago", 
-        text: "Pure positive vibrations across the baseline timeline. Shoutout the global fambily locking in from every time zone.", 
-        link: "https://www.facebook.com/tellstream.dem",
-        img: ""
-    }
+    { id: 1, date: "Just now", text: "Big John is locked and loaded live in the studio! Lock into tellstream.banton.org right now and fire up the lounge chat! 🎚️👑", link: "https://www.facebook.com/tellstream.dem" },
+    { id: 2, date: "Yesterday", text: "Big respect to all the listeners locking in from around the globe. Drop your shoutouts and tell-a-wheel selectors directly inside the main chat line! 🔊🎧", link: "https://www.facebook.com/tellstream.dem" },
+    { id: 3, date: "2 days ago", text: "Weekend scheduling updates coming soon. Keep your locked eyes locked onto the central flyer board for upcoming live dance clashes.", link: "https://www.facebook.com/tellstream.dem" }
 ];
 
-function renderFacebookFeed() {
-    fbFeedContainer.innerHTML = facebookPosts.map(post => {
-        const postImgTag = post.img 
-            ? `<img src="${post.img}" alt="Facebook Content" style="max-width:100%; height:auto; border-radius:6px; margin-top:8px; display:block; border:1px solid rgba(255,255,255,0.05);">` 
-            : '';
+function anchorChatToBottom() {
+    const chatContainer = document.querySelector('.chat-messages') || chatBox;
+    if (chatContainer) {
+        setTimeout(() => { chatContainer.scrollTop = chatContainer.scrollHeight; }, 50);
+    }
+}
 
-        return `
-            <div class="fb-post-card" onclick="window.open('${post.link}', '_blank');">
-                <div class="fb-post-meta">Tellstream Page • ${post.date}</div>
-                <div class="fb-post-text">${post.text}</div>
-                ${postImgTag}
-            </div>
-        `;
-    }).join('');
+function containsSwearWords(text) {
+    if (bannedWordsCache.length === 0) return false;
+    const escapedWords = bannedWordsCache.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+    const pattern = new RegExp(`\\b(${escapedWords})\\b`, 'gi');
+    return pattern.test(text);
+}
+
+function cleanSwearWords(text) {
+    if (bannedWordsCache.length === 0) return text;
+    const escapedWords = bannedWordsCache.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+    const pattern = new RegExp(`\\b(${escapedWords})\\b`, 'gi');
+    return text.replace(pattern, '****');
+}
+
+function checkBanStatus(username) {
+    const userBan = bannedUsersCache[username.toLowerCase()];
+    if (!userBan) return { isBanned: false };
+
+    if (userBan.is_permanent) {
+        return { isBanned: true, message: "You have been permanently banned from the Tellstream Lounge." };
+    }
+
+    if (userBan.ban_expires_at) {
+        const expiration = new Date(userBan.ban_expires_at);
+        if (expiration > new Date()) {
+            const remainingHours = Math.ceil((expiration - new Date()) / (1000 * 60 * 60));
+            return { isBanned: true, message: `You are temporarily banned for swearing. Ban expires in ${remainingHours} hours.` };
+        }
+    }
+    return { isBanned: false };
+}
+
+function appendPrivateWelcomeGreeting(compiledMessageText) {
+    if (!chatBox) return;
+    const systemDiv = document.createElement('div');
+    systemDiv.className = 'msg';
+    systemDiv.style.borderLeft = '4px solid #00E676'; 
+    systemDiv.style.background = 'rgba(0, 230, 118, 0.05)';
+    systemDiv.innerHTML = `<div class="user" style="color: #00E676; font-weight: 900;">TELLA SECURITY</div><div style="color: #e0f2f1; font-size: 0.88rem; line-height: 1.4;">${compiledMessageText} <br><span style="opacity: 0.4; font-size: 0.75rem; font-style: italic;">(Only you can see this message)</span></div>`;
+    chatBox.appendChild(systemDiv);
+    anchorChatToBottom();
+}
+
+function appendPrivateWarning(user, text, strikeCount, customMessage = null) {
+    if (!chatBox) return;
+    let warningMsg = customMessage;
+    if (!warningMsg) {
+        warningMsg = `⚠️ PRIVATE WARNING: Strike ${strikeCount}/3. Bad language detected.`;
+        if (strikeCount === 3) {
+            warningMsg = "🛑 AUTOMATED BAN ACTION: You have used banned keywords 3 times. You are now locked out for 24 hours.";
+        } else if (strikeCount > 3) {
+            warningMsg = "🚫 PERMANENT LIFETIME LOCKOUT: Repeat offense detected. Your handle access is permanently revoked.";
+        }
+    }
+
+    const systemDiv = document.createElement('div');
+    systemDiv.className = 'msg';
+    systemDiv.style.borderLeft = '4px solid #ff3333';
+    systemDiv.style.background = 'rgba(255, 51, 51, 0.08)';
+    systemDiv.innerHTML = `<div class="user" style="color: #ff3333; font-weight: 900;">TELLA SECURITY</div><div style="color: #ffdddd; font-style: italic; font-size: 0.85rem;">${warningMsg} <br><span style="opacity: 0.6;">(Only you can see this message)</span></div>`;
+    chatBox.appendChild(systemDiv);
+
+    if (text) {
+        const maskedText = cleanSwearWords(text);
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'msg';
+        const profile = profilesCache[user];
+        let nameClass = "user-unregistered";
+        let hoverAttribute = "";
+        if (profile) {
+            nameClass = (profile.power_level >= 1) ? "user-admin" : "user-registered";
+            if (profile.hover_title) hoverAttribute = `title="${escapeHTML(profile.hover_title)}"`;
+        }
+        msgDiv.innerHTML = `<div class="user ${nameClass}" ${hoverAttribute}>${escapeHTML(user)}</div><div>${escapeHTML(maskedText)}</div>`;
+        chatBox.appendChild(msgDiv);
+    }
+    anchorChatToBottom();
+}
+
+async function handleUserStrike(username, originalText) {
+    const lowerUser = username.toLowerCase();
+    const existingRecord = bannedUsersCache[lowerUser];
+    let currentStrikes = existingRecord ? existingRecord.strikes : 0;
+    let apologyUsed = existingRecord ? existingRecord.apology_used : false;
+    currentStrikes += 1;
+
+    let banExpiresAt = null;
+    let isPermanent = false;
+
+    if (currentStrikes === 3) {
+        const tomorrow = new Date();
+        tomorrow.setHours(tomorrow.getHours() + 24);
+        banExpiresAt = tomorrow.toISOString();
+    } else if (currentStrikes > 3) {
+        isPermanent = true;
+    }
+
+    await supabase_db.from('banned_users').upsert({
+        username: lowerUser,
+        strikes: currentStrikes,
+        ban_expires_at: banExpiresAt,
+        is_permanent: isPermanent,
+        apology_used: apologyUsed,
+        updated_at: new Date().toISOString()
+    });
+    appendPrivateWarning(username, originalText, currentStrikes);
+}
+
+async function checkAndProcessApology(username, text) {
+    const lowerUser = username.toLowerCase();
+    const existingRecord = bannedUsersCache[lowerUser];
+    if (!existingRecord || existingRecord.strikes === 0 || existingRecord.apology_used) return false;
+
+    const apologyRegex = /\b(sorry|apologise|apologize)\b/i;
+    if (apologyRegex.test(text)) {
+        let currentStrikes = existingRecord.strikes - 1;
+        await supabase_db.from('banned_users').upsert({
+            username: lowerUser,
+            strikes: currentStrikes,
+            ban_expires_at: null,
+            is_permanent: false,
+            apology_used: true,
+            updated_at: new Date().toISOString()
+        });
+        appendPrivateWarning(username, null, currentStrikes, `✅ APOLOGY ACCEPTED: Your one-time grace apology has been processed. One strike removed! Current strikes: ${currentStrikes}/3.`);
+        return true;
+    }
+    return false;
+}
+
+async function handleAdminFilterCommand(text) {
+    if (text.startsWith('/add ')) {
+        const wordToAdd = text.substring(5).trim().toLowerCase();
+        if (!wordToAdd) return;
+        const { error } = await supabase_db.from('banned_words').insert([{ word: wordToAdd }]);
+        if (!error) alert(`"${wordToAdd}" added to filter list.`);
+    } 
+    else if (text.startsWith('/del ')) {
+        const wordToDel = text.substring(5).trim().toLowerCase();
+        if (!wordToDel) return;
+        const { error } = await supabase_db.from('banned_words').delete().eq('word', wordToDel);
+        if (!error) alert(`"${wordToDel}" removed from filter list.`);
+    } 
+    else if (text.startsWith('/unban ')) {
+        const userToUnban = text.substring(7).trim().toLowerCase();
+        if (!userToUnban) return;
+        const { error } = await supabase_db.from('banned_users').delete().eq('username', userToUnban);
+        if (!error) alert(`User "${userToUnban}" has been successfully unbanned.`);
+    }
+    else if (text === '/listwords') {
+        alert(bannedWordsCache.length === 0 ? "Filter is empty." : "Filtered Words:\n" + bannedWordsCache.join(', '));
+    }
+}
+
+function renderFacebookFeed() {
+    fbFeedContainer.innerHTML = facebookPosts.map(post => `
+        <div class="fb-post-card" onclick="window.open('${post.link}', '_blank');">
+            <div class="fb-post-meta">Tellstream Page • ${post.date}</div>
+            <div class="fb-post-text">${post.text}</div>
+        </div>
+    `).join('');
 }
 
 async function renderActiveFlyers() {
@@ -521,6 +644,7 @@ async function handleSecuritySubmit() {
         if (currentName === "Banton") { assignedLevel = 2; assignedHover = "banton.org"; }
         else if (currentName === "Big John") { assignedLevel = 2; assignedHover = "the boss"; }
         else if (currentName === "Perfectionist") { assignedLevel = 2; assignedHover = "You done know"; }
+
 
         const { error } = await supabase_db.from('secured_profiles').insert([{
             username: currentName,
