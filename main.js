@@ -77,7 +77,7 @@ function renderStreamHeader(showName) {
         cellLeft.appendChild(logoImg);
     }
 
-if (!display) {
+    if (!display) {
         display = document.createElement('p');
         display.id = 'stream-name-display';
         display.style.color = '#ffffff'; 
@@ -352,8 +352,26 @@ async function handleAdminFilterCommand(text) {
 
 async function renderSiteNewsFeed() {
     if (!fbFeedContainer) return;
+
+    // Direct header override logic to patch "Facebook Activity" out dynamically
+    const colHeader = fbFeedContainer.previousElementSibling;
+    if (colHeader && (colHeader.innerText.includes("Facebook") || colHeader.querySelector('a'))) {
+        colHeader.style.display = 'flex';
+        colHeader.style.justifyContent = 'space-between';
+        colHeader.style.alignItems = 'center';
+        colHeader.style.width = '100%';
+        
+        colHeader.innerHTML = `
+            <span>📰 Site News</span>
+            <a href="https://www.facebook.com/tellstream.dem" target="_blank" style="display: flex; align-items: center; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="#1877F2" style="display: block;">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                </svg>
+            </a>
+        `;
+    }
     
-    // 1. Fetch the 12 newest combined records from the boss and selectors boards
+    // Fetch the 12 newest combined records from the boss and selectors boards
     const { data: records, error } = await supabase_db
         .from('notice_board')
         .select('*')
@@ -371,7 +389,7 @@ async function renderSiteNewsFeed() {
         return;
     }
 
-    // 2. Build the visual HTML feed blocks
+    // Build the visual HTML feed blocks
     let html = records.map(item => {
         const isBoss = item.board_type === 'boss';
         const badgeColor = isBoss ? '#ff3333' : '#ffdd1a';
@@ -389,7 +407,7 @@ async function renderSiteNewsFeed() {
         `;
     }).join('');
 
-    // 3. Append the clickable history link node to the very bottom
+    // Append the clickable history link node to the very bottom
     html += `
         <div class="fb-post-card" style="text-align:center; margin-top:20px; cursor:pointer; background: rgba(255,221,26,0.05); border: 1px dashed #ffdd1a;" onclick="toggleNoticeBoardView();">
             <div class="fb-post-text" style="font-weight:bold; color:#ffdd1a; font-size:0.9rem;">
@@ -787,7 +805,12 @@ async function loadMessages() {
 
 supabase_db.channel('public:messages').on('postgres_changes', { event: 'INSERT', pattern: 'public', table: 'messages' }, payload => { appendMessage(payload.new); }).subscribe();
 supabase_db.channel('public:secured_profiles').on('postgres_changes', { event: '*', pattern: 'public', table: 'secured_profiles' }, async () => { await syncProfilesMap(); }).subscribe();
-supabase_db.channel('public:notice_board').on('postgres_changes', { event: 'INSERT', pattern: 'public', table: 'notice_board' }, payload => { if (isNoticeBoardActive) fetchNoticeBoardRecords(); }).subscribe();
+
+supabase_db.channel('public:notice_board').on('postgres_changes', { event: '*', pattern: 'public', table: 'notice_board' }, payload => { 
+    renderSiteNewsFeed(); 
+    if (isNoticeBoardActive) fetchNoticeBoardRecords(); 
+}).subscribe();
+
 supabase_db.channel('public:banned_words').on('postgres_changes', { event: '*', pattern: 'public', table: 'banned_words' }, async () => { await syncBannedWordsMap(); }).subscribe();
 supabase_db.channel('public:banned_users').on('postgres_changes', { event: '*', pattern: 'public', table: 'banned_users' }, async () => { await syncBannedUsersMap(); }).subscribe();
 
