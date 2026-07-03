@@ -643,9 +643,8 @@ async function handleSecuritySubmit() {
         let assignedLevel = 0;
         let assignedHover = "Tella Fambily";
         if (currentName === "Banton") { assignedLevel = 2; assignedHover = "banton.org"; }
-        else if (currentName === "BIG JOHN NEW000") { assignedLevel = 2; assignedHover = "the boss"; }
-        else if (currentName === "Perfection") { assignedLevel = 2; assignedHover = "You done know"; }
-        else if (currentName === "Milo Medina Int") { assignedLevel = 2; assignedHover = "Milo Medina Int"; }
+        else if (currentName === "Big John") { assignedLevel = 2; assignedHover = "The Boss"; }
+        else if (currentName === "Perfectionist") { assignedLevel = 2; assignedHover = "You done know"; }
 
         const { error } = await supabase_db.from('secured_profiles').insert([{
             username: currentName,
