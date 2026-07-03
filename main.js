@@ -451,9 +451,21 @@ function toggleChatFullscreen() {
 
 function initQuickEmojiCloud() {
     if (!window.emojiMapping) return;
-    const html = Object.keys(window.emojiMapping).slice(0, 32).map(key => `
+    
+    // 1. Get all available emoji shorthand keys from your mapping file
+    const allKeys = Object.keys(window.emojiMapping);
+    
+    // 2. Shuffle the entire array randomly
+    const shuffledKeys = allKeys.sort(() => 0.5 - Math.random());
+    
+    // 3. Take the first 32 random keys out of the shuffled deck
+    const randomSelection = shuffledKeys.slice(0, 32);
+    
+    // 4. Render the grid items
+    const html = randomSelection.map(key => `
         <div class="emoji-grid-item" onclick="insertEmojiCode('${key}')">:${key}:</div>
     `).join('');
+    
     quickEmojiList.innerHTML = html;
     quickEmojiListFS.innerHTML = html;
 }
