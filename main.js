@@ -102,10 +102,10 @@ function renderStreamHeader(showName) {
         display.style.textAlign = 'center';
         display.style.position = 'absolute';
         display.style.left = '50%';
-        display.style.transform = 'translateX(-50%)';
+        display.style.top = '50%';
+        display.style.transform = 'translate(-50%, -50%)'; // Center alignment protection block
         display.style.width = '100%';
-        display.style.bottom = '12px';
-        display.style.zIndex = '99999'; // Boosted z-index for ironclad visibility safety dominance override
+        display.style.zIndex = '99999'; // Ironclad visibility safety dominance override
         cellLeft.appendChild(display);
     }
     
@@ -132,12 +132,12 @@ function renderStreamHeader(showName) {
             logoImg.src = imgCloudUrl;
             logoImg.style.display = 'block';
 
-            // Enforce absolute positioning properties floating cleanly near the bottom
+            // Enforce absolute positioning properties centered cleanly above background asset
             display.style.position = 'absolute';
             display.style.left = '50%';
-            display.style.transform = 'translateX(-50%)';
+            display.style.top = '50%';
+            display.style.transform = 'translate(-50%, -50%)';
             display.style.width = '100%';
-            display.style.bottom = '12px';
             display.style.zIndex = '99999';
 
             if (cleanName.toLowerCase() === 'tellstream') {
