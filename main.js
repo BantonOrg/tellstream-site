@@ -58,13 +58,12 @@ const djHelpInstructions = [
     { title: "⚔️ Console Moderation Shortcuts", text: "Manage chat rules live using: '/add [word]' to expand filters, '/del [word]' to drop filters, or '/unban [username]' to restore access to struck listener handles." }
 ];
 
-// CELL-LEFT ISOLATED ENGINE (FIXED ASPECT RATIO & OVERLAY PROMINENCE)
+// CELL-LEFT ISOLATED ENGINE (CONDITIONAL STATE FORMATTING MECHANICS)
 function renderStreamHeader(showName) {
     const cellLeft = document.querySelector('.cell-left');
     const wrapper = document.querySelector('.cell-left .tagline-wrapper');
     if (!cellLeft) return;
 
-    // Secure relative bounding mechanics strictly inside the left cell layer context
     cellLeft.style.position = 'relative';
 
     let display = document.getElementById('stream-name-display');
@@ -74,16 +73,13 @@ function renderStreamHeader(showName) {
         logoImg = document.createElement('img');
         logoImg.id = 'stream-logo-display';
         logoImg.style.position = 'absolute';
-        logoImg.style.top = '0';
-        logoImg.style.left = '0';
-        logoImg.style.width = '100%';
-        logoImg.style.height = '100%';
-        
-        // UN-SQUASH LOCK: Fills out the cell height flawlessly, pinned left to preserve character visibility
-        logoImg.style.objectFit = 'cover'; 
-        logoImg.style.objectPosition = 'left center'; 
-        
-        logoImg.style.zIndex = '10'; // Above background layouts, below text elements
+        logoImg.style.top = '50%';
+        logoImg.style.left = '50%';
+        logoImg.style.transform = 'translate(-50%, -50%)';
+        logoImg.style.width = '150px'; // Matching cell-middle baseline dimensions
+        logoImg.style.height = '140px'; // Matching cell-middle baseline dimensions
+        logoImg.style.objectFit = 'contain';
+        logoImg.style.zIndex = '10';
         logoImg.style.display = 'none';      
         cellLeft.appendChild(logoImg);
     }
@@ -102,10 +98,10 @@ function renderStreamHeader(showName) {
         display.style.textAlign = 'center';
         display.style.position = 'absolute';
         display.style.left = '50%';
-        display.style.top = '50%';
-        display.style.transform = 'translate(-50%, -50%)'; // Center alignment protection block
+        display.style.bottom = '12px';
+        display.style.transform = 'translateX(-50%)';
         display.style.width = '100%';
-        display.style.zIndex = '99999'; // Ironclad visibility safety dominance override
+        display.style.zIndex = '99999';
         cellLeft.appendChild(display);
     }
     
@@ -120,25 +116,16 @@ function renderStreamHeader(showName) {
         imageProbe.src = imgCloudUrl;
 
         imageProbe.onload = function() {
-            // Success! Clear baseline typography lines inside tagline wrapper container
+            // STATE B: Custom Graphic Found -> Hide fallback text, apply padding/centering parity rules
             if (wrapper) {
                 wrapper.querySelectorAll('h1, p').forEach(el => el.style.display = 'none');
             }
             
-            // Re-mount priority order directly to cellLeft to ensure text layers render on top of images
-            cellLeft.appendChild(logoImg);
-            cellLeft.appendChild(display);
+            cellLeft.style.paddingLeft = '0px'; 
+            cellLeft.style.justifyContent = 'center'; 
             
             logoImg.src = imgCloudUrl;
             logoImg.style.display = 'block';
-
-            // Enforce absolute positioning properties centered cleanly above background asset
-            display.style.position = 'absolute';
-            display.style.left = '50%';
-            display.style.top = '50%';
-            display.style.transform = 'translate(-50%, -50%)';
-            display.style.width = '100%';
-            display.style.zIndex = '99999';
 
             if (cleanName.toLowerCase() === 'tellstream') {
                 display.innerText = "TELLSTREAM NONE STOP";
@@ -148,8 +135,10 @@ function renderStreamHeader(showName) {
         };
 
         imageProbe.onerror = function() {
-            // Fallback: Wipe out overlay settings and return base settings to normal flow parameters
+            // STATE A: No Custom Image -> Restore original 3 lines layout text and layout rules
             logoImg.style.display = 'none';
+            cellLeft.style.paddingLeft = '40px';
+            cellLeft.style.justifyContent = 'flex-start';
             
             if (wrapper) {
                 wrapper.querySelectorAll('h1, p').forEach(el => el.style.display = 'block');
@@ -161,7 +150,6 @@ function renderStreamHeader(showName) {
                 display.style.marginTop = '4px';
                 display.style.width = 'auto';
                 display.style.textAlign = 'left';
-                display.style.zIndex = 'auto';
             }
 
             if (cleanName.toLowerCase() === 'tellstream') {
