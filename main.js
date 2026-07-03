@@ -58,13 +58,13 @@ const djHelpInstructions = [
     { title: "⚔️ Console Moderation Shortcuts", text: "Manage chat rules live using: '/add [word]' to expand filters, '/del [word]' to drop filters, or '/unban [username]' to restore access to struck listener handles." }
 ];
 
-// CELL-LEFT ISOLATED ENGINE (FIXED ASPECT RATIO & FOREGROUND LAYERING)
+// CELL-LEFT ENGINE (FULLY PACKED ASPECT RATIO AND TEXT LAYER PRESERVATION FIXED)
 function renderStreamHeader(showName) {
     const cellLeft = document.querySelector('.cell-left');
     const wrapper = document.querySelector('.cell-left .tagline-wrapper');
     if (!cellLeft) return;
 
-    // Secure relative bounding mechanics strictly inside the left cell layer context
+    // Establish absolute relative layout positioning context directly onto the left column block
     cellLeft.style.position = 'relative';
 
     let display = document.getElementById('stream-name-display');
@@ -79,11 +79,11 @@ function renderStreamHeader(showName) {
         logoImg.style.width = '100%';
         logoImg.style.height = '100%';
         
-        // UN-SQUASH LOCK: Fills out the cell height flawlessly, pinned left to preserve character visibility
-        logoImg.style.objectFit = 'cover'; 
-        logoImg.style.objectPosition = 'left center'; 
+        // CORNER-TO-CORNER EXECUTION: Force image template coordinates to pad out fully over background fields
+        logoImg.style.objectFit = 'fill'; 
+        logoImg.style.objectPosition = 'center'; 
         
-        logoImg.style.zIndex = '10'; // Above background layouts, below text elements
+        logoImg.style.zIndex = '1'; 
         logoImg.style.display = 'none';      
         cellLeft.appendChild(logoImg);
     }
@@ -91,21 +91,7 @@ function renderStreamHeader(showName) {
     if (!display) {
         display = document.createElement('p');
         display.id = 'stream-name-display';
-        display.style.color = '#ffdd1a';
-        display.style.fontSize = '1.1rem';
-        display.style.fontWeight = 'bold';
-        display.style.webkitTextStroke = '1px #000000';
-        display.style.textShadow = '2px 2px 4px rgba(0, 0, 0, 0.9)';
-        display.style.textTransform = 'uppercase';
-        display.style.lineHeight = '1.2';
-        display.style.maxWidth = '95%';
-        display.style.textAlign = 'center';
         display.style.position = 'absolute';
-        display.style.left = '50%';
-        display.style.transform = 'translateX(-50%)';
-        display.style.width = '100%';
-        display.style.bottom = '12px';
-        display.style.zIndex = '9999'; // Ironclad visibility safety dominance override
         cellLeft.appendChild(display);
     }
     
@@ -120,17 +106,39 @@ function renderStreamHeader(showName) {
         imageProbe.src = imgCloudUrl;
 
         imageProbe.onload = function() {
-            // Success! Clear baseline typography lines inside tagline wrapper container
+            // Guarded Filter: Hide baseline elements inside tagline block wrapper without hiding stream text nodes
             if (wrapper) {
-                wrapper.querySelectorAll('h1, p').forEach(el => el.style.display = 'none');
+                wrapper.querySelectorAll('h1, p').forEach(el => {
+                    if (el.id !== 'stream-name-display') el.style.display = 'none';
+                });
             }
             
-            // Re-mount priority order directly to cellLeft to ensure text layers render on top of images
+            // LAYER LOCK: Force re-appending order to ensure layout hierarchy places text on top
             cellLeft.appendChild(logoImg);
             cellLeft.appendChild(display);
             
             logoImg.src = imgCloudUrl;
             logoImg.style.display = 'block';
+
+            // VISIBILITY SHIELD: Secure typography configurations directly during layout initialization
+            display.style.color = '#ffdd1a';
+            display.style.fontSize = '1.1rem';
+            display.style.fontWeight = 'bold';
+            display.style.webkitTextStroke = '1px #000000';
+            display.style.textShadow = '2px 2px 4px rgba(0, 0, 0, 0.9)';
+            display.style.textTransform = 'uppercase';
+            display.style.lineHeight = '1.2';
+            display.style.maxWidth = '95%';
+            display.style.position = 'absolute';
+            display.style.top = 'auto'; 
+            display.style.bottom = '12px';
+            display.style.left = '50%';
+            display.style.transform = 'translateX(-50%)';
+            display.style.marginTop = '0px';
+            display.style.width = '100%';
+            display.style.textAlign = 'center';
+            display.style.zIndex = '100'; 
+            display.style.display = 'block';
 
             if (cleanName.toLowerCase() === 'tellstream') {
                 display.innerText = "TELLSTREAM NONE STOP";
@@ -140,7 +148,7 @@ function renderStreamHeader(showName) {
         };
 
         imageProbe.onerror = function() {
-            // Fallback: Wipe out overlay settings and return base settings to normal flow parameters
+            // Fallback Engine: Clear dynamic parameters and return baseline static typography tags into view
             logoImg.style.display = 'none';
             
             if (wrapper) {
