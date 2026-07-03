@@ -189,12 +189,6 @@ if (usernameInput) {
     });
 }
 
-const facebookPosts = [
-    { id: 1, date: "Just now", text: "Big John is locked and loaded live in the studio! Lock into tellstream.banton.org right now and fire up the lounge chat! 🎚️👑", link: "https://www.facebook.com/tellstream.dem" },
-    { id: 2, date: "Yesterday", text: "Big respect to all the listeners locking in from around the globe. Drop your shoutouts and tell-a-wheel selectors directly inside the main chat line! 🔊🎧", link: "https://www.facebook.com/tellstream.dem" },
-    { id: 3, date: "2 days ago", text: "Weekend scheduling updates coming soon. Keep your locked eyes locked onto the central flyer board for upcoming live dance clashes.", link: "https://www.facebook.com/tellstream.dem" }
-];
-
 function anchorChatToBottom() {
     const chatContainer = document.querySelector('.chat-messages') || chatBox;
     if (chatContainer) {
@@ -356,13 +350,55 @@ async function handleAdminFilterCommand(text) {
     }
 }
 
-function renderFacebookFeed() {
-    fbFeedContainer.innerHTML = facebookPosts.map(post => `
-        <div class="fb-post-card" onclick="window.open('${post.link}', '_blank');">
-            <div class="fb-post-meta">Tellstream Page • ${post.date}</div>
-            <div class="fb-post-text">${post.text}</div>
+async function renderFacebookFeed() {
+    if (!fbFeedContainer) return;
+    
+    // 1. Fetch the 12 newest combined records from the boss and selectors boards
+    const { data: records, error } = await supabase_db
+        .from('notice_board')
+        .select('*')
+        .in('board_type', ['boss', 'selectors'])
+        .order('created_at', { ascending: false })
+        .limit(12);
+
+    if (error || !records || records.length === 0) {
+        fbFeedContainer.innerHTML = `
+            <p style="color:#666; text-align:center; padding-top:20px; font-style:italic;">No station notices posted.</p>
+            <div class="fb-post-card" style="text-align:center; margin-top:15px; cursor:pointer; border-left:4px solid #ffdd1a;" onclick="toggleNoticeBoardView();">
+                <div class="fb-post-text" style="font-weight:bold; color:#ffdd1a;">📋 OPEN NOTICEBOARD HISTORY</div>
+            </div>
+        `;
+        return;
+    }
+
+    // 2. Build the visual HTML feed blocks
+    let html = records.map(item => {
+        const isBoss = item.board_type === 'boss';
+        const badgeColor = isBoss ? '#ff3333' : '#ffdd1a';
+        const badgeText = isBoss ? 'STATION ADMIN' : 'DJ SELECTOR';
+        
+        return `
+            <div class="fb-post-card" style="border-left: 4px solid ${badgeColor}; margin-bottom: 12px;">
+                <div class="fb-post-meta" style="color: ${badgeColor}; font-weight: bold;">
+                    👑 ${escapeHTML(item.username)} • <span style="font-size:0.75rem; opacity:0.8;">${badgeText}</span>
+                </div>
+                <div class="fb-post-text" style="color: #e0f2f1; margin-top: 5px; line-height: 1.4;">
+                    ${escapeHTML(item.notice_text)}
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    // 3. Append the clickable history link node to the very bottom
+    html += `
+        <div class="fb-post-card" style="text-align:center; margin-top:20px; cursor:pointer; background: rgba(255,221,26,0.05); border: 1px dashed #ffdd1a;" onclick="toggleNoticeBoardView();">
+            <div class="fb-post-text" style="font-weight:bold; color:#ffdd1a; font-size:0.9rem;">
+                📋 VIEW FULL NOTICEBOARD HISTORY
+            </div>
         </div>
-    `).join('');
+    `;
+
+    fbFeedContainer.innerHTML = html;
 }
 
 async function renderActiveFlyers() {
