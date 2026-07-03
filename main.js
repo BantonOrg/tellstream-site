@@ -75,7 +75,7 @@ function renderStreamHeader(showName) {
         logoImg = document.createElement('img');
         logoImg.id = 'stream-logo-display';
         logoImg.style.width = '100%';
-        logoImg.style.height = 'auto'; // Fluid scaling allows image aspect ratio to dictate cell height
+        logoImg.style.height = 'auto'; 
         logoImg.style.display = 'none';      
         cellLeft.appendChild(logoImg);
     }
@@ -85,8 +85,8 @@ function renderStreamHeader(showName) {
         display.id = 'stream-name-display';
         display.style.color = '#ffffff'; 
         display.style.fontSize = '1.1rem';
-        display.style.fontWeight = '900'; // Changed from 'bold' to ultra-heavy '900'
-        display.style.webkitTextStroke = '1.8px #000000'; // Thickened black outline edge definition
+        display.style.fontWeight = '900'; 
+        display.style.webkitTextStroke = '1.8px #000000'; 
         display.style.textShadow = '3px 3px 6px rgba(0, 0, 0, 0.95), -2px -2px 4px rgba(0, 0, 0, 0.8)';        display.style.textTransform = 'uppercase';
         display.style.lineHeight = '1.2';
         display.style.maxWidth = '95%';
@@ -105,20 +105,16 @@ function renderStreamHeader(showName) {
         imageProbe.src = imgCloudUrl;
 
         imageProbe.onload = function() {
-            // STATE B: IMAGE FOUND -> Switch to image-driven physics matching the middle cell
             if (wrapper) {
                 wrapper.querySelectorAll('h1, p').forEach(el => el.style.display = 'none');
             }
-            
-            // Strip text absolute constraints; let the natural image flow control the container height
             cellLeft.style.position = 'relative';
             cellLeft.style.height = 'auto'; 
             
             logoImg.src = imgCloudUrl;
-            logoImg.style.position = 'relative'; // Removes absolute locking
+            logoImg.style.position = 'relative'; 
             logoImg.style.display = 'block';
 
-            // Pin text overlay absolutely over the natural fluid image background
             display.style.position = 'absolute';
             display.style.left = '50%';
             display.style.transform = 'translateX(-50%)';
@@ -134,18 +130,15 @@ function renderStreamHeader(showName) {
         };
 
         imageProbe.onerror = function() {
-            // STATE A: NO IMAGE FOUND -> Fallback completely to structural text parameters
             logoImg.style.display = 'none';
             logoImg.style.position = 'absolute';
-            
-            cellLeft.style.height = ''; // Clear forced rules, return to base CSS flow
+            cellLeft.style.height = ''; 
             
             if (wrapper) {
                 wrapper.querySelectorAll('h1, p').forEach(el => el.style.display = 'block');
                 if (display.parentElement !== wrapper) {
                     wrapper.appendChild(display);
                 }
-                // Normalize text behavior for normal text boxes
                 display.style.position = 'static';
                 display.style.transform = 'none';
                 display.style.marginTop = '4px';
@@ -355,461 +348,71 @@ async function handleAdminFilterCommand(text) {
 
 async function renderSiteNewsFeed() {
     if (!fbFeedContainer) return;
-
-    // Direct header override logic to patch "Facebook Activity" out dynamically
-    const colHeader = fbFeedContainer.previousElementSibling;
-    if (colHeader && (colHeader.innerText.includes("Facebook") || colHeader.querySelector('a'))) {
-        colHeader.style.display = 'flex';
-        colHeader.style.justifyContent = 'space-between';
-        colHeader.style.alignItems = 'center';
-        colHeader.style.width = '100%';
+    try {
+        const colHeader = fbFeedContainer.previousElementSibling;
+        if (colHeader && (colHeader.innerText.includes("Facebook") || colHeader.querySelector('a'))) {
+            colHeader.style.display = 'flex';
+            colHeader.style.justifyContent = 'space-between';
+            colHeader.style.alignItems = 'center';
+            colHeader.style.width = '100%';
+            colHeader.innerHTML = `
+                <span>📰 Site News</span>
+                <a href="https://www.facebook.com/tellstream.dem" target="_blank" style="display: flex; align-items: center; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="#1877F2" style="display: block;">
+                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    </svg>
+                </a>
+            `;
+        }
         
-        colHeader.innerHTML = `
-            <span>📰 Site News</span>
-            <a href="https://www.facebook.com/tellstream.dem" target="_blank" style="display: flex; align-items: center; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="#1877F2" style="display: block;">
-                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                </svg>
-            </a>
-        `;
-    }
-    
-    // Fetch the 12 newest combined records from the boss and selectors boards
-    const { data: records, error } = await supabase_db
-        .from('notice_board')
-        .select('*')
-        .in('board_type', ['boss', 'selectors'])
-        .order('created_at', { ascending: false })
-        .limit(12);
+        const { data: records, error } = await supabase_db
+            .from('notice_board')
+            .select('*')
+            .in('board_type', ['boss', 'selectors'])
+            .order('created_at', { ascending: false })
+            .limit(12);
 
-    if (error || !records || records.length === 0) {
-        fbFeedContainer.innerHTML = `
-            <p style="color:#666; text-align:center; padding-top:20px; font-style:italic;">No station notices posted.</p>
-            <div class="fb-post-card" style="text-align:center; margin-top:15px; cursor:pointer; border-left:4px solid #ffdd1a;" onclick="toggleNoticeBoardView();">
-                <div class="fb-post-text" style="font-weight:bold; color:#ffdd1a;">📋 OPEN NOTICEBOARD HISTORY</div>
-            </div>
-        `;
-        return;
-    }
-
-    // Build the visual HTML feed blocks
-    let html = records.map(item => {
-        const isBoss = item.board_type === 'boss';
-        const badgeColor = isBoss ? '#ff3333' : '#ffdd1a';
-        const badgeText = isBoss ? 'STATION ADMIN' : 'DJ SELECTOR';
-        
-        return `
-            <div class="fb-post-card" style="border-left: 4px solid ${badgeColor}; margin-bottom: 12px;">
-                <div class="fb-post-meta" style="color: ${badgeColor}; font-weight: bold;">
-                    👑 ${escapeHTML(item.username)} • <span style="font-size:0.75rem; opacity:0.8;">${badgeText}</span>
+        if (error || !records || records.length === 0) {
+            fbFeedContainer.innerHTML = `
+                <p style="color:#666; text-align:center; padding-top:20px; font-style:italic;">No station notices posted.</p>
+                <div class="fb-post-card" style="text-align:center; margin-top:15px; cursor:pointer; border-left:4px solid #ffdd1a;" onclick="toggleNoticeBoardView();">
+                    <div class="fb-post-text" style="font-weight:bold; color:#ffdd1a;">📋 OPEN NOTICEBOARD HISTORY</div>
                 </div>
-                <div class="fb-post-text" style="color: #e0f2f1; margin-top: 5px; line-height: 1.4;">
-                    ${escapeHTML(item.notice_text)}
+            `;
+            return;
+        }
+
+        let html = records.map(item => {
+            const isBoss = item.board_type === 'boss';
+            const badgeColor = isBoss ? '#ff3333' : '#ffdd1a';
+            const badgeText = isBoss ? 'STATION ADMIN' : 'DJ SELECTOR';
+            return `
+                <div class="fb-post-card" style="border-left: 4px solid ${badgeColor}; margin-bottom: 12px;">
+                    <div class="fb-post-meta" style="color: ${badgeColor}; font-weight: bold;">
+                        👑 ${escapeHTML(item.username)} • <span style="font-size:0.75rem; opacity:0.8;">${badgeText}</span>
+                    </div>
+                    <div class="fb-post-text" style="color: #e0f2f1; margin-top: 5px; line-height: 1.4;">
+                        ${escapeHTML(item.notice_text)}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        html += `
+            <div class="fb-post-card" style="text-align:center; margin-top:20px; cursor:pointer; background: rgba(255,221,26,0.05); border: 1px dashed #ffdd1a;" onclick="toggleNoticeBoardView();">
+                <div class="fb-post-text" style="font-weight:bold; color:#ffdd1a; font-size:0.9rem;">
+                    📋 VIEW FULL NOTICEBOARD HISTORY
                 </div>
             </div>
         `;
-    }).join('');
-
-    // Append the clickable history link node to the very bottom
-    html += `
-        <div class="fb-post-card" style="text-align:center; margin-top:20px; cursor:pointer; background: rgba(255,221,26,0.05); border: 1px dashed #ffdd1a;" onclick="toggleNoticeBoardView();">
-            <div class="fb-post-text" style="font-weight:bold; color:#ffdd1a; font-size:0.9rem;">
-                📋 VIEW FULL NOTICEBOARD HISTORY
-            </div>
-        </div>
-    `;
-
-    fbFeedContainer.innerHTML = html;
-}
-
-async function renderActiveFlyers() {
-    const today = new Date();
-    today.setDate(today.getDate() - 1);
-    today.setHours(0,0,0,0);
-
-    const { data: files, error } = await supabase_db.storage.from('flyers').list('', { limit: 100 });
-    if (error || !files || files.length === 0) {
-        flyerContainer.innerHTML = `<p style="color:#666; text-align:center; padding-top:20px;">No current event flyers listed.</p>`;
-        return;
-    }
-
-    let renderedHtml = "";
-    for (let file of files) {
-        if (file.name === ".emptyFolderPlaceholder") continue;
-        const datePrefix = file.name.substring(0, 6);
-        if (/^\d{6}$/.test(datePrefix)) {
-            const day = parseInt(datePrefix.substring(0, 2), 10);
-            const month = parseInt(datePrefix.substring(2, 4), 10) - 1;
-            const year = 2000 + parseInt(datePrefix.substring(4, 6), 10);
-            const expirationDate = new Date(year, month, day);
-            if (expirationDate < today) {
-                await supabase_db.storage.from('flyers').remove([file.name]);
-                continue;
-            }
-        }
-        const { data: urlData } = supabase_db.storage.from('flyers').getPublicUrl(file.name);
-        const titleClean = file.name.substring(7).replace(/\.[^/.]+$/, '').replace(/_/g, ' ');
-        renderedHtml += `
-            <div class="flyer-item" onclick="launchFlyerLightbox('${urlData.publicUrl}')">
-                <img src="${urlData.publicUrl}" alt="${titleClean}">
-                <h4 style="text-transform: capitalize;">${titleClean}</h4>
-            </div>
-        `;
-    }
-    flyerContainer.innerHTML = renderedHtml || `<p style="color:#666; text-align:center; padding-top:20px;">No current event flyers listed.</p>`;
-}
-
-function renderHelpContent(useNoticeboardGuide = false) {
-    const activeDataset = useNoticeboardGuide ? noticeboardHelpInstructions : helpInstructions;
-    let html = activeDataset.map(item => `
-        <div class="help-item-card">
-            <h5>${item.title}</h5>
-            <p>${item.text}</p>
-        </div>
-    `).join('');
-
-    const currentUser = usernameInput.value.trim();
-    const profile = profilesCache[currentUser];
-    const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
-    const isVerifiedDJ = profile && profile.passkey === authorizedKey && parseInt(profile.power_level || 0) >= 1;
-
-    if (isVerifiedDJ && !useNoticeboardGuide) {
-        const djHtml = djHelpInstructions.map(item => `
-            <div class="help-item-card" style="border-left: 4px solid #ffdd1a; background: rgba(255, 221, 26, 0.05);">
-                <h5 style="color: #ffdd1a; font-weight: bold;">${item.title}</h5>
-                <p style="color: #fffbdf; white-space: pre-line;">${item.text}</p>
-            </div>
-        `).join('');
-        html = djHtml + html; 
-    }
-
-    helpCardsContainer.innerHTML = html;
-    helpCardsContainerFS.innerHTML = html;
-    const currentTitle = useNoticeboardGuide ? "📋 Noticeboard Help Guide" : "💡 Chat help and emoji codes";
-    const fsTitleNode = helpCardsContainerFS.previousElementSibling;
-    if (fsTitleNode && fsTitleNode.classList.contains('col-title')) fsTitleNode.innerHTML = currentTitle;
-}
-
-function launchFlyerLightbox(imgSrc) {
-    modalTargetImg.src = imgSrc;
-    flyerModal.classList.add('active');
-}
-function closeFlyerLightbox() {
-    flyerModal.classList.remove('active');
-    modalTargetImg.src = "";
-}
-
-function toggleChatFullscreen() {
-    if (isNoticeBoardActive) toggleNoticeBoardView();
-    document.body.classList.toggle('chat-is-fullscreen');
-    fsToggleBtn.innerText = document.body.classList.contains('chat-is-fullscreen') ? "Exit Fullscreen" : "Maximize Chat";
-    anchorChatToBottom();
-}
-
-function initQuickEmojiCloud() {
-    if (!window.emojiMapping) return;
-    
-    // 1. Get all available emoji shorthand keys from your mapping file
-    const allKeys = Object.keys(window.emojiMapping);
-    
-    // 2. Shuffle the entire array randomly
-    const shuffledKeys = allKeys.sort(() => 0.5 - Math.random());
-    
-    // 3. Take the first 32 random keys out of the shuffled deck
-    const randomSelection = shuffledKeys.slice(0, 32);
-    
-    // 4. Render the grid items
-    const html = randomSelection.map(key => `
-        <div class="emoji-grid-item" onclick="insertEmojiCode('${key}')">:${key}:</div>
-    `).join('');
-    
-    quickEmojiList.innerHTML = html;
-    quickEmojiListFS.innerHTML = html;
-}
-
-function insertEmojiCode(code) {
-    messageInput.value += ` :${code}: `;
-    messageInput.focus();
-}
-
-function toggleNoticeBoardView() {
-    const streamChat = document.getElementById('chatBox');
-    const noticePanel = document.getElementById('noticeboard-view-panel');
-    const inputContainer = document.getElementById('chat-input-panel-container');
-    const mainTitle = document.getElementById('sidebarPanelTitle');
-    const toggleBtn = document.getElementById('toggle-notice-btn');
-    const emojiSectionFS = quickEmojiListFS.parentElement;
-
-    if (!isNoticeBoardActive) {
-        document.body.classList.add('chat-is-fullscreen');
-        streamChat.style.display = 'none';
-        inputContainer.style.display = 'none'; 
-        securityDrawer.classList.remove('open'); 
-        noticePanel.style.display = 'flex';
-        mainTitle.innerText = "📋 Noticeboard";
-        toggleBtn.innerText = "❌ Exit Noticeboard";
-        isNoticeBoardActive = true;
-        if (emojiSectionFS) emojiSectionFS.style.display = 'none';
-        renderHelpContent(true);
-        evaluateNoticeBoardForms();
-        fetchNoticeBoardRecords();
-    } else {
-        document.body.classList.remove('chat-is-fullscreen');
-        noticePanel.style.display = 'none';
-        streamChat.style.display = 'flex';
-        inputContainer.style.display = 'flex';
-        mainTitle.innerText = "🔊 Listener Lounge";
-        toggleBtn.innerText = "📋 Noticeboard";
-        isNoticeBoardActive = false;
-        if (emojiSectionFS) emojiSectionFS.style.display = 'block';
-        renderHelpContent(false);
-        anchorChatToBottom();
-    }
-}
-
-function evaluateNoticeBoardForms() {
-    const currentUser = usernameInput.value.trim();
-    const warningBanner = document.getElementById('notice-footer-warning');
-    const profile = profilesCache[currentUser];
-    const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
-    const isVerified = profile && profile.passkey === authorizedKey;
-
-    if (!isVerified) {
-        warningBanner.style.display = 'block';
-        document.querySelectorAll('.notice-input-form-block').forEach(form => form.style.display = 'none');
-        return;
-    }
-
-    warningBanner.style.display = 'none';
-    const powerLevel = parseInt(profile.power_level || 0);
-    document.getElementById('form-boss').style.display = (powerLevel >= 2) ? 'block' : 'none';
-    document.getElementById('form-selectors').style.display = (powerLevel >= 1) ? 'block' : 'none';
-    document.getElementById('form-fambily').style.display = (powerLevel >= 0) ? 'block' : 'none';
-}
-
-async function fetchNoticeBoardRecords() {
-    const { data: records, error } = await supabase_db.from('notice_board').select('*').order('created_at', { ascending: false });
-    if (!error && records) {
-        document.getElementById('feed-boss').innerHTML = "";
-        document.getElementById('feed-selectors').innerHTML = "";
-        document.getElementById('feed-fambily').innerHTML = "";
-        records.forEach(item => {
-            const columnTarget = document.getElementById(`feed-${item.board_type}`);
-            if (columnTarget) {
-                const card = document.createElement('div');
-                card.className = 'notice-card-item';
-                card.innerHTML = `<strong>${escapeHTML(item.username)}:</strong> <span>${escapeHTML(item.notice_text)}</span>`;
-                columnTarget.appendChild(card);
-            }
-        });
-    }
-}
-
-async function submitNoticeUpdate(boardType) {
-    const currentUser = usernameInput.value.trim();
-    const inputField = document.getElementById(`input-${boardType}`);
-    let textContent = inputField.value.trim();
-    if (!textContent) return;
-
-    const profile = profilesCache[currentUser];
-    const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
-    if (!profile || profile.passkey !== authorizedKey) return;
-
-    const pLevel = parseInt(profile.power_level || 0);
-    if (boardType === 'boss' && pLevel < 2) return;
-    if (boardType === 'selectors' && pLevel < 1) return;
-
-    const banCheck = checkBanStatus(currentUser);
-    if (banCheck.isBanned) {
-        alert(banCheck.message);
-        return;
-    }
-
-    if (containsSwearWords(textContent)) {
-        await handleUserStrike(currentUser, textContent);
-        inputField.value = "";
-        return; 
-    }
-
-    const wasApology = await checkAndProcessApology(currentUser, textContent);
-    if (wasApology) {
-        inputField.value = "";
-        return;
-    }
-
-    const { error } = await supabase_db.from('notice_board').insert([{
-        username: currentUser,
-        notice_text: textContent,
-        board_type: boardType
-    }]);
-
-    if (!error) {
-        inputField.value = "";
-        fetchNoticeBoardRecords();
-    } else {
-        alert("Notice save failed: " + error.message);
-    }
-}
-
-function syncDrawerName() {
-    const currentName = usernameInput.value.trim();
-    regNameInput.value = currentName;
-    reminderHintDisplay.style.display = "none";
-    
-    if (profilesCache[currentName]) {
-        lockStatusBtn.innerText = "🔒";
-        drawerTitle.innerText = "Name is Secured: Log In";
-        regReminderInput.style.display = "none";
-        regEmailInput.style.display = "none";
-        drawerSubmitBtn.innerText = "Authorize Device Local Memory";
-    } else {
-        lockStatusBtn.innerText = "🔓";
-        drawerTitle.innerText = "Secure Current Handle";
-        regReminderInput.style.display = "block";
-        regEmailInput.style.display = "block";
-        drawerSubmitBtn.innerText = "Lock Name Globally";
-    }
-    if (isNoticeBoardActive) evaluateNoticeBoardForms();
-    renderHelpContent(isNoticeBoardActive);
-}
-
-async function toggleSecurityDrawer() {
-    if (securityDrawer.classList.toggle('open')) {
-        syncDrawerName();
-        regPasskeyInput.focus();
-    }
-}
-
-async function handleSecuritySubmit() {
-    const currentName = usernameInput.value.trim();
-    const passkey = regPasskeyInput.value.trim();
-    const reminder = regReminderInput.value.trim();
-    const email = regEmailInput.value.trim();
-
-    if (!currentName || !passkey) {
-        alert("Please fill in both Name and a Passkey string.");
-        return;
-    }
-
-    if (profilesCache[currentName]) {
-        if (profilesCache[currentName].passkey === passkey) {
-            localStorage.setItem('tellstream_key_' + currentName, passkey);
-            localStorage.setItem('tellstream_saved_username', currentName);
-            alert("Identity checked and authorized!");
-            securityDrawer.classList.remove('open');
-            chatBox.innerHTML = ""; 
-            if (isNoticeBoardActive) evaluateNoticeBoardForms();
-            loadMessages();
-        } else {
-            alert("Invalid Passkey entry sequence.");
-            if (profilesCache[currentName].key_reminder) {
-                reminderHintDisplay.innerText = "Hint Clue: " + profilesCache[currentName].key_reminder;
-                reminderHintDisplay.style.display = "block";
-            }
-        }
-    } else {
-        let assignedLevel = 0;
-        let assignedHover = "Tella Fambily";
-        if (currentName === "Banton") { assignedLevel = 2; assignedHover = "banton.org"; }
-        else if (currentName === "Big John") { assignedLevel = 2; assignedHover = "the boss"; }
-        else if (currentName === "Perfectionist") { assignedLevel = 2; assignedHover = "You done know"; }
-
-
-        const { error } = await supabase_db.from('secured_profiles').insert([{
-            username: currentName,
-            passkey: passkey,
-            key_reminder: reminder,
-            email: email,
-            power_level: assignedLevel,
-            hover_title: assignedHover
-        }]);
-
-        if (error) {
-            alert("Could not claim this name block profile target.");
-        } else {
-            localStorage.setItem('tellstream_key_' + currentName, passkey);
-            localStorage.setItem('tellstream_saved_username', currentName);
-            alert("Registration complete!");
-            await syncProfilesMap();
-            securityDrawer.classList.remove('open');
-            chatBox.innerHTML = "";
-            if (isNoticeBoardActive) evaluateNoticeBoardForms();
-            loadMessages();
-        }
-    }
-}
-
-async function syncProfilesMap() {
-    const { data } = await supabase_db.from('secured_profiles').select('*');
-    profilesCache = {};
-    if (data) data.forEach(p => { profilesCache[p.username] = p; });
-    syncDrawerName();
-}
-
-async function syncBannedWordsMap() {
-    const { data } = await supabase_db.from('banned_words').select('word');
-    if (data) bannedWordsCache = data.map(item => item.word.toLowerCase());
-}
-
-async function syncBannedUsersMap() {
-    const { data } = await supabase_db.from('banned_users').select('*');
-    bannedUsersCache = {};
-    if (data) data.forEach(u => { bannedUsersCache[u.username.toLowerCase()] = u; });
-}
-
-audioPlayer.addEventListener('stalled', () => { recoverStream(); });
-audioPlayer.addEventListener('error', () => { recoverStream(); });
-
-function recoverStream() {
-    const currentSrc = audioPlayer.src;
-    if (!currentSrc) return;
-    audioPlayer.src = "";
-    audioPlayer.load();
-    audioPlayer.src = currentSrc;
-    audioPlayer.play().catch(err => console.log(err));
-}
-
-function appendMessage(data) {
-    const msgDiv = document.createElement('div');
-    msgDiv.className = 'msg';
-    let messageContent = escapeHTML(data.message);
-
-    messageContent = messageContent.replace(/:([a-zA-Z0-9_-]+):/g, (match, code) => {
-        const lowerCode = code.toLowerCase();
-        if (window.emojiMapping && window.emojiMapping[lowerCode]) {
-            return `<img src="${imgBaseUrl}${window.emojiMapping[lowerCode]}" alt="${code}" style="max-height: 48px; vertical-align: middle; margin: 2px; border-radius: 4px;">`;
-        }
-        return match;
-    });
-
-    const profile = profilesCache[data.username];
-    let nameClass = "user-unregistered";
-    let hoverAttribute = "";
-
-    if (profile) {
-        nameClass = (profile.power_level >= 1) ? "user-admin" : "user-registered";
-        if (profile.hover_title) hoverAttribute = `title="${escapeHTML(profile.hover_title)}"`;
-    }
-
-    msgDiv.innerHTML = `<div class="user ${nameClass}" ${hoverAttribute}>${escapeHTML(data.username)}</div><div>${messageContent}</div>`;
-    chatBox.appendChild(msgDiv);
-    anchorChatToBottom();
-    while (chatBox.children.length > 50) chatBox.removeChild(chatBox.firstChild);
-}
-
-function escapeHTML(str) {
-    return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
-}
-
-async function loadMessages() {
-    const { data } = await supabase_db.from('messages').select('*').order('id', { ascending: true }).limit(40);
-    if (data) { data.forEach(appendMessage); anchorChatToBottom(); }
+        fbFeedContainer.innerHTML = html;
+    } catch (e) { console.error(e); }
 }
 
 // CENTRALIZED PARSER FOR ZERO-SLASH STAFF TRANSMISSION SCHEDULE ACTIONS
 async function processScheduleConsoleInjections(text, djUser) {
     const args = text.trim().split(/\s+/);
-    const action = args[1]?.toLowerCase(); // perm, temp, or cancel
+    const action = args[1]?.toLowerCase();
 
     if (action === 'perm') {
         const dayName = args[2];
@@ -833,7 +436,7 @@ async function processScheduleConsoleInjections(text, djUser) {
         if (error) console.error("Database master schedule record failure:", error.message);
     } 
     else if (action === 'temp') {
-        const dateBlock = args[2]; // strict ddmmyy format parameter
+        const dateBlock = args[2]; 
         const startTime = args[3];
         const endTime = args[4];
         const timeZone = args[5];
@@ -877,59 +480,60 @@ async function processScheduleConsoleInjections(text, djUser) {
 // REALTIME TRANSMISSION DIRECTORY GRAPHICS LISTENER SYNCS
 async function fetchAndRenderWeeklyTimetable() {
     if (!flyerContainer) return;
+    try {
+        const { data: masterData, error: masterErr } = await supabase_db.from('master_schedule').select('*');
+        const { data: tempOverrides, error: tempErr } = await supabase_db.from('temporary_overrides').select('*');
 
-    const { data: masterData, error: masterErr } = await supabase_db.from('master_schedule').select('*');
-    const { data: tempOverrides, error: tempErr } = await supabase_db.from('temporary_overrides').select('*');
-
-    if (masterErr || !masterData) {
-        flyerContainer.innerHTML = `<p style="color:#666; text-align:center; padding-top:20px;">No transmission directory slots listed.</p>`;
-        return;
-    }
-
-    // Sort order dictionary mapping rules for chronological British presentation sequences
-    const dayOrder = { sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6 };
-    
-    masterData.sort((a, b) => {
-        if (dayOrder[a.day_of_week] !== dayOrder[b.day_of_week]) {
-            return dayOrder[a.day_of_week] - dayOrder[b.day_of_week];
+        if (masterErr || !masterData || masterData.length === 0) {
+            flyerContainer.innerHTML = `<p style="color:#666; text-align:center; padding-top:20px; font-style:italic;">Weekly Transmission Timetable under construction.</p>`;
+            return;
         }
-        return a.start_time.localeCompare(b.start_time);
-    });
 
-    let htmlOutput = masterData.map(item => {
-        let currentDJ = item.dj_name;
-        let noteLabel = "";
+        const dayOrder = { sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6 };
+        masterData.sort((a, b) => {
+            if (dayOrder[a.day_of_week] !== dayOrder[b.day_of_week]) {
+                return dayOrder[a.day_of_week] - dayOrder[b.day_of_week];
+            }
+            return a.start_time.localeCompare(b.start_time);
+        });
 
-        // Identify and process temporary scratchpad override disruptions matching this slot frame dynamically
-        if (tempOverrides) {
-            const matchOverride = tempOverrides.find(o => o.start_time === item.start_time);
-            if (matchOverride) {
-                if (matchOverride.is_cancelled) {
-                    currentDJ = "tellstream";
-                    noteLabel = `<span style="color:#ff3333; font-size:0.75rem; margin-left:8px;">[CANCELLED]</span>`;
-                } else {
-                    currentDJ = matchOverride.dj_name;
-                    noteLabel = `<span style="color:#ffdd1a; font-size:0.75rem; margin-left:8px;">[COVER SET]</span>`;
+        let htmlOutput = masterData.map(item => {
+            let currentDJ = item.dj_name;
+            let noteLabel = "";
+
+            if (tempOverrides) {
+                const matchOverride = tempOverrides.find(o => o.start_time === item.start_time);
+                if (matchOverride) {
+                    if (matchOverride.is_cancelled) {
+                        currentDJ = "tellstream";
+                        noteLabel = `<span style="color:#ff3333; font-size:0.75rem; margin-left:8px;">[CANCELLED]</span>`;
+                    } else {
+                        currentDJ = matchOverride.dj_name;
+                        noteLabel = `<span style="color:#ffdd1a; font-size:0.75rem; margin-left:8px;">[COVER SET]</span>`;
+                    }
                 }
             }
-        }
 
-        return `
-            <div class="fb-post-card" style="border-left: 4px solid #00adb5; margin-bottom: 10px; background: rgba(0, 173, 181, 0.02);">
-                <div style="font-weight: bold; color: #00adb5; text-transform: uppercase; font-size: 0.88rem;">
-                    📅 ${item.day_of_week}
+            return `
+                <div class="fb-post-card" style="border-left: 4px solid #00adb5; margin-bottom: 10px; background: rgba(0, 173, 181, 0.02);">
+                    <div style="font-weight: bold; color: #00adb5; text-transform: uppercase; font-size: 0.88rem;">
+                        📅 ${item.day_of_week}
+                    </div>
+                    <div style="color: #e0f2f1; margin-top: 4px; font-size: 0.95rem;">
+                        ⏰ ${item.start_time} - ${item.end_time} <span style="color:#ffdd1a; font-size:0.8rem; font-weight:bold;">${item.time_zone}</span>
+                    </div>
+                    <div style="color: #888; font-size: 0.85rem; margin-top: 2px;">
+                        👤 Presenter: <strong style="color:#fff;">${currentDJ}</strong> ${noteLabel}
+                    </div>
                 </div>
-                <div style="color: #e0f2f1; margin-top: 4px; font-size: 0.95rem;">
-                    ⏰ ${item.start_time} - ${item.end_time} <span style="color:#ffdd1a; font-size:0.8rem; font-weight:bold;">${item.time_zone}</span>
-                </div>
-                <div style="color: #888; font-size: 0.85rem; margin-top: 2px;">
-                    👤 Presenter: <strong style="color:#fff;">${currentDJ}</strong> ${noteLabel}
-                </div>
-            </div>
-        `;
-    }).join('');
+            `;
+        }).join('');
 
-    flyerContainer.innerHTML = htmlOutput || `<p style="color:#666; text-align:center; padding-top:20px;">No transmission directory slots listed.</p>`;
+        flyerContainer.innerHTML = htmlOutput;
+    } catch (e) {
+        console.error("Timetable parse error:", e);
+        flyerContainer.innerHTML = `<p style="color:#666; text-align:center; padding-top:20px; font-style:italic;">Weekly Transmission Timetable under construction.</p>`;
+    }
 }
 
 supabase_db.channel('public:messages').on('postgres_changes', { event: 'INSERT', pattern: 'public', table: 'messages' }, payload => { appendMessage(payload.new); }).subscribe();
@@ -947,9 +551,10 @@ supabase_db.channel('public:stream_status').on('postgres_changes', { event: '*',
     if (payload.new && payload.new.current_show) { renderStreamHeader(payload.new.current_show); }
 }).subscribe();
 
-// DATABASE CHANNELS BINDING SCHEDULE DATA WRITES TO AUTOMATED MIDDLE TIMETABLE REDRAWS
-supabase_db.channel('public:master_schedule').on('postgres_changes', { event: '*', pattern: 'public', table: 'master_schedule' }, () => { fetchAndRenderWeeklyTimetable(); }).subscribe();
-supabase_db.channel('public:temporary_overrides').on('postgres_changes', { event: '*', pattern: 'public', table: 'temporary_overrides' }, () => { fetchAndRenderWeeklyTimetable(); }).subscribe();
+try {
+    supabase_db.channel('public:master_schedule').on('postgres_changes', { event: '*', pattern: 'public', table: 'master_schedule' }, () => { fetchAndRenderWeeklyTimetable(); }).subscribe();
+    supabase_db.channel('public:temporary_overrides').on('postgres_changes', { event: '*', pattern: 'public', table: 'temporary_overrides' }, () => { fetchAndRenderWeeklyTimetable(); }).subscribe();
+} catch (e) { console.log("Realtime schedule subscription delayed:", e.message); }
 
 async function sendMessage() {
     const user = usernameInput.value.trim() || 'Listener';
@@ -961,7 +566,6 @@ async function sendMessage() {
         const userPowerLevel = parseInt(profile?.power_level || 0);
         
         if (profile && userPowerLevel >= 1) { 
-            
             if (text.startsWith('/schedule ')) {
                 messageInput.value = '';
                 await processScheduleConsoleInjections(text, user);
@@ -1056,3 +660,72 @@ async function sendMessage() {
     if (wasApology) { messageInput.value = ''; return; }
 
     messageInput.value = '';
+    await supabase_db.from('messages').insert([{ username: user, message: text }]);
+}
+
+sendBtn.addEventListener('click', sendMessage);
+messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+
+(async function initSystem() {
+    await renderSiteNewsFeed();
+    await fetchAndRenderWeeklyTimetable(); 
+    
+    try { await syncProfilesMap(); } catch(e){}
+    try { await syncBannedWordsMap(); } catch(e){}
+    try { await syncBannedUsersMap(); } catch(e){}
+    try { await loadMessages(); } catch(e){}
+    try { await loadInitialStreamStatus(); } catch(e){}
+    
+    renderHelpContent(false);
+    setTimeout(initQuickEmojiCloud, 500);
+    
+    const hiddenInputFileTag = document.createElement('input');
+    hiddenInputFileTag.type = 'file';
+    hiddenInputFileTag.id = 'studioLogoHiddenFilePicker';
+    hiddenInputFileTag.accept = 'image/png';
+    hiddenInputFileTag.style.display = 'none';
+    document.body.appendChild(hiddenInputFileTag);
+
+    hiddenInputFileTag.addEventListener('change', async function(e) {
+        const file = e.target.files[0];
+        if (!file || !pendingLogoTargetName) return;
+        try {
+            const uploadFileName = `${pendingLogoTargetName}.png`;
+            const { error } = await supabase_db.storage.from('dj-logos').upload(uploadFileName, file, { upsert: true });
+            if (error) throw error;
+            alert(`✅ Success! Transparent logo saved for: "${pendingLogoTargetName.replace(/_/g, ' ')}"`);
+            await loadInitialStreamStatus();
+        } catch (err) {
+            alert("Cloud Upload Failure: " + err.message);
+        } finally {
+            hiddenInputFileTag.value = '';
+            pendingLogoTargetName = "";
+        }
+    });
+
+    const currentUser = usernameInput.value.trim();
+    syncDrawerName();
+
+    setTimeout(() => {
+        const profile = profilesCache[currentUser];
+        const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
+        const isLoggedIn = profile && profile.passkey === authorizedKey;
+        const mainBody = "Greetings and welcome to Tellstream Chat. Please help keep this experience a positive blessing for one and all. Remember, at any time, users may have children around them. Bad blessings will be removed. One love from Tellstream.";
+
+        if (isLoggedIn) {
+            const prefix = `Welcome back ${currentUser}, we are blessed you are here. Please continue to fulljoy the vibes. `;
+            const lastSeenKey = `tellstream_greeting_${currentUser.toLowerCase()}`;
+            const lastSeenDate = localStorage.getItem(lastSeenKey);
+            const todayDateStr = new Date().toDateString();
+
+            if (lastSeenDate === todayDateStr) {
+                appendPrivateWelcomeGreeting(prefix);
+            } else {
+                appendPrivateWelcomeGreeting(prefix + mainBody);
+                localStorage.setItem(lastSeenKey, todayDateStr);
+            }
+        } else {
+            appendPrivateWelcomeGreeting(mainBody);
+        }
+    }, 200);
+})();
