@@ -58,43 +58,39 @@ const djHelpInstructions = [
     { title: "⚔️ Console Moderation Shortcuts", text: "Manage chat rules live using: '/add [word]' to expand filters, '/del [word]' to drop filters, or '/unban [username]' to restore access to struck listener handles." }
 ];
 
-// CELL-LEFT ISOLATED ENGINE (FORCED FULL PAD OUT & TEXT ORDER INSTANTIATED EVERY RENDER)
+// CELL-LEFT ISOLATED ENGINE (DYNAMIC BOUNDS & AUTOMATED MODE SWITCH)
 function renderStreamHeader(showName) {
     const cellLeft = document.querySelector('.cell-left');
     const wrapper = document.querySelector('.cell-left .tagline-wrapper');
     if (!cellLeft) return;
 
-    // Secure relative bounding context parameters on the left cell layer container
-    cellLeft.style.position = 'relative';
-
     let display = document.getElementById('stream-name-display');
     let logoImg = document.getElementById('stream-logo-display');
     
+    // 1. Structural Setup: Build components if they don't exist yet
     if (!logoImg) {
         logoImg = document.createElement('img');
         logoImg.id = 'stream-logo-display';
+        logoImg.style.width = '100%';
+        logoImg.style.height = 'auto'; // Fluid scaling allows image aspect ratio to dictate cell height
+        logoImg.style.display = 'none';      
         cellLeft.appendChild(logoImg);
     }
 
     if (!display) {
         display = document.createElement('p');
         display.id = 'stream-name-display';
+        display.style.color = '#ffdd1a';
+        display.style.fontSize = '1.1rem';
+        display.style.fontWeight = 'bold';
+        display.style.webkitTextStroke = '1px #000000';
+        display.style.textShadow = '2px 2px 4px rgba(0, 0, 0, 0.9)';
+        display.style.textTransform = 'uppercase';
+        display.style.lineHeight = '1.2';
+        display.style.maxWidth = '95%';
+        display.style.textAlign = 'center';
         cellLeft.appendChild(display);
     }
-
-    // Dynamic sizing match: Track standard vs mobile screen layout stacks
-    const isMobile = window.matchMedia('(max-width: 1024px)').matches;
-
-    // FORCE LAYOUT PROPERTIES OUTSIDE CONDITIONAL BLOCKS TO OVERRIDE CACHED DOM NODES
-    logoImg.style.position = 'absolute';
-    logoImg.style.top = '0';
-    logoImg.style.left = '0';
-    logoImg.style.width = '100%';
-    logoImg.style.height = '100%';
-    // Mirrors desktop background-size: cover || mobile background-size: 100% 100%
-    logoImg.style.objectFit = isMobile ? 'fill' : 'cover'; 
-    logoImg.style.objectPosition = 'center'; 
-    logoImg.style.zIndex = '10'; // Sits cleanly above CSS backgrounds, below typography overlays
     
     if (showName) {
         const cleanName = showName.trim();
@@ -107,39 +103,26 @@ function renderStreamHeader(showName) {
         imageProbe.src = imgCloudUrl;
 
         imageProbe.onload = function() {
-            // Guarded Filter: Hide base elements inside tagline-wrapper safely without targeting stream elements
+            // STATE B: IMAGE FOUND -> Switch to image-driven physics matching the middle cell
             if (wrapper) {
-                wrapper.querySelectorAll('h1, p').forEach(el => {
-                    if (el.id !== 'stream-name-display') el.style.display = 'none';
-                });
+                wrapper.querySelectorAll('h1, p').forEach(el => el.style.display = 'none');
             }
             
+            // Strip text absolute constraints; let the natural image flow control the container height
+            cellLeft.style.position = 'relative';
+            cellLeft.style.height = 'auto'; 
+            
             logoImg.src = imgCloudUrl;
+            logoImg.style.position = 'relative'; // Removes absolute locking
             logoImg.style.display = 'block';
 
-            // VISIBILITY LOCK: Force absolute foreground priority parameters directly to stream text display nodes
-            display.style.color = '#ffdd1a';
-            display.style.fontSize = '1.1rem';
-            display.style.fontWeight = 'bold';
-            display.style.webkitTextStroke = '1px #000000';
-            display.style.textShadow = '2px 2px 4px rgba(0, 0, 0, 0.9)';
-            display.style.textTransform = 'uppercase';
-            display.style.lineHeight = '1.2';
-            display.style.maxWidth = '95%';
+            // Pin text overlay absolutely over the natural fluid image background
             display.style.position = 'absolute';
-            display.style.top = 'auto'; 
-            display.style.bottom = '12px';
             display.style.left = '50%';
             display.style.transform = 'translateX(-50%)';
-            display.style.marginTop = '0px';
             display.style.width = '100%';
-            display.style.textAlign = 'center';
-            display.style.zIndex = '99999'; // Secure ironclad frontend presentation safety layer
-            display.style.display = 'block';
-
-            // Force rendering tree sorting path sequence: Image loads first, text appends directly on top
-            cellLeft.appendChild(logoImg);
-            cellLeft.appendChild(display);
+            display.style.bottom = '12px';
+            display.style.zIndex = '9999';
 
             if (cleanName.toLowerCase() === 'tellstream') {
                 display.innerText = "TELLSTREAM NONE STOP";
@@ -149,14 +132,18 @@ function renderStreamHeader(showName) {
         };
 
         imageProbe.onerror = function() {
-            // Fallback: Clear dynamic canvas streams and return baseline elements back into view parameters
+            // STATE A: NO IMAGE FOUND -> Fallback completely to structural text parameters
             logoImg.style.display = 'none';
+            logoImg.style.position = 'absolute';
+            
+            cellLeft.style.height = ''; // Clear forced rules, return to base CSS flow
             
             if (wrapper) {
                 wrapper.querySelectorAll('h1, p').forEach(el => el.style.display = 'block');
                 if (display.parentElement !== wrapper) {
                     wrapper.appendChild(display);
                 }
+                // Normalize text behavior for normal text boxes
                 display.style.position = 'static';
                 display.style.transform = 'none';
                 display.style.marginTop = '4px';
@@ -230,7 +217,7 @@ function cleanSwearWords(text) {
     return text.replace(pattern, '****');
 }
 
-checkBanStatus(username) {
+function checkBanStatus(username) {
     const userBan = bannedUsersCache[username.toLowerCase()];
     if (!userBan) return { isBanned: false };
 
