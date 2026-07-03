@@ -26,7 +26,7 @@ body {
 }
 
 /* ==========================================================================
-   🧱 THE 3-CELL HEADER SYSTEM (DESKTOP MODE)
+   🧩 THE 3-CELL HEADER SYSTEM (DESKTOP MODE)
    ========================================================================== */
 .header-container {
     display: flex;
@@ -92,7 +92,7 @@ body {
 }
 
 /* ==========================================================================
-   📻 MAIN LAYOUT WORKSPACE COLUMNS
+   📊 MAIN LAYOUT WORKSPACE COLUMNS
    ========================================================================== */
 .columns-container {
     flex: 1;
@@ -602,7 +602,7 @@ body.chat-is-fullscreen .main-content {
 }
 
 /* ==========================================================================
-   🎮 THE PERFECT 4-COLUMN FULLSCREEN ENGINE (NO LAYOUT OVERLAPS)
+   🧩 THE PERFECT 4-COLUMN FULLSCREEN ENGINE (NO LAYOUT OVERLAPS)
    ========================================================================== */
 body.chat-is-fullscreen .chat-sidebar {
     width: 100% !important;
@@ -660,7 +660,7 @@ body.chat-is-fullscreen .chat-fs-help-panel {
     flex-shrink: 0 !important;
 }
 
-/* 📥 FIXED OVERLAY: Locks layout paths completely into a fixed space stack layer */
+/* 🛑 FIXED OVERLAY: Locks layout paths completely into a fixed space stack layer */
 .flyer-modal-overlay {
     position: fixed !important;
     top: 0 !important;
@@ -769,30 +769,18 @@ body.chat-is-fullscreen .chat-fs-help-panel {
         justify-content: center !important;
         text-align: center !important;
         padding: 20px !important;
-        box-sizing: border-box;
     }
     
     .cell-left {
         background-image: url('header-bg1m.jpg') !important;
         background-position: center center !important;
         background-size: 100% 100% !important;
-        position: relative;
     }
-
-    /* CRITICAL FIX: Locks custom foreground images to perfect, non-cropped aspect ratio windows */
-    .cell-left img#stream-logo-display {
-        width: 150px !important;
-        height: 140px !important;
-        object-fit: contain !important;
-        object-position: center center !important;
-    }
-    
     .cell-middle {
         background-image: url('header-bg2m.jpg') !important;
         background-position: center center !important;
         background-size: 100% 100% !important;
     }
-    
     .cell-right {
         background-image: url('header-bg3m.jpg') !important;
         background-position: center center !important;
