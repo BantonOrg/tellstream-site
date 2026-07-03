@@ -477,7 +477,7 @@ function renderHelpContent(useNoticeboardGuide = false) {
         const djHtml = djHelpInstructions.map(item => `
             <div class="help-item-card" style="border-left: 4px solid #ffdd1a; background: rgba(255, 221, 26, 0.05);">
                 <h5 style="color: #ffdd1a; font-weight: bold;">${item.title}</h5>
-                <p style="color: #fffbdf;">${item.text}</p>
+                <p style="color: #fffbdf; white-space: pre-line;">${item.text}</p>
             </div>
         `).join('');
         html = djHtml + html; 
@@ -806,6 +806,132 @@ async function loadMessages() {
     if (data) { data.forEach(appendMessage); anchorChatToBottom(); }
 }
 
+// CENTRALIZED PARSER FOR ZERO-SLASH STAFF TRANSMISSION SCHEDULE ACTIONS
+async function processScheduleConsoleInjections(text, djUser) {
+    const args = text.trim().split(/\s+/);
+    const action = args[1]?.toLowerCase(); // perm, temp, or cancel
+
+    if (action === 'perm') {
+        const dayName = args[2];
+        const startTime = args[3];
+        const endTime = args[4];
+        const timeZone = args[5];
+
+        if (!dayName || !startTime || !endTime || !timeZone) {
+            alert("Format missing. Use: /schedule perm [Day] [Start Time] [End Time] [Time Zone]");
+            return;
+        }
+
+        const { error } = await supabase_db.from('master_schedule').upsert([{
+            day_of_week: dayName.toLowerCase(),
+            start_time: startTime,
+            end_time: endTime,
+            time_zone: timeZone.toUpperCase(),
+            dj_name: djUser
+        }], { onConflict: 'day_of_week,start_time' });
+
+        if (error) console.error("Database master schedule record failure:", error.message);
+    } 
+    else if (action === 'temp') {
+        const dateBlock = args[2]; // strict ddmmyy format parameter
+        const startTime = args[3];
+        const endTime = args[4];
+        const timeZone = args[5];
+
+        if (!dateBlock || !startTime || !endTime || !timeZone || dateBlock.length !== 6) {
+            alert("Format missing. Use a strict 6-digit date: /schedule temp [ddmmyy] [Start Time] [End Time] [Time Zone]");
+            return;
+        }
+
+        const { error } = await supabase_db.from('temporary_overrides').upsert([{
+            specific_date: dateBlock,
+            start_time: startTime,
+            end_time: endTime,
+            time_zone: timeZone.toUpperCase(),
+            dj_name: djUser,
+            is_cancelled: false
+        }], { onConflict: 'specific_date,start_time' });
+
+        if (error) console.error("Database temporary override record failure:", error.message);
+    } 
+    else if (action === 'cancel') {
+        const dateBlock = args[2];
+        const startTime = args[3];
+
+        if (!dateBlock || !startTime || dateBlock.length !== 6) {
+            alert("Format missing. Use: /schedule cancel [ddmmyy] [Start Time]");
+            return;
+        }
+
+        const { error } = await supabase_db.from('temporary_overrides').upsert([{
+            specific_date: dateBlock,
+            start_time: startTime,
+            is_cancelled: true,
+            dj_name: 'tellstream'
+        }], { onConflict: 'specific_date,start_time' });
+
+        if (error) console.error("Database cancel action sync failure:", error.message);
+    }
+}
+
+// REALTIME TRANSMISSION DIRECTORY GRAPHICS LISTENER SYNCS
+async function fetchAndRenderWeeklyTimetable() {
+    if (!flyerContainer) return;
+
+    const { data: masterData, error: masterErr } = await supabase_db.from('master_schedule').select('*');
+    const { data: tempOverrides, error: tempErr } = await supabase_db.from('temporary_overrides').select('*');
+
+    if (masterErr || !masterData) {
+        flyerContainer.innerHTML = `<p style="color:#666; text-align:center; padding-top:20px;">No transmission directory slots listed.</p>`;
+        return;
+    }
+
+    // Sort order dictionary mapping rules for chronological British presentation sequences
+    const dayOrder = { sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6 };
+    
+    masterData.sort((a, b) => {
+        if (dayOrder[a.day_of_week] !== dayOrder[b.day_of_week]) {
+            return dayOrder[a.day_of_week] - dayOrder[b.day_of_week];
+        }
+        return a.start_time.localeCompare(b.start_time);
+    });
+
+    let htmlOutput = masterData.map(item => {
+        let currentDJ = item.dj_name;
+        let noteLabel = "";
+
+        // Identify and process temporary scratchpad override disruptions matching this slot frame dynamically
+        if (tempOverrides) {
+            const matchOverride = tempOverrides.find(o => o.start_time === item.start_time);
+            if (matchOverride) {
+                if (matchOverride.is_cancelled) {
+                    currentDJ = "tellstream";
+                    noteLabel = `<span style="color:#ff3333; font-size:0.75rem; margin-left:8px;">[CANCELLED]</span>`;
+                } else {
+                    currentDJ = matchOverride.dj_name;
+                    noteLabel = `<span style="color:#ffdd1a; font-size:0.75rem; margin-left:8px;">[COVER SET]</span>`;
+                }
+            }
+        }
+
+        return `
+            <div class="fb-post-card" style="border-left: 4px solid #00adb5; margin-bottom: 10px; background: rgba(0, 173, 181, 0.02);">
+                <div style="font-weight: bold; color: #00adb5; text-transform: uppercase; font-size: 0.88rem;">
+                    📅 ${item.day_of_week}
+                </div>
+                <div style="color: #e0f2f1; margin-top: 4px; font-size: 0.95rem;">
+                    ⏰ ${item.start_time} - ${item.end_time} <span style="color:#ffdd1a; font-size:0.8rem; font-weight:bold;">${item.time_zone}</span>
+                </div>
+                <div style="color: #888; font-size: 0.85rem; margin-top: 2px;">
+                    👤 Presenter: <strong style="color:#fff;">${currentDJ}</strong> ${noteLabel}
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    flyerContainer.innerHTML = htmlOutput || `<p style="color:#666; text-align:center; padding-top:20px;">No transmission directory slots listed.</p>`;
+}
+
 supabase_db.channel('public:messages').on('postgres_changes', { event: 'INSERT', pattern: 'public', table: 'messages' }, payload => { appendMessage(payload.new); }).subscribe();
 supabase_db.channel('public:secured_profiles').on('postgres_changes', { event: '*', pattern: 'public', table: 'secured_profiles' }, async () => { await syncProfilesMap(); }).subscribe();
 
@@ -821,6 +947,10 @@ supabase_db.channel('public:stream_status').on('postgres_changes', { event: '*',
     if (payload.new && payload.new.current_show) { renderStreamHeader(payload.new.current_show); }
 }).subscribe();
 
+// DATABASE CHANNELS BINDING SCHEDULE DATA WRITES TO AUTOMATED MIDDLE TIMETABLE REDRAWS
+supabase_db.channel('public:master_schedule').on('postgres_changes', { event: '*', pattern: 'public', table: 'master_schedule' }, () => { fetchAndRenderWeeklyTimetable(); }).subscribe();
+supabase_db.channel('public:temporary_overrides').on('postgres_changes', { event: '*', pattern: 'public', table: 'temporary_overrides' }, () => { fetchAndRenderWeeklyTimetable(); }).subscribe();
+
 async function sendMessage() {
     const user = usernameInput.value.trim() || 'Listener';
     let text = messageInput.value.trim();
@@ -832,6 +962,12 @@ async function sendMessage() {
         
         if (profile && userPowerLevel >= 1) { 
             
+            if (text.startsWith('/schedule ')) {
+                messageInput.value = '';
+                await processScheduleConsoleInjections(text, user);
+                return;
+            }
+
             if (text.startsWith('/show')) {
                 let showNameInput = "";
                 if (text.trim() === '/show live') {
@@ -920,71 +1056,3 @@ async function sendMessage() {
     if (wasApology) { messageInput.value = ''; return; }
 
     messageInput.value = '';
-    await supabase_db.from('messages').insert([{ username: user, message: text }]);
-}
-
-sendBtn.addEventListener('click', sendMessage);
-messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
-
-(async function initSystem() {
-    renderSiteNewsFeed();
-    renderActiveFlyers();
-    renderHelpContent(false);
-    setTimeout(initQuickEmojiCloud, 500);
-    
-    const hiddenInputFileTag = document.createElement('input');
-    hiddenInputFileTag.type = 'file';
-    hiddenInputFileTag.id = 'studioLogoHiddenFilePicker';
-    hiddenInputFileTag.accept = 'image/png';
-    hiddenInputFileTag.style.display = 'none';
-    document.body.appendChild(hiddenInputFileTag);
-
-    hiddenInputFileTag.addEventListener('change', async function(e) {
-        const file = e.target.files[0];
-        if (!file || !pendingLogoTargetName) return;
-        try {
-            const uploadFileName = `${pendingLogoTargetName}.png`;
-            const { error } = await supabase_db.storage.from('dj-logos').upload(uploadFileName, file, { upsert: true });
-            if (error) throw error;
-            alert(`✅ Success! Transparent logo saved for: "${pendingLogoTargetName.replace(/_/g, ' ')}"`);
-            await loadInitialStreamStatus();
-        } catch (err) {
-            alert("Cloud Upload Failure: " + err.message);
-        } finally {
-            hiddenInputFileTag.value = '';
-            pendingLogoTargetName = "";
-        }
-    });
-
-    await syncProfilesMap();
-    await syncBannedWordsMap();
-    await syncBannedUsersMap();
-    await loadMessages();
-    await loadInitialStreamStatus();
-    
-    const currentUser = usernameInput.value.trim();
-    syncDrawerName();
-
-    setTimeout(() => {
-        const profile = profilesCache[currentUser];
-        const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
-        const isLoggedIn = profile && profile.passkey === authorizedKey;
-        const mainBody = "Greetings and welcome to Tellstream Chat. Please help keep this experience a positive blessing for one and all. Remember, at any time, users may have children around them. Bad blessings will be removed. One love from Tellstream.";
-
-        if (isLoggedIn) {
-            const prefix = `Welcome back ${currentUser}, we are blessed you are here. Please continue to fulljoy the vibes. `;
-            const lastSeenKey = `tellstream_greeting_${currentUser.toLowerCase()}`;
-            const lastSeenDate = localStorage.getItem(lastSeenKey);
-            const todayDateStr = new Date().toDateString();
-
-            if (lastSeenDate === todayDateStr) {
-                appendPrivateWelcomeGreeting(prefix);
-            } else {
-                appendPrivateWelcomeGreeting(prefix + mainBody);
-                localStorage.setItem(lastSeenKey, todayDateStr);
-            }
-        } else {
-            appendPrivateWelcomeGreeting(mainBody);
-        }
-    }, 200);
-})();
