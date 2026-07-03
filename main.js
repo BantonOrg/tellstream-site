@@ -58,17 +58,24 @@ const djHelpInstructions = [
     { title: "⚔️ Console Moderation Shortcuts", text: "Manage chat rules live using: '/add [word]' to expand filters, '/del [word]' to drop filters, or '/unban [username]' to restore access to struck listener handles." }
 ];
 
-// CELL-LEFT ISOLATED ENGINE (BACKGROUND PARITY MATCH & OVERLAY DYNAMICS)
+// CELL-LEFT ISOLATED ENGINE (DYNAMIC BOUNDS & AUTOMATED MODE SWITCH)
 function renderStreamHeader(showName) {
     const cellLeft = document.querySelector('.cell-left');
     const wrapper = document.querySelector('.cell-left .tagline-wrapper');
     if (!cellLeft) return;
 
     let display = document.getElementById('stream-name-display');
+    let logoImg = document.getElementById('stream-logo-display');
     
-    // Remove any structural image tag completely to enforce background behavior parity
-    const oldImg = document.getElementById('stream-logo-display');
-    if (oldImg) oldImg.remove();
+    // 1. Structural Setup: Build components if they don't exist yet
+    if (!logoImg) {
+        logoImg = document.createElement('img');
+        logoImg.id = 'stream-logo-display';
+        logoImg.style.width = '100%';
+        logoImg.style.height = 'auto'; // Fluid scaling allows image aspect ratio to dictate cell height
+        logoImg.style.display = 'none';      
+        cellLeft.appendChild(logoImg);
+    }
 
     if (!display) {
         display = document.createElement('p');
@@ -82,12 +89,6 @@ function renderStreamHeader(showName) {
         display.style.lineHeight = '1.2';
         display.style.maxWidth = '95%';
         display.style.textAlign = 'center';
-        display.style.position = 'absolute';
-        display.style.left = '50%';
-        display.style.transform = 'translateX(-50%)';
-        display.style.width = '100%';
-        display.style.bottom = '12px';
-        display.style.zIndex = '99999'; // Dominant presentation overlay depth protection
         cellLeft.appendChild(display);
     }
     
@@ -102,26 +103,26 @@ function renderStreamHeader(showName) {
         imageProbe.src = imgCloudUrl;
 
         imageProbe.onload = function() {
-            // STATE B: IMAGE MATCH VALIDATED -> Sync layout rules to match the center cell
+            // STATE B: IMAGE FOUND -> Switch to image-driven physics matching the middle cell
             if (wrapper) {
                 wrapper.querySelectorAll('h1, p').forEach(el => el.style.display = 'none');
             }
             
-            cellLeft.style.backgroundImage = `url('${imgCloudUrl}')`;
-            cellLeft.style.backgroundSize = 'cover';
-            cellLeft.style.backgroundPosition = 'center center';
-            cellLeft.style.backgroundRepeat = 'no-repeat';
+            // Strip text absolute constraints; let the natural image flow control the container height
+            cellLeft.style.position = 'relative';
+            cellLeft.style.height = 'auto'; 
             
-            // Re-pin overlay metrics securely over background plane context
-            if (display.parentElement !== cellLeft) {
-                cellLeft.appendChild(display);
-            }
+            logoImg.src = imgCloudUrl;
+            logoImg.style.position = 'relative'; // Removes absolute locking
+            logoImg.style.display = 'block';
+
+            // Pin text overlay absolutely over the natural fluid image background
             display.style.position = 'absolute';
             display.style.left = '50%';
             display.style.transform = 'translateX(-50%)';
             display.style.width = '100%';
             display.style.bottom = '12px';
-            display.style.textAlign = 'center';
+            display.style.zIndex = '9999';
 
             if (cleanName.toLowerCase() === 'tellstream') {
                 display.innerText = "TELLSTREAM NONE STOP";
@@ -131,19 +132,24 @@ function renderStreamHeader(showName) {
         };
 
         imageProbe.onerror = function() {
-            // STATE A: NO IMAGE DISCOVERED -> Clean cell parameters and revert to base text typography rules
-            cellLeft.style.backgroundImage = 'none';
+            // STATE A: NO IMAGE FOUND -> Fallback completely to structural text parameters
+            logoImg.style.display = 'none';
+            logoImg.style.position = 'absolute';
+            
+            cellLeft.style.height = ''; // Clear forced rules, return to base CSS flow
             
             if (wrapper) {
                 wrapper.querySelectorAll('h1, p').forEach(el => el.style.display = 'block');
                 if (display.parentElement !== wrapper) {
                     wrapper.appendChild(display);
                 }
+                // Normalize text behavior for normal text boxes
                 display.style.position = 'static';
                 display.style.transform = 'none';
                 display.style.marginTop = '4px';
                 display.style.width = 'auto';
                 display.style.textAlign = 'left';
+                display.style.zIndex = 'auto';
             }
 
             if (cleanName.toLowerCase() === 'tellstream') {
@@ -551,7 +557,7 @@ async function submitNoticeUpdate(boardType) {
         return;
     }
 
-    if (containsSwwearWords(textContent)) {
+    if (containsSwearWords(textContent)) {
         await handleUserStrike(currentUser, textContent);
         inputField.value = "";
         return; 
@@ -637,8 +643,9 @@ async function handleSecuritySubmit() {
         let assignedLevel = 0;
         let assignedHover = "Tella Fambily";
         if (currentName === "Banton") { assignedLevel = 2; assignedHover = "banton.org"; }
-        else if (currentName === "Big John") { assignedLevel = 2; assignedHover = "The Boss"; }
-        else if (currentName === "Perfectionist") { assignedLevel = 2; assignedHover = "You done know"; }
+        else if (currentName === "BIG JOHN NEW000") { assignedLevel = 2; assignedHover = "the boss"; }
+        else if (currentName === "Perfection") { assignedLevel = 2; assignedHover = "You done know"; }
+        else if (currentName === "Milo Medina Int") { assignedLevel = 2; assignedHover = "Milo Medina Int"; }
 
         const { error } = await supabase_db.from('secured_profiles').insert([{
             username: currentName,
