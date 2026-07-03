@@ -761,43 +761,44 @@ body.chat-is-fullscreen .chat-fs-help-panel {
     .header-container {
         flex-direction: column !important;
         height: auto !important;
-        background: #111;
     }
     
     .header-cell {
         width: 100% !important;
+        height: 180px !important; 
         justify-content: center !important;
         text-align: center !important;
+        padding: 20px !important;
         box-sizing: border-box;
     }
     
     .cell-left {
-        height: 120px !important; /* Proportional vertical height container window lock */
-        padding: 0 !important;
-        position: relative;
         background-image: url('header-bg1m.jpg') !important;
         background-position: center center !important;
-        background-size: cover !important;
+        background-size: 100% 100% !important;
+        position: relative;
     }
 
-    /* Force the custom foreground live image component to contain full text values without cropping */
+    /* CRITICAL FIX: Locks custom foreground images to perfect, non-cropped aspect ratio windows */
     .cell-left img#stream-logo-display {
+        width: 150px !important;
+        height: 140px !important;
         object-fit: contain !important;
         object-position: center center !important;
     }
     
-    /* Drop the blank desktop spacer element completely on mobile view formats */
     .cell-middle {
-        display: none !important;
+        background-image: url('header-bg2m.jpg') !important;
+        background-position: center center !important;
+        background-size: 100% 100% !important;
     }
     
     .cell-right {
-        height: 60px !important; /* Clean close padding wrap for the audio control frame element */
-        padding: 10px !important;
         background-image: url('header-bg3m.jpg') !important;
         background-position: center center !important;
-        background-size: cover !important;
+        background-size: 100% 100% !important;
         justify-content: center !important;
+        padding-right: 0px !important;
     }
     
     .columns-container {
