@@ -77,14 +77,14 @@ function renderStreamHeader(showName) {
         cellLeft.appendChild(logoImg);
     }
 
-    if (!display) {
+if (!display) {
         display = document.createElement('p');
         display.id = 'stream-name-display';
-        display.style.color = '#ffdd1a';
+        display.style.color = '#ffffff'; // Changed from yellow to clean white
         display.style.fontSize = '1.1rem';
         display.style.fontWeight = 'bold';
-        display.style.webkitTextStroke = '1px #000000';
-        display.style.textShadow = '2px 2px 4px rgba(0, 0, 0, 0.9)';
+        display.style.webkitTextStroke = '1.5px #000000'; // Slightly thickened outline edge definition
+        display.style.textShadow = '3px 3px 6px rgba(0, 0, 0, 0.95), -2px -2px 4px rgba(0, 0, 0, 0.8)'; // Good strong deep multi-layered drop shadow
         display.style.textTransform = 'uppercase';
         display.style.lineHeight = '1.2';
         display.style.maxWidth = '95%';
