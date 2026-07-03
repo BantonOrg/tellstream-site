@@ -53,7 +53,7 @@ const noticeboardHelpInstructions = [
 const djHelpInstructions = [
     { title: "🎛️ Live Broadcast: /show live", text: "Type '/show live' to instantly pull your active presenter name and update the golden header logo across all global listeners' screens." },
     { title: "🖼️ Upload a new image", text: "Transparent PNG are the only files accepted. You must make them good quality, if you need help, speak to management. To upload your image simply type /upload Your Name" },
-    { title: "🔄 Off-Air Sign Off Script", text: "When closing down your live set, type '/show tellstream' to cleanly wipe your on-screen graphic profile and restore the automated non-stop system banner text." },
+    { title: "🔄 Last Presenter of the Night ?", text: "When closing down your live set, type '/show tellstream' to cleanly wipe your on-screen graphic profile and restore the automated non-stop system banner text." },
     { title: "🚨 Emergency Stream Fixes", text: "The audio player contains automated reconnect flags. If a listener reports a layout freeze or dead air, instruct them to execute a hard page refresh (Ctrl + F5)." },
     { title: "⚔️ Console Moderation Shortcuts", text: "Manage chat rules live using: '/add [word]' to expand filters, '/del [word]' to drop filters, or '/unban [username]' to restore access to struck listener handles." }
 ];
