@@ -1014,14 +1014,11 @@ async function fetchAndRenderWeeklyTimetable() {
         }
 
         const dayOrder = { sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6 };
-        masterData.sort((a, b) => {
-            if (dayOrder[a.day_of_week] !== dayOrder[b.day_of_week]) {
-                return dayOrder[a.day_of_week] - dayOrder[b.day_of_week];
-            }
-            return a.start_time.localeCompare(b.start_time);
-        });
+        
+        // Grab the viewer's native system time zone city
+        const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-        let htmlOutput = masterData.map(item => {
+        let processedData = masterData.map(item => {
             let currentDJ = item.dj_name;
             let noteLabel = "";
 
@@ -1030,32 +1027,69 @@ async function fetchAndRenderWeeklyTimetable() {
                 if (matchOverride) {
                     if (matchOverride.is_cancelled) {
                         currentDJ = "tellstream";
-                        noteLabel = `<span style="color:#ff3333; font-size:0.75rem; margin-left:8px;">[CANCELLED]</span>`;
+                        noteLabel = `<span style="color:#ff3333; font-size:0.75rem; margin-left:8px; font-weight:bold;">[CANCELLED]</span>`;
                     } else {
                         currentDJ = matchOverride.dj_name;
-                        noteLabel = `<span style="color:#ffdd1a; font-size:0.75rem; margin-left:8px;">[COVER SET]</span>`;
+                        noteLabel = `<span style="color:#ffdd1a; font-size:0.75rem; margin-left:8px; font-weight:bold;">[COVER SET]</span>`;
                     }
                 }
             }
 
-            return `
-                <div class="fb-post-card" style="border-left: 4px solid #00adb5; margin-bottom: 10px; background: rgba(0, 173, 181, 0.02);">
-                    <div style="font-weight: bold; color: #00adb5; text-transform: uppercase; font-size: 0.88rem;">
-                        📅 ${item.day_of_week}
-                    </div>
-                    <div style="color: #e0f2f1; margin-top: 4px; font-size: 0.95rem;">
-                        ⏰ ${item.start_time} - ${item.end_time} <span style="color:#ffdd1a; font-size:0.8rem; font-weight:bold;">${item.time_zone}</span>
-                    </div>
-                    <div style="color: #888; font-size: 0.85rem; margin-top: 2px;">
-                        👤 Presenter: <strong style="color:#fff;">${currentDJ}</strong> ${noteLabel}
-                    </div>
-                </div>
-            `;
-        }).join('');
+            // Break raw database values ('2000') into numbers
+            const startHours = parseInt(item.start_time.substring(0, 2), 10);
+            const startMins = parseInt(item.start_time.substring(2, 4), 10);
+            const endHours = parseInt(item.end_time.substring(0, 2), 10);
+            const endMins = parseInt(item.end_time.substring(2, 4), 10);
 
-        flyerContainer.innerHTML = htmlOutput;
+            // Establish dates pinned to Europe/London
+            const baseDate = new Date();
+            const currentDayIndex = baseDate.getDay();
+            const targetDayIndex = dayOrder[item.day_of_week.toLowerCase()];
+            let dayDiff = targetDayIndex - currentDayIndex;
+            
+            baseDate.setDate(baseDate.getDate() + dayDiff);
+
+            const ukStart = new Date(baseDate.toLocaleString('en-US', { timeZone: 'Europe/London' }));
+            ukStart.setHours(startHours, startMins, 0, 0);
+
+            const ukEnd = new Date(baseDate.toLocaleString('en-US', { timeZone: 'Europe/London' }));
+            ukEnd.setHours(endHours, endMins, 0, 0);
+
+            // Shift everything cleanly to the user's local zone
+            const localDayStr = ukStart.toLocaleDateString('en-US', { timeZone: userTimeZone, weekday: 'long' });
+            const localStartStr = ukStart.toLocaleTimeString('en-GB', { timeZone: userTimeZone, hour: '2-digit', minute: '2-digit', hour12: false });
+            const localEndStr = ukEnd.toLocaleTimeString('en-GB', { timeZone: userTimeZone, hour: '2-digit', minute: '2-digit', hour12: false });
+
+            return {
+                sortDay: dayOrder[localDayStr.toLowerCase()],
+                sortTime: localStartStr,
+                html: `
+                    <div class="fb-post-card" style="border-left: 4px solid #00adb5; margin-bottom: 12px; background: rgba(0, 173, 181, 0.03); padding: 14px; border-radius: 4px;">
+                        <div style="font-weight: 900; color: #00adb5; text-transform: uppercase; font-size: 0.95rem; letter-spacing: 1px; display: flex; justify-content: space-between;">
+                            <span>📅 ${localDayStr}</span>
+                            <span style="color: #555; font-size: 0.75rem; text-transform: none; font-weight: normal;">📍 Auto-Translated</span>
+                        </div>
+                        <div style="color: #ffffff; margin-top: 6px; font-size: 1.25rem; font-weight: 900; letter-spacing: 0.5px;">
+                            ⏰ ${localStartStr} - ${localEndStr}
+                        </div>
+                        <div style="color: #a0a0a0; font-size: 0.88rem; margin-top: 8px; border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 8px; display: flex; align-items: center;">
+                            🎙️ <span style="margin-left: 6px;">Presenter: <strong style="color:#fff; font-weight:800;">${currentDJ}</strong></span> ${noteLabel}
+                        </div>
+                    </div>
+                `
+            };
+        });
+
+        // Re-sort the final display array by the VIEWER'S timeline flow
+        processedData.sort((a, b) => {
+            if (a.sortDay !== b.sortDay) return a.sortDay - b.sortDay;
+            return a.sortTime.localeCompare(b.sortTime);
+        });
+
+        flyerContainer.innerHTML = processedData.map(d => d.html).join('');
+
     } catch (e) {
-        console.error("Timetable parse error:", e);
+        console.error("Timetable translation engine fault:", e);
         flyerContainer.innerHTML = `<p style="color:#666; text-align:center; padding-top:20px; font-style:italic;">Weekly Transmission Timetable under construction.</p>`;
     }
 }
