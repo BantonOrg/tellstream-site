@@ -26,7 +26,7 @@ body {
 }
 
 /* ==========================================================================
-   🧩 THE 3-CELL HEADER SYSTEM (DESKTOP MODE)
+   🧱 THE 3-CELL HEADER SYSTEM (DESKTOP MODE)
    ========================================================================== */
 .header-container {
     display: flex;
@@ -92,7 +92,7 @@ body {
 }
 
 /* ==========================================================================
-   📊 MAIN LAYOUT WORKSPACE COLUMNS
+   📻 MAIN LAYOUT WORKSPACE COLUMNS
    ========================================================================== */
 .columns-container {
     flex: 1;
@@ -154,6 +154,30 @@ body {
     display: flex;
     flex-direction: column;
     gap: 12px;
+}
+
+/* 📘 FACEBOOK INNER WRAPPER SCROLL LOCK ENGINE */
+#fbFeedContainer {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-right: 6px;
+}
+
+#fbFeedContainer::-webkit-scrollbar {
+    width: 6px;
+}
+#fbFeedContainer::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+}
+#fbFeedContainer::-webkit-scrollbar-thumb {
+    background: rgba(0, 173, 181, 0.3);
+    border-radius: 4px;
+}
+#fbFeedContainer::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 173, 181, 0.6);
 }
 
 .fb-post-card {
@@ -507,7 +531,7 @@ body {
 .drawer-action-btn:hover { background: #008c94; }
 
 /* ==========================================================================
-   🎮 CONSOLE INPUT HUB (SWAPPED LAYER ORDER FOR TEXTAREA FLUSH-LEFT POSITIONING)
+   🎮 CONSOLE INPUT HUB
    ========================================================================== */
 .chat-input-area {
     padding: 12px;
@@ -521,10 +545,9 @@ body {
     flex-shrink: 0;
 }
 
-/* Textarea now expands first on the left side */
 .chat-input-area textarea#messageInput {
     flex: 1;
-    order: 1; /* Left position sorting priority */
+    order: 1; 
     background: #2d2d2d;
     border: 1px solid rgba(255, 255, 255, 0.05);
     padding: 8px 12px;
@@ -541,9 +564,8 @@ body {
     border-color: rgba(0, 173, 181, 0.4);
 }
 
-/* Lock toggle sits perfectly in between components */
 .lock-toggle-btn {
-    order: 2; /* Centered layout placement */
+    order: 2; 
     background: transparent;
     border: none;
     font-size: 1.1rem;
@@ -556,14 +578,13 @@ body {
     flex-shrink: 0;
 }
 
-/* Control stack containing username and send button maps cleanly to the far right side */
 .left-control-stack {
     display: flex;
     flex-direction: column;
     gap: 6px; 
     width: 85px;
     flex-shrink: 0;
-    order: 3; /* Right alignment stack routing */
+    order: 3; 
 }
 
 .left-control-stack input#usernameInput {
@@ -602,7 +623,7 @@ body.chat-is-fullscreen .main-content {
 }
 
 /* ==========================================================================
-   🧩 THE PERFECT 4-COLUMN FULLSCREEN ENGINE (NO LAYOUT OVERLAPS)
+   🎮 THE PERFECT 4-COLUMN FULLSCREEN ENGINE
    ========================================================================== */
 body.chat-is-fullscreen .chat-sidebar {
     width: 100% !important;
@@ -660,7 +681,6 @@ body.chat-is-fullscreen .chat-fs-help-panel {
     flex-shrink: 0 !important;
 }
 
-/* 🛑 FIXED OVERLAY: Locks layout paths completely into a fixed space stack layer */
 .flyer-modal-overlay {
     position: fixed !important;
     top: 0 !important;
@@ -769,18 +789,29 @@ body.chat-is-fullscreen .chat-fs-help-panel {
         justify-content: center !important;
         text-align: center !important;
         padding: 20px !important;
+        box-sizing: border-box;
     }
     
     .cell-left {
         background-image: url('header-bg1m.jpg') !important;
         background-position: center center !important;
         background-size: 100% 100% !important;
+        position: relative;
     }
+
+    .cell-left img#stream-logo-display {
+        width: 150px !important;
+        height: 140px !important;
+        object-fit: contain !important;
+        object-position: center center !important;
+    }
+    
     .cell-middle {
         background-image: url('header-bg2m.jpg') !important;
         background-position: center center !important;
         background-size: 100% 100% !important;
     }
+    
     .cell-right {
         background-image: url('header-bg3m.jpg') !important;
         background-position: center center !important;
