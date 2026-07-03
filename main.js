@@ -82,13 +82,17 @@ function renderStreamHeader(showName) {
         cellLeft.appendChild(display);
     }
 
+    // Dynamic sizing match: Track standard vs mobile screen layout stacks
+    const isMobile = window.matchMedia('(max-width: 1024px)').matches;
+
     // FORCE LAYOUT PROPERTIES OUTSIDE CONDITIONAL BLOCKS TO OVERRIDE CACHED DOM NODES
     logoImg.style.position = 'absolute';
     logoImg.style.top = '0';
     logoImg.style.left = '0';
     logoImg.style.width = '100%';
     logoImg.style.height = '100%';
-    logoImg.style.objectFit = 'fill'; // Pads out completely corner-to-corner matching the background scale format
+    // Mirrors desktop background-size: cover || mobile background-size: 100% 100%
+    logoImg.style.objectFit = isMobile ? 'fill' : 'cover'; 
     logoImg.style.objectPosition = 'center'; 
     logoImg.style.zIndex = '10'; // Sits cleanly above CSS backgrounds, below typography overlays
     
@@ -226,7 +230,7 @@ function cleanSwearWords(text) {
     return text.replace(pattern, '****');
 }
 
-function checkBanStatus(username) {
+checkBanStatus(username) {
     const userBan = bannedUsersCache[username.toLowerCase()];
     if (!userBan) return { isBanned: false };
 
