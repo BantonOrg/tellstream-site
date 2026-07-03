@@ -58,13 +58,13 @@ const djHelpInstructions = [
     { title: "⚔️ Console Moderation Shortcuts", text: "Manage chat rules live using: '/add [word]' to expand filters, '/del [word]' to drop filters, or '/unban [username]' to restore access to struck listener handles." }
 ];
 
-// CELL-LEFT ENGINE (FULLY PACKED ASPECT RATIO AND TEXT LAYER PRESERVATION FIXED)
+// CELL-LEFT ISOLATED ENGINE (FORCED FULL PAD OUT & TEXT ORDER INSTANTIATED EVERY RENDER)
 function renderStreamHeader(showName) {
     const cellLeft = document.querySelector('.cell-left');
     const wrapper = document.querySelector('.cell-left .tagline-wrapper');
     if (!cellLeft) return;
 
-    // Establish absolute relative layout positioning context directly onto the left column block
+    // Secure relative bounding context parameters on the left cell layer container
     cellLeft.style.position = 'relative';
 
     let display = document.getElementById('stream-name-display');
@@ -73,27 +73,24 @@ function renderStreamHeader(showName) {
     if (!logoImg) {
         logoImg = document.createElement('img');
         logoImg.id = 'stream-logo-display';
-        logoImg.style.position = 'absolute';
-        logoImg.style.top = '0';
-        logoImg.style.left = '0';
-        logoImg.style.width = '100%';
-        logoImg.style.height = '100%';
-        
-        // CORNER-TO-CORNER EXECUTION: Force image template coordinates to pad out fully over background fields
-        logoImg.style.objectFit = 'fill'; 
-        logoImg.style.objectPosition = 'center'; 
-        
-        logoImg.style.zIndex = '1'; 
-        logoImg.style.display = 'none';      
         cellLeft.appendChild(logoImg);
     }
 
     if (!display) {
         display = document.createElement('p');
         display.id = 'stream-name-display';
-        display.style.position = 'absolute';
         cellLeft.appendChild(display);
     }
+
+    // FORCE LAYOUT PROPERTIES OUTSIDE CONDITIONAL BLOCKS TO OVERRIDE CACHED DOM NODES
+    logoImg.style.position = 'absolute';
+    logoImg.style.top = '0';
+    logoImg.style.left = '0';
+    logoImg.style.width = '100%';
+    logoImg.style.height = '100%';
+    logoImg.style.objectFit = 'fill'; // Pads out completely corner-to-corner matching the background scale format
+    logoImg.style.objectPosition = 'center'; 
+    logoImg.style.zIndex = '10'; // Sits cleanly above CSS backgrounds, below typography overlays
     
     if (showName) {
         const cleanName = showName.trim();
@@ -106,21 +103,17 @@ function renderStreamHeader(showName) {
         imageProbe.src = imgCloudUrl;
 
         imageProbe.onload = function() {
-            // Guarded Filter: Hide baseline elements inside tagline block wrapper without hiding stream text nodes
+            // Guarded Filter: Hide base elements inside tagline-wrapper safely without targeting stream elements
             if (wrapper) {
                 wrapper.querySelectorAll('h1, p').forEach(el => {
                     if (el.id !== 'stream-name-display') el.style.display = 'none';
                 });
             }
             
-            // LAYER LOCK: Force re-appending order to ensure layout hierarchy places text on top
-            cellLeft.appendChild(logoImg);
-            cellLeft.appendChild(display);
-            
             logoImg.src = imgCloudUrl;
             logoImg.style.display = 'block';
 
-            // VISIBILITY SHIELD: Secure typography configurations directly during layout initialization
+            // VISIBILITY LOCK: Force absolute foreground priority parameters directly to stream text display nodes
             display.style.color = '#ffdd1a';
             display.style.fontSize = '1.1rem';
             display.style.fontWeight = 'bold';
@@ -137,8 +130,12 @@ function renderStreamHeader(showName) {
             display.style.marginTop = '0px';
             display.style.width = '100%';
             display.style.textAlign = 'center';
-            display.style.zIndex = '100'; 
+            display.style.zIndex = '99999'; // Secure ironclad frontend presentation safety layer
             display.style.display = 'block';
+
+            // Force rendering tree sorting path sequence: Image loads first, text appends directly on top
+            cellLeft.appendChild(logoImg);
+            cellLeft.appendChild(display);
 
             if (cleanName.toLowerCase() === 'tellstream') {
                 display.innerText = "TELLSTREAM NONE STOP";
@@ -148,7 +145,7 @@ function renderStreamHeader(showName) {
         };
 
         imageProbe.onerror = function() {
-            // Fallback Engine: Clear dynamic parameters and return baseline static typography tags into view
+            // Fallback: Clear dynamic canvas streams and return baseline elements back into view parameters
             logoImg.style.display = 'none';
             
             if (wrapper) {
