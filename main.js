@@ -51,11 +51,14 @@ const noticeboardHelpInstructions = [
 ];
 
 const djHelpInstructions = [
-    { title: "🎛️ Live Broadcast: /show live", text: "Type '/show live' to instantly pull your active presenter name and update the golden header logo across all global listeners' screens." },
-    { title: "🖼️ Presenter Image Upload", text: "PNG are the only files accepted. The imag emust be good quality and sized : 930 x 434px, if you need help, speak to management. To upload your image simply type /upload Your Name" },
-    { title: "🔄 Last Presenter of the Night ?", text: "When closing down your live set, type '/show tellstream' to cleanly wipe your on-screen graphic profile and restore the automated non-stop system banner text." },
-    { title: "🚨 Emergency Stream Fixes", text: "The audio player contains automated reconnect flags. If a listener reports a layout freeze or dead air, instruct them to execute a hard page refresh (Ctrl + F5)." },
-    { title: "⚔️ Console Moderation Shortcuts", text: "Manage chat word usage rules live using: '/add [word]' to expand filters, '/del [word]' to drop filters, or '/unban [username]' to restore access to struck listener handles." }
+    { title: "⚠️ Notice", text: "If you are unsure how to use these controls, ask management for guidance before typing them. It is easy once you understand, but you need to know what you are doing so it stays simple for everyone." },
+    { title: "🎛️ /show live", text: "Example: /show live \nWhat it does: Shows that YOU are now live on air." },
+    { title: "🔄 /show tellstream", text: "Example: /show tellstream \nWhat it does: Shows Tellstream Autopilot as Live again. Only do this if you are last for the day." },
+    { title: "🗓️ /schedule perm [Day] [Start Time] [End Time] [Time Zone]", text: "Example: /schedule perm Friday 2000 2200 BST \nWhat it does: Locks weekly show detail in permanently." },
+    { title: "🚨 /schedule temp [ddmmyy] [Start Time] [End Time] [Time Zone]", text: "Example: /schedule temp 100726 2000 2200 BST \nWhat it does: Adds a one-off temporary change for a specific date." },
+    { title: "❌ /schedule cancel [ddmmyy] [Start Time]", text: "Example: /schedule cancel 100726 2000 \nWhat it does: Cancels a show already added (perm or temp)." },
+    { title: "🖼️ /upload [Name] & /delete [Name]", text: "Example: /upload Big John \nWhat it does: Manages transparent PNG logo assets in the cloud." },
+    { title: "⚔️ Moderation Shortcuts", text: "/add [word], /del [word], /unban [username], or /listwords to manage filters live." }
 ];
 
 // CELL-LEFT ISOLATED ENGINE (DYNAMIC BOUNDS & AUTOMATED MODE SWITCH)
