@@ -1060,17 +1060,17 @@ async function fetchAndRenderWeeklyTimetable() {
             const localStartStr = ukStart.toLocaleTimeString('en-GB', { timeZone: userTimeZone, hour: '2-digit', minute: '2-digit', hour12: false });
             const localEndStr = ukEnd.toLocaleTimeString('en-GB', { timeZone: userTimeZone, hour: '2-digit', minute: '2-digit', hour12: false });
 
-            return {
+return {
                 sortDay: dayOrder[localDayStr.toLowerCase()],
                 sortTime: localStartStr,
                 html: `
-                    <div class="fb-post-card" style="border-left: 4px solid #00adb5; margin-bottom: 10px; background: rgba(0, 173, 181, 0.03); padding: 12px; border-radius: 4px;">
+                    <div class="fb-post-card" style="border-left: 4px solid #00adb5; margin-bottom: 10px; background: rgba(0, 173, 181, 0.03); padding: 12px; border-radius: 4px; box-sizing: border-box; overflow: hidden;">
                         
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
                             <span style="font-weight: 900; color: #00adb5; text-transform: uppercase; font-size: 0.95rem; letter-spacing: 1px;">
                                 📅 ${localDayStr}
                             </span>
-                            <span style="color: #ffffff; font-size: 1.2rem; font-weight: 900; letter-spacing: 0.5px;">
+                            <span style="color: #ffffff; font-size: 1.2rem; font-weight: 900; letter-spacing: 0.5px; padding-right: 4px;">
                                 ⏰ ${localStartStr} - ${localEndStr}
                             </span>
                         </div>
