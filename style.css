@@ -26,7 +26,7 @@ body {
 }
 
 /* ==========================================================================
-   🧩 THE 3-CELL HEADER SYSTEM (DESKTOP MODE)
+   🧱 THE 3-CELL HEADER SYSTEM (DESKTOP MODE)
    ========================================================================== */
 .header-container {
     display: flex;
@@ -92,7 +92,7 @@ body {
 }
 
 /* ==========================================================================
-   📊 MAIN LAYOUT WORKSPACE COLUMNS
+   📻 MAIN LAYOUT WORKSPACE COLUMNS
    ========================================================================== */
 .columns-container {
     flex: 1;
@@ -602,7 +602,7 @@ body.chat-is-fullscreen .main-content {
 }
 
 /* ==========================================================================
-   🧩 THE PERFECT 4-COLUMN FULLSCREEN ENGINE (NO LAYOUT OVERLAPS)
+   🎮 THE PERFECT 4-COLUMN FULLSCREEN ENGINE (NO LAYOUT OVERLAPS)
    ========================================================================== */
 body.chat-is-fullscreen .chat-sidebar {
     width: 100% !important;
@@ -660,7 +660,7 @@ body.chat-is-fullscreen .chat-fs-help-panel {
     flex-shrink: 0 !important;
 }
 
-/* 🛑 FIXED OVERLAY: Locks layout paths completely into a fixed space stack layer */
+/* 📥 FIXED OVERLAY: Locks layout paths completely into a fixed space stack layer */
 .flyer-modal-overlay {
     position: fixed !important;
     top: 0 !important;
@@ -761,32 +761,43 @@ body.chat-is-fullscreen .chat-fs-help-panel {
     .header-container {
         flex-direction: column !important;
         height: auto !important;
+        background: #111;
     }
     
     .header-cell {
         width: 100% !important;
-        height: 180px !important; 
         justify-content: center !important;
         text-align: center !important;
-        padding: 20px !important;
+        box-sizing: border-box;
     }
     
     .cell-left {
+        height: 120px !important; /* Proportional vertical height container window lock */
+        padding: 0 !important;
+        position: relative;
         background-image: url('header-bg1m.jpg') !important;
         background-position: center center !important;
-        background-size: 100% 100% !important;
+        background-size: cover !important;
     }
+
+    /* Force the custom foreground live image component to contain full text values without cropping */
+    .cell-left img#stream-logo-display {
+        object-fit: contain !important;
+        object-position: center center !important;
+    }
+    
+    /* Drop the blank desktop spacer element completely on mobile view formats */
     .cell-middle {
-        background-image: url('header-bg2m.jpg') !important;
-        background-position: center center !important;
-        background-size: 100% 100% !important;
+        display: none !important;
     }
+    
     .cell-right {
+        height: 60px !important; /* Clean close padding wrap for the audio control frame element */
+        padding: 10px !important;
         background-image: url('header-bg3m.jpg') !important;
         background-position: center center !important;
-        background-size: 100% 100% !important;
+        background-size: cover !important;
         justify-content: center !important;
-        padding-right: 0px !important;
     }
     
     .columns-container {
