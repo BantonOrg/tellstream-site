@@ -124,7 +124,7 @@ if (!display) {
             display.style.zIndex = '9999';
 
             if (cleanName.toLowerCase() === 'tellstream') {
-                display.innerText = "TELLSTREAM NONE STOP";
+                display.innerText = "TELLSTREAM NON STOP";
             } else {
                 display.innerText = `${cleanName} - LIVE`;
             }
