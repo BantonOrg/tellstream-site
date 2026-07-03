@@ -667,9 +667,6 @@ sendBtn.addEventListener('click', sendMessage);
 messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
 
 (async function initSystem() {
-    await renderSiteNewsFeed();
-    await fetchAndRenderWeeklyTimetable(); 
-    
     try { await syncProfilesMap(); } catch(e){}
     try { await syncBannedWordsMap(); } catch(e){}
     try { await syncBannedUsersMap(); } catch(e){}
@@ -728,4 +725,7 @@ messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.s
             appendPrivateWelcomeGreeting(mainBody);
         }
     }, 200);
+
+    try { await renderSiteNewsFeed(); } catch(e){}
+    try { await fetchAndRenderWeeklyTimetable(); } catch(e){}
 })();
