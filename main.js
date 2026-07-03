@@ -350,7 +350,7 @@ async function handleAdminFilterCommand(text) {
     }
 }
 
-async function renderFacebookFeed() {
+async function renderSiteNewsFeed() {
     if (!fbFeedContainer) return;
     
     // 1. Fetch the 12 newest combined records from the boss and selectors boards
@@ -901,7 +901,7 @@ sendBtn.addEventListener('click', sendMessage);
 messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
 
 (async function initSystem() {
-    renderFacebookFeed();
+    renderSiteNewsFeed();
     renderActiveFlyers();
     renderHelpContent(false);
     setTimeout(initQuickEmojiCloud, 500);
