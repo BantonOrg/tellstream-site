@@ -254,10 +254,10 @@ html, body {
     box-shadow: 0 4px 8px rgba(0,0,0,0.4) !important;
 }
 
-/* Overrides the dynamic-45-scale grid matrix to expand outer rows/columns outward */
+/* Overrides the dynamic grid matrix with your precise layout offsets */
 .new-design-bone .domino-half {
-    grid-template-columns: 28% auto 28% !important;
-    grid-template-rows: 28% auto 28% !important;
+    grid-template-columns: 24% auto 32% !important;
+    grid-template-rows: 22% auto 34% !important;
     gap: 0 !important;
     padding: 2px !important;
 }
