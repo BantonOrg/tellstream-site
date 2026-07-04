@@ -128,14 +128,14 @@ html, body {
 }
 
 /* ==========================================================================
-   Authentic Domino Bone Styling
+   Authentic Domino Bone Styling - Premium Masked Texture Layer
    ========================================================================== */
 
 .domino-bone-interactive {
     width: 58px !important;
     height: 119px !important;
-    background: #fdfdfd !important;
-    border: 2px solid #1a1a1a !important;
+    background: url('assets/dom_front.gif') no-repeat center !important;
+    background-size: 100% 100% !important;
     border-radius: 5px !important;
     display: flex !important;
     flex-direction: column !important;
@@ -144,7 +144,7 @@ html, body {
     padding: 4px 2px !important;
     box-sizing: border-box !important;
     cursor: pointer !important;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.8) !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4) !important;
     position: relative;
 }
 
@@ -155,26 +155,17 @@ html, body {
     flex-direction: row !important;
 }
 
-/* The Center Dividing Line & Brass Spinner Pin */
+/* Clear default divider styling since it is baked into dom_front.gif */
 .domino-divider {
     width: 90%;
     height: 2px;
-    background: #222;
+    background: transparent !important;
     margin: 1px 0;
     position: relative;
 }
 
 .domino-divider::after {
-    content: '';
-    position: absolute;
-    width: 4px;
-    height: 4px;
-    background: #cca43b; /* Brass metallic sheen anchor */
-    border: 1px solid #443410;
-    border-radius: 50%;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
+    display: none !important; /* Turn off artificial brass pin */
 }
 
 /* Grid Layout Matrix holding the dots (pips) */
@@ -191,18 +182,17 @@ html, body {
     align-items: center !important;
 }
 
-/* The individual round sunken layout dots */
+/* Changed from a black dot to a container for the ivory image mask */
 .pip {
-    width: 8px !important;
-    height: 8px !important;
-    background: #111 !important;
-    border-radius: 50% !important;
-    visibility: hidden; /* Kept hidden until toggled active */
-    box-shadow: inset 1px 1px 1px rgba(0,0,0,0.6) !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    box-shadow: none !important;
 }
 
 /* Exact positional mapping matrix for a 3x3 dot grid */
-.pip.active { visibility: visible !important; }
 .pos-1 { grid-area: 1 / 1 !important; }
 .pos-2 { grid-area: 1 / 3 !important; }
 .pos-3 { grid-area: 2 / 1 !important; }
