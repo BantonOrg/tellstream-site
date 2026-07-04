@@ -1,3 +1,7 @@
+// ==========================================================================
+// Tellstream Dominoes - Game Board & Player Hand Rendering Layer
+// ==========================================================================
+
 const SUPABASE_URL = "https://vegwferwmyuunwvfqpsf.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZ3dmZXJ3bXl1dW53dmZxcHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODU5NDQsImV4cCI6MjA5Nzk2MTk0NH0.7F3HUEY59BGE5phlD9AukhZzRa3Ied_ZT43j8YZeIy8";
 const supabase_db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -55,7 +59,7 @@ const djHelpInstructions = [
     { title: "🎛️ /show live", text: "Example: /show live \nWhat it does: Shows that YOU are now live on air." },
     { title: "🔄 /show tellstream", text: "Example: /show tellstream \nWhat it does: Shows Tellstream Autopilot as Live again. Only do this if you are last for the day." },
     { title: "🗓️ /schedule perm [Day] [Start Time] [End Time] [Time Zone]", text: "Example: /schedule perm Friday 2000 2200 BST \nWhat it does: Locks weekly show detail in permanently." },
-    { title: "🚨 /schedule temp [ddmmyy] [Start Time] [End Time]", text: "Example: /schedule temp 100726 1500 1700 \nWhat it does: Adds a one-off temporary change for a specific date. Type this exactly using your own local device clock time!" },
+    { title: "🚨 /schedule temp [ddmmyy] [Start Time] [End Time] [Time Zone]", text: "Example: /schedule temp 100726 1500 1700 BST \nWhat it does: Adds a one-off temporary change for a specific date. Type this exactly using your own local device clock time!" },
     { title: "❌ /schedule cancel [ddmmyy] [Start Time]", text: "Example: /schedule cancel 100726 1500 \nWhat it does: Cancels a show already added. Type this using your own local show start time!" },
     { title: "🖼️ /upload [Name] & /delete [Name]", text: "Example: /upload Big John \nWhat it does: Manages transparent PNG logo assets in the cloud." },
     { title: "⚔️ Moderation Shortcuts", text: "/add [word], /del [word], /unban [username], or /listwords to manage filters live." }
@@ -75,7 +79,7 @@ function renderStreamHeader(showName) {
         logoImg = document.createElement('img');
         logoImg.id = 'stream-logo-display';
         logoImg.style.width = '100%';
-        logoImg.style.height = 'auto'; // Fluid scaling allows image aspect ratio to dictate cell height
+        logoImg.style.height = 'auto'; 
         logoImg.style.display = 'none';      
         cellLeft.appendChild(logoImg);
     }
@@ -85,9 +89,10 @@ function renderStreamHeader(showName) {
         display.id = 'stream-name-display';
         display.style.color = '#ffffff'; 
         display.style.fontSize = '1.1rem';
-        display.style.fontWeight = '900'; // Changed from 'bold' to ultra-heavy '900'
-        display.style.webkitTextStroke = '1.8px #000000'; // Thickened black outline edge definition
-        display.style.textShadow = '3px 3px 6px rgba(0, 0, 0, 0.95), -2px -2px 4px rgba(0, 0, 0, 0.8)';        display.style.textTransform = 'uppercase';
+        display.style.fontWeight = '900'; 
+        display.style.webkitTextStroke = '1.8px #000000'; 
+        display.style.textShadow = '3px 3px 6px rgba(0, 0, 0, 0.95), -2px -2px 4px rgba(0, 0, 0, 0.8)';
+        display.style.textTransform = 'uppercase';
         display.style.lineHeight = '1.2';
         display.style.maxWidth = '95%';
         display.style.textAlign = 'center';
@@ -105,20 +110,17 @@ function renderStreamHeader(showName) {
         imageProbe.src = imgCloudUrl;
 
         imageProbe.onload = function() {
-            // STATE B: IMAGE FOUND -> Switch to image-driven physics matching the middle cell
             if (wrapper) {
                 wrapper.querySelectorAll('h1, p').forEach(el => el.style.display = 'none');
             }
             
-            // Strip text absolute constraints; let the natural image flow control the container height
             cellLeft.style.position = 'relative';
             cellLeft.style.height = 'auto'; 
             
             logoImg.src = imgCloudUrl;
-            logoImg.style.position = 'relative'; // Removes absolute locking
+            logoImg.style.position = 'relative'; 
             logoImg.style.display = 'block';
 
-            // Pin text overlay absolutely over the natural fluid image background
             display.style.position = 'absolute';
             display.style.left = '50%';
             display.style.transform = 'translateX(-50%)';
@@ -134,18 +136,16 @@ function renderStreamHeader(showName) {
         };
 
         imageProbe.onerror = function() {
-            // STATE A: NO IMAGE FOUND -> Fallback completely to structural text parameters
             logoImg.style.display = 'none';
             logoImg.style.position = 'absolute';
             
-            cellLeft.style.height = ''; // Clear forced rules, return to base CSS flow
+            cellLeft.style.height = ''; 
             
             if (wrapper) {
                 wrapper.querySelectorAll('h1, p').forEach(el => el.style.display = 'block');
                 if (display.parentElement !== wrapper) {
                     wrapper.appendChild(display);
                 }
-                // Normalize text behavior for normal text boxes
                 display.style.position = 'static';
                 display.style.transform = 'none';
                 display.style.marginTop = '4px';
@@ -155,7 +155,7 @@ function renderStreamHeader(showName) {
             }
 
             if (cleanName.toLowerCase() === 'tellstream') {
-                display.innerText = "TELLSTREAM NONE STOP";
+                display.innerText = "TELLSTREAM NON STOP";
             } else {
                 display.innerText = `${cleanName} - LIVE`;
             }
@@ -356,7 +356,6 @@ async function handleAdminFilterCommand(text) {
 async function renderSiteNewsFeed() {
     if (!fbFeedContainer) return;
     try {
-        // Direct header override logic to patch "Facebook Activity" out dynamically
         const colHeader = fbFeedContainer.previousElementSibling;
         if (colHeader && (colHeader.innerText.includes("Facebook") || colHeader.querySelector('a'))) {
             colHeader.style.display = 'flex';
@@ -374,7 +373,6 @@ async function renderSiteNewsFeed() {
             `;
         }
         
-        // Fetch the 12 newest combined records from the boss and selectors boards
         const { data: records, error } = await supabase_db
             .from('notice_board')
             .select('*')
@@ -392,7 +390,6 @@ async function renderSiteNewsFeed() {
             return;
         }
 
-        // Build the visual HTML feed blocks
         let html = records.map(item => {
             const isBoss = item.board_type === 'boss';
             const badgeColor = isBoss ? '#ff3333' : '#ffdd1a';
@@ -410,7 +407,6 @@ async function renderSiteNewsFeed() {
             `;
         }).join('');
 
-        // Append the clickable history link node to the very bottom
         html += `
             <div class="fb-post-card" style="text-align:center; margin-top:20px; cursor:pointer; background: rgba(255,221,26,0.05); border: 1px dashed #ffdd1a;" onclick="toggleNoticeBoardView();">
                 <div class="fb-post-text" style="font-weight:bold; color:#ffdd1a; font-size:0.9rem;">
@@ -469,7 +465,7 @@ function renderHelpContent(useNoticeboardGuide = false) {
         </div>
     `).join('');
 
-    const currentUser = usernameInput.value.trim();
+    const currentUser = usernameInput ? usernameInput.value.trim() : '';
     const profile = profilesCache[currentUser];
     const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
     const isVerifiedDJ = profile && profile.passkey === authorizedKey && parseInt(profile.power_level || 0) >= 1;
@@ -484,53 +480,55 @@ function renderHelpContent(useNoticeboardGuide = false) {
         html = djHtml + html; 
     }
 
-    helpCardsContainer.innerHTML = html;
-    helpCardsContainerFS.innerHTML = html;
+    if (helpCardsContainer) helpCardsContainer.innerHTML = html;
+    if (helpCardsContainerFS) helpCardsContainerFS.innerHTML = html;
     const currentTitle = useNoticeboardGuide ? "📋 Noticeboard Help Guide" : "💡 Chat help and emoji codes";
-    const fsTitleNode = helpCardsContainerFS.previousElementSibling;
-    if (fsTitleNode && fsTitleNode.classList.contains('col-title')) fsTitleNode.innerHTML = currentTitle;
+    if (helpCardsContainerFS) {
+        const fsTitleNode = helpCardsContainerFS.previousElementSibling;
+        if (fsTitleNode && fsTitleNode.classList.contains('col-title')) fsTitleNode.innerHTML = currentTitle;
+    }
 }
 
 function launchFlyerLightbox(imgSrc) {
-    modalTargetImg.src = imgSrc;
-    flyerModal.classList.add('active');
+    if (modalTargetImg && flyerModal) {
+        modalTargetImg.src = imgSrc;
+        flyerModal.classList.add('active');
+    }
 }
 function closeFlyerLightbox() {
-    flyerModal.classList.remove('active');
-    modalTargetImg.src = "";
+    if (flyerModal && modalTargetImg) {
+        flyerModal.classList.remove('active');
+        modalTargetImg.src = "";
+    }
 }
 
 function toggleChatFullscreen() {
     if (isNoticeBoardActive) toggleNoticeBoardView();
     document.body.classList.toggle('chat-is-fullscreen');
-    fsToggleBtn.innerText = document.body.classList.contains('chat-is-fullscreen') ? "Exit Fullscreen" : "Maximize Chat";
+    if (fsToggleBtn) fsToggleBtn.innerText = document.body.classList.contains('chat-is-fullscreen') ? "Exit Fullscreen" : "Maximize Chat";
     anchorChatToBottom();
 }
 
 function initQuickEmojiCloud() {
     if (!window.emojiMapping) return;
     
-    // 1. Get all available emoji shorthand keys from your mapping file
     const allKeys = Object.keys(window.emojiMapping);
-    
-    // 2. Shuffle the entire array randomly
     const shuffledKeys = allKeys.sort(() => 0.5 - Math.random());
-    
-    // 3. Take the first 32 random keys out of the shuffled deck
     const randomSelection = shuffledKeys.slice(0, 32);
     
-    // 4. Render the grid items
     const html = randomSelection.map(key => `
         <div class="emoji-grid-item" onclick="insertEmojiCode('${key}')">:${key}:</div>
     `).join('');
     
-    quickEmojiList.innerHTML = html;
-    quickEmojiListFS.innerHTML = html;
+    if (quickEmojiList) quickEmojiList.innerHTML = html;
+    if (quickEmojiListFS) quickEmojiListFS.innerHTML = html;
 }
 
 function insertEmojiCode(code) {
-    messageInput.value += ` :${code}: `;
-    messageInput.focus();
+    if (messageInput) {
+        messageInput.value += ` :${code}: `;
+        messageInput.focus();
+    }
 }
 
 function toggleNoticeBoardView() {
@@ -539,16 +537,16 @@ function toggleNoticeBoardView() {
     const inputContainer = document.getElementById('chat-input-panel-container');
     const mainTitle = document.getElementById('sidebarPanelTitle');
     const toggleBtn = document.getElementById('toggle-notice-btn');
-    const emojiSectionFS = quickEmojiListFS.parentElement;
+    const emojiSectionFS = quickEmojiListFS ? quickEmojiListFS.parentElement : null;
 
     if (!isNoticeBoardActive) {
         document.body.classList.add('chat-is-fullscreen');
-        streamChat.style.display = 'none';
-        inputContainer.style.display = 'none'; 
-        securityDrawer.classList.remove('open'); 
-        noticePanel.style.display = 'flex';
-        mainTitle.innerText = "📋 Noticeboard";
-        toggleBtn.innerText = "❌ Exit Noticeboard";
+        if (streamChat) streamChat.style.display = 'none';
+        if (inputContainer) inputContainer.style.display = 'none'; 
+        if (securityDrawer) securityDrawer.classList.remove('open'); 
+        if (noticePanel) noticePanel.style.display = 'flex';
+        if (mainTitle) mainTitle.innerText = "📋 Noticeboard";
+        if (toggleBtn) toggleBtn.innerText = "❌ Exit Noticeboard";
         isNoticeBoardActive = true;
         if (emojiSectionFS) emojiSectionFS.style.display = 'none';
         renderHelpContent(true);
@@ -556,11 +554,11 @@ function toggleNoticeBoardView() {
         fetchNoticeBoardRecords();
     } else {
         document.body.classList.remove('chat-is-fullscreen');
-        noticePanel.style.display = 'none';
-        streamChat.style.display = 'flex';
-        inputContainer.style.display = 'flex';
-        mainTitle.innerText = "🔊 Listener Lounge";
-        toggleBtn.innerText = "📋 Noticeboard";
+        if (noticePanel) noticePanel.style.display = 'none';
+        if (streamChat) streamChat.style.display = 'flex';
+        if (inputContainer) inputContainer.style.display = 'flex';
+        if (mainTitle) mainTitle.innerText = "🔊 Listener Lounge";
+        if (toggleBtn) toggleBtn.innerText = "📋 Noticeboard";
         isNoticeBoardActive = false;
         if (emojiSectionFS) emojiSectionFS.style.display = 'block';
         renderHelpContent(false);
@@ -569,31 +567,41 @@ function toggleNoticeBoardView() {
 }
 
 function evaluateNoticeBoardForms() {
-    const currentUser = usernameInput.value.trim();
+    const currentUser = usernameInput ? usernameInput.value.trim() : '';
     const warningBanner = document.getElementById('notice-footer-warning');
     const profile = profilesCache[currentUser];
     const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
     const isVerified = profile && profile.passkey === authorizedKey;
 
     if (!isVerified) {
-        warningBanner.style.display = 'block';
+        if (warningBanner) warningBanner.style.display = 'block';
         document.querySelectorAll('.notice-input-form-block').forEach(form => form.style.display = 'none');
         return;
     }
 
-    warningBanner.style.display = 'none';
+    if (warningBanner) warningBanner.style.display = 'none';
     const powerLevel = parseInt(profile.power_level || 0);
-    document.getElementById('form-boss').style.display = (powerLevel >= 2) ? 'block' : 'none';
-    document.getElementById('form-selectors').style.display = (powerLevel >= 1) ? 'block' : 'none';
-    document.getElementById('form-fambily').style.display = (powerLevel >= 0) ? 'block' : 'none';
+    
+    const fBoss = document.getElementById('form-boss');
+    const fSelectors = document.getElementById('form-selectors');
+    const fFambily = document.getElementById('form-fambily');
+    
+    if (fBoss) fBoss.style.display = (powerLevel >= 2) ? 'block' : 'none';
+    if (fSelectors) fSelectors.style.display = (powerLevel >= 1) ? 'block' : 'none';
+    if (fFambily) fFambily.style.display = (powerLevel >= 0) ? 'block' : 'none';
 }
 
 async function fetchNoticeBoardRecords() {
     const { data: records, error } = await supabase_db.from('notice_board').select('*').order('created_at', { ascending: false });
     if (!error && records) {
-        document.getElementById('feed-boss').innerHTML = "";
-        document.getElementById('feed-selectors').innerHTML = "";
-        document.getElementById('feed-fambily').innerHTML = "";
+        const fBoss = document.getElementById('feed-boss');
+        const fSelectors = document.getElementById('feed-selectors');
+        const fFambily = document.getElementById('feed-fambily');
+        
+        if (fBoss) fBoss.innerHTML = "";
+        if (fSelectors) fSelectors.innerHTML = "";
+        if (fFambily) fFambily.innerHTML = "";
+        
         records.forEach(item => {
             const columnTarget = document.getElementById(`feed-${item.board_type}`);
             if (columnTarget) {
@@ -607,8 +615,9 @@ async function fetchNoticeBoardRecords() {
 }
 
 async function submitNoticeUpdate(boardType) {
-    const currentUser = usernameInput.value.trim();
+    const currentUser = usernameInput ? usernameInput.value.trim() : '';
     const inputField = document.getElementById(`input-${boardType}`);
+    if (!inputField) return;
     let textContent = inputField.value.trim();
     if (!textContent) return;
 
@@ -653,39 +662,40 @@ async function submitNoticeUpdate(boardType) {
 }
 
 function syncDrawerName() {
+    if (!usernameInput || !regNameInput) return;
     const currentName = usernameInput.value.trim();
     regNameInput.value = currentName;
-    reminderHintDisplay.style.display = "none";
+    if (reminderHintDisplay) reminderHintDisplay.style.display = "none";
     
     if (profilesCache[currentName]) {
-        lockStatusBtn.innerText = "🔒";
-        drawerTitle.innerText = "Name is Secured: Log In";
-        regReminderInput.style.display = "none";
-        regEmailInput.style.display = "none";
-        drawerSubmitBtn.innerText = "Authorize Device Local Memory";
+        if (lockStatusBtn) lockStatusBtn.innerText = "🔒";
+        if (drawerTitle) drawerTitle.innerText = "Name is Secured: Log In";
+        if (regReminderInput) regReminderInput.style.display = "none";
+        if (regEmailInput) regEmailInput.style.display = "none";
+        if (drawerSubmitBtn) drawerSubmitBtn.innerText = "Authorize Device Local Memory";
     } else {
-        lockStatusBtn.innerText = "🔓";
-        drawerTitle.innerText = "Secure Current Handle";
-        regReminderInput.style.display = "block";
-        regEmailInput.style.display = "block";
-        drawerSubmitBtn.innerText = "Lock Name Globally";
+        if (lockStatusBtn) lockStatusBtn.innerText = "🔓";
+        if (drawerTitle) drawerTitle.innerText = "Secure Current Handle";
+        if (regReminderInput) regReminderInput.style.display = "block";
+        if (regEmailInput) regEmailInput.style.display = "block";
+        if (drawerSubmitBtn) drawerSubmitBtn.innerText = "Lock Name Globally";
     }
-    if (isNoticeBoardActive) evaluateNoticeBoardForms();
+    evaluateNoticeBoardForms();
     renderHelpContent(isNoticeBoardActive);
 }
 
 async function toggleSecurityDrawer() {
-    if (securityDrawer.classList.toggle('open')) {
+    if (securityDrawer && securityDrawer.classList.toggle('open')) {
         syncDrawerName();
-        regPasskeyInput.focus();
+        if (regPasskeyInput) regPasskeyInput.focus();
     }
 }
 
 async function handleSecuritySubmit() {
-    const currentName = usernameInput.value.trim();
-    const passkey = regPasskeyInput.value.trim();
-    const reminder = regReminderInput.value.trim();
-    const email = regEmailInput.value.trim();
+    const currentName = usernameInput ? usernameInput.value.trim() : '';
+    const passkey = regPasskeyInput ? regPasskeyInput.value.trim() : '';
+    const reminder = regReminderInput ? regReminderInput.value.trim() : '';
+    const email = regEmailInput ? regEmailInput.value.trim() : '';
 
     if (!currentName || !passkey) {
         alert("Please fill in both Name and a Passkey string.");
@@ -697,13 +707,13 @@ async function handleSecuritySubmit() {
             localStorage.setItem('tellstream_key_' + currentName, passkey);
             localStorage.setItem('tellstream_saved_username', currentName);
             alert("Identity checked and authorized!");
-            securityDrawer.classList.remove('open');
-            chatBox.innerHTML = ""; 
-            if (isNoticeBoardActive) evaluateNoticeBoardForms();
+            if (securityDrawer) securityDrawer.classList.remove('open');
+            if (chatBox) chatBox.innerHTML = ""; 
+            evaluateNoticeBoardForms();
             loadMessages();
         } else {
             alert("Invalid Passkey entry sequence.");
-            if (profilesCache[currentName].key_reminder) {
+            if (profilesCache[currentName].key_reminder && reminderHintDisplay) {
                 reminderHintDisplay.innerText = "Hint Clue: " + profilesCache[currentName].key_reminder;
                 reminderHintDisplay.style.display = "block";
             }
@@ -714,7 +724,6 @@ async function handleSecuritySubmit() {
         if (currentName === "Banton") { assignedLevel = 2; assignedHover = "banton.org"; }
         else if (currentName === "Big John") { assignedLevel = 2; assignedHover = "the boss"; }
         else if (currentName === "Perfectionist") { assignedLevel = 2; assignedHover = "You done know"; }
-
 
         const { error } = await supabase_db.from('secured_profiles').insert([{
             username: currentName,
@@ -732,9 +741,9 @@ async function handleSecuritySubmit() {
             localStorage.setItem('tellstream_saved_username', currentName);
             alert("Registration complete!");
             await syncProfilesMap();
-            securityDrawer.classList.remove('open');
-            chatBox.innerHTML = "";
-            if (isNoticeBoardActive) evaluateNoticeBoardForms();
+            if (securityDrawer) securityDrawer.classList.remove('open');
+            if (chatBox) chatBox.innerHTML = "";
+            evaluateNoticeBoardForms();
             loadMessages();
         }
     }
@@ -758,10 +767,13 @@ async function syncBannedUsersMap() {
     if (data) data.forEach(u => { bannedUsersCache[u.username.toLowerCase()] = u; });
 }
 
-audioPlayer.addEventListener('stalled', () => { recoverStream(); });
-audioPlayer.addEventListener('error', () => { recoverStream(); });
+if (audioPlayer) {
+    audioPlayer.addEventListener('stalled', () => { recoverStream(); });
+    audioPlayer.addEventListener('error', () => { recoverStream(); });
+}
 
 function recoverStream() {
+    if (!audioPlayer) return;
     const currentSrc = audioPlayer.src;
     if (!currentSrc) return;
     audioPlayer.src = "";
@@ -771,6 +783,7 @@ function recoverStream() {
 }
 
 function appendMessage(data) {
+    if (!chatBox) return;
     const msgDiv = document.createElement('div');
     msgDiv.className = 'msg';
     let messageContent = escapeHTML(data.message);
@@ -823,7 +836,8 @@ supabase_db.channel('public:stream_status').on('postgres_changes', { event: '*',
 }).subscribe();
 
 async function sendMessage() {
-    const user = usernameInput.value.trim() || 'Listener';
+    const user = (usernameInput ? usernameInput.value.trim() : '') || 'Listener';
+    if (!messageInput) return;
     let text = messageInput.value.trim();
     if (!text) return;
 
@@ -833,7 +847,6 @@ async function sendMessage() {
         
         if (profile && userPowerLevel >= 1) { 
             
-            // CONSOLE INJECTION INTERCEPTOR FOR ZERO-SLASH SCHEDULE SYSTEM
             if (text.startsWith('/schedule ')) {
                 messageInput.value = '';
                 await processScheduleConsoleInjections(text, user);
@@ -931,10 +944,11 @@ async function sendMessage() {
     await supabase_db.from('messages').insert([{ username: user, message: text }]);
 }
 
-sendBtn.addEventListener('click', sendMessage);
-messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+if (sendBtn) sendBtn.addEventListener('click', sendMessage);
+if (messageInput) {
+    messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+}
 
-// HELPER FUNCTION: Bulletproof local to absolute UK time shifter
 function convertInputToUKTime(inputDateStr, inputTimeStr) {
     const day = parseInt(inputDateStr.substring(0, 2), 10);
     const month = parseInt(inputDateStr.substring(2, 4), 10) - 1; 
@@ -978,7 +992,6 @@ function convertInputToUKTime(inputDateStr, inputTimeStr) {
     };
 }
 
-// ISOLATED INJECTIONS RUNNERS (BUILT ASYNC SO THEY CANNOT BLOCK CORE GREETINGS OR LOGINS)
 async function processScheduleConsoleInjections(text, djUser) {
     const args = text.trim().split(/\s+/);
     const action = args[1]?.toLowerCase();
@@ -1011,16 +1024,14 @@ async function processScheduleConsoleInjections(text, djUser) {
         const timeZone = args[5];
 
         if (!dateBlock || !startTime || !endTime || !timeZone || dateBlock.length !== 6) {
-            alert("Format missing. Use a strict 6-digit date: /schedule temp [ddmmyy] [Start Time] [End Time] [Time Zone]");
+            alert("Format missing. Use: /schedule temp [ddmmyy] [Start Time] [End Time] [Time Zone]");
             return;
         }
 
-        // Apply Timezone shifting intercept logic for the start time
         const shiftStart = convertInputToUKTime(dateBlock, startTime);
         startTime = shiftStart.finalUKTime;
-        dateBlock = shiftStart.finalUKDate; // Secure date context in case of midnight flip
+        dateBlock = shiftStart.finalUKDate; 
 
-        // Apply Timezone shifting intercept logic for the end time
         const shiftEnd = convertInputToUKTime(args[2], endTime);
         endTime = shiftEnd.finalUKTime;
 
@@ -1028,7 +1039,7 @@ async function processScheduleConsoleInjections(text, djUser) {
             specific_date: dateBlock,
             start_time: startTime,
             end_time: endTime,
-            time_zone: 'EUROPE/LONDON',
+            time_zone: timeZone.toUpperCase(),
             dj_name: djUser,
             is_cancelled: false
         }], { onConflict: 'specific_date,start_time' });
@@ -1044,7 +1055,6 @@ async function processScheduleConsoleInjections(text, djUser) {
             return;
         }
 
-        // Apply Timezone shifting intercept logic
         const shiftCancel = convertInputToUKTime(dateBlock, startTime);
         startTime = shiftCancel.finalUKTime;
         dateBlock = shiftCancel.finalUKDate;
@@ -1072,8 +1082,6 @@ async function fetchAndRenderWeeklyTimetable() {
         }
 
         const dayOrder = { sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6 };
-        
-        // Grab the viewer's native system time zone city
         const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
         let processedData = masterData.map(item => {
@@ -1093,13 +1101,11 @@ async function fetchAndRenderWeeklyTimetable() {
                 }
             }
 
-            // Break raw database values ('2000') into numbers
             const startHours = parseInt(item.start_time.substring(0, 2), 10);
             const startMins = parseInt(item.start_time.substring(2, 4), 10);
             const endHours = parseInt(item.end_time.substring(0, 2), 10);
             const endMins = parseInt(item.end_time.substring(2, 4), 10);
 
-            // Establish dates pinned to Europe/London
             const baseDate = new Date();
             const currentDayIndex = baseDate.getDay();
             const targetDayIndex = dayOrder[item.day_of_week.toLowerCase()];
@@ -1113,7 +1119,6 @@ async function fetchAndRenderWeeklyTimetable() {
             const ukEnd = new Date(baseDate.toLocaleString('en-US', { timeZone: 'Europe/London' }));
             ukEnd.setHours(endHours, endMins, 0, 0);
 
-            // Shift everything cleanly to the user's local zone
             const localDayStr = ukStart.toLocaleDateString('en-US', { timeZone: userTimeZone, weekday: 'long' });
             const localStartStr = ukStart.toLocaleTimeString('en-GB', { timeZone: userTimeZone, hour: '2-digit', minute: '2-digit', hour12: false });
             const localEndStr = ukEnd.toLocaleTimeString('en-GB', { timeZone: userTimeZone, hour: '2-digit', minute: '2-digit', hour12: false });
@@ -1123,7 +1128,6 @@ async function fetchAndRenderWeeklyTimetable() {
                 sortTime: localStartStr,
                 html: `
                     <div class="fb-post-card" style="border-left: 4px solid #00adb5; margin-bottom: 10px; background: rgba(0, 173, 181, 0.03); padding: 12px; border-radius: 4px; box-sizing: border-box; overflow: hidden;">
-                        
                         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
                             <span style="font-weight: 900; color: #00adb5; text-transform: uppercase; font-size: 0.95rem; letter-spacing: 1px;">
                                 📅 ${localDayStr}
@@ -1132,17 +1136,14 @@ async function fetchAndRenderWeeklyTimetable() {
                                 ⏰ ${localStartStr} - ${localEndStr}
                             </span>
                         </div>
-
                         <div style="color: #a0a0a0; font-size: 0.88rem; margin-top: 8px; border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 8px;">
                             🎙️ <span style="margin-left: 4px;">Presenter: <strong style="color:#fff; font-weight:800;">${currentDJ}</strong></span> ${noteLabel}
                         </div>
-
                     </div>
                 `
             };
         });
 
-        // Re-sort the final display array by the VIEWER'S timeline flow
         processedData.sort((a, b) => {
             if (a.sortDay !== b.sortDay) return a.sortDay - b.sortDay;
             return a.sortTime.localeCompare(b.sortTime);
@@ -1156,14 +1157,12 @@ async function fetchAndRenderWeeklyTimetable() {
     }
 }
 
-// SECURE TIMETABLE REALTIME EVENT LISTENERS
 try {
     supabase_db.channel('public:master_schedule').on('postgres_changes', { event: '*', pattern: 'public', table: 'master_schedule' }, () => { fetchAndRenderWeeklyTimetable(); }).subscribe();
     supabase_db.channel('public:temporary_overrides').on('postgres_changes', { event: '*', pattern: 'public', table: 'temporary_overrides' }, () => { fetchAndRenderWeeklyTimetable(); }).subscribe();
 } catch (e) { console.log("Realtime schedule subscription delayed:", e.message); }
 
 (async function initSystem() {
-    // 1. Core Lounge Operations (Cannot be affected by outside scripts)
     try { await syncProfilesMap(); } catch(e){}
     try { await syncBannedWordsMap(); } catch(e){}
     try { await syncBannedUsersMap(); } catch(e){}
@@ -1197,7 +1196,7 @@ try {
         }
     });
 
-    const currentUser = usernameInput.value.trim();
+    const currentUser = usernameInput ? usernameInput.value.trim() : '';
     syncDrawerName();
 
     setTimeout(() => {
@@ -1223,7 +1222,6 @@ try {
         }
     }, 200);
 
-    // 2. Auxiliary column scripts load at the ultimate tail of execution
     try { await renderSiteNewsFeed(); } catch(e){}
     try { await fetchAndRenderWeeklyTimetable(); } catch(e){}
 })();
