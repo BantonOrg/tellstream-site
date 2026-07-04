@@ -1,0 +1,62 @@
+/* ==========================================================================
+   SKIN 1: THE IVORY CLASSIC (Standard Set)
+   ========================================================================== */
+/* Front Face */
+.domino-bone-interactive.skin-classic:has(.domino-half) {
+    background-image: url('assets/dom_front.gif') !important;
+    background-size: 100% 100% !important;
+}
+/* Back Face */
+.domino-bone-interactive.skin-classic:not(:has(.domino-half)) {
+    background-image: url('assets/dom_back.gif') !important;
+    background-size: 100% 100% !important;
+}
+/* Pip Mask Overlay */
+.skin-classic .pip.active {
+    background-image: url('assets/_DOM_PIPS.png') !important;
+    background-size: cover !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+}
+
+/* ==========================================================================
+   SKIN 2: THE AMBER PREMIUM (Gold/Dark Tint Set)
+   ========================================================================== */
+/* Front Face */
+.domino-bone-interactive.skin-premium:has(.domino-half) {
+    background-image: url('assets/dom_front1.gif') !important;
+    background-size: 100% 100% !important;
+}
+/* Back Face */
+.domino-bone-interactive.skin-premium:not(:has(.domino-half)) {
+    background-image: url('assets/dom_back1.gif') !important;
+    background-size: 100% 100% !important;
+}
+/* Pip Mask Overlay */
+.skin-premium .pip.active {
+    background-image: url('assets/_DOM_PIPS1.png') !important;
+    background-size: cover !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+}
+
+/* ==========================================================================
+   SKIN 3: THE RASTA MATRIX (High-Visibility Test Set)
+   ========================================================================== */
+/* Front Face */
+.domino-bone-interactive.skin-rasta:has(.domino-half) {
+    background-image: url('assets/dom_front3.gif') !important;
+    background-size: 100% 100% !important;
+}
+/* Back Face */
+.domino-bone-interactive.skin-rasta:not(:has(.domino-half)) {
+    background-image: url('assets/dom_back3.gif') !important;
+    background-size: 100% 100% !important;
+}
+/* Pip Mask Overlay */
+.skin-rasta .pip.active {
+    background-image: url('assets/_DOM_PIPS3.png') !important;
+    background-size: cover !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+}
