@@ -214,7 +214,7 @@ html, body {
 .pos-9 { grid-area: 3 / 2 !important; } /* Mid-bottom drop slot */
 
 /* ==========================================================================
-   Temporary Design Comparison Preview Layer Styles
+   Temporary Design Comparison Preview Layer Styles - Refined Grid
    ========================================================================== */
 #temp-preview-overlay {
     position: absolute;
@@ -254,13 +254,23 @@ html, body {
     box-shadow: 0 4px 8px rgba(0,0,0,0.4) !important;
 }
 
+/* Overrides the dynamic-45-scale grid matrix to expand outer rows/columns outward */
+.new-design-bone .domino-half {
+    grid-template-columns: 28% auto 28% !important;
+    grid-template-rows: 28% auto 28% !important;
+    gap: 0 !important;
+    padding: 2px !important;
+}
+
+/* Mask Element: Doubled structural footprint from 12px to 24px within layout space */
 .pip-mask {
-    width: 12px !important;
-    height: 12px !important;
-    background: #eadeca !important; /* Ivory color matching dom_front texture */
+    width: 24px !important;
+    height: 24px !important;
+    background: #eadeca !important; /* Kept ivory for tracking contrast */
     border-radius: 50%;
     opacity: 1;
     transition: opacity 0.1s ease;
+    margin: auto; /* Keeps elements perfectly centered inside their expanded grid tracks */
 }
 
 .pip-mask.reveal-pip {
