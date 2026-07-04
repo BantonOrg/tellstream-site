@@ -13,7 +13,7 @@ const PATH_TRACK = {
     lowerY: 1180, // Halfway between 920 and 1440
     upperY: 95,   // Shifted up -> Moves top row up by ~174px
     leftX: 245,   // Shifted left -> Moves left corner out by 175px
-    rightX: 2395  // Shifted right -> Moves right corner out by 175px
+    rightX: 2220  // Restored original right boundary point
 };
 
 // Absolute center point for the dealt hand tray
