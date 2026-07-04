@@ -74,8 +74,8 @@ function renderLiveTable(boardLine) {
                 .domino-divider::after { width: 6px !important; height: 6px !important; }
             </style>
 
-<div id="game-mat" style="position: relative; width: 100vw; height: 100vh; background-color: #0b0c10; display: flex; justify-content: center; align-items: center; overflow: hidden; box-sizing: border-box;">
-    <div id="scaled-table-canvas-root" style="position: absolute; display: flex; justify-content: center; align-items: center; background-image: url('assets/table_bg.jpg'); background-size: 100% 100%; background-repeat: no-repeat; background-position: center; flex-shrink: 0;">
+            <div id="game-mat" style="position: relative; width: 100vw; height: 100vh; background-color: #0b0c10; display: flex; justify-content: center; align-items: center; overflow: hidden; box-sizing: border-box;">
+                <div id="scaled-table-canvas-root" style="position: absolute; display: flex; justify-content: center; align-items: center; background-image: url('assets/table_bg.jpg'); background-size: 100% 100%; background-repeat: no-repeat; background-position: center; flex-shrink: 0;">
                     <div id="seat-block-1" style="position: absolute; top: 30px; left: 30px; padding: 12px 28px; background: rgba(11,12,16,0.85); border: 2px solid rgba(102,252,241,0.2); border-radius: 8px; font-size: 1.5rem; z-index: 10; display: flex; gap: 16px; align-items: center; white-space: nowrap;"></div>
                     <div id="seat-block-2" style="position: absolute; top: 30px; right: 30px; padding: 12px 28px; background: rgba(11,12,16,0.85); border: 2px solid rgba(102,252,241,0.2); border-radius: 8px; font-size: 1.5rem; z-index: 10; display: flex; gap: 16px; align-items: center; white-space: nowrap;"></div>
                     <div id="seat-block-3" style="position: absolute; bottom: 50px; right: 30px; padding: 12px 28px; background: rgba(11,12,16,0.85); border: 2px solid rgba(102,252,241,0.2); border-radius: 8px; font-size: 1.5rem; z-index: 10; display: flex; gap: 16px; align-items: center; white-space: nowrap;"></div>
@@ -329,7 +329,7 @@ function renderLiveTable(boardLine) {
         });
     }
 
-// 2. RENDER PLAYER HAND
+    // 2. RENDER PLAYER HAND
     if (window.localGameState && window.localGameState.players && window.localGameState.players.player1) {
         const hand = window.localGameState.players.player1.hand || [];
         hand.forEach(tile => {
@@ -371,9 +371,9 @@ function renderLiveTable(boardLine) {
     // Add 3 decorative face-down dominoes shifted down safely away from the top track
     if (trackContainer) {
         const positions = [
-            { x: 1080, y: 550 }, // Lowered Y from 460 to 550
-            { x: 1260, y: 510 }, // Lowered Y from 410 to 510
-            { x: 1420, y: 570 }  // Lowered Y from 480 to 570
+            { x: 1080, y: 550 }, 
+            { x: 1260, y: 510 }, 
+            { x: 1420, y: 570 }  
         ];
 
         positions.forEach((pos, idx) => {
@@ -397,6 +397,9 @@ function renderLiveTable(boardLine) {
             trackContainer.appendChild(backTile);
         });
     }
+
+    // Render temporary visual design preview layer safely stacked on top
+    renderTemporaryPreviewLayer();
 }
 
 function updateCornerSeatBlocks() {
@@ -507,4 +510,95 @@ function processTilePlacement(targetSide) {
     
     selectedTileId = null;
     renderLiveTable(window.localGameState.board_line);
+}
+
+// ==========================================================================
+// TEMPORARY HIGH-LEVEL PREVIEW OVERLAY FUNCTIONS
+// ==========================================================================
+function renderTemporaryPreviewLayer() {
+    const existingOverlay = document.getElementById("temp-preview-overlay");
+    if (existingOverlay) existingOverlay.remove();
+
+    const mat = document.getElementById("game-mat");
+    if (!mat) return;
+
+    const overlay = document.createElement("div");
+    overlay.id = "temp-preview-overlay";
+
+    const doubleValues = [0, 1, 2, 3, 4, 5, 6];
+
+    // ROW 1: CURRENT DYNAMIC CSS DESIGN
+    const row1Container = document.createElement("div");
+    row1Container.className = "preview-tiles-row";
+    
+    const title1 = document.createElement("div");
+    title1.className = "preview-row-title";
+    title1.innerText = "1st Row: Current Design (CSS Grid Pips)";
+    overlay.appendChild(title1);
+
+    doubleValues.forEach(val => {
+        const tileElement = document.createElement("div");
+        tileElement.className = "domino-bone-interactive"; 
+        tileElement.style.cursor = "default";
+        
+        tileElement.innerHTML = `
+            ${generateHalfDisplay(val, false)}
+            <div style="width: 100%; height: 2px; background: #1a1a1a; flex-shrink: 0;" class="domino-divider"></div>
+            ${generateHalfDisplay(val, false)}
+        `;
+        row1Container.appendChild(tileElement);
+    });
+    overlay.appendChild(row1Container);
+
+    // ROW 2: UPDATED MASK DESIGN (WORKING COMPLETELY BACKWARDS)
+    const row2Container = document.createElement("div");
+    row2Container.className = "preview-tiles-row";
+
+    const title2 = document.createElement("div");
+    title2.className = "preview-row-title";
+    title2.innerText = "2nd Row: Updated Design (Asset Background + Inverse Mask)";
+    overlay.appendChild(title2);
+
+    doubleValues.forEach(val => {
+        const tileElement = document.createElement("div");
+        tileElement.className = "domino-bone-interactive new-design-bone";
+        tileElement.style.cursor = "default";
+
+        // Bakes design details completely beforehand at raw string state
+        const topHalfHtml = generateMaskedHalfDisplay(val);
+        const bottomHalfHtml = generateMaskedHalfDisplay(val);
+
+        tileElement.innerHTML = `
+            ${topHalfHtml}
+            <div style="width: 100%; height: 2px; background: transparent; flex-shrink: 0;" class="domino-divider"></div>
+            ${bottomHalfHtml}
+        `;
+        row2Container.appendChild(tileElement);
+    });
+    overlay.appendChild(row2Container);
+
+    mat.appendChild(overlay);
+}
+
+function generateMaskedHalfDisplay(value) {
+    const pipMaps = {
+        0: [],
+        1: [4],
+        2: [1, 7],
+        3: [1, 4, 7],
+        4: [1, 2, 6, 7],
+        5: [1, 2, 4, 6, 7],
+        6: [1, 2, 3, 5, 6, 7]
+    };
+    
+    const activePips = pipMaps[value] || [];
+    
+    let html = `<div class="domino-half">`;
+    for (let p = 1; p <= 9; p++) {
+        // Inverse rule: Active pips get the mask REMOVED (opacity 0) to show asset beneath
+        const maskModifier = activePips.includes(p) ? 'reveal-pip' : '';
+        html += `<div class="pip-mask ${maskModifier} pos-${p}"></div>`;
+    }
+    html += `</div>`;
+    return html;
 }
