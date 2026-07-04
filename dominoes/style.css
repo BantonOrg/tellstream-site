@@ -128,43 +128,40 @@ html, body {
 }
 
 /* ==========================================================================
-   Authentic Domino Bone Styling - Textured Inverse Mask Variant
+   Authentic Domino Bone Styling
    ========================================================================== */
 
 .domino-bone-interactive {
     width: 58px !important;
     height: 119px !important;
-    background: url('assets/dom_front.gif') no-repeat center;
-    background-size: 100% 100%;
+    background: #fdfdfd;
     border: 2px solid #1a1a1a !important;
     border-radius: 5px !important;
     display: flex !important;
     flex-direction: column !important;
     justify-content: space-between !important;
     align-items: center !important;
-    padding: 0 !important; /* Cleared out padding so masks track edge-to-edge */
+    padding: 4px 2px !important;
     box-sizing: border-box !important;
     cursor: pointer !important;
     box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.8) !important;
     position: relative;
-    overflow: hidden; /* Lock the rounded corner masks cleanly inside */
 }
 
-/* Horizontal Table Track Configurations */
+/* Force standard table bones flat horizontally without layout warping */
 .domino-bone-interactive.domino-flat-track {
     width: 119px !important;
     height: 58px !important;
     flex-direction: row !important;
 }
 
-/* Center Splitting Divider Bar */
+/* The Center Dividing Line & Brass Spinner Pin */
 .domino-divider {
-    width: 100%;
-    height: 4px;
-    background: #111;
-    margin: 0;
+    width: 90%;
+    height: 2px;
+    background: #222;
+    margin: 1px 0;
     position: relative;
-    z-index: 10;
 }
 
 .domino-divider::after {
@@ -172,7 +169,7 @@ html, body {
     position: absolute;
     width: 4px;
     height: 4px;
-    background: #cca43b;
+    background: #cca43b; /* Brass metallic sheen anchor */
     border: 1px solid #443410;
     border-radius: 50%;
     left: 50%;
@@ -180,43 +177,38 @@ html, body {
     transform: translate(-50%, -50%);
 }
 
-/* The Grid Framework Matrix */
+/* Grid Layout Matrix holding the dots (pips) */
 .domino-half {
-    width: 100% !important;
-    height: 100% !important;
+    width: 48px !important;
+    height: 48px !important;
     display: grid !important;
-    /* Custom percentage grid tracks centered exactly over the printed artwork pockets */
-    grid-template-columns: 24% auto 24% !important;
-    grid-template-rows: 22% auto 22% !important;
-    padding: 2px !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    grid-template-rows: repeat(3, 1fr) !important;
+    gap: 2px !important;
+    padding: 3px !important;
     box-sizing: border-box !important;
     justify-items: center !important;
     align-items: center !important;
-    position: relative;
-    background: transparent !important;
 }
 
-/* The Inverse Mask Block Windows */
-.pip-mask {
-    width: 100%;
-    height: 100%;
-    background: #fdfdfd; /* Matte Ivory background matching asset texture skin */
-    transition: background 0.1s ease;
-    box-sizing: border-box;
+/* The individual round sunken layout dots */
+.pip {
+    width: 8px !important;
+    height: 8px !important;
+    background: #111 !important;
+    border-radius: 50% !important;
+    visibility: hidden; /* Kept hidden until toggled active */
+    box-shadow: inset 1px 1px 1px rgba(0,0,0,0.6) !important;
 }
 
-/* When a number clears a position, turn the ivory mask clear to show the pocket underneath */
-.pip-mask.revealed {
-    background: transparent !important;
-}
-
-/* Position Index Grid Mappings */
+/* Exact positional mapping matrix for a 3x3 dot grid */
+.pip.active { visibility: visible !important; }
 .pos-1 { grid-area: 1 / 1 !important; }
 .pos-2 { grid-area: 1 / 3 !important; }
 .pos-3 { grid-area: 2 / 1 !important; }
-.pos-4 { grid-area: 2 / 2 !important; } /* Center Spinner Dot */
+.pos-4 { grid-area: 2 / 2 !important; } /* Absolute center point */
 .pos-5 { grid-area: 2 / 3 !important; }
 .pos-6 { grid-area: 3 / 1 !important; }
 .pos-7 { grid-area: 3 / 3 !important; }
-.pos-8 { grid-area: 1 / 2 !important; } /* Fixed Ivory Top Space */
-.pos-9 { grid-area: 3 / 2 !important; } /* Fixed Ivory Bottom Space */
+.pos-8 { grid-area: 1 / 2 !important; } /* Mid-top drop slot */
+.pos-9 { grid-area: 3 / 2 !important; } /* Mid-bottom drop slot */
