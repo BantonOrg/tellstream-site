@@ -55,8 +55,8 @@ const djHelpInstructions = [
     { title: "🎛️ /show live", text: "Example: /show live \nWhat it does: Shows that YOU are now live on air." },
     { title: "🔄 /show tellstream", text: "Example: /show tellstream \nWhat it does: Shows Tellstream Autopilot as Live again. Only do this if you are last for the day." },
     { title: "🗓️ /schedule perm [Day] [Start Time] [End Time] [Time Zone]", text: "Example: /schedule perm Friday 2000 2200 BST \nWhat it does: Locks weekly show detail in permanently." },
-    { title: "🚨 /schedule temp [ddmmyy] [Start Time] [End Time] [Time Zone]", text: "Example: /schedule temp 100726 2000 2200 BST \nWhat it does: Adds a one-off temporary change for a specific date." },
-    { title: "❌ /schedule cancel [ddmmyy] [Start Time]", text: "Example: /schedule cancel 100726 2000 \nWhat it does: Cancels a show already added (perm or temp)." },
+    { title: "🚨 /schedule temp [ddmmyy] [Start Time] [End Time]", text: "Example: /schedule temp 100726 1500 1700 \nWhat it does: Adds a one-off temporary change for a specific date. Type this exactly using your own local device clock time!" },
+    { title: "❌ /schedule cancel [ddmmyy] [Start Time]", text: "Example: /schedule cancel 100726 1500 \nWhat it does: Cancels a show already added. Type this using your own local show start time!" },
     { title: "🖼️ /upload [Name] & /delete [Name]", text: "Example: /upload Big John \nWhat it does: Manages transparent PNG logo assets in the cloud." },
     { title: "⚔️ Moderation Shortcuts", text: "/add [word], /del [word], /unban [username], or /listwords to manage filters live." }
 ];
