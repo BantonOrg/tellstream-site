@@ -368,12 +368,12 @@ function renderLiveTable(boardLine) {
         });
     }
 
-    // Add 3 decorative face-down dominoes randomly tilted up to 45 degrees
+    // Add 3 decorative face-down dominoes shifted down safely away from the top track
     if (trackContainer) {
         const positions = [
-            { x: 1080, y: 460 },
-            { x: 1260, y: 410 },
-            { x: 1420, y: 480 }
+            { x: 1080, y: 550 }, // Lowered Y from 460 to 550
+            { x: 1260, y: 510 }, // Lowered Y from 410 to 510
+            { x: 1420, y: 570 }  // Lowered Y from 480 to 570
         ];
 
         positions.forEach((pos, idx) => {
