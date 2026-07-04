@@ -148,14 +148,11 @@ html, body {
     position: relative;
 }
 
-/* Force standard table bones flat horizontally and cleanly rotate the asset background */
+/* Force standard table bones flat horizontally without layout warping */
 .domino-bone-interactive.domino-flat-track {
     width: 119px !important;
     height: 58px !important;
     flex-direction: row !important;
-    background: url('assets/dom_front.gif') no-repeat center !important;
-    background-size: 58px 119px !important; /* Locks original crisp vertical proportions */
-    transform: rotate(90deg) !important;     /* Physically spins the physical tile bone correctly */
 }
 
 /* Clear default divider styling since it is baked into dom_front.gif */
