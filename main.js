@@ -934,6 +934,50 @@ async function sendMessage() {
 sendBtn.addEventListener('click', sendMessage);
 messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
 
+// HELPER FUNCTION: Bulletproof local to absolute UK time shifter
+function convertInputToUKTime(inputDateStr, inputTimeStr) {
+    const day = parseInt(inputDateStr.substring(0, 2), 10);
+    const month = parseInt(inputDateStr.substring(2, 4), 10) - 1; 
+    const year = 2000 + parseInt(inputDateStr.substring(4, 6), 10);
+    const hours = parseInt(inputTimeStr.substring(0, 2), 10);
+    const mins = parseInt(inputTimeStr.substring(2, 4), 10);
+
+    const djLocalDateTime = new Date(year, month, day, hours, mins);
+
+    const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Europe/London',
+        year: 'numeric', month: 'numeric', day: 'numeric',
+        hour: 'numeric', minute: 'numeric', second: 'numeric',
+        hour12: false
+    });
+    
+    const ukParts = formatter.formatToParts(djLocalDateTime);
+    const ukMap = Object.fromEntries(ukParts.map(p => [p.type, p.value]));
+
+    const londonEquivalentTime = new Date(
+        parseInt(ukMap.year, 10),
+        parseInt(ukMap.month, 10) - 1,
+        parseInt(ukMap.day, 10),
+        parseInt(ukMap.hour, 10),
+        parseInt(ukMap.minute, 10)
+    );
+
+    const timeDifferenceMs = londonEquivalentTime - djLocalDateTime;
+    djLocalDateTime.setTime(djLocalDateTime.getTime() + timeDifferenceMs);
+
+    const ukYearStr = String(djLocalDateTime.getFullYear()).substring(2, 4);
+    const ukMonthStr = String(djLocalDateTime.getMonth() + 1).padStart(2, '0');
+    const ukDayStr = String(djLocalDateTime.getDate()).padStart(2, '0');
+    
+    const ukHoursStr = String(djLocalDateTime.getHours()).padStart(2, '0');
+    const ukMinsStr = String(djLocalDateTime.getMinutes()).padStart(2, '0');
+
+    return {
+        finalUKDate: `${ukDayStr}${ukMonthStr}${ukYearStr}`,
+        finalUKTime: `${ukHoursStr}${ukMinsStr}`
+    };
+}
+
 // ISOLATED INJECTIONS RUNNERS (BUILT ASYNC SO THEY CANNOT BLOCK CORE GREETINGS OR LOGINS)
 async function processScheduleConsoleInjections(text, djUser) {
     const args = text.trim().split(/\s+/);
@@ -961,9 +1005,9 @@ async function processScheduleConsoleInjections(text, djUser) {
         if (error) console.error("Database master schedule record failure:", error.message);
     } 
     else if (action === 'temp') {
-        const dateBlock = args[2]; 
-        const startTime = args[3];
-        const endTime = args[4];
+        let dateBlock = args[2]; 
+        let startTime = args[3];
+        let endTime = args[4];
         const timeZone = args[5];
 
         if (!dateBlock || !startTime || !endTime || !timeZone || dateBlock.length !== 6) {
@@ -971,11 +1015,20 @@ async function processScheduleConsoleInjections(text, djUser) {
             return;
         }
 
+        // Apply Timezone shifting intercept logic for the start time
+        const shiftStart = convertInputToUKTime(dateBlock, startTime);
+        startTime = shiftStart.finalUKTime;
+        dateBlock = shiftStart.finalUKDate; // Secure date context in case of midnight flip
+
+        // Apply Timezone shifting intercept logic for the end time
+        const shiftEnd = convertInputToUKTime(args[2], endTime);
+        endTime = shiftEnd.finalUKTime;
+
         const { error } = await supabase_db.from('temporary_overrides').upsert([{
             specific_date: dateBlock,
             start_time: startTime,
             end_time: endTime,
-            time_zone: timeZone.toUpperCase(),
+            time_zone: 'EUROPE/LONDON',
             dj_name: djUser,
             is_cancelled: false
         }], { onConflict: 'specific_date,start_time' });
@@ -983,13 +1036,18 @@ async function processScheduleConsoleInjections(text, djUser) {
         if (error) console.error("Database temporary override record failure:", error.message);
     } 
     else if (action === 'cancel') {
-        const dateBlock = args[2];
-        const startTime = args[3];
+        let dateBlock = args[2];
+        let startTime = args[3];
 
         if (!dateBlock || !startTime || dateBlock.length !== 6) {
             alert("Format missing. Use: /schedule cancel [ddmmyy] [Start Time]");
             return;
         }
+
+        // Apply Timezone shifting intercept logic
+        const shiftCancel = convertInputToUKTime(dateBlock, startTime);
+        startTime = shiftCancel.finalUKTime;
+        dateBlock = shiftCancel.finalUKDate;
 
         const { error } = await supabase_db.from('temporary_overrides').upsert([{
             specific_date: dateBlock,
@@ -1060,7 +1118,7 @@ async function fetchAndRenderWeeklyTimetable() {
             const localStartStr = ukStart.toLocaleTimeString('en-GB', { timeZone: userTimeZone, hour: '2-digit', minute: '2-digit', hour12: false });
             const localEndStr = ukEnd.toLocaleTimeString('en-GB', { timeZone: userTimeZone, hour: '2-digit', minute: '2-digit', hour12: false });
 
-return {
+            return {
                 sortDay: dayOrder[localDayStr.toLowerCase()],
                 sortTime: localStartStr,
                 html: `
