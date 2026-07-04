@@ -425,27 +425,21 @@ function updateCornerSeatBlocks() {
 }
 
 function generateHalfDisplay(value, isHorizontal = false) {
-    // Corrected 7-Pip Reversal Matrix matching dom_front.gif
-    const hideMaps = {
-        6: [4],                                  // Hides center pip only, leaving the outer 6
-        5: [3, 5],                               // Hides middle-sides, leaving 4 corners + center
-        4: [3, 4, 5],                            // Hides center + middle-sides, leaving 4 corners
-        3: isHorizontal ? [1, 3, 5, 7] : [2, 3, 5, 6], // Leaves a diagonal line of 3 across the face
-        2: isHorizontal ? [1, 3, 4, 5, 7] : [2, 3, 4, 5, 6], // Leaves 2 opposite corner pips
-        1: [1, 2, 3, 5, 6, 7],                   // Hides all outer pips, leaving only the center dot
-        0: [1, 2, 3, 4, 5, 6, 7]                 // Blank face: Covers all 7 pre-rendered pips completely
+    const pipMaps = {
+        0: [],
+        1: [4],
+        2: isHorizontal ? [6, 2] : [1, 7],
+        3: isHorizontal ? [6, 4, 2] : [1, 4, 7],
+        4: [1, 2, 6, 7],
+        5: [1, 2, 4, 6, 7],
+        6: isHorizontal ? [1, 8, 2, 6, 9, 7] : [1, 2, 3, 5, 6, 7]
     };
     
-    const pipsToHide = hideMaps[value] || [];
+    const activePips = pipMaps[value] || [];
     let html = `<div class="domino-half">`;
-    
     for (let p = 1; p <= 9; p++) {
-        html += `<div class="pip pos-${p}">`;
-        // If this position belongs in the 7-pip hide map, inject the ivory mask patch
-        if (pipsToHide.includes(p)) {
-            html += `<img src="assets/_DOM_PIPS.png" style="width: 100%; height: 100%; object-fit: contain; display: block;" alt="mask">`;
-        }
-        html += `</div>`;
+        const isActive = activePips.includes(p) ? 'active' : '';
+        html += `<div class="pip ${isActive} pos-${p}"></div>`;
     }
     html += `</div>`;
     return html;
