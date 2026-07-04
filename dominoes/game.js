@@ -11,9 +11,9 @@ const BG_NATIVE_HEIGHT = 1440;
 // Your precise grid coordinates verified from the midpoints
 const PATH_TRACK = {
     lowerY: 1180, // Halfway between 920 and 1440
-    upperY: 269,  // Halfway between 92 and 446
-    leftX: 420,   // Strict left vertical boundary
-    rightX: 2220  // Halfway between 1790 and 2650
+    upperY: 95,   // Shifted up -> Moves top row up by ~174px
+    leftX: 245,   // Shifted left -> Moves left corner out by 175px
+    rightX: 2395  // Shifted right -> Moves right corner out by 175px
 };
 
 // Absolute center point for the dealt hand tray
