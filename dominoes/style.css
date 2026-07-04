@@ -134,7 +134,7 @@ html, body {
 .domino-bone-interactive {
     width: 58px !important;
     height: 119px !important;
-    background: #fdfdfd !important;
+    background: #fdfdfd;
     border: 2px solid #1a1a1a !important;
     border-radius: 5px !important;
     display: flex !important;
