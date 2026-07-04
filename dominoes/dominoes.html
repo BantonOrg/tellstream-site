@@ -21,7 +21,7 @@
         </div>
 
     <div id="table-view" class="screen hidden-layout">
-        <div id="game-table" style="position: relative; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; gap: 40px; background: #0b0c10;">
+        <div id="game-table" style="position: relative; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; gap: 20px; background: #0b0c10; flex-wrap: wrap; padding: 20px;">
             
             <div class="domino-bone-interactive skin-classic">
                 <div class="domino-half top-half">
@@ -32,8 +32,9 @@
                     <div class="pip pos-1"></div><div class="pip pos-2"></div><div class="pip pos-3"></div><div class="pip pos-4"></div><div class="pip pos-5"></div><div class="pip pos-6"></div><div class="pip pos-7"></div>
                 </div>
             </div>
+            <div class="domino-bone-interactive skin-classic"></div>
 
-            <div class="domino-bone-interactive skin-premium">
+            <div style="width: 20px;"></div> <div class="domino-bone-interactive skin-premium">
                 <div class="domino-half top-half">
                     <div class="pip active pos-1"></div>
                     <div class="pip active pos-2"></div>
@@ -54,8 +55,9 @@
                     <div class="pip active pos-7"></div>
                 </div>
             </div>
+            <div class="domino-bone-interactive skin-premium"></div>
 
-            <div class="domino-bone-interactive skin-rasta">
+            <div style="width: 20px;"></div> <div class="domino-bone-interactive skin-rasta">
                 <div class="domino-half top-half">
                     <div class="pip active pos-1"></div>
                     <div class="pip active pos-2"></div>
@@ -76,6 +78,7 @@
                     <div class="pip active pos-7"></div>
                 </div>
             </div>
+            <div class="domino-bone-interactive skin-rasta"></div>
 
         </div>
     </div>
@@ -83,7 +86,7 @@
     <div id="rotation-overlay">
         <div class="message">
             <h2>🔄 Please Rotate Your Device</h2>
-            <p>This game requires landscape mode. If your screen doesn't turn, please ensure "Auto-Rotate" is enabled in your phone settings.</p>
+            <p>This game requires landscape mode.</p>
         </div>
     </div>
 
