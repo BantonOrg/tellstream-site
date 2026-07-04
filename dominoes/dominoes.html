@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TellStream Lounge Dominoes</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="tiles.css">
+    <link rel="stylesheet" href="skins.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -16,12 +18,65 @@
     </div>
 
     <div id="lobby-view" class="screen">
-        <!-- Lobby layout content populates here dynamically -->
-    </div>
+        </div>
 
     <div id="table-view" class="screen hidden-layout">
-        <div id="game-table">
-            <!-- Game layout container -->
+        <div id="game-table" style="position: relative; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; gap: 40px; background: #0b0c10;">
+            
+            <div class="domino-bone-interactive skin-classic">
+                <div class="domino-half top-half">
+                    <div class="pip pos-1"></div><div class="pip pos-2"></div><div class="pip pos-3"></div><div class="pip pos-4"></div><div class="pip pos-5"></div><div class="pip pos-6"></div><div class="pip pos-7"></div>
+                </div>
+                <div class="domino-divider"></div>
+                <div class="domino-half bottom-half">
+                    <div class="pip pos-1"></div><div class="pip pos-2"></div><div class="pip pos-3"></div><div class="pip pos-4"></div><div class="pip pos-5"></div><div class="pip pos-6"></div><div class="pip pos-7"></div>
+                </div>
+            </div>
+
+            <div class="domino-bone-interactive skin-premium">
+                <div class="domino-half top-half">
+                    <div class="pip active pos-1"></div>
+                    <div class="pip active pos-2"></div>
+                    <div class="pip pos-3"></div>
+                    <div class="pip pos-4"></div>
+                    <div class="pip pos-5"></div>
+                    <div class="pip active pos-6"></div>
+                    <div class="pip active pos-7"></div>
+                </div>
+                <div class="domino-divider"></div>
+                <div class="domino-half bottom-half">
+                    <div class="pip active pos-1"></div>
+                    <div class="pip pos-2"></div>
+                    <div class="pip pos-3"></div>
+                    <div class="pip active pos-4"></div>
+                    <div class="pip pos-5"></div>
+                    <div class="pip pos-6"></div>
+                    <div class="pip active pos-7"></div>
+                </div>
+            </div>
+
+            <div class="domino-bone-interactive skin-rasta">
+                <div class="domino-half top-half">
+                    <div class="pip active pos-1"></div>
+                    <div class="pip active pos-2"></div>
+                    <div class="pip active pos-3"></div>
+                    <div class="pip pos-4"></div>
+                    <div class="pip active pos-5"></div>
+                    <div class="pip active pos-6"></div>
+                    <div class="pip active pos-7"></div>
+                </div>
+                <div class="domino-divider"></div>
+                <div class="domino-half bottom-half">
+                    <div class="pip active pos-1"></div>
+                    <div class="pip active pos-2"></div>
+                    <div class="pip active pos-3"></div>
+                    <div class="pip pos-4"></div>
+                    <div class="pip active pos-5"></div>
+                    <div class="pip active pos-6"></div>
+                    <div class="pip active pos-7"></div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -32,20 +87,16 @@
         </div>
     </div>
 
-    <!-- Correct Loading Sequence: UI & rendering foundation must load before network management -->
     <script src="game.js"></script>
     <script src="network.js"></script>
 
     <script>
-        // Safely bind the entry engine once the DOM structure is fully parsed
         document.addEventListener("DOMContentLoaded", () => {
             const startButton = document.getElementById("start-btn");
             if (startButton) {
                 startButton.addEventListener("click", () => {
-                    // Hide the initial loading screen wrapper overlay
                     document.getElementById("loading-screen").style.display = "none";
-                    // Initialize the network setup state loop
-                    initNetwork();
+                    document.getElementById("table-view").classList.remove("hidden-layout");
                 });
             }
         });
