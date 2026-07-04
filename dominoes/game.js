@@ -591,14 +591,10 @@ function generateMaskedHalfDisplay(value) {
         6: [1, 2, 3, 5, 6, 7]
     };
     
-    const activePips = pipMaps[value] || [];
-    
-    let html = `<div class="domino-half">`;
-    for (let p = 1; p <= 9; p++) {
-        // Inverse rule: Active pips get the mask REMOVED (opacity 0) to show asset beneath
-        const maskModifier = activePips.includes(p) ? 'reveal-pip' : '';
-        html += `<div class="pip-mask ${maskModifier} pos-${p}"></div>`;
-    }
-    html += `</div>`;
-    return html;
+/* Overrides the dynamic grid matrix with your precise layout offsets */
+.new-design-bone .domino-half {
+    grid-template-columns: 24% auto 32% !important;
+    grid-template-rows: 22% auto 34% !important;
+    gap: 0 !important;
+    padding: 2px !important;
 }
