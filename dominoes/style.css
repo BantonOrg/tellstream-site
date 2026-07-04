@@ -266,11 +266,11 @@ html, body {
 .pip-mask {
     width: 24px !important;
     height: 24px !important;
-    background: #eadeca !important; /* Kept ivory for tracking contrast */
+    background: #eadeca !important;
     border-radius: 50%;
     opacity: 1;
     transition: opacity 0.1s ease;
-    margin: auto; /* Keeps elements perfectly centered inside their expanded grid tracks */
+    margin: auto;
 }
 
 .pip-mask.reveal-pip {
