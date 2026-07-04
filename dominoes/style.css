@@ -134,7 +134,7 @@ html, body {
 .domino-bone-interactive {
     width: 58px !important;
     height: 119px !important;
-    background: url('dom_front.gif') no-repeat center/cover !important;
+    background: url('assets/dom_front.gif') no-repeat center/cover !important;
     border: 2px solid #1a1a1a !important;
     border-radius: 5px !important;
     display: flex !important;
