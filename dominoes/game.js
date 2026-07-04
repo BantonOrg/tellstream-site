@@ -329,7 +329,7 @@ function renderLiveTable(boardLine) {
         });
     }
 
-    // 2. RENDER PLAYER HAND
+// 2. RENDER PLAYER HAND
     if (window.localGameState && window.localGameState.players && window.localGameState.players.player1) {
         const hand = window.localGameState.players.player1.hand || [];
         hand.forEach(tile => {
@@ -365,6 +365,36 @@ function renderLiveTable(boardLine) {
             });
 
             handContainer.appendChild(tileElement);
+        });
+    }
+
+    // Add 3 decorative face-down dominoes randomly tilted up to 45 degrees
+    if (trackContainer) {
+        const positions = [
+            { x: 1080, y: 460 },
+            { x: 1260, y: 410 },
+            { x: 1420, y: 480 }
+        ];
+
+        positions.forEach((pos, idx) => {
+            const backTile = document.createElement("div");
+            backTile.className = "domino-bone-interactive";
+            backTile.style.position = "absolute";
+            backTile.style.width = "173px";
+            backTile.style.height = "84px";
+            backTile.style.background = "url('assets/dom_back.gif') no-repeat center";
+            backTile.style.backgroundSize = "100% 100%";
+            backTile.style.border = "none";
+            backTile.style.boxShadow = "0 6px 12px rgba(0,0,0,0.5)";
+            backTile.style.cursor = "default";
+
+            const randomTilt = Math.floor(Math.random() * 90) - 45; 
+            
+            backTile.style.left = Math.round(pos.x - 173 / 2) + "px";
+            backTile.style.top = Math.round(pos.y - 84 / 2) + "px";
+            backTile.style.transform = `rotate(${randomTilt}deg)`;
+            
+            trackContainer.appendChild(backTile);
         });
     }
 }
