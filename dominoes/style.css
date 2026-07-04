@@ -148,11 +148,14 @@ html, body {
     position: relative;
 }
 
-/* Force standard table bones flat horizontally without layout warping */
+/* Force standard table bones flat horizontally and cleanly rotate the asset background */
 .domino-bone-interactive.domino-flat-track {
     width: 119px !important;
     height: 58px !important;
     flex-direction: row !important;
+    background: url('assets/dom_front.gif') no-repeat center !important;
+    background-size: 58px 119px !important; /* Locks original crisp vertical proportions */
+    transform: rotate(90deg) !important;     /* Physically spins the physical tile bone correctly */
 }
 
 /* Clear default divider styling since it is baked into dom_front.gif */
@@ -190,6 +193,17 @@ html, body {
     justify-content: center !important;
     align-items: center !important;
     box-shadow: none !important;
+    position: relative;
+    background: transparent !important;
+}
+
+/* Enlarged Mask: Scales the ivory circle up to double its size to cover the 3D pips */
+.pip img {
+    width: 24px !important;  
+    height: 24px !important; 
+    object-fit: contain !important;
+    border-radius: 50% !important;
+    transform: scale(1.4);   
 }
 
 /* Exact positional mapping matrix for a 3x3 dot grid */
