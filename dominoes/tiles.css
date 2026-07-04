@@ -1,1 +1,74 @@
+/* ==========================================================================
+   TILES.CSS - Unified Base Structure & Permanent 7-Slot Mask Matrix
+   ========================================================================== */
 
+/* Core Vertical Tile Container Physics */
+.domino-bone-interactive {
+    position: relative;
+    box-sizing: border-box;
+}
+
+/* Universal Front Face Sticker Rule */
+.domino-bone-interactive:has(.domino-half) {
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+}
+
+/* Universal Back Face Sticker Rule */
+.domino-bone-interactive:not(:has(.domino-half)) {
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+}
+
+/* Base Half-Tile Box Structural Container */
+.domino-half {
+    position: absolute;
+    width: 100% !important;
+    height: 50% !important;
+    box-sizing: border-box;
+}
+
+/* Force Absolute Top Half and Bottom Half Regions */
+.domino-half.top-half {
+    top: 0;
+    left: 0;
+}
+.domino-half.bottom-half {
+    bottom: 0;
+    left: 0;
+}
+
+/* The Master Mask Slot Sticker Core Rules */
+.pip {
+    position: absolute;
+    width: 12px !important;  /* Locked pixel width matching asset scale */
+    height: 12px !important; /* Locked pixel height matching asset scale */
+    background-size: cover !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-color: transparent !important;
+    visibility: hidden;      /* Completely hidden until called by script */
+}
+
+/* Make it visible only when toggled active */
+.pip.active {
+    visibility: visible !important;
+}
+
+/* --------------------------------------------------------------------------
+   PERMANENT 7-SLOT MASK COORDINATES Matrix (Slots 8 and 9 Binned)
+   -------------------------------------------------------------------------- */
+/* Top Row Positions */
+.pip.pos-1 { top: 12px; left: 12px; }
+.pip.pos-2 { top: 12px; right: 12px; }
+
+/* Middle Row Positions */
+.pip.pos-3 { top: 50%; left: 12px; transform: translateY(-50%); }
+.pip.pos-4 { top: 50%; left: 50%; transform: translate(-50%, -50%); } /* Exact Center */
+.pip.pos-5 { top: 50%; right: 12px; transform: translateY(-50%); }
+
+/* Bottom Row Positions */
+.pip.pos-6 { bottom: 12px; left: 12px; }
+.pip.pos-7 { bottom: 12px; right: 12px; }
