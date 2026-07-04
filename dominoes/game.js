@@ -550,7 +550,7 @@ function renderTemporaryPreviewLayer() {
     });
     overlay.appendChild(row1Container);
 
-    // ROW 2: UPDATED MASK DESIGN (WORKING COMPLETELY BACKWARDS)
+    // ROW 2: UPDATED MASK DESIGN (WORKING COMPLETELY BACKWARDS WITH EXPANDED GRID)
     const row2Container = document.createElement("div");
     row2Container.className = "preview-tiles-row";
 
