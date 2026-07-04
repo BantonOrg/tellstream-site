@@ -425,7 +425,6 @@ function updateCornerSeatBlocks() {
 }
 
 function generateHalfDisplay(value, isHorizontal = false) {
-    // Mapping rules based on standard reading grid indices
     const pipMaps = {
         0: [],
         1: [4],
@@ -438,14 +437,10 @@ function generateHalfDisplay(value, isHorizontal = false) {
     
     const activePips = pipMaps[value] || [];
     let html = `<div class="domino-half">`;
-    
-    // Generate all 9 structural tracking squares
     for (let p = 1; p <= 9; p++) {
-        // If the number utilizes this dot position, reveal the asset window underneath
-        const isRevealed = activePips.includes(p) ? 'revealed' : '';
-        html += `<div class="pip-mask ${isRevealed} pos-${p}"></div>`;
+        const isActive = activePips.includes(p) ? 'active' : '';
+        html += `<div class="pip ${isActive} pos-${p}"></div>`;
     }
-    
     html += `</div>`;
     return html;
 }
