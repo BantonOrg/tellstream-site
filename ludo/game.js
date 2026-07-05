@@ -1,12 +1,10 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-// 1. Database Connection
 const supabase = createClient(
   "https://vegwferwmyuunwvfqpsf.supabase.co",       
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZ3dmZXJ3bXl1dW53dmZxcHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODU5NDQsImV4cCI6MjA5Nzk2MTk0NH0.7F3HUEY59BGE5phlD9AukhZzRa3Ied_ZT43j8YZeIy8"   
 );
 
-// 2. State Engine Variables
 let roomCode = null;
 let playerColor = null;
 let state = null;
@@ -19,81 +17,68 @@ const TURN_TIMEOUT_SECONDS = 30;
 
 const COLORS = ["red", "green", "yellow", "blue"];
 
-// Completely Corrected Clockwise Path Map
 const COMMON_TRACK = [
-  // Top arm, left column (moving bottom to top)
   {x:6, y:5}, {x:6, y:4}, {x:6, y:3}, {x:6, y:2}, {x:6, y:1}, {x:6, y:0},
-  // Top center crossover
   {x:7, y:0},
-  // Top arm, right column (moving top to bottom)
   {x:8, y:0}, {x:8, y:1}, {x:8, y:2}, {x:8, y:3}, {x:8, y:4}, {x:8, y:5},
-  // Right arm, top row (moving left to right)
   {x:9, y:6}, {x:10, y:6}, {x:11, y:6}, {x:12, y:6}, {x:13, y:6}, {x:14, y:6},
-  // Right center crossover
   {x:14, y:7},
-  // Right arm, bottom row (moving right to left)
   {x:14, y:8}, {x:13, y:8}, {x:12, y:8}, {x:11, y:8}, {x:10, y:8}, {x:9, y:8},
-  // Bottom arm, right column (moving top to bottom)
   {x:8, y:9}, {x:8, y:10}, {x:8, y:11}, {x:8, y:12}, {x:8, y:13}, {x:8, y:14},
-  // Bottom center crossover
   {x:7, y:14},
-  // Bottom arm, left column (moving bottom to top)
   {x:6, y:14}, {x:6, y:13}, {x:6, y:12}, {x:6, y:11}, {x:6, y:10}, {x:6, y:9},
-  // Left arm, bottom row (moving right to left)
   {x:5, y:8}, {x:4, y:8}, {x:3, y:8}, {x:2, y:8}, {x:1, y:8}, {x:0, y:8},
-  // Left center crossover
   {x:0, y:7},
-  // Left arm, top row (moving left to right)
   {x:0, y:6}, {x:1, y:6}, {x:2, y:6}, {x:3, y:6}, {x:4, y:6}, {x:5, y:6}
 ];
 
-// Re-aligned perfectly to match clockwise indexes and board coordinates
+// Mapping each token slot directly to its explicit double-figure coordinate from image_55b1f9.jpg
 const COLOR_MAPS = {
   green: {
-    startTrackIdx: 47,    // Map to {x:1, y:6} (Green Arrow)
-    homeStartIdx: 50,     // Turns home after 51 steps
+    startTrackIdx: 47,
+    homeStartIdx: 50,
     homeCoords: [{x:7,y:1}, {x:7,y:2}, {x:7,y:3}, {x:7,y:4}, {x:7,y:5}, {x:7,y:6}],
-    yard: [{x:2,y:2}, {x:3,y:2}, {x:2,y:3}, {x:3,y:3}]
+    yard: [{x:4,y:1}, {x:5,y:1}, {x:4,y:2}, {x:5,y:2}]
   },
   yellow: {
-    startTrackIdx: 8,     // Map to {x:8, y:1} (Yellow Arrow)
-    homeStartIdx: 50,     // Turns home after 51 steps
+    startTrackIdx: 8,
+    homeStartIdx: 50,
     homeCoords: [{x:13,y:7}, {x:12,y:7}, {x:11,y:7}, {x:10,y:7}, {x:9,y:7}, {x:8,y:7}],
-    yard: [{x:11,y:2}, {x:12,y:2}, {x:11,y:3}, {x:12,y:3}]
+    yard: [{x:9,y:1}, {x:10,y:1}, {x:9,y:2}, {x:10,y:2}]
   },
   blue: {
-    startTrackIdx: 21,    // Map to {x:13, y:8} (Blue Arrow)
-    homeStartIdx: 50,     // Turns home after 51 steps
+    startTrackIdx: 21,
+    homeStartIdx: 50,
     homeCoords: [{x:7,y:13}, {x:7,y:12}, {x:7,y:11}, {x:7,y:10}, {x:7,y:9}, {x:7,y:8}],
-    yard: [{x:11,y:11}, {x:12,y:11}, {x:11,y:12}, {x:12,y:12}]
+    yard: [{x:9,y:12}, {x:10,y:12}, {x:9,y:13}, {x:10,y:13}]
   },
   red: {
-    startTrackIdx: 34,    // Map to {x:6, y:13} (Red Arrow)
-    homeStartIdx: 50,     // Turns home after 51 steps
+    startTrackIdx: 34,
+    homeStartIdx: 50,
     homeCoords: [{x:1,y:7}, {x:2,y:7}, {x:3,y:7}, {x:4,y:7}, {x:5,y:7}, {x:6,y:7}],
-    yard: [{x:2,y:11}, {x:3,y:11}, {x:2,y:12}, {x:3,y:12}]
+    yard: [{x:4,y:12}, {x:5,y:12}, {x:4,y:13}, {x:5,y:13}]
   }
 };
 
 const board = document.getElementById("board");
 const menuScreen = document.getElementById("menuScreen");
 const gameScreen = document.getElementById("gameScreen");
-const rollBtn = document.getElementById("rollBtn");
-const dice = document.getElementById("dice");
 const soundToggle = document.getElementById("soundToggle");
+const themeSelect = document.getElementById("themeSelect");
 
 soundToggle.onchange = () => soundOn = soundToggle.checked;
 
+// Local Cosmetic Theme Switcher
+themeSelect.onchange = () => {
+  board.className = "";
+  board.classList.add(`theme-${themeSelect.value}`);
+};
+
 function genCode() { return Math.random().toString(36).substring(2,6).toUpperCase(); }
 
-// 3. Room Initialization & State Routing
 document.getElementById("createBtn").onclick = async () => {
   roomCode = genCode();
   playerColor = "red";
-  
-  localStorage.setItem("ludo_roomCode", roomCode);
-  localStorage.setItem("ludo_playerColor", playerColor);
-  
   enterGame();
   
   await supabase.from("rooms").insert({
@@ -119,9 +104,6 @@ document.getElementById("joinBtn").onclick = async () => {
   playerColor = COLORS[players.length];
   players.push(playerColor);
 
-  localStorage.setItem("ludo_roomCode", roomCode);
-  localStorage.setItem("ludo_playerColor", playerColor);
-
   await supabase.from("rooms").update({ players }).eq("code", roomCode);
   enterGame();
   listenRoom();
@@ -142,36 +124,37 @@ function enterGame() {
   document.getElementById("roomInfo").innerText = `ROOM: ${roomCode} | YOU: ${playerColor.toUpperCase()}`;
 }
 
-// 4. Realtime Synchronization Management
 function listenRoom() {
   supabase
     .channel("room-" + roomCode)
     .on("postgres_changes", { event: "UPDATE", schema: "public", table: "rooms", filter: `code=eq.${roomCode}` }, payload => {
-      state = payload.new.state;
-      const players = payload.new.players || [];
-      
-      if (players.length > 0) {
-        currentTurnColor = COLORS[payload.new.turn % players.length];
-      } else {
-        currentTurnColor = "red";
-      }
-      
-      currentRoll = state.currentRoll;
-      hasRolledThisTurn = state.hasRolled;
-      
-      if (players.length > 1) {
-        startTurnTimer();
-      } else {
-        clearInterval(turnTimerInterval);
-        document.getElementById("roomInfo").innerText = `ROOM: ${roomCode} | YOU: ${playerColor.toUpperCase()} | WAITING FOR PLAYERS TO JOIN...`;
-      }
-      
-      render();
+      handleStateUpdate(payload.new);
     })
-    .subscribe();
+    .subscribe(async (status) => {
+      if (status === "SUBSCRIBED") {
+        const { data } = await supabase.from("rooms").select("*").eq("code", roomCode).single();
+        if (data) handleStateUpdate(data);
+      }
+    });
 }
 
-// 5. Automated Turn Expiration Clock (Anti-AFK Handling)
+function handleStateUpdate(roomData) {
+  state = roomData.state;
+  const players = roomData.players || [];
+  
+  currentTurnColor = players.length > 0 ? COLORS[roomData.turn % players.length] : "red";
+  currentRoll = state.currentRoll;
+  hasRolledThisTurn = state.hasRolled;
+  
+  if (players.length > 1) {
+    startTurnTimer();
+  } else {
+    clearInterval(turnTimerInterval);
+    document.getElementById("roomInfo").innerText = `ROOM: ${roomCode} | YOU: ${playerColor.toUpperCase()} | WAITING FOR PLAYERS...`;
+  }
+  render();
+}
+
 function startTurnTimer() {
   clearInterval(turnTimerInterval);
   if (!state || !state.lastTurnTimestamp) return;
@@ -190,10 +173,9 @@ function startTurnTimer() {
   }, 1000);
 }
 
-// 6. Game Core Mechanics & Rules Enforcements
-rollBtn.onclick = async () => {
-  if (playerColor !== currentTurnColor) return alert("It's not your turn!");
-  if (hasRolledThisTurn) return alert("You already rolled!");
+async function handleDiceRoll() {
+  if (playerColor !== currentTurnColor) return;
+  if (hasRolledThisTurn) return;
 
   const roll = Math.floor(Math.random() * 6) + 1;
   if(soundOn) playSound("roll");
@@ -204,9 +186,8 @@ rollBtn.onclick = async () => {
   if (!hasValidMoves(playerColor, roll)) {
     setTimeout(() => passTurn(roll === 6), 1500);
   }
-
   await updateDatabaseState();
-};
+}
 
 function hasValidMoves(color, roll) {
   return state.tokens[color].some((pos, idx) => isValidMove(color, idx, roll));
@@ -236,7 +217,6 @@ async function selectTokenToMove(tokenIdx) {
   await passTurn(currentRoll === 6);
 }
 
-// 7. Core Rules: Capture Evaluation & Safe Zones Verification
 function checkCaptures(movingColor, movingIdx) {
   const currentPos = state.tokens[movingColor][movingIdx];
   if (currentPos === -1 || currentPos > 51) return;
@@ -244,7 +224,6 @@ function checkCaptures(movingColor, movingIdx) {
   const map = COLOR_MAPS[movingColor];
   const absoluteTrackIndex = (map.startTrackIdx + currentPos) % 52;
 
-  // Corrected track index alignments matching safety stars and spawns clockwise
   const SAFE_TRACK_INDICES = [2, 8, 15, 21, 28, 34, 41, 47];
   if (SAFE_TRACK_INDICES.includes(absoluteTrackIndex)) return;
 
@@ -294,16 +273,34 @@ function getTokenGridCoords(color, pos, tokenIdx) {
   return COMMON_TRACK[absoluteTrackIndex];
 }
 
-// 8. Render Engine (Fixed Standard Orientation Layout)
 function render() {
   board.querySelectorAll('.token').forEach(el => el.remove());
-  
-  dice.innerText = currentRoll || "🎲";
-  rollBtn.disabled = (playerColor !== currentTurnColor || hasRolledThisTurn);
+  const controlsContainer = document.getElementById("yard-controls-container");
+  controlsContainer.innerHTML = "";
 
-  // Structural Alignment: Board layout is locked straight for all screens
-  board.style.transform = "none";
+  // Inject Roll HUD inside the current turn owner's 2x2 box space
+  if (currentTurnColor) {
+    const controlHUD = document.createElement("div");
+    controlHUD.className = `yard-control ${currentTurnColor}`;
+    
+    const rollButton = document.createElement("button");
+    rollButton.className = "yard-roll-btn";
+    rollButton.innerText = playerColor === currentTurnColor ? "ROLL" : currentTurnColor.toUpperCase();
+    rollButton.disabled = (playerColor !== currentTurnColor || hasRolledThisTurn);
+    rollButton.onclick = handleDiceRoll;
 
+    const diceDisplay = document.createElement("div");
+    diceDisplay.className = "yard-dice-view";
+    
+    const diceEmojis = ["🎲", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
+    diceDisplay.innerText = currentRoll ? diceEmojis[currentRoll] : "🎲";
+
+    controlHUD.appendChild(rollButton);
+    controlHUD.appendChild(diceDisplay);
+    controlsContainer.appendChild(controlHUD);
+  }
+
+  // Token rendering using precise groupings
   const coordinateGroups = {};
   const tokensToRender = [];
 
@@ -312,9 +309,7 @@ function render() {
       const coords = getTokenGridCoords(c, pos, idx);
       const coordKey = `${coords.x},${coords.y}`;
       
-      if (!coordinateGroups[coordKey]) {
-        coordinateGroups[coordKey] = [];
-      }
+      if (!coordinateGroups[coordKey]) coordinateGroups[coordKey] = [];
       
       const tokenData = { color: c, index: idx, pos: pos, coords: coords, coordKey: coordKey };
       coordinateGroups[coordKey].push(tokenData);
@@ -335,72 +330,21 @@ function render() {
     if (sharedOccupants.length > 1) {
       const occupantIndex = sharedOccupants.indexOf(token);
       const totalOccupants = sharedOccupants.length;
-      
       const angle = (occupantIndex / totalOccupants) * 2 * Math.PI;
-      const radius = 7; 
-      const offsetX = Math.cos(angle) * radius;
-      const offsetY = Math.sin(angle) * radius;
-      
-      transformString = `translate(${offsetX}px, ${offsetY}px) scale(0.8)`;
+      const radius = 6; 
+      transformString = `translate(${Math.cos(angle) * radius}px, ${Math.sin(angle) * radius}px) scale(0.75)`;
     }
-
     tokenEl.style.transform = transformString;
 
     if (token.color === playerColor && currentTurnColor === playerColor && hasRolledThisTurn && isValidMove(token.color, token.index, currentRoll)) {
       tokenEl.classList.add("movable");
       tokenEl.onclick = () => selectTokenToMove(token.index);
     }
-
     board.appendChild(tokenEl);
   });
-
-  // === DOM-BASED GRID DEBUGGING LABELS ===
-  // Only run this once to prevent duplicating text elements on every re-render
-  if (!document.getElementById("debug-grid-layer")) {
-    const debugLayer = document.createElement("div");
-    debugLayer.id = "debug-grid-layer";
-    debugLayer.style.position = "absolute";
-    debugLayer.style.top = "0";
-    debugLayer.style.left = "0";
-    debugLayer.style.width = "100%";
-    debugLayer.style.height = "100%";
-    debugLayer.style.pointerEvents = "none"; // Let clicks pass right through
-    board.appendChild(debugLayer);
-
-    // Loop through all 15x15 slots
-    for (let row = 0; row < 15; row++) {
-      for (let col = 0; col < 15; col++) {
-        const label = document.createElement("div");
-        label.innerText = `${col},${row}`;
-        label.style.position = "absolute";
-        
-        // Calculate percentages based on a 15-cell grid layout
-        label.style.left = `${(col / 15) * 100}%`;
-        label.style.top = `${(row / 15) * 100}%`;
-        label.style.width = `${100 / 15}%`;
-        label.style.height = `${100 / 15}%`;
-        
-        // Text styling
-        label.style.color = "#000000";
-        label.style.fontWeight = "bold";
-        label.style.fontSize = "9px";
-        label.style.display = "flex";
-        label.style.justifyContent = "center";
-        label.style.alignItems = "center";
-        
-        debugLayer.appendChild(label);
-      }
-    }
-  }
-  // === END DEBUGGING LABELS ===
 }
 
 function playSound(name) {
   let a = new Audio(`assets/sfx/${name}.mp3`);
   a.play().catch(()=>{});
 }
-
-window.addEventListener("DOMContentLoaded", () => {
-  localStorage.clear();
-  sessionStorage.clear();
-});
