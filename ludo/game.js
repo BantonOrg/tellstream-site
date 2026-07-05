@@ -6,7 +6,7 @@ const supabase = createClient(
 );
 
 let roomCode = null;
-let playerColor = null; // Assigned once the host chooses their color seat
+let playerColor = null; 
 let myUsername = null;
 let isHost = false;
 let state = null;
@@ -72,25 +72,28 @@ window.onclick = () => dropdownContent.classList.remove("show");
 
 function genCode() { return Math.random().toString(36).substring(2,6).toUpperCase(); }
 
-function promptUsername() {
-  myUsername = prompt("Enter your player username:");
-  if (!myUsername || myUsername.trim() === "") myUsername = "Player_" + Math.floor(Math.random() * 1000);
-  return myUsername;
+async function getLoggedInUser() {
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) {
+    console.warn("No active Supabase auth session found. Using default.");
+    return "User_" + Math.floor(Math.random() * 1000);
+  }
+  return user.user_metadata?.display_name || user.email.split('@')[0];
 }
 
 // HOST CREATION LOOP
 document.getElementById("createBtn").onclick = async () => {
-  promptUsername();
+  myUsername = await getLoggedInUser();
   roomCode = genCode();
   isHost = true;
-  playerColor = "red"; // Host defaults to red seat
+  playerColor = "red"; 
   
   const initialPlayersObj = {};
   initialPlayersObj[playerColor] = myUsername;
 
   enterGame();
   
-  await supabase.from("lud_room").insert({
+  const { error } = await supabase.from("lud_room").insert({
     room_code: roomCode,
     game_state: "waiting",
     players: initialPlayersObj,
@@ -98,6 +101,8 @@ document.getElementById("createBtn").onclick = async () => {
     turn: 0,
     state: defaultState()
   });
+
+  if (error) console.error("Error creating room:", error);
   listenRoom();
 };
 
@@ -106,7 +111,7 @@ document.getElementById("joinBtn").onclick = async () => {
   const inputCode = document.getElementById("joinCode").value.toUpperCase();
   if (!inputCode || inputCode.length !== 4) return alert("Enter a valid 4-letter room code");
   
-  promptUsername();
+  myUsername = await getLoggedInUser();
   
   const { data, error } = await supabase.from("lud_room").select("*").eq("room_code", inputCode).single();
   if (!data || error) return alert("Room not found");
@@ -114,7 +119,6 @@ document.getElementById("joinBtn").onclick = async () => {
   roomCode = inputCode;
   isHost = false;
 
-  // Append user safely into the text array pool if they aren't assigned a seat yet
   let spectators = data.connected_spectators || [];
   let isSeated = Object.values(data.players).includes(myUsername);
 
@@ -157,7 +161,6 @@ function listenRoom() {
     });
 }
 
-// COMPREHENSIVE LOBBY CONTROL OVERLAY RENDERER
 function renderLobbyOverlay() {
   let overlay = document.getElementById("lobby-overlay");
   if (!overlay) {
@@ -175,7 +178,6 @@ async function assignSeat(spectatorName, selectedColor) {
   let currentPlayers = { ...data.players };
   let currentSpectators = (data.connected_spectators || []).filter(name => name !== spectatorName);
 
-  // Clear name out if they were sitting somewhere else
   Object.keys(currentPlayers).forEach(color => {
     if (currentPlayers[color] === spectatorName) delete currentPlayers[color];
   });
@@ -205,13 +207,11 @@ function handleStateUpdate(roomData) {
   const playersObj = roomData.players || {};
   const spectators = roomData.connected_spectators || [];
   
-  // Track my own assigned identity dynamically from the synchronized object state
   playerColor = null;
   Object.keys(playersObj).forEach(color => {
     if (playersObj[color] === myUsername) playerColor = color;
   });
 
-  // LOBBY INTERFACE STAGE LOOP
   const overlay = document.getElementById("lobby-overlay");
   if (roomData.game_state === "waiting") {
     if (overlay) {
@@ -256,19 +256,17 @@ function handleStateUpdate(roomData) {
         ${actionButton}
       `;
 
-      // Expose seat assignment method to window for inline HTML selection access safely
       window.assignSeat = assignSeat;
 
       if (isHost) {
         document.getElementById("startMatchBtn").onclick = launchMatch;
       }
     }
-    return; // Block background gameplay interaction loops
+    return; 
   } else {
     if (overlay) overlay.style.display = "none";
   }
 
-  // GAME ENGINE RUNNING STAGE LOOP
   const joinedColors = Object.keys(playersObj);
   const activeSeatsCount = joinedColors.length;
   
