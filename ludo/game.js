@@ -273,12 +273,20 @@ function getTokenGridCoords(color, pos, tokenIdx) {
   return COMMON_TRACK[absoluteTrackIndex];
 }
 
-// 8. Render Engine & Dynamic Multi-Token Stacking Offsets Handling
+// 8. Render Engine & Dynamic Board View Rotation
 function render() {
   board.querySelectorAll('.token').forEach(el => el.remove());
   
   dice.innerText = currentRoll || "🎲";
   rollBtn.disabled = (playerColor !== currentTurnColor || hasRolledThisTurn);
+
+  // Determine board rotation angle to keep active player zone focused at the bottom
+  let boardRotation = 0;
+  if (playerColor === "blue") boardRotation = 270;
+  if (playerColor === "yellow") boardRotation = 180;
+  if (playerColor === "green") boardRotation = 90;
+  
+  board.style.transform = `rotate(${boardRotation}deg)`;
 
   const coordinateGroups = {};
   const tokensToRender = [];
@@ -305,7 +313,10 @@ function render() {
     tokenEl.style.gridColumnStart = token.coords.x + 1;
     tokenEl.style.gridRowStart = token.coords.y + 1;
 
+    // Default stacking offset equations
+    let transformString = "";
     const sharedOccupants = coordinateGroups[token.coordKey];
+    
     if (sharedOccupants.length > 1) {
       const occupantIndex = sharedOccupants.indexOf(token);
       const totalOccupants = sharedOccupants.length;
@@ -315,8 +326,13 @@ function render() {
       const offsetX = Math.cos(angle) * radius;
       const offsetY = Math.sin(angle) * radius;
       
-      tokenEl.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(0.8)`;
+      // Calculate layout base offset translation
+      transformString = `translate(${offsetX}px, ${offsetY}px) scale(0.8)`;
     }
+
+    // Counter-rotate tokens so their rendering profiles/animations stay vertical 
+    // instead of flipping upside down along with the rotated layout template
+    tokenEl.style.transform = `${transformString} rotate(-${boardRotation}deg)`;
 
     if (token.color === playerColor && currentTurnColor === playerColor && hasRolledThisTurn && isValidMove(token.color, token.index, currentRoll)) {
       tokenEl.classList.add("movable");
