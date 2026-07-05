@@ -143,6 +143,12 @@ body {
   min-width: 140px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.5);
 }
+
+/* Explicit JavaScript-controlled toggle class */
+.dropdownContent.show {
+  display: block !important;
+}
+
 .dropdownContent label {
   display: flex;
   justify-content: space-between;
@@ -151,7 +157,6 @@ body {
   font-size: 12px;
   color: white;
 }
-.dropdownContent.show { display: block !important; }
 
 /* THE 2x2 ACTION PANELS */
 .yard-control {
