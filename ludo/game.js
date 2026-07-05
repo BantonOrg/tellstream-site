@@ -343,21 +343,7 @@ function playSound(name) {
   a.play().catch(()=>{});
 }
 
-// 9. Runtime Execution: Automated Storage Rehydration Check
 window.addEventListener("DOMContentLoaded", () => {
-  const initialRoom = localStorage.getItem("ludo_roomCode");
-  const initialColor = localStorage.getItem("ludo_playerColor");
-
-  if (initialRoom && initialColor) {
-    supabase.from("rooms").select("*").eq("code", initialRoom).maybeSingle().then(({ data, error }) => {
-      if (data && !error && data.players.includes(initialColor)) {
-        roomCode = initialRoom;
-        playerColor = initialColor;
-        enterGame();
-        listenRoom();
-      } else {
-        localStorage.clear();
-      }
-    });
-  }
+  localStorage.clear();
+  sessionStorage.clear();
 });
