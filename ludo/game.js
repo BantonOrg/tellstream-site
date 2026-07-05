@@ -47,27 +47,31 @@ const COMMON_TRACK = [
   {x:0, y:6}, {x:1, y:6}, {x:2, y:6}, {x:3, y:6}, {x:4, y:6}, {x:5, y:6}
 ];
 
-// Re-aligned perfectly to match your background image boxes
+// Re-aligned perfectly to match clockwise indexes and board coordinates
 const COLOR_MAPS = {
-  red: {
-    startTrackIdx: 14, homeStartIdx: 11,
-    homeCoords: [{x:1,y:7}, {x:2,y:7}, {x:3,y:7}, {x:4,y:7}, {x:5,y:7}, {x:6,y:7}],
-    yard: [{x:2,y:11}, {x:3,y:11}, {x:2,y:12}, {x:3,y:12}]
-  },
   green: {
-    startTrackIdx: 0, homeStartIdx: 50,
+    startTrackIdx: 47,    // Map to {x:1, y:6} (Green Arrow)
+    homeStartIdx: 50,     // Turns home after 51 steps
     homeCoords: [{x:7,y:1}, {x:7,y:2}, {x:7,y:3}, {x:7,y:4}, {x:7,y:5}, {x:7,y:6}],
     yard: [{x:2,y:2}, {x:3,y:2}, {x:2,y:3}, {x:3,y:3}]
   },
   yellow: {
-    startTrackIdx: 13, homeStartIdx: 11,
+    startTrackIdx: 8,     // Map to {x:8, y:1} (Yellow Arrow)
+    homeStartIdx: 50,     // Turns home after 51 steps
     homeCoords: [{x:13,y:7}, {x:12,y:7}, {x:11,y:7}, {x:10,y:7}, {x:9,y:7}, {x:8,y:7}],
     yard: [{x:11,y:2}, {x:12,y:2}, {x:11,y:3}, {x:12,y:3}]
   },
   blue: {
-    startTrackIdx: 26, homeStartIdx: 24,
+    startTrackIdx: 21,    // Map to {x:13, y:8} (Blue Arrow)
+    homeStartIdx: 50,     // Turns home after 51 steps
     homeCoords: [{x:7,y:13}, {x:7,y:12}, {x:7,y:11}, {x:7,y:10}, {x:7,y:9}, {x:7,y:8}],
     yard: [{x:11,y:11}, {x:12,y:11}, {x:11,y:12}, {x:12,y:12}]
+  },
+  red: {
+    startTrackIdx: 34,    // Map to {x:6, y:13} (Red Arrow)
+    homeStartIdx: 50,     // Turns home after 51 steps
+    homeCoords: [{x:1,y:7}, {x:2,y:7}, {x:3,y:7}, {x:4,y:7}, {x:5,y:7}, {x:6,y:7}],
+    yard: [{x:2,y:11}, {x:3,y:11}, {x:2,y:12}, {x:3,y:12}]
   }
 };
 
@@ -240,7 +244,8 @@ function checkCaptures(movingColor, movingIdx) {
   const map = COLOR_MAPS[movingColor];
   const absoluteTrackIndex = (map.startTrackIdx + currentPos) % 52;
 
-  const SAFE_TRACK_INDICES = [0, 8, 13, 21, 26, 34, 39, 47];
+  // Corrected track index alignments matching safety stars and spawns clockwise
+  const SAFE_TRACK_INDICES = [2, 8, 15, 21, 28, 34, 41, 47];
   if (SAFE_TRACK_INDICES.includes(absoluteTrackIndex)) return;
 
   const targetCoords = getTokenGridCoords(movingColor, currentPos, movingIdx);
@@ -280,8 +285,8 @@ function getTokenGridCoords(color, pos, tokenIdx) {
   if (pos === -1) return map.yard[tokenIdx];
   if (pos === 57) return {x: 7, y: 7};
 
-  if (pos > 51) {
-    const homeStep = pos - 52;
+  if (pos > map.homeStartIdx) {
+    const homeStep = pos - (map.homeStartIdx + 1);
     return map.homeCoords[homeStep];
   }
 
@@ -348,45 +353,46 @@ function render() {
 
     board.appendChild(tokenEl);
   });
-  // === DOM-BASED GRID DEBUGGING LABELS ===
-// Only run this once to prevent duplicating text elements on every re-render
-if (!document.getElementById("debug-grid-layer")) {
-  const debugLayer = document.createElement("div");
-  debugLayer.id = "debug-grid-layer";
-  debugLayer.style.position = "absolute";
-  debugLayer.style.top = "0";
-  debugLayer.style.left = "0";
-  debugLayer.style.width = "100%";
-  debugLayer.style.height = "100%";
-  debugLayer.style.pointerEvents = "none"; // Let clicks pass right through
-  board.appendChild(debugLayer);
 
-  // Loop through all 15x15 slots
-  for (let row = 0; row < 15; row++) {
-    for (let col = 0; col < 15; col++) {
-      const label = document.createElement("div");
-      label.innerText = `${col},${row}`;
-      label.style.position = "absolute";
-      
-      // Calculate percentages based on a 15-cell grid layout
-      label.style.left = `${(col / 15) * 100}%`;
-      label.style.top = `${(row / 15) * 100}%`;
-      label.style.width = `${100 / 15}%`;
-      label.style.height = `${100 / 15}%`;
-      
-      // Text styling
-      label.style.color = "#000000";
-      label.style.fontWeight = "bold";
-      label.style.fontSize = "9px";
-      label.style.display = "flex";
-      label.style.justifyContent = "center";
-      label.style.alignItems = "center";
-      
-      debugLayer.appendChild(label);
+  // === DOM-BASED GRID DEBUGGING LABELS ===
+  // Only run this once to prevent duplicating text elements on every re-render
+  if (!document.getElementById("debug-grid-layer")) {
+    const debugLayer = document.createElement("div");
+    debugLayer.id = "debug-grid-layer";
+    debugLayer.style.position = "absolute";
+    debugLayer.style.top = "0";
+    debugLayer.style.left = "0";
+    debugLayer.style.width = "100%";
+    debugLayer.style.height = "100%";
+    debugLayer.style.pointerEvents = "none"; // Let clicks pass right through
+    board.appendChild(debugLayer);
+
+    // Loop through all 15x15 slots
+    for (let row = 0; row < 15; row++) {
+      for (let col = 0; col < 15; col++) {
+        const label = document.createElement("div");
+        label.innerText = `${col},${row}`;
+        label.style.position = "absolute";
+        
+        // Calculate percentages based on a 15-cell grid layout
+        label.style.left = `${(col / 15) * 100}%`;
+        label.style.top = `${(row / 15) * 100}%`;
+        label.style.width = `${100 / 15}%`;
+        label.style.height = `${100 / 15}%`;
+        
+        // Text styling
+        label.style.color = "#000000";
+        label.style.fontWeight = "bold";
+        label.style.fontSize = "9px";
+        label.style.display = "flex";
+        label.style.justifyContent = "center";
+        label.style.alignItems = "center";
+        
+        debugLayer.appendChild(label);
+      }
     }
   }
-}
-// === END DEBUGGING LABELS ===
+  // === END DEBUGGING LABELS ===
 }
 
 function playSound(name) {
