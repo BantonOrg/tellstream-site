@@ -32,7 +32,6 @@ const COMMON_TRACK = [
   {x:0, y:6}, {x:1, y:6}, {x:2, y:6}, {x:3, y:6}, {x:4, y:6}, {x:5, y:6}
 ];
 
-// Coordinates anchored exactly inside the Purple boxes from image_609a4c.jpg
 const COLOR_MAPS = {
   green: {
     startTrackIdx: 47,
@@ -75,7 +74,6 @@ themeSelect.onchange = () => {
   board.classList.add(`theme-${themeSelect.value}`);
 };
 
-// JavaScript Click Dropdown Controller
 optionsBtn.onclick = (e) => {
   e.stopPropagation();
   dropdownContent.classList.toggle("show");
@@ -157,7 +155,6 @@ function handleStateUpdate(roomData) {
   currentRoll = state.currentRoll;
   hasRolledThisTurn = state.hasRolled;
   
-  // Update Player Details Headers
   COLORS.forEach(color => {
     const el = document.getElementById(`details-${color}`);
     if (!el) return;
@@ -315,11 +312,9 @@ function render() {
   const controlsContainer = document.getElementById("yard-controls-container");
   controlsContainer.innerHTML = "";
 
-  // Render Play Action Widgets inside Separate Pink & Black Box containers
   COLORS.forEach(color => {
     const isBottom = (color === "red" || color === "blue");
     
-    // Create Pink Box Layer (Roll Control)
     const rollBox = document.createElement("div");
     rollBox.className = `yard-control roll ${color}${isBottom ? " bottom-row" : ""}`;
     
@@ -333,7 +328,6 @@ function render() {
     }
     controlsContainer.appendChild(rollBox);
 
-    // Create Black Box Layer (Dice View)
     const diceBox = document.createElement("div");
     diceBox.className = `yard-control dice ${color}${isBottom ? " bottom-row" : ""}`;
     
@@ -347,7 +341,6 @@ function render() {
     controlsContainer.appendChild(diceBox);
   });
 
-  // Token Placement Engine
   const coordinateGroups = {};
   const tokensToRender = [];
 
@@ -366,10 +359,10 @@ function render() {
 
   tokensToRender.forEach(token => {
     const tokenEl = document.createElement("div");
-    tokenEl.className = "token";
-    tokenEl.style.background = token.color;
     
-    // Zero-indexed mapping matching grid layout precisely
+    // Attaches the CSS selector mapping directly
+    tokenEl.className = `token ${token.color}`;
+    
     tokenEl.style.gridColumnStart = token.coords.x + 1;
     tokenEl.style.gridRowStart = token.coords.y + 1;
 
