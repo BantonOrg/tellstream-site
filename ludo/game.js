@@ -65,12 +65,24 @@ const menuScreen = document.getElementById("menuScreen");
 const gameScreen = document.getElementById("gameScreen");
 const soundToggle = document.getElementById("soundToggle");
 const themeSelect = document.getElementById("themeSelect");
+const optionsBtn = document.getElementById("optionsBtn");
+const dropdownContent = document.querySelector(".dropdownContent");
 
 soundToggle.onchange = () => soundOn = soundToggle.checked;
 
 themeSelect.onchange = () => {
   board.className = "";
   board.classList.add(`theme-${themeSelect.value}`);
+};
+
+// JavaScript Click Dropdown Controller
+optionsBtn.onclick = (e) => {
+  e.stopPropagation();
+  dropdownContent.classList.toggle("show");
+};
+
+window.onclick = () => {
+  dropdownContent.classList.remove("show");
 };
 
 function genCode() { return Math.random().toString(36).substring(2,6).toUpperCase(); }
@@ -357,7 +369,7 @@ function render() {
     tokenEl.className = "token";
     tokenEl.style.background = token.color;
     
-    // Direct zero-indexed placement matches grid array perfectly
+    // Zero-indexed mapping matching grid layout precisely
     tokenEl.style.gridColumnStart = token.coords.x + 1;
     tokenEl.style.gridRowStart = token.coords.y + 1;
 
