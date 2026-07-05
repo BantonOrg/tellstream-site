@@ -157,24 +157,26 @@ body {
   color: white;
 }
 
-/* THE 2x2 ACTION PANELS */
+/* THE 2x2 ACTION PANELS (Symmetrical Corner Mapping) */
 .yard-control {
-  grid-row: 2 / 4;
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 25;
   box-sizing: border-box;
 }
-.yard-control.bottom-row { grid-row: 13 / 15; }
+.yard-control.green  { grid-row: 2 / 4; }
+.yard-control.yellow { grid-row: 2 / 4; }
+.yard-control.red    { grid-row: 13 / 15; }
+.yard-control.blue   { grid-row: 13 / 15; }
 
-/* Pink Boxes (Roll Button) */
+/* Pink Boxes (Roll Button Columns) */
 .yard-control.roll.green  { grid-column: 1 / 3; }
 .yard-control.roll.red    { grid-column: 1 / 3; }
 .yard-control.roll.yellow { grid-column: 14 / 16; }
 .yard-control.roll.blue   { grid-column: 14 / 16; }
 
-/* Black Boxes (Dice View) */
+/* Black Boxes (Dice View Columns) */
 .yard-control.dice.green  { grid-column: 3 / 5; }
 .yard-control.dice.red    { grid-column: 3 / 5; }
 .yard-control.dice.yellow { grid-column: 12 / 14; }
@@ -190,7 +192,7 @@ body {
   font-size: 11px;
   cursor: pointer;
   border-radius: 4px;
-  box-shadow: 0 0 8px rgba(0,240,255,0.3);
+  box-shadow: 0 0 8px rgba(240,255,0.3);
 }
 .yard-roll-btn:disabled {
   background: #222d3d;
@@ -204,7 +206,7 @@ body {
   line-height: 1;
 }
 
-/* TOKENS DESIGN & IMAGE PIP ROLES */
+/* TOKENS DESIGN */
 .token {
   width: 70%;
   height: 70%;
@@ -213,14 +215,13 @@ body {
   box-shadow: 0 4px 6px rgba(0,0,0,0.4);
   cursor: pointer;
   z-index: 10;
-  border: 2px solid rgba(255,255,255,0.4);
+  border: none;
   transition: transform 0.2s ease;
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
 }
 
-/* Direct Graphical Enclosure */
 .token.green  { background-image: url("assets/green_pip_ludo.png"); }
 .token.yellow { background-image: url("assets/yellow_pip_ludo.png"); }
 .token.red    { background-image: url("assets/red_pip_ludo.png"); }
@@ -228,7 +229,6 @@ body {
 
 .token.movable {
   animation: bounce 0.6s infinite alternate;
-  border: 2px solid #ffffff;
   box-shadow: 0 0 12px #ffffff;
 }
 @keyframes bounce {
