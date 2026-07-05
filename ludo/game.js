@@ -19,7 +19,7 @@ const TURN_TIMEOUT_SECONDS = 30;
 
 const COLORS = ["red", "green", "yellow", "blue"];
 
-// 15x15 Grid Layout Pathing Array
+// 15x15 Grid Layout Pathing Array (Fixed Global Tracking Map)
 const COMMON_TRACK = [
   {x:6, y:1}, {x:6, y:2}, {x:6, y:3}, {x:6, y:4}, {x:6, y:5},
   {x:5, y:6}, {x:4, y:6}, {x:3, y:6}, {x:2, y:6}, {x:1, y:6}, {x:0, y:6},
@@ -35,26 +35,27 @@ const COMMON_TRACK = [
   {x:7, y:0}, {x:6, y:0}
 ];
 
+// Re-aligned perfectly to match your background image boxes
 const COLOR_MAPS = {
   red: {
     startTrackIdx: 14, homeStartIdx: 11,
     homeCoords: [{x:1,y:7}, {x:2,y:7}, {x:3,y:7}, {x:4,y:7}, {x:5,y:7}, {x:6,y:7}],
-    yard: [{x:2,y:2}, {x:3,y:2}, {x:2,y:3}, {x:3,y:3}]
+    yard: [{x:2,y:11}, {x:3,y:11}, {x:2,y:12}, {x:3,y:12}] // Bottom Left
   },
   green: {
-    startTrackIdx: 27, homeStartIdx: 24,
-    homeCoords: [{x:7,y:13}, {x:7,y:12}, {x:7,y:11}, {x:7,y:10}, {x:7,y:9}, {x:7,y:8}],
-    yard: [{x:11,y:2}, {x:12,y:2}, {x:11,y:3}, {x:12,y:3}]
+    startTrackIdx: 1, homeStartIdx: 50,
+    homeCoords: [{x:7,y:1}, {x:7,y:2}, {x:7,y:3}, {x:7,y:4}, {x:7,y:5}, {x:7,y:6}],
+    yard: [{x:2,y:2}, {x:3,y:2}, {x:2,y:3}, {x:3,y:3}] // Top Left
   },
   yellow: {
     startTrackIdx: 40, homeStartIdx: 37,
     homeCoords: [{x:13,y:7}, {x:12,y:7}, {x:11,y:7}, {x:10,y:7}, {x:9,y:7}, {x:8,y:7}],
-    yard: [{x:11,y:11}, {x:12,y:11}, {x:11,y:12}, {x:12,y:12}]
+    yard: [{x:11,y:2}, {x:12,y:2}, {x:11,y:3}, {x:12,y:3}] // Top Right
   },
   blue: {
-    startTrackIdx: 1, homeStartIdx: 50,
-    homeCoords: [{x:7,y:1}, {x:7,y:2}, {x:7,y:3}, {x:7,y:4}, {x:7,y:5}, {x:7,y:6}],
-    yard: [{x:2,y:11}, {x:3,y:11}, {x:2,y:12}, {x:3,y:12}]
+    startTrackIdx: 27, homeStartIdx: 24,
+    homeCoords: [{x:7,y:13}, {x:7,y:12}, {x:7,y:11}, {x:7,y:10}, {x:7,y:9}, {x:7,y:8}],
+    yard: [{x:11,y:11}, {x:12,y:11}, {x:11,y:12}, {x:12,y:12}] // Bottom Right
   }
 };
 
@@ -276,20 +277,15 @@ function getTokenGridCoords(color, pos, tokenIdx) {
   return COMMON_TRACK[absoluteTrackIndex];
 }
 
-// 8. Render Engine & Dynamic Board View Rotation
+// 8. Render Engine (Fixed Standard Orientation Layout)
 function render() {
   board.querySelectorAll('.token').forEach(el => el.remove());
   
   dice.innerText = currentRoll || "🎲";
   rollBtn.disabled = (playerColor !== currentTurnColor || hasRolledThisTurn);
 
-  let boardRotation = 0;
-  if (playerColor === "red") boardRotation = 0;
-  if (playerColor === "green") boardRotation = 270;
-  if (playerColor === "yellow") boardRotation = 180;
-  if (playerColor === "blue") boardRotation = 90;
-  
-  board.style.transform = `rotate(${boardRotation}deg)`;
+  // Structural Alignment: Board layout is locked straight for all screens
+  board.style.transform = "none";
 
   const coordinateGroups = {};
   const tokensToRender = [];
@@ -331,7 +327,7 @@ function render() {
       transformString = `translate(${offsetX}px, ${offsetY}px) scale(0.8)`;
     }
 
-    tokenEl.style.transform = `${transformString} rotate(-${boardRotation}deg)`;
+    tokenEl.style.transform = transformString;
 
     if (token.color === playerColor && currentTurnColor === playerColor && hasRolledThisTurn && isValidMove(token.color, token.index, currentRoll)) {
       tokenEl.classList.add("movable");
@@ -347,14 +343,12 @@ function playSound(name) {
   a.play().catch(()=>{});
 }
 
-// 9. Runtime Execution: Completely decoupled clean boot sequence
+// 9. Runtime Execution: Automated Storage Rehydration Check
 window.addEventListener("DOMContentLoaded", () => {
-  // Clear any structural initialization loops from previous page reloads immediately on startup
   const initialRoom = localStorage.getItem("ludo_roomCode");
   const initialColor = localStorage.getItem("ludo_playerColor");
 
   if (initialRoom && initialColor) {
-    // Check database state strictly via non-blocking asynchronous verification
     supabase.from("rooms").select("*").eq("code", initialRoom).maybeSingle().then(({ data, error }) => {
       if (data && !error && data.players.includes(initialColor)) {
         roomCode = initialRoom;
