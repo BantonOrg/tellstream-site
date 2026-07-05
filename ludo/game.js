@@ -19,20 +19,32 @@ const TURN_TIMEOUT_SECONDS = 30;
 
 const COLORS = ["red", "green", "yellow", "blue"];
 
-// 15x15 Grid Layout Pathing Array (Clockwise Tracking Map)
+// Completely Corrected Clockwise Path Map
 const COMMON_TRACK = [
-  {x:6, y:0}, {x:6, y:1}, {x:6, y:2}, {x:6, y:3}, {x:6, y:4}, {x:6, y:5},
-  {x:5, y:6}, {x:4, y:6}, {x:3, y:6}, {x:2, y:6}, {x:1, y:6}, {x:0, y:6},
-  {x:0, y:7},
-  {x:0, y:8}, {x:1, y:8}, {x:2, y:8}, {x:3, y:8}, {x:4, y:8}, {x:5, y:8},
-  {x:6, y:9}, {x:6, y:10}, {x:6, y:11}, {x:6, y:12}, {x:6, y:13}, {x:6, y:14},
-  {x:7, y:14},
-  {x:8, y:14}, {x:8, y:13}, {x:8, y:12}, {x:8, y:11}, {x:8, y:10}, {x:8, y:9},
-  {x:9, y:8}, {x:10, y:8}, {x:11, y:8}, {x:12, y:8}, {x:13, y:8}, {x:14, y:8},
+  // Top arm, left column (moving bottom to top)
+  {x:6, y:5}, {x:6, y:4}, {x:6, y:3}, {x:6, y:2}, {x:6, y:1}, {x:6, y:0},
+  // Top center crossover
+  {x:7, y:0},
+  // Top arm, right column (moving top to bottom)
+  {x:8, y:0}, {x:8, y:1}, {x:8, y:2}, {x:8, y:3}, {x:8, y:4}, {x:8, y:5},
+  // Right arm, top row (moving left to right)
+  {x:9, y:6}, {x:10, y:6}, {x:11, y:6}, {x:12, y:6}, {x:13, y:6}, {x:14, y:6},
+  // Right center crossover
   {x:14, y:7},
-  {x:14, y:6}, {x:13, y:6}, {x:12, y:6}, {x:11, y:6}, {x:10, y:6}, {x:9, y:6},
-  {x:8, y:5}, {x:8, y:4}, {x:8, y:3}, {x:8, y:2}, {x:8, y:1}, {x:8, y:0},
-  {x:7, y:0}
+  // Right arm, bottom row (moving right to left)
+  {x:14, y:8}, {x:13, y:8}, {x:12, y:8}, {x:11, y:8}, {x:10, y:8}, {x:9, y:8},
+  // Bottom arm, right column (moving top to bottom)
+  {x:8, y:9}, {x:8, y:10}, {x:8, y:11}, {x:8, y:12}, {x:8, y:13}, {x:8, y:14},
+  // Bottom center crossover
+  {x:7, y:14},
+  // Bottom arm, left column (moving bottom to top)
+  {x:6, y:14}, {x:6, y:13}, {x:6, y:12}, {x:6, y:11}, {x:6, y:10}, {x:6, y:9},
+  // Left arm, bottom row (moving right to left)
+  {x:5, y:8}, {x:4, y:8}, {x:3, y:8}, {x:2, y:8}, {x:1, y:8}, {x:0, y:8},
+  // Left center crossover
+  {x:0, y:7},
+  // Left arm, top row (moving left to right)
+  {x:0, y:6}, {x:1, y:6}, {x:2, y:6}, {x:3, y:6}, {x:4, y:6}, {x:5, y:6}
 ];
 
 // Re-aligned perfectly to match your background image boxes
