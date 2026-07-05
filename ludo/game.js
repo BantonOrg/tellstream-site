@@ -32,7 +32,7 @@ const COMMON_TRACK = [
   {x:0, y:6}, {x:1, y:6}, {x:2, y:6}, {x:3, y:6}, {x:4, y:6}, {x:5, y:6}
 ];
 
-// Mapping each token slot directly to its explicit double-figure coordinate from image_55b1f9.jpg
+// Explicit coordinates matching the Purple boxes from image_609a4c.jpg perfectly
 const COLOR_MAPS = {
   green: {
     startTrackIdx: 47,
@@ -68,7 +68,6 @@ const themeSelect = document.getElementById("themeSelect");
 
 soundToggle.onchange = () => soundOn = soundToggle.checked;
 
-// Local Cosmetic Theme Switcher
 themeSelect.onchange = () => {
   board.className = "";
   board.classList.add(`theme-${themeSelect.value}`);
@@ -121,7 +120,6 @@ function defaultState() {
 function enterGame() {
   menuScreen.classList.add("hidden");
   gameScreen.classList.remove("hidden");
-  document.getElementById("roomInfo").innerText = `ROOM: ${roomCode} | YOU: ${playerColor.toUpperCase()}`;
 }
 
 function listenRoom() {
@@ -146,11 +144,30 @@ function handleStateUpdate(roomData) {
   currentRoll = state.currentRoll;
   hasRolledThisTurn = state.hasRolled;
   
+  // Update Player Details Header Text Blocks Explicitly
+  COLORS.forEach(color => {
+    const el = document.getElementById(`details-${color}`);
+    if (!el) return;
+    
+    const isJoined = players.includes(color);
+    let statusText = `${color.toUpperCase()}: ${isJoined ? "READY" : "EMPTY"}`;
+    if (isJoined && color === currentTurnColor) {
+      const elapsed = Math.floor((Date.now() - state.lastTurnTimestamp) / 1000);
+      const remaining = Math.max(0, TURN_TIMEOUT_SECONDS - elapsed);
+      statusText = `${color.toUpperCase()}'S TURN (${remaining}s)`;
+    }
+    
+    if (color === "yellow") {
+      el.querySelector("span").innerText = statusText;
+    } else {
+      el.innerText = statusText;
+    }
+  });
+
   if (players.length > 1) {
     startTurnTimer();
   } else {
     clearInterval(turnTimerInterval);
-    document.getElementById("roomInfo").innerText = `ROOM: ${roomCode} | YOU: ${playerColor.toUpperCase()} | WAITING FOR PLAYERS...`;
   }
   render();
 }
@@ -162,9 +179,16 @@ function startTurnTimer() {
   turnTimerInterval = setInterval(() => {
     const elapsed = Math.floor((Date.now() - state.lastTurnTimestamp) / 1000);
     const remaining = Math.max(0, TURN_TIMEOUT_SECONDS - elapsed);
-    
-    document.getElementById("roomInfo").innerText = 
-      `ROOM: ${roomCode} | YOU: ${playerColor.toUpperCase()} | TURN: ${currentTurnColor.toUpperCase()} (${remaining}s)`;
+
+    COLORS.forEach(color => {
+      if (color === currentTurnColor) {
+        const el = document.getElementById(`details-${color}`);
+        if (!el) return;
+        const txt = `${color.toUpperCase()}'S TURN (${remaining}s)`;
+        if (color === "yellow") el.querySelector("span").innerText = txt;
+        else el.innerText = txt;
+      }
+    });
 
     if (remaining <= 0 && playerColor === currentTurnColor) {
       clearInterval(turnTimerInterval);
@@ -278,29 +302,39 @@ function render() {
   const controlsContainer = document.getElementById("yard-controls-container");
   controlsContainer.innerHTML = "";
 
-  // Inject Roll HUD inside the current turn owner's 2x2 box space
-  if (currentTurnColor) {
-    const controlHUD = document.createElement("div");
-    controlHUD.className = `yard-control ${currentTurnColor}`;
+  // 1. Render Play Action Widgets inside Separate Pink & Black Box containers
+  COLORS.forEach(color => {
+    const isBottom = (color === "red" || color === "blue");
     
-    const rollButton = document.createElement("button");
-    rollButton.className = "yard-roll-btn";
-    rollButton.innerText = playerColor === currentTurnColor ? "ROLL" : currentTurnColor.toUpperCase();
-    rollButton.disabled = (playerColor !== currentTurnColor || hasRolledThisTurn);
-    rollButton.onclick = handleDiceRoll;
-
-    const diceDisplay = document.createElement("div");
-    diceDisplay.className = "yard-dice-view";
+    // Create Pink Box Layer (Roll Control)
+    const rollBox = document.createElement("div");
+    rollBox.className = `yard-control roll ${color}${isBottom ? " bottom-row" : ""}`;
     
-    const diceEmojis = ["🎲", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
-    diceDisplay.innerText = currentRoll ? diceEmojis[currentRoll] : "🎲";
+    if (color === currentTurnColor) {
+      const rollButton = document.createElement("button");
+      rollButton.className = "yard-roll-btn";
+      rollButton.innerText = playerColor === currentTurnColor ? "ROLL" : "DICE";
+      rollButton.disabled = (playerColor !== currentTurnColor || hasRolledThisTurn);
+      rollButton.onclick = handleDiceRoll;
+      rollBox.appendChild(rollButton);
+    }
+    controlsContainer.appendChild(rollBox);
 
-    controlHUD.appendChild(rollButton);
-    controlHUD.appendChild(diceDisplay);
-    controlsContainer.appendChild(controlHUD);
-  }
+    // Create Black Box Layer (Dice View)
+    const diceBox = document.createElement("div");
+    diceBox.className = `yard-control dice ${color}${isBottom ? " bottom-row" : ""}`;
+    
+    if (color === currentTurnColor) {
+      const diceDisplay = document.createElement("div");
+      diceDisplay.className = "yard-dice-view";
+      const diceEmojis = ["🎲", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
+      diceDisplay.innerText = currentRoll ? diceEmojis[currentRoll] : "🎲";
+      diceBox.appendChild(diceDisplay);
+    }
+    controlsContainer.appendChild(diceBox);
+  });
 
-  // Token rendering using precise groupings
+  // 2. Token Placement Engine
   const coordinateGroups = {};
   const tokensToRender = [];
 
@@ -321,6 +355,8 @@ function render() {
     const tokenEl = document.createElement("div");
     tokenEl.className = "token";
     tokenEl.style.background = token.color;
+    
+    // Direct zero-indexed placement matches grid array perfectly
     tokenEl.style.gridColumnStart = token.coords.x + 1;
     tokenEl.style.gridRowStart = token.coords.y + 1;
 
@@ -331,7 +367,7 @@ function render() {
       const occupantIndex = sharedOccupants.indexOf(token);
       const totalOccupants = sharedOccupants.length;
       const angle = (occupantIndex / totalOccupants) * 2 * Math.PI;
-      const radius = 6; 
+      const radius = 5; 
       transformString = `translate(${Math.cos(angle) * radius}px, ${Math.sin(angle) * radius}px) scale(0.75)`;
     }
     tokenEl.style.transform = transformString;
