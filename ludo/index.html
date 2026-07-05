@@ -18,28 +18,29 @@
 </div>
 
 <div id="gameScreen" class="hidden">
-  <div id="topBar">
+  <div id="topBar" class="hidden">
     <div id="roomInfo">Connecting...</div>
-    <div class="dropdown">
-      <button id="optionsBtn">⚙️ Settings</button>
-      <div class="dropdownContent">
-        <label>
-          Sound
-          <input type="checkbox" id="soundToggle">
-        </label>
-        <label>
-          Table Theme
-          <select id="themeSelect">
-            <option value="classic">Classic Table</option>
-            <option value="futuristic">Futuristic Board</option>
-          </select>
-        </label>
-      </div>
-    </div>
   </div>
 
   <div id="boardWrapper">
     <div id="board" class="theme-classic">
+      <div class="player-details green" id="details-green">GREEN: Connecting...</div>
+      <div class="player-details yellow" id="details-yellow">
+        <span>YELLOW: Connecting...</span>
+        <button id="optionsBtn">⚙️ Settings</button>
+        <div class="dropdownContent">
+          <label>Sound <input type="checkbox" id="soundToggle"></label>
+          <label>Theme 
+            <select id="themeSelect">
+              <option value="classic">Classic Table</option>
+              <option value="futuristic">Futuristic Board</option>
+            </select>
+          </label>
+        </div>
+      </div>
+      <div class="player-details red" id="details-red">RED: Connecting...</div>
+      <div class="player-details blue" id="details-blue">BLUE: Connecting...</div>
+
       <div id="yard-controls-container" style="display: contents;"></div>
     </div>
   </div>
