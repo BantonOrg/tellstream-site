@@ -103,10 +103,23 @@ body {
 }
 .player-details.green  { grid-column: 1 / 7;  grid-row: 1; text-align: left; }
 .player-details.red    { grid-column: 1 / 7;  grid-row: 15; text-align: left; }
-.player-details.yellow { grid-column: 10 / 16; grid-row: 1; justify-content: space-between; }
+.player-details.yellow { grid-column: 10 / 16; grid-row: 1; justify-content: space-between; position: relative; }
 .player-details.blue   { grid-column: 10 / 16; grid-row: 15; text-align: right; justify-content: flex-end; }
 
-/* SETTINGS DROPDOWN MECHANICS */
+/* Header Controls Grouping */
+.system-controls-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#roomDisplay {
+  color: #00f0ff;
+  font-weight: bold;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+
 #optionsBtn {
   background: #1e293b;
   color: #00f0ff;
@@ -115,9 +128,8 @@ body {
   padding: 2px 6px;
   font-size: 11px;
   border-radius: 3px;
-  position: relative;
 }
-.player-details.yellow { position: relative; }
+
 .dropdownContent {
   display: none;
   position: absolute;
