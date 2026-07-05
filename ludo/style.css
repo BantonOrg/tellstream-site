@@ -151,7 +151,7 @@ body {
   font-size: 12px;
   color: white;
 }
-#optionsBtn:hover + .dropdownContent, .dropdownContent:hover { display: block; }
+.dropdownContent.show { display: block !important; }
 
 /* THE 2x2 ACTION PANELS */
 .yard-control {
