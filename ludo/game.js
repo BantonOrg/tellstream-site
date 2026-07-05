@@ -1,10 +1,12 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
+// 1. Database Connection
 const supabase = createClient(
   "https://vegwferwmyuunwvfqpsf.supabase.co",       
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZ3dmZXJ3bXl1dW53dmZxcHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODU5NDQsImV4cCI6MjA5Nzk2MTk0NH0.7F3HUEY59BGE5phlD9AukhZzRa3Ied_ZT43j8YZeIy8"   
 );
 
+// 2. State Engine Variables
 let roomCode = null;
 let playerColor = null;
 let state = null;
@@ -12,9 +14,12 @@ let currentTurnColor = null;
 let currentRoll = null;
 let hasRolledThisTurn = false;
 let soundOn = false;
+let turnTimerInterval = null;
+const TURN_TIMEOUT_SECONDS = 30;
 
 const COLORS = ["red", "green", "yellow", "blue"];
 
+// 15x15 Grid Layout Pathing Array
 const COMMON_TRACK = [
   {x:6, y:1}, {x:6, y:2}, {x:6, y:3}, {x:6, y:4}, {x:6, y:5},
   {x:5, y:6}, {x:4, y:6}, {x:3, y:6}, {x:2, y:6}, {x:1, y:6}, {x:0, y:6},
@@ -64,9 +69,14 @@ soundToggle.onchange = () => soundOn = soundToggle.checked;
 
 function genCode() { return Math.random().toString(36).substring(2,6).toUpperCase(); }
 
+// 3. Room Initialization & State Routing
 document.getElementById("createBtn").onclick = async () => {
   roomCode = genCode();
   playerColor = "red";
+  
+  localStorage.setItem("ludo_roomCode", roomCode);
+  localStorage.setItem("ludo_playerColor", playerColor);
+  
   enterGame();
   
   await supabase.from("rooms").insert({
@@ -89,6 +99,9 @@ document.getElementById("joinBtn").onclick = async () => {
   playerColor = COLORS[players.length];
   players.push(playerColor);
 
+  localStorage.setItem("ludo_roomCode", roomCode);
+  localStorage.setItem("ludo_playerColor", playerColor);
+
   await supabase.from("rooms").update({ players }).eq("code", roomCode);
   enterGame();
   listenRoom();
@@ -98,7 +111,8 @@ function defaultState() {
   return {
     tokens: { red: [-1,-1,-1,-1], green: [-1,-1,-1,-1], yellow: [-1,-1,-1,-1], blue: [-1,-1,-1,-1] },
     currentRoll: null,
-    hasRolled: false
+    hasRolled: false,
+    lastTurnTimestamp: Date.now()
   };
 }
 
@@ -108,6 +122,7 @@ function enterGame() {
   document.getElementById("roomInfo").innerText = `ROOM: ${roomCode} | YOU: ${playerColor.toUpperCase()}`;
 }
 
+// 4. Realtime Synchronization Management
 function listenRoom() {
   supabase
     .channel("room-" + roomCode)
@@ -117,11 +132,33 @@ function listenRoom() {
       currentTurnColor = COLORS[payload.new.turn % players.length];
       currentRoll = state.currentRoll;
       hasRolledThisTurn = state.hasRolled;
+      
+      startTurnTimer();
       render();
     })
     .subscribe();
 }
 
+// 5. Automated Turn Expiration Clock (Anti-AFK Handling)
+function startTurnTimer() {
+  clearInterval(turnTimerInterval);
+  if (!state || !state.lastTurnTimestamp) return;
+
+  turnTimerInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - state.lastTurnTimestamp) / 1000);
+    const remaining = Math.max(0, TURN_TIMEOUT_SECONDS - elapsed);
+    
+    document.getElementById("roomInfo").innerText = 
+      `ROOM: ${roomCode} | YOU: ${playerColor.toUpperCase()} | TURN: ${currentTurnColor.toUpperCase()} (${remaining}s)`;
+
+    if (remaining <= 0 && playerColor === currentTurnColor) {
+      clearInterval(turnTimerInterval);
+      passTurn(false); // Force skip turn if timer bottoms out
+    }
+  }, 1000);
+}
+
+// 6. Game Core Mechanics & Rules Enforcements
 rollBtn.onclick = async () => {
   if (playerColor !== currentTurnColor) return alert("It's not your turn!");
   if (hasRolledThisTurn) return alert("You already rolled!");
@@ -167,9 +204,19 @@ async function selectTokenToMove(tokenIdx) {
   await passTurn(currentRoll === 6);
 }
 
+// 7. Core Rules: Capture Evaluation & Safe Zones Verification
 function checkCaptures(movingColor, movingIdx) {
-  const targetCoords = getTokenGridCoords(movingColor, state.tokens[movingColor][movingIdx], movingIdx);
-  if (state.tokens[movingColor][movingIdx] === -1 || state.tokens[movingColor][movingIdx] > 51) return;
+  const currentPos = state.tokens[movingColor][movingIdx];
+  if (currentPos === -1 || currentPos > 51) return;
+
+  const map = COLOR_MAPS[movingColor];
+  const absoluteTrackIndex = (map.startTrackIdx + currentPos) % 52;
+
+  // Standard safe spots: 4 launcher tiles + 4 milestone star paths
+  const SAFE_TRACK_INDICES = [0, 8, 13, 21, 26, 34, 39, 47];
+  if (SAFE_TRACK_INDICES.includes(absoluteTrackIndex)) return;
+
+  const targetCoords = getTokenGridCoords(movingColor, currentPos, movingIdx);
 
   COLORS.forEach(color => {
     if (color === movingColor) return;
@@ -192,6 +239,7 @@ async function passTurn(getsBonusRoll) {
 
   state.currentRoll = null;
   state.hasRolled = false;
+  state.lastTurnTimestamp = Date.now();
 
   await supabase.from("rooms").update({ state: state, turn: nextTurn }).eq("code", roomCode);
 }
@@ -214,29 +262,57 @@ function getTokenGridCoords(color, pos, tokenIdx) {
   return COMMON_TRACK[absoluteTrackIndex];
 }
 
+// 8. Render Engine & Dynamic Multi-Token Stacking Offsets Handling
 function render() {
   board.querySelectorAll('.token').forEach(el => el.remove());
   
   dice.innerText = currentRoll || "🎲";
   rollBtn.disabled = (playerColor !== currentTurnColor || hasRolledThisTurn);
 
+  const coordinateGroups = {};
+  const tokensToRender = [];
+
   COLORS.forEach(c => {
     state.tokens[c].forEach((pos, idx) => {
       const coords = getTokenGridCoords(c, pos, idx);
-      const tokenEl = document.createElement("div");
+      const coordKey = `${coords.x},${coords.y}`;
       
-      tokenEl.className = "token";
-      tokenEl.style.background = c;
-      tokenEl.style.gridColumnStart = coords.x + 1;
-      tokenEl.style.gridRowStart = coords.y + 1;
-
-      if (c === playerColor && currentTurnColor === playerColor && hasRolledThisTurn && isValidMove(c, idx, currentRoll)) {
-        tokenEl.classList.add("movable");
-        tokenEl.onclick = () => selectTokenToMove(idx);
+      if (!coordinateGroups[coordKey]) {
+        coordinateGroups[coordKey] = [];
       }
-
-      board.appendChild(tokenEl);
+      
+      const tokenData = { color: c, index: idx, pos: pos, coords: coords, coordKey: coordKey };
+      coordinateGroups[coordKey].push(tokenData);
+      tokensToRender.push(tokenData);
     });
+  });
+
+  tokensToRender.forEach(token => {
+    const tokenEl = document.createElement("div");
+    tokenEl.className = "token";
+    tokenEl.style.background = token.color;
+    tokenEl.style.gridColumnStart = token.coords.x + 1;
+    tokenEl.style.gridRowStart = token.coords.y + 1;
+
+    const sharedOccupants = coordinateGroups[token.coordKey];
+    if (sharedOccupants.length > 1) {
+      const occupantIndex = sharedOccupants.indexOf(token);
+      const totalOccupants = sharedOccupants.length;
+      
+      const angle = (occupantIndex / totalOccupants) * 2 * Math.PI;
+      const radius = 7; 
+      const offsetX = Math.cos(angle) * radius;
+      const offsetY = Math.sin(angle) * radius;
+      
+      tokenEl.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(0.8)`;
+    }
+
+    if (token.color === playerColor && currentTurnColor === playerColor && hasRolledThisTurn && isValidMove(token.color, token.index, currentRoll)) {
+      tokenEl.classList.add("movable");
+      tokenEl.onclick = () => selectTokenToMove(token.index);
+    }
+
+    board.appendChild(tokenEl);
   });
 }
 
@@ -244,3 +320,21 @@ function playSound(name) {
   let a = new Audio(`assets/sfx/${name}.mp3`);
   a.play().catch(()=>{});
 }
+
+// 9. Runtime Execution: Automated Storage Rehydration Check
+window.addEventListener("DOMContentLoaded", async () => {
+  const cachedRoom = localStorage.getItem("ludo_roomCode");
+  const cachedColor = localStorage.getItem("ludo_playerColor");
+
+  if (cachedRoom && cachedColor) {
+    const { data } = await supabase.from("rooms").select("*").eq("code", cachedRoom).single();
+    if (data && data.players.includes(cachedColor)) {
+      roomCode = cachedRoom;
+      playerColor = cachedColor;
+      enterGame();
+      listenRoom();
+    } else {
+      localStorage.clear();
+    }
+  }
+});
