@@ -32,7 +32,7 @@ const COMMON_TRACK = [
   {x:0, y:6}, {x:1, y:6}, {x:2, y:6}, {x:3, y:6}, {x:4, y:6}, {x:5, y:6}
 ];
 
-// Explicit coordinates matching the Purple boxes from image_609a4c.jpg perfectly
+// Coordinates anchored exactly inside the Purple boxes from image_609a4c.jpg
 const COLOR_MAPS = {
   green: {
     startTrackIdx: 47,
@@ -120,6 +120,7 @@ function defaultState() {
 function enterGame() {
   menuScreen.classList.add("hidden");
   gameScreen.classList.remove("hidden");
+  document.getElementById("roomDisplay").innerText = `ROOM: ${roomCode}`;
 }
 
 function listenRoom() {
@@ -144,7 +145,7 @@ function handleStateUpdate(roomData) {
   currentRoll = state.currentRoll;
   hasRolledThisTurn = state.hasRolled;
   
-  // Update Player Details Header Text Blocks Explicitly
+  // Update Player Details Headers
   COLORS.forEach(color => {
     const el = document.getElementById(`details-${color}`);
     if (!el) return;
@@ -302,7 +303,7 @@ function render() {
   const controlsContainer = document.getElementById("yard-controls-container");
   controlsContainer.innerHTML = "";
 
-  // 1. Render Play Action Widgets inside Separate Pink & Black Box containers
+  // Render Play Action Widgets inside Separate Pink & Black Box containers
   COLORS.forEach(color => {
     const isBottom = (color === "red" || color === "blue");
     
@@ -334,7 +335,7 @@ function render() {
     controlsContainer.appendChild(diceBox);
   });
 
-  // 2. Token Placement Engine
+  // Token Placement Engine
   const coordinateGroups = {};
   const tokensToRender = [];
 
