@@ -6,7 +6,9 @@ const supabase = createClient(
 );
 
 let roomCode = null;
-let playerColor = null;
+let playerColor = null; // Assigned once the host chooses their color seat
+let myUsername = null;
+let isHost = false;
 let state = null;
 let currentTurnColor = null;
 let currentRoll = null;
@@ -32,29 +34,24 @@ const COMMON_TRACK = [
   {x:0, y:6}, {x:1, y:6}, {x:2, y:6}, {x:3, y:6}, {x:4, y:6}, {x:5, y:6}
 ];
 
-// Fixed coordinates: Yellow and Red are shifted back to their proper color quadrant backgrounds
 const COLOR_MAPS = {
   green: {
-    startTrackIdx: 47,
-    homeStartIdx: 50,
+    startTrackIdx: 47, homeStartIdx: 50,
     homeCoords: [{x:7,y:1}, {x:7,y:2}, {x:7,y:3}, {x:7,y:4}, {x:7,y:5}, {x:7,y:6}],
     yard: [{x:0,y:4}, {x:1,y:4}, {x:0,y:5}, {x:1,y:5}]
   },
   yellow: {
-    startTrackIdx: 8,
-    homeStartIdx: 50,
+    startTrackIdx: 8, homeStartIdx: 50,
     homeCoords: [{x:13,y:7}, {x:12,y:7}, {x:11,y:7}, {x:10,y:7}, {x:9,y:7}, {x:8,y:7}],
     yard: [{x:9,y:1}, {x:10,y:1}, {x:9,y:2}, {x:10,y:2}]
   },
   blue: {
-    startTrackIdx: 21,
-    homeStartIdx: 50,
+    startTrackIdx: 21, homeStartIdx: 50,
     homeCoords: [{x:7,y:13}, {x:7,y:12}, {x:7,y:11}, {x:7,y:10}, {x:7,y:9}, {x:7,y:8}],
     yard: [{x:13,y:9}, {x:14,y:9}, {x:13,y:10}, {x:14,y:10}]
   },
   red: {
-    startTrackIdx: 34,
-    homeStartIdx: 50,
+    startTrackIdx: 34, homeStartIdx: 50,
     homeCoords: [{x:1,y:7}, {x:2,y:7}, {x:3,y:7}, {x:4,y:7}, {x:5,y:7}, {x:6,y:7}],
     yard: [{x:4,y:12}, {x:5,y:12}, {x:4,y:13}, {x:5,y:13}]
   }
@@ -69,52 +66,63 @@ const optionsBtn = document.getElementById("optionsBtn");
 const dropdownContent = document.querySelector(".dropdownContent");
 
 soundToggle.onchange = () => soundOn = soundToggle.checked;
-
-themeSelect.onchange = () => {
-  board.className = "";
-  board.classList.add(`theme-${themeSelect.value}`);
-};
-
-optionsBtn.onclick = (e) => {
-  e.stopPropagation();
-  dropdownContent.classList.toggle("show");
-};
-
-window.onclick = () => {
-  dropdownContent.classList.remove("show");
-};
+themeSelect.onchange = () => { board.className = ""; board.classList.add(`theme-${themeSelect.value}`); };
+optionsBtn.onclick = (e) => { e.stopPropagation(); dropdownContent.classList.toggle("show"); };
+window.onclick = () => dropdownContent.classList.remove("show");
 
 function genCode() { return Math.random().toString(36).substring(2,6).toUpperCase(); }
 
+function promptUsername() {
+  myUsername = prompt("Enter your player username:");
+  if (!myUsername || myUsername.trim() === "") myUsername = "Player_" + Math.floor(Math.random() * 1000);
+  return myUsername;
+}
+
+// HOST CREATION LOOP
 document.getElementById("createBtn").onclick = async () => {
+  promptUsername();
   roomCode = genCode();
-  playerColor = "red";
+  isHost = true;
+  playerColor = "red"; // Host defaults to red seat
+  
+  const initialPlayersObj = {};
+  initialPlayersObj[playerColor] = myUsername;
+
   enterGame();
   
-  await supabase.from("rooms").insert({
-    code: roomCode,
-    players: [playerColor],
+  await supabase.from("lud_room").insert({
+    room_code: roomCode,
+    game_state: "waiting",
+    players: initialPlayersObj,
+    connected_spectators: [],
     turn: 0,
     state: defaultState()
   });
   listenRoom();
 };
 
+// GUEST JOINING LOOP
 document.getElementById("joinBtn").onclick = async () => {
   const inputCode = document.getElementById("joinCode").value.toUpperCase();
   if (!inputCode || inputCode.length !== 4) return alert("Enter a valid 4-letter room code");
-
-  const { data } = await supabase.from("rooms").select("*").eq("code", inputCode).single();
-  if(!data) return alert("Room not found");
-
-  const players = data.players || [];
-  if (players.length >= 4) return alert("Room full");
   
-  roomCode = inputCode;
-  playerColor = COLORS[players.length];
-  players.push(playerColor);
+  promptUsername();
+  
+  const { data, error } = await supabase.from("lud_room").select("*").eq("room_code", inputCode).single();
+  if (!data || error) return alert("Room not found");
 
-  await supabase.from("rooms").update({ players }).eq("code", roomCode);
+  roomCode = inputCode;
+  isHost = false;
+
+  // Append user safely into the text array pool if they aren't assigned a seat yet
+  let spectators = data.connected_spectators || [];
+  let isSeated = Object.values(data.players).includes(myUsername);
+
+  if (!spectators.includes(myUsername) && !isSeated) {
+    spectators.push(myUsername);
+    await supabase.from("lud_room").update({ connected_spectators: spectators }).eq("room_code", roomCode);
+  }
+
   enterGame();
   listenRoom();
 };
@@ -132,27 +140,139 @@ function enterGame() {
   menuScreen.classList.add("hidden");
   gameScreen.classList.remove("hidden");
   document.getElementById("roomDisplay").innerText = `ROOM: ${roomCode}`;
+  renderLobbyOverlay();
 }
 
 function listenRoom() {
   supabase
     .channel("room-" + roomCode)
-    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "rooms", filter: `code=eq.${roomCode}` }, payload => {
+    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "lud_room", filter: `room_code=eq.${roomCode}` }, payload => {
       handleStateUpdate(payload.new);
     })
     .subscribe(async (status) => {
       if (status === "SUBSCRIBED") {
-        const { data } = await supabase.from("rooms").select("*").eq("code", roomCode).single();
+        const { data } = await supabase.from("lud_room").select("*").eq("room_code", roomCode).single();
         if (data) handleStateUpdate(data);
       }
     });
 }
 
+// COMPREHENSIVE LOBBY CONTROL OVERLAY RENDERER
+function renderLobbyOverlay() {
+  let overlay = document.getElementById("lobby-overlay");
+  if (!overlay) {
+    overlay = document.createElement("div");
+    overlay.id = "lobby-overlay";
+    overlay.style = "position: absolute; top:0; left:0; width:100%; height:100%; background:rgba(11,12,16,0.98); z-index:9999; display:flex; flex-direction:column; justify-content:center; align-items:center; color:#fff; font-family:sans-serif;";
+    gameScreen.appendChild(overlay);
+  }
+}
+
+async function assignSeat(spectatorName, selectedColor) {
+  const { data } = await supabase.from("lud_room").select("*").eq("room_code", roomCode).single();
+  if (!data) return;
+
+  let currentPlayers = { ...data.players };
+  let currentSpectators = (data.connected_spectators || []).filter(name => name !== spectatorName);
+
+  // Clear name out if they were sitting somewhere else
+  Object.keys(currentPlayers).forEach(color => {
+    if (currentPlayers[color] === spectatorName) delete currentPlayers[color];
+  });
+
+  currentPlayers[selectedColor] = spectatorName;
+
+  await supabase.from("lud_room").update({
+    players: currentPlayers,
+    connected_spectators: currentSpectators
+  }).eq("room_code", roomCode);
+}
+
+async function launchMatch() {
+  await supabase.from("lud_room").update({
+    game_state: "playing",
+    state: {
+      tokens: { red: [-1,-1,-1,-1], green: [-1,-1,-1,-1], yellow: [-1,-1,-1,-1], blue: [-1,-1,-1,-1] },
+      currentRoll: null,
+      hasRolled: false,
+      lastTurnTimestamp: Date.now()
+    }
+  }).eq("room_code", roomCode);
+}
+
 function handleStateUpdate(roomData) {
   state = roomData.state;
-  const players = roomData.players || [];
+  const playersObj = roomData.players || {};
+  const spectators = roomData.connected_spectators || [];
   
-  currentTurnColor = players.length > 0 ? COLORS[roomData.turn % players.length] : "red";
+  // Track my own assigned identity dynamically from the synchronized object state
+  playerColor = null;
+  Object.keys(playersObj).forEach(color => {
+    if (playersObj[color] === myUsername) playerColor = color;
+  });
+
+  // LOBBY INTERFACE STAGE LOOP
+  const overlay = document.getElementById("lobby-overlay");
+  if (roomData.game_state === "waiting") {
+    if (overlay) {
+      overlay.style.display = "flex";
+      let seatedLayout = "<h3>SEAT ASSIGNMENTS</h3><ul style='list-style:none; padding:0; width:280px;'>";
+      COLORS.forEach(c => {
+        seatedLayout += `<li style='padding:8px; margin:4px 0; background:#1f2833; border-left:5px solid ${c}; display:flex; justify-content:between;'>
+          <span>${c.toUpperCase()}: <strong>${playersObj[c] || "EMPTY"}</strong></span>
+        </li>`;
+      });
+      seatedLayout += "</ul>";
+
+      let queueLayout = "<h3>WAITING POOL</h3><div style='width:280px; max-height:150px; overflow-y:auto;'>";
+      if (spectators.length === 0) queueLayout += "<p style='color:#666; font-size:0.9rem;'>No pending connections...</p>";
+      
+      spectators.forEach(spec => {
+        queueLayout += `<div style='background:#0b0c10; border:1px solid #1f2833; padding:8px; margin:4px 0; display:flex; justify-content:space-between; align-items:center;'>
+          <span>${spec}</span>`;
+        if (isHost) {
+          queueLayout += `<select onchange="this.value ? window.assignSeat('${spec}', this.value) : null" style="background:#1f2833; color:#fff; border:1px solid #66fcf1; border-radius:4px; font-size:0.8rem; padding:2px;">
+            <option value="">Seat...</option>
+            ${COLORS.map(c => !playersObj[c] ? `<option value="${c}">${c}</option>` : '').join('')}
+          </select>`;
+        }
+        queueLayout += `</div>`;
+      });
+      queueLayout += "</div>";
+
+      let actionButton = "";
+      if (isHost) {
+        const structuralActiveCount = Object.keys(playersObj).length;
+        actionButton = `<button id='startMatchBtn' ${structuralActiveCount < 2 ? 'disabled style="background:#333; cursor:not-allowed;"' : 'style="background:#66fcf1; color:#0b0c10;"'} style='margin-top:20px; padding:10px 24px; font-weight:bold; border:none; border-radius:4px; cursor:pointer;'>START MATCH</button>`;
+      } else {
+        actionButton = `<p style='color:#66fcf1; animation:pulse 1.5s infinite; font-size:0.9rem; margin-top:20px;'>Waiting for host to launch match...</p>`;
+      }
+
+      overlay.innerHTML = `
+        <h2 style='color:#66fcf1; margin-bottom:5px;'>LUDO LOBBY</h2>
+        <p style='margin:0 0 20px 0; color:#888;'>Room Code: <strong style='color:#fff;'>${roomCode}</strong></p>
+        ${seatedLayout}
+        ${queueLayout}
+        ${actionButton}
+      `;
+
+      // Expose seat assignment method to window for inline HTML selection access safely
+      window.assignSeat = assignSeat;
+
+      if (isHost) {
+        document.getElementById("startMatchBtn").onclick = launchMatch;
+      }
+    }
+    return; // Block background gameplay interaction loops
+  } else {
+    if (overlay) overlay.style.display = "none";
+  }
+
+  // GAME ENGINE RUNNING STAGE LOOP
+  const joinedColors = Object.keys(playersObj);
+  const activeSeatsCount = joinedColors.length;
+  
+  currentTurnColor = activeSeatsCount > 0 ? COLORS[roomData.turn % activeSeatsCount] : "red";
   currentRoll = state.currentRoll;
   hasRolledThisTurn = state.hasRolled;
   
@@ -160,9 +280,9 @@ function handleStateUpdate(roomData) {
     const el = document.getElementById(`details-${color}`);
     if (!el) return;
     
-    const isJoined = players.includes(color);
-    let statusText = `${color.toUpperCase()}: ${isJoined ? "READY" : "EMPTY"}`;
-    if (isJoined && color === currentTurnColor) {
+    const isSeated = !!playersObj[color];
+    let statusText = `${color.toUpperCase(): ${isSeated ? playersObj[color].toUpperCase() : "EMPTY"}`;
+    if (isSeated && color === currentTurnColor) {
       const elapsed = Math.floor((Date.now() - state.lastTurnTimestamp) / 1000);
       const remaining = Math.max(0, TURN_TIMEOUT_SECONDS - elapsed);
       statusText = `${color.toUpperCase()}'S TURN (${remaining}s)`;
@@ -175,7 +295,7 @@ function handleStateUpdate(roomData) {
     }
   });
 
-  if (players.length > 1) {
+  if (activeSeatsCount > 1) {
     startTurnTimer();
   } else {
     clearInterval(turnTimerInterval);
@@ -279,7 +399,7 @@ function checkCaptures(movingColor, movingIdx) {
 }
 
 async function passTurn(getsBonusRoll) {
-  const { data } = await supabase.from("rooms").select("*").eq("code", roomCode).single();
+  const { data } = await supabase.from("lud_room").select("*").eq("room_code", roomCode).single();
   let nextTurn = data.turn;
   if (!getsBonusRoll) nextTurn += 1;
 
@@ -287,11 +407,11 @@ async function passTurn(getsBonusRoll) {
   state.hasRolled = false;
   state.lastTurnTimestamp = Date.now();
 
-  await supabase.from("rooms").update({ state: state, turn: nextTurn }).eq("code", roomCode);
+  await supabase.from("lud_room").update({ state: state, turn: nextTurn }).eq("room_code", roomCode);
 }
 
 async function updateDatabaseState() {
-  await supabase.from("rooms").update({ state }).eq("code", roomCode);
+  await supabase.from("lud_room").update({ state }).eq("room_code", roomCode);
 }
 
 function getTokenGridCoords(color, pos, tokenIdx) {
