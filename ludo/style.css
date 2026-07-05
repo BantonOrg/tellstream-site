@@ -68,11 +68,13 @@ body {
   padding: 15px;
   background: #111722;
   font-weight: bold;
+  height: 10vh;
+  box-sizing: border-box;
 }
 
 #boardWrapper {
   width: 100vw;
-  height: 70vh;
+  height: 90vh;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -82,12 +84,11 @@ body {
 
 #board {
   width: 100%;
-  max-width: 550px;
+  max-width: 80vh;
   aspect-ratio: 1 / 1;
-  background-image: url("assets/background.jpg");
-  background-size: cover;
+  background-size: 100% 100%;
   background-position: center;
-  background-color: #1e293b;
+  background-repeat: no-repeat;
   position: relative;
   display: grid;
   grid-template-columns: repeat(15, 1fr);
@@ -97,12 +98,66 @@ body {
   box-shadow: 0 10px 25px rgba(0,0,0,0.5);
 }
 
+/* Theme Classes */
+#board.theme-classic {
+  background-image: url("assets/classic_ludo_table.png");
+}
+#board.theme-futuristic {
+  background-image: url("assets/futuristic_ludo_board.jpg");
+}
+
+/* IN-BOARD YARD CONTROLS (Mapped precisely to the 2x2 Purple Boxes) */
+.yard-control {
+  grid-column: span 2;
+  grid-row: span 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 20;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  border-radius: 6px;
+  box-sizing: border-box;
+  padding: 2px;
+}
+
+/* Precise Coordinate Targets matching image_55b1f9.jpg grid rows/columns */
+.yard-control.green  { grid-column: 5 / 7;  grid-row: 2 / 4; }
+.yard-control.yellow { grid-column: 10 / 12; grid-row: 2 / 4; }
+.yard-control.red    { grid-column: 5 / 7;  grid-row: 13 / 15; }
+.yard-control.blue   { grid-column: 10 / 12; grid-row: 13 / 15; }
+
+.yard-roll-btn {
+  padding: 4px 8px;
+  background: #00f0ff;
+  border: none;
+  color: black;
+  font-weight: bold;
+  font-size: 11px;
+  cursor: pointer;
+  border-radius: 3px;
+  text-align: center;
+}
+
+.yard-roll-btn:disabled {
+  background: #3a475c;
+  color: #888;
+  cursor: not-allowed;
+}
+
+.yard-dice-view {
+  font-size: 1.5rem;
+  margin-top: 2px;
+  line-height: 1;
+}
+
 /* TOKENS */
 .token {
-  width: 70%;
-  height: 70%;
+  width: 65%;
+  height: 65%;
   border-radius: 50%;
-  margin: 15%;
+  margin: 17.5%;
   box-shadow: 0 4px 6px rgba(0,0,0,0.4);
   cursor: pointer;
   z-index: 10;
@@ -121,33 +176,6 @@ body {
   to { transform: scale(1.2); }
 }
 
-/* CONTROLS */
-#diceArea {
-  text-align: center;
-  padding: 15px;
-}
-
-#rollBtn {
-  padding: 12px 30px;
-  border: 2px solid #00f0ff;
-  background: transparent;
-  color: #00f0ff;
-  font-weight: bold;
-  cursor: pointer;
-  border-radius: 4px;
-}
-
-#rollBtn:disabled {
-  border-color: #3a475c;
-  color: #3a475c;
-  cursor: not-allowed;
-}
-
-#dice {
-  font-size: 2.5rem;
-  margin-top: 10px;
-}
-
 /* SETTINGS DROPDOWN */
 .dropdown { position: relative; }
 .dropdownContent {
@@ -159,5 +187,20 @@ body {
   padding: 12px;
   border-radius: 4px;
   z-index: 100;
+  min-width: 160px;
+}
+.dropdownContent label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+.dropdownContent select {
+  background: #1e293b;
+  color: white;
+  border: 1px solid #3a475c;
+  padding: 4px;
+  border-radius: 4px;
 }
 .dropdown:hover .dropdownContent { display: block; }
