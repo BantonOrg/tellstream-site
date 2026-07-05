@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TellStream Lounge Dominoes</title>
-    <link rel="stylesheet" href="style2.css">
-    <link rel="stylesheet" href="tiles.css">
-    <link rel="stylesheet" href="skins.css">
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -18,44 +16,36 @@
     </div>
 
     <div id="lobby-view" class="screen">
-        </div>
+        <!-- Lobby layout content populates here dynamically -->
+    </div>
 
     <div id="table-view" class="screen hidden-layout">
-        <div id="game-table" style="position: relative; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; gap: 20px; background: #ffffff; flex-wrap: wrap; padding: 20px;">
-            
-            <div class="domino-bone-interactive skin-classic"></div>
-            <div class="domino-bone-interactive skin-classic back-face"></div>
-
-            <div style="width: 20px;"></div>
-
-            <div class="domino-bone-interactive skin-premium"></div>
-            <div class="domino-bone-interactive skin-premium back-face"></div>
-
-            <div style="width: 20px;"></div>
-
-            <div class="domino-bone-interactive skin-rasta"></div>
-            <div class="domino-bone-interactive skin-rasta back-face"></div>
-
+        <div id="game-table">
+            <!-- Game layout container -->
         </div>
     </div>
 
     <div id="rotation-overlay">
         <div class="message">
             <h2>🔄 Please Rotate Your Device</h2>
-            <p>This game requires landscape mode.</p>
+            <p>This game requires landscape mode. If your screen doesn't turn, please ensure "Auto-Rotate" is enabled in your phone settings.</p>
         </div>
     </div>
 
+    <!-- Correct Loading Sequence: UI & rendering foundation must load before network management -->
     <script src="game.js"></script>
     <script src="network.js"></script>
 
     <script>
+        // Safely bind the entry engine once the DOM structure is fully parsed
         document.addEventListener("DOMContentLoaded", () => {
             const startButton = document.getElementById("start-btn");
             if (startButton) {
                 startButton.addEventListener("click", () => {
+                    // Hide the initial loading screen wrapper overlay
                     document.getElementById("loading-screen").style.display = "none";
-                    document.getElementById("table-view").classList.remove("hidden-layout");
+                    // Initialize the network setup state loop
+                    initNetwork();
                 });
             }
         });
