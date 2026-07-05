@@ -32,30 +32,31 @@ const COMMON_TRACK = [
   {x:0, y:6}, {x:1, y:6}, {x:2, y:6}, {x:3, y:6}, {x:4, y:6}, {x:5, y:6}
 ];
 
+// Completely re-aligned token yard data matching image_620721.jpg perfectly
 const COLOR_MAPS = {
   green: {
     startTrackIdx: 47,
     homeStartIdx: 50,
     homeCoords: [{x:7,y:1}, {x:7,y:2}, {x:7,y:3}, {x:7,y:4}, {x:7,y:5}, {x:7,y:6}],
-    yard: [{x:4,y:1}, {x:5,y:1}, {x:4,y:2}, {x:5,y:2}]
+    yard: [{x:0,y:4}, {x:1,y:4}, {x:0,y:5}, {x:1,y:5}]
   },
   yellow: {
     startTrackIdx: 8,
     homeStartIdx: 50,
     homeCoords: [{x:13,y:7}, {x:12,y:7}, {x:11,y:7}, {x:10,y:7}, {x:9,y:7}, {x:8,y:7}],
-    yard: [{x:9,y:1}, {x:10,y:1}, {x:9,y:2}, {x:10,y:2}]
+    yard: [{x:11,y:1}, {x:12,y:1}, {x:11,y:2}, {x:12,y:2}]
   },
   blue: {
     startTrackIdx: 21,
     homeStartIdx: 50,
     homeCoords: [{x:7,y:13}, {x:7,y:12}, {x:7,y:11}, {x:7,y:10}, {x:7,y:9}, {x:7,y:8}],
-    yard: [{x:9,y:12}, {x:10,y:12}, {x:9,y:13}, {x:10,y:13}]
+    yard: [{x:13,y:9}, {x:14,y:9}, {x:13,y:10}, {x:14,y:10}]
   },
   red: {
     startTrackIdx: 34,
     homeStartIdx: 50,
     homeCoords: [{x:1,y:7}, {x:2,y:7}, {x:3,y:7}, {x:4,y:7}, {x:5,y:7}, {x:6,y:7}],
-    yard: [{x:4,y:12}, {x:5,y:12}, {x:4,y:13}, {x:5,y:13}]
+    yard: [{x:2,y:12}, {x:3,y:12}, {x:2,y:13}, {x:3,y:13}]
   }
 };
 
@@ -313,10 +314,8 @@ function render() {
   controlsContainer.innerHTML = "";
 
   COLORS.forEach(color => {
-    const isBottom = (color === "red" || color === "blue");
-    
     const rollBox = document.createElement("div");
-    rollBox.className = `yard-control roll ${color}${isBottom ? " bottom-row" : ""}`;
+    rollBox.className = `yard-control roll ${color}`;
     
     if (color === currentTurnColor) {
       const rollButton = document.createElement("button");
@@ -329,7 +328,7 @@ function render() {
     controlsContainer.appendChild(rollBox);
 
     const diceBox = document.createElement("div");
-    diceBox.className = `yard-control dice ${color}${isBottom ? " bottom-row" : ""}`;
+    diceBox.className = `yard-control dice ${color}`;
     
     if (color === currentTurnColor) {
       const diceDisplay = document.createElement("div");
@@ -359,10 +358,9 @@ function render() {
 
   tokensToRender.forEach(token => {
     const tokenEl = document.createElement("div");
-    
-    // Attaches the CSS selector mapping directly
     tokenEl.className = `token ${token.color}`;
     
+    // Unified, absolute grid mapping statement
     tokenEl.style.gridColumnStart = token.coords.x + 1;
     tokenEl.style.gridRowStart = token.coords.y + 1;
 
