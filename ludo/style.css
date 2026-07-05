@@ -144,7 +144,6 @@ body {
   box-shadow: 0 4px 10px rgba(0,0,0,0.5);
 }
 
-/* Explicit JavaScript-controlled toggle class */
 .dropdownContent.show {
   display: block !important;
 }
@@ -205,7 +204,7 @@ body {
   line-height: 1;
 }
 
-/* TOKENS (Sits in Purple 2x2 boxes) */
+/* TOKENS DESIGN & IMAGE PIP ROLES */
 .token {
   width: 70%;
   height: 70%;
@@ -216,7 +215,17 @@ body {
   z-index: 10;
   border: 2px solid rgba(255,255,255,0.4);
   transition: transform 0.2s ease;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
 }
+
+/* Direct Graphical Enclosure */
+.token.green  { background-image: url("assets/green_pip_ludo.png"); }
+.token.yellow { background-image: url("assets/yellow_pip_ludo.png"); }
+.token.red    { background-image: url("assets/red_pip_ludo.png"); }
+.token.blue   { background-image: url("assets/blue_pip_ludo.png"); }
+
 .token.movable {
   animation: bounce 0.6s infinite alternate;
   border: 2px solid #ffffff;
