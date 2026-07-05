@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-Time Ludo</title>
+  <link rel="stylesheet" href="/ludo/styles.css">
+</head>
+<body>
+
+<div id="menuScreen">
+  <div class="panel">
+    <h1>LUDO REALTIME</h1>
+    <button id="createBtn" class="bigBtn">CREATE GAME</button>
+    <input id="joinCode" maxlength="4" placeholder="ENTER CODE"/>
+    <button id="joinBtn" class="bigBtn">JOIN GAME</button>
+  </div>
+</div>
+
+<div id="gameScreen" class="hidden">
+  <div id="topBar">
+    <div id="roomInfo">Connecting...</div>
+    <div class="dropdown">
+      <button id="optionsBtn">⚙️ Settings</button>
+      <div class="dropdownContent">
+        <label>
+          Sound
+          <input type="checkbox" id="soundToggle">
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div id="boardWrapper">
+    <div id="board"></div>
+  </div>
+
+  <div id="diceArea">
+    <button id="rollBtn">ROLL DICE</button>
+    <div id="dice">🎲</div>
+  </div>
+</div>
+
+<script type="module" src="/ludo/game.js"></script>
+</body>
+</html>
