@@ -34,23 +34,7 @@ let bannedWordsCache = [];
 let bannedUsersCache = {}; 
 let isNoticeBoardActive = false;
 
-// Populate saved handle from memory immediately on start
-if (usernameInput) {
-    const savedName = localStorage.getItem('tellstream_saved_username');
-    if (savedName) usernameInput.value = savedName;
-    
-    // Save handle automatically if they manually type/change it
-    usernameInput.addEventListener('input', () => {
-        localStorage.setItem('tellstream_saved_username', usernameInput.value.trim());
-        syncDrawerName();
-    });
-}
-
-const facebookPosts = [
-    { id: 1, date: "Just now", text: "Big John is locked and loaded live in the studio! Lock into tellstream.banton.org right now and fire up the lounge chat! 🎚️🔥", link: "https://www.facebook.com/tellstream.dem" },
-    { id: 2, date: "Yesterday", text: "Big respect to all the listeners locking in from around the globe. Drop your shoutouts and tell-a-wheel selectors directly inside the main chat line! 🔊🎧", link: "https://www.facebook.com/tellstream.dem" },
-    { id: 3, date: "2 days ago", text: "Weekend scheduling updates coming soon. Keep your locked eyes locked onto the central flyer board for upcoming live dance clashes.", link: "https://www.facebook.com/tellstream.dem" }
-];
+let pendingLogoTargetName = "";
 
 const helpInstructions = [
     { title: "Setting Nickname", text: "Fill in the Nickname block before typing to claim your handle in the Lounge panel." },
@@ -66,12 +50,152 @@ const noticeboardHelpInstructions = [
     { title: "⚠️ Noticeboard Enforcement", text: "The dynamic global blocklist active in the Lounge chat applies directly to noticeboard columns. Posting restricted keywords increments your profile strikes and can lead to an automated 24-hour column ban or permanent lifetime removal." }
 ];
 
+const djHelpInstructions = [
+    { title: "⚠️ Notice", text: "If you are unsure how to use these controls, ask management for guidance before typing them. It is easy once you understand, but you need to know what you are doing so it stays simple for everyone." },
+    { title: "🎛️ /show live", text: "Example: /show live \nWhat it does: Shows that YOU are now live on air." },
+    { title: "🔄 /show tellstream", text: "Example: /show tellstream \nWhat it does: Shows Tellstream Autopilot as Live again. Only do this if you are last for the day." },
+    { title: "🗓️ /schedule perm [Day] [Start Time] [End Time] [Time Zone]", text: "Example: /schedule perm Friday 2000 2200 BST \nWhat it does: Locks weekly show detail in permanently." },
+    { title: "🚨 /schedule temp [ddmmyy] [Start Time] [End Time] [Time Zone]", text: "Example: /schedule temp 100726 2000 2200 BST \nWhat it does: Adds a one-off temporary change for a specific date." },
+    { title: "❌ /schedule cancel [ddmmyy] [Start Time]", text: "Example: /schedule cancel 100726 2000 \nWhat it does: Cancels a show already added (perm or temp)." },
+    { title: "🖼️ /upload [Name] & /delete [Name]", text: "Example: /upload Big John \nWhat it does: Manages transparent PNG logo assets in the cloud." },
+    { title: "⚔️ Moderation Shortcuts", text: "/add [word], /del [word], /unban [username], or /listwords to manage filters live." }
+];
+
+// CELL-LEFT ISOLATED ENGINE (DYNAMIC BOUNDS & AUTOMATED MODE SWITCH)
+function renderStreamHeader(showName) {
+    const cellLeft = document.querySelector('.cell-left');
+    const wrapper = document.querySelector('.cell-left .tagline-wrapper');
+    if (!cellLeft) return;
+
+    let display = document.getElementById('stream-name-display');
+    let logoImg = document.getElementById('stream-logo-display');
+    
+    // 1. Structural Setup: Build components if they don't exist yet
+    if (!logoImg) {
+        logoImg = document.createElement('img');
+        logoImg.id = 'stream-logo-display';
+        logoImg.style.width = '100%';
+        logoImg.style.height = 'auto'; // Fluid scaling allows image aspect ratio to dictate cell height
+        logoImg.style.display = 'none';      
+        cellLeft.appendChild(logoImg);
+    }
+
+    if (!display) {
+        display = document.createElement('p');
+        display.id = 'stream-name-display';
+        display.style.color = '#ffffff'; 
+        display.style.fontSize = '1.1rem';
+        display.style.fontWeight = '900'; // Changed from 'bold' to ultra-heavy '900'
+        display.style.webkitTextStroke = '1.8px #000000'; // Thickened black outline edge definition
+        display.style.textShadow = '3px 3px 6px rgba(0, 0, 0, 0.95), -2px -2px 4px rgba(0, 0, 0, 0.8)';        display.style.textTransform = 'uppercase';
+        display.style.lineHeight = '1.2';
+        display.style.maxWidth = '95%';
+        display.style.textAlign = 'center';
+        cellLeft.appendChild(display);
+    }
+    
+    if (showName) {
+        const cleanName = showName.trim();
+        const safeFileName = cleanName.toLowerCase().replace(/\s+/g, '_') + '.png';
+        
+        const { data } = supabase_db.storage.from('dj-logos').getPublicUrl(safeFileName);
+        const imgCloudUrl = data.publicUrl;
+
+        const imageProbe = new Image();
+        imageProbe.src = imgCloudUrl;
+
+        imageProbe.onload = function() {
+            // STATE B: IMAGE FOUND -> Switch to image-driven physics matching the middle cell
+            if (wrapper) {
+                wrapper.querySelectorAll('h1, p').forEach(el => el.style.display = 'none');
+            }
+            
+            // Strip text absolute constraints; let the natural image flow control the container height
+            cellLeft.style.position = 'relative';
+            cellLeft.style.height = 'auto'; 
+            
+            logoImg.src = imgCloudUrl;
+            logoImg.style.position = 'relative'; // Removes absolute locking
+            logoImg.style.display = 'block';
+
+            // Pin text overlay absolutely over the natural fluid image background
+            display.style.position = 'absolute';
+            display.style.left = '50%';
+            display.style.transform = 'translateX(-50%)';
+            display.style.width = '100%';
+            display.style.bottom = '12px';
+            display.style.zIndex = '9999';
+
+            if (cleanName.toLowerCase() === 'tellstream') {
+                display.innerText = "TELLSTREAM NON STOP";
+            } else {
+                display.innerText = `${cleanName} - LIVE`;
+            }
+        };
+
+        imageProbe.onerror = function() {
+            // STATE A: NO IMAGE FOUND -> Fallback completely to structural text parameters
+            logoImg.style.display = 'none';
+            logoImg.style.position = 'absolute';
+            
+            cellLeft.style.height = ''; // Clear forced rules, return to base CSS flow
+            
+            if (wrapper) {
+                wrapper.querySelectorAll('h1, p').forEach(el => el.style.display = 'block');
+                if (display.parentElement !== wrapper) {
+                    wrapper.appendChild(display);
+                }
+                // Normalize text behavior for normal text boxes
+                display.style.position = 'static';
+                display.style.transform = 'none';
+                display.style.marginTop = '4px';
+                display.style.width = 'auto';
+                display.style.textAlign = 'left';
+                display.style.zIndex = 'auto';
+            }
+
+            if (cleanName.toLowerCase() === 'tellstream') {
+                display.innerText = "TELLSTREAM NONE STOP";
+            } else {
+                display.innerText = `${cleanName} - LIVE`;
+            }
+        };
+    }
+}
+
+async function updateDatabaseStreamStatus(showName) {
+    try {
+        await supabase_db.from('stream_status').upsert([{ id: 1, current_show: showName }]);
+    } catch (err) {
+        console.error("Database stream status write execution failed:", err);
+    }
+}
+
+async function loadInitialStreamStatus() {
+    try {
+        const { data, error } = await supabase_db.from('stream_status').select('current_show').eq('id', 1).single();
+        if (!error && data) {
+            renderStreamHeader(data.current_show);
+        }
+    } catch (err) {
+        console.error("Failed loading baseline header stream text state parameter:", err);
+    }
+}
+
+if (usernameInput) {
+    const savedName = localStorage.getItem('tellstream_saved_username');
+    if (savedName) usernameInput.value = savedName;
+    
+    usernameInput.addEventListener('input', () => {
+        localStorage.setItem('tellstream_saved_username', usernameInput.value.trim());
+        syncDrawerName();
+    });
+}
+
 function anchorChatToBottom() {
     const chatContainer = document.querySelector('.chat-messages') || chatBox;
     if (chatContainer) {
-        setTimeout(() => {
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }, 50);
+        setTimeout(() => { chatContainer.scrollTop = chatContainer.scrollHeight; }, 50);
     }
 }
 
@@ -104,7 +228,6 @@ function checkBanStatus(username) {
             return { isBanned: true, message: `You are temporarily banned for swearing. Ban expires in ${remainingHours} hours.` };
         }
     }
-
     return { isBanned: false };
 }
 
@@ -121,7 +244,6 @@ function appendPrivateWelcomeGreeting(compiledMessageText) {
 
 function appendPrivateWarning(user, text, strikeCount, customMessage = null) {
     if (!chatBox) return;
-
     let warningMsg = customMessage;
     if (!warningMsg) {
         warningMsg = `⚠️ PRIVATE WARNING: Strike ${strikeCount}/3. Bad language detected.`;
@@ -143,7 +265,6 @@ function appendPrivateWarning(user, text, strikeCount, customMessage = null) {
         const maskedText = cleanSwearWords(text);
         const msgDiv = document.createElement('div');
         msgDiv.className = 'msg';
-        
         const profile = profilesCache[user];
         let nameClass = "user-unregistered";
         let hoverAttribute = "";
@@ -151,18 +272,15 @@ function appendPrivateWarning(user, text, strikeCount, customMessage = null) {
             nameClass = (profile.power_level >= 1) ? "user-admin" : "user-registered";
             if (profile.hover_title) hoverAttribute = `title="${escapeHTML(profile.hover_title)}"`;
         }
-
         msgDiv.innerHTML = `<div class="user ${nameClass}" ${hoverAttribute}>${escapeHTML(user)}</div><div>${escapeHTML(maskedText)}</div>`;
         chatBox.appendChild(msgDiv);
     }
-    
     anchorChatToBottom();
 }
 
 async function handleUserStrike(username, originalText) {
     const lowerUser = username.toLowerCase();
     const existingRecord = bannedUsersCache[lowerUser];
-    
     let currentStrikes = existingRecord ? existingRecord.strikes : 0;
     let apologyUsed = existingRecord ? existingRecord.apology_used : false;
     currentStrikes += 1;
@@ -186,20 +304,17 @@ async function handleUserStrike(username, originalText) {
         apology_used: apologyUsed,
         updated_at: new Date().toISOString()
     });
-
     appendPrivateWarning(username, originalText, currentStrikes);
 }
 
 async function checkAndProcessApology(username, text) {
     const lowerUser = username.toLowerCase();
     const existingRecord = bannedUsersCache[lowerUser];
-    
     if (!existingRecord || existingRecord.strikes === 0 || existingRecord.apology_used) return false;
 
     const apologyRegex = /\b(sorry|apologise|apologize)\b/i;
     if (apologyRegex.test(text)) {
         let currentStrikes = existingRecord.strikes - 1;
-        
         await supabase_db.from('banned_users').upsert({
             username: lowerUser,
             strikes: currentStrikes,
@@ -208,7 +323,6 @@ async function checkAndProcessApology(username, text) {
             apology_used: true,
             updated_at: new Date().toISOString()
         });
-
         appendPrivateWarning(username, null, currentStrikes, `✅ APOLOGY ACCEPTED: Your one-time grace apology has been processed. One strike removed! Current strikes: ${currentStrikes}/3.`);
         return true;
     }
@@ -239,13 +353,74 @@ async function handleAdminFilterCommand(text) {
     }
 }
 
-function renderFacebookFeed() {
-    fbFeedContainer.innerHTML = facebookPosts.map(post => `
-        <div class="fb-post-card" onclick="window.open('${post.link}', '_blank');">
-            <div class="fb-post-meta">Tellstream Page • ${post.date}</div>
-            <div class="fb-post-text">${post.text}</div>
-        </div>
-    `).join('');
+async function renderSiteNewsFeed() {
+    if (!fbFeedContainer) return;
+    try {
+        // Direct header override logic to patch "Facebook Activity" out dynamically
+        const colHeader = fbFeedContainer.previousElementSibling;
+        if (colHeader && (colHeader.innerText.includes("Facebook") || colHeader.querySelector('a'))) {
+            colHeader.style.display = 'flex';
+            colHeader.style.justifyContent = 'space-between';
+            colHeader.style.alignItems = 'center';
+            colHeader.style.width = '100%';
+            
+            colHeader.innerHTML = `
+                <span>📰 Site News</span>
+                <a href="https://www.facebook.com/tellstream.dem" target="_blank" style="display: flex; align-items: center; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="#1877F2" style="display: block;">
+                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    </svg>
+                </a>
+            `;
+        }
+        
+        // Fetch the 12 newest combined records from the boss and selectors boards
+        const { data: records, error } = await supabase_db
+            .from('notice_board')
+            .select('*')
+            .in('board_type', ['boss', 'selectors'])
+            .order('created_at', { ascending: false })
+            .limit(12);
+
+        if (error || !records || records.length === 0) {
+            fbFeedContainer.innerHTML = `
+                <p style="color:#666; text-align:center; padding-top:20px; font-style:italic;">No station notices posted.</p>
+                <div class="fb-post-card" style="text-align:center; margin-top:15px; cursor:pointer; border-left:4px solid #ffdd1a;" onclick="toggleNoticeBoardView();">
+                    <div class="fb-post-text" style="font-weight:bold; color:#ffdd1a;">📋 OPEN NOTICEBOARD HISTORY</div>
+                </div>
+            `;
+            return;
+        }
+
+        // Build the visual HTML feed blocks
+        let html = records.map(item => {
+            const isBoss = item.board_type === 'boss';
+            const badgeColor = isBoss ? '#ff3333' : '#ffdd1a';
+            const badgeText = isBoss ? 'STATION ADMIN' : 'DJ SELECTOR';
+            
+            return `
+                <div class="fb-post-card" style="border-left: 4px solid ${badgeColor}; margin-bottom: 12px;">
+                    <div class="fb-post-meta" style="color: ${badgeColor}; font-weight: bold;">
+                        👑 ${escapeHTML(item.username)} • <span style="font-size:0.75rem; opacity:0.8;">${badgeText}</span>
+                    </div>
+                    <div class="fb-post-text" style="color: #e0f2f1; margin-top: 5px; line-height: 1.4;">
+                        ${escapeHTML(item.notice_text)}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Append the clickable history link node to the very bottom
+        html += `
+            <div class="fb-post-card" style="text-align:center; margin-top:20px; cursor:pointer; background: rgba(255,221,26,0.05); border: 1px dashed #ffdd1a;" onclick="toggleNoticeBoardView();">
+                <div class="fb-post-text" style="font-weight:bold; color:#ffdd1a; font-size:0.9rem;">
+                    📋 VIEW FULL NOTICEBOARD HISTORY
+                </div>
+            </div>
+        `;
+
+        fbFeedContainer.innerHTML = html;
+    } catch(e) { console.error(e); }
 }
 
 async function renderActiveFlyers() {
@@ -254,7 +429,6 @@ async function renderActiveFlyers() {
     today.setHours(0,0,0,0);
 
     const { data: files, error } = await supabase_db.storage.from('flyers').list('', { limit: 100 });
-
     if (error || !files || files.length === 0) {
         flyerContainer.innerHTML = `<p style="color:#666; text-align:center; padding-top:20px;">No current event flyers listed.</p>`;
         return;
@@ -288,15 +462,31 @@ async function renderActiveFlyers() {
 
 function renderHelpContent(useNoticeboardGuide = false) {
     const activeDataset = useNoticeboardGuide ? noticeboardHelpInstructions : helpInstructions;
-    const currentTitle = useNoticeboardGuide ? "📋 Noticeboard Help Guide" : "💡 Chat help and emoji codes";
-    const html = activeDataset.map(item => `
+    let html = activeDataset.map(item => `
         <div class="help-item-card">
             <h5>${item.title}</h5>
             <p>${item.text}</p>
         </div>
     `).join('');
+
+    const currentUser = usernameInput.value.trim();
+    const profile = profilesCache[currentUser];
+    const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
+    const isVerifiedDJ = profile && profile.passkey === authorizedKey && parseInt(profile.power_level || 0) >= 1;
+
+    if (isVerifiedDJ && !useNoticeboardGuide) {
+        const djHtml = djHelpInstructions.map(item => `
+            <div class="help-item-card" style="border-left: 4px solid #ffdd1a; background: rgba(255, 221, 26, 0.05);">
+                <h5 style="color: #ffdd1a; font-weight: bold;">${item.title}</h5>
+                <p style="color: #fffbdf; white-space: pre-line;">${item.text}</p>
+            </div>
+        `).join('');
+        html = djHtml + html; 
+    }
+
     helpCardsContainer.innerHTML = html;
     helpCardsContainerFS.innerHTML = html;
+    const currentTitle = useNoticeboardGuide ? "📋 Noticeboard Help Guide" : "💡 Chat help and emoji codes";
     const fsTitleNode = helpCardsContainerFS.previousElementSibling;
     if (fsTitleNode && fsTitleNode.classList.contains('col-title')) fsTitleNode.innerHTML = currentTitle;
 }
@@ -310,7 +500,6 @@ function closeFlyerLightbox() {
     modalTargetImg.src = "";
 }
 
-// Fullscreen toggle
 function toggleChatFullscreen() {
     if (isNoticeBoardActive) toggleNoticeBoardView();
     document.body.classList.toggle('chat-is-fullscreen');
@@ -320,9 +509,21 @@ function toggleChatFullscreen() {
 
 function initQuickEmojiCloud() {
     if (!window.emojiMapping) return;
-    const html = Object.keys(window.emojiMapping).slice(0, 32).map(key => `
+    
+    // 1. Get all available emoji shorthand keys from your mapping file
+    const allKeys = Object.keys(window.emojiMapping);
+    
+    // 2. Shuffle the entire array randomly
+    const shuffledKeys = allKeys.sort(() => 0.5 - Math.random());
+    
+    // 3. Take the first 32 random keys out of the shuffled deck
+    const randomSelection = shuffledKeys.slice(0, 32);
+    
+    // 4. Render the grid items
+    const html = randomSelection.map(key => `
         <div class="emoji-grid-item" onclick="insertEmojiCode('${key}')">:${key}:</div>
     `).join('');
+    
     quickEmojiList.innerHTML = html;
     quickEmojiListFS.innerHTML = html;
 }
@@ -470,6 +671,7 @@ function syncDrawerName() {
         drawerSubmitBtn.innerText = "Lock Name Globally";
     }
     if (isNoticeBoardActive) evaluateNoticeBoardForms();
+    renderHelpContent(isNoticeBoardActive);
 }
 
 async function toggleSecurityDrawer() {
@@ -510,8 +712,9 @@ async function handleSecuritySubmit() {
         let assignedLevel = 0;
         let assignedHover = "Tella Fambily";
         if (currentName === "Banton") { assignedLevel = 2; assignedHover = "banton.org"; }
-        else if (currentName === "BIG JOHN NEW000") { assignedLevel = 2; assignedHover = "the boss"; }
-        else if (currentName === "Perfection") { assignedLevel = 2; assignedHover = "You done know"; }
+        else if (currentName === "Big John") { assignedLevel = 2; assignedHover = "the boss"; }
+        else if (currentName === "Perfectionist") { assignedLevel = 2; assignedHover = "You done know"; }
+
 
         const { error } = await supabase_db.from('secured_profiles').insert([{
             username: currentName,
@@ -552,11 +755,7 @@ async function syncBannedWordsMap() {
 async function syncBannedUsersMap() {
     const { data } = await supabase_db.from('banned_users').select('*');
     bannedUsersCache = {};
-    if (data) {
-        data.forEach(u => {
-            bannedUsersCache[u.username.toLowerCase()] = u;
-        });
-    }
+    if (data) data.forEach(u => { bannedUsersCache[u.username.toLowerCase()] = u; });
 }
 
 audioPlayer.addEventListener('stalled', () => { recoverStream(); });
@@ -596,7 +795,6 @@ function appendMessage(data) {
     msgDiv.innerHTML = `<div class="user ${nameClass}" ${hoverAttribute}>${escapeHTML(data.username)}</div><div>${messageContent}</div>`;
     chatBox.appendChild(msgDiv);
     anchorChatToBottom();
-    
     while (chatBox.children.length > 50) chatBox.removeChild(chatBox.firstChild);
 }
 
@@ -609,12 +807,20 @@ async function loadMessages() {
     if (data) { data.forEach(appendMessage); anchorChatToBottom(); }
 }
 
-// Subscriptions
 supabase_db.channel('public:messages').on('postgres_changes', { event: 'INSERT', pattern: 'public', table: 'messages' }, payload => { appendMessage(payload.new); }).subscribe();
 supabase_db.channel('public:secured_profiles').on('postgres_changes', { event: '*', pattern: 'public', table: 'secured_profiles' }, async () => { await syncProfilesMap(); }).subscribe();
-supabase_db.channel('public:notice_board').on('postgres_changes', { event: 'INSERT', pattern: 'public', table: 'notice_board' }, payload => { if (isNoticeBoardActive) fetchNoticeBoardRecords(); }).subscribe();
+
+supabase_db.channel('public:notice_board').on('postgres_changes', { event: '*', pattern: 'public', table: 'notice_board' }, payload => { 
+    renderSiteNewsFeed(); 
+    if (isNoticeBoardActive) fetchNoticeBoardRecords(); 
+}).subscribe();
+
 supabase_db.channel('public:banned_words').on('postgres_changes', { event: '*', pattern: 'public', table: 'banned_words' }, async () => { await syncBannedWordsMap(); }).subscribe();
 supabase_db.channel('public:banned_users').on('postgres_changes', { event: '*', pattern: 'public', table: 'banned_users' }, async () => { await syncBannedUsersMap(); }).subscribe();
+
+supabase_db.channel('public:stream_status').on('postgres_changes', { event: '*', pattern: 'public', table: 'stream_status' }, payload => {
+    if (payload.new && payload.new.current_show) { renderStreamHeader(payload.new.current_show); }
+}).subscribe();
 
 async function sendMessage() {
     const user = usernameInput.value.trim() || 'Listener';
@@ -623,9 +829,80 @@ async function sendMessage() {
 
     if (text.startsWith('/')) {
         const profile = profilesCache[user];
-        if (profile && parseInt(profile.power_level || 0) >= 1) { 
+        const userPowerLevel = parseInt(profile?.power_level || 0);
+        
+        if (profile && userPowerLevel >= 1) { 
+            
+            // CONSOLE INJECTION INTERCEPTOR FOR ZERO-SLASH SCHEDULE SYSTEM
+            if (text.startsWith('/schedule ')) {
+                messageInput.value = '';
+                await processScheduleConsoleInjections(text, user);
+                return;
+            }
+
+            if (text.startsWith('/show')) {
+                let showNameInput = "";
+                if (text.trim() === '/show live') {
+                    showNameInput = user; 
+                } else if (text.startsWith('/show ')) {
+                    showNameInput = text.substring(6).trim().substring(0, 50);
+                }
+
+                if (showNameInput) {
+                    messageInput.value = '';
+                    await updateDatabaseStreamStatus(showNameInput);
+                    return;
+                }
+            }
+            
+            if (text.startsWith('/upload ') || text.startsWith('/delete ')) {
+                if (userPowerLevel < 2) {
+                    messageInput.value = '';
+                    alert("🔒 Access Denied: Only Station Admins (Level 2) have authorization to manage cloud image assets.");
+                    return;
+                }
+
+                if (text.startsWith('/upload ')) {
+                    const uploadNameInput = text.substring(8).trim().substring(0, 50);
+                    if (uploadNameInput) {
+                        messageInput.value = '';
+                        pendingLogoTargetName = uploadNameInput.toLowerCase().replace(/\s+/g, '_');
+                        const hiddenUploader = document.getElementById('studioLogoHiddenFilePicker');
+                        if (hiddenUploader) hiddenUploader.click();
+                        return;
+                    }
+                }
+
+                if (text.startsWith('/delete ')) {
+                    const deleteNameInput = text.substring(8).trim().substring(0, 50);
+                    if (deleteNameInput) {
+                        messageInput.value = '';
+                        const targetFileName = deleteNameInput.toLowerCase().replace(/\s+/g, '_') + '.png';
+                        try {
+                            const { error } = await supabase_db.storage.from('dj-logos').remove([targetFileName]);
+                            if (error) throw error;
+                            alert(`🗑️ Logo successfully deleted for: "${deleteNameInput}"`);
+                            await loadInitialStreamStatus();
+                        } catch (err) {
+                            alert("Cloud Deletion Failure: " + err.message);
+                        }
+                        return;
+                    }
+                }
+            }
+
+            if (text.startsWith('/add ') || text.startsWith('/del ') || text.startsWith('/unban ') || text === '/listwords') {
+                messageInput.value = '';
+                await handleAdminFilterCommand(text);
+                return;
+            }
+            
             messageInput.value = '';
-            await handleAdminFilterCommand(text);
+            alert("❓ Unknown Command: That command does not exist. Use /show live to switch banners.");
+            return;
+        } else {
+            messageInput.value = '';
+            alert("🔒 Access Denied: Only Station Admins and Authorized DJs can run command scripts.");
             return;
         }
     }
@@ -639,10 +916,7 @@ async function sendMessage() {
     }
 
     const banCheck = checkBanStatus(user);
-    if (banCheck.isBanned) {
-        alert(banCheck.message);
-        return;
-    }
+    if (banCheck.isBanned) { alert(banCheck.message); return; }
 
     if (containsSwearWords(text)) {
         messageInput.value = '';
@@ -651,10 +925,7 @@ async function sendMessage() {
     }
 
     const wasApology = await checkAndProcessApology(user, text);
-    if (wasApology) {
-        messageInput.value = '';
-        return;
-    }
+    if (wasApology) { messageInput.value = ''; return; }
 
     messageInput.value = '';
     await supabase_db.from('messages').insert([{ username: user, message: text }]);
@@ -663,30 +934,214 @@ async function sendMessage() {
 sendBtn.addEventListener('click', sendMessage);
 messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
 
+// ISOLATED INJECTIONS RUNNERS (BUILT ASYNC SO THEY CANNOT BLOCK CORE GREETINGS OR LOGINS)
+async function processScheduleConsoleInjections(text, djUser) {
+    const args = text.trim().split(/\s+/);
+    const action = args[1]?.toLowerCase();
+
+    if (action === 'perm') {
+        const dayName = args[2];
+        const startTime = args[3];
+        const endTime = args[4];
+        const timeZone = args[5];
+
+        if (!dayName || !startTime || !endTime || !timeZone) {
+            alert("Format missing. Use: /schedule perm [Day] [Start Time] [End Time] [Time Zone]");
+            return;
+        }
+
+        const { error } = await supabase_db.from('master_schedule').upsert([{
+            day_of_week: dayName.toLowerCase(),
+            start_time: startTime,
+            end_time: endTime,
+            time_zone: timeZone.toUpperCase(),
+            dj_name: djUser
+        }], { onConflict: 'day_of_week,start_time' });
+
+        if (error) console.error("Database master schedule record failure:", error.message);
+    } 
+    else if (action === 'temp') {
+        const dateBlock = args[2]; 
+        const startTime = args[3];
+        const endTime = args[4];
+        const timeZone = args[5];
+
+        if (!dateBlock || !startTime || !endTime || !timeZone || dateBlock.length !== 6) {
+            alert("Format missing. Use a strict 6-digit date: /schedule temp [ddmmyy] [Start Time] [End Time] [Time Zone]");
+            return;
+        }
+
+        const { error } = await supabase_db.from('temporary_overrides').upsert([{
+            specific_date: dateBlock,
+            start_time: startTime,
+            end_time: endTime,
+            time_zone: timeZone.toUpperCase(),
+            dj_name: djUser,
+            is_cancelled: false
+        }], { onConflict: 'specific_date,start_time' });
+
+        if (error) console.error("Database temporary override record failure:", error.message);
+    } 
+    else if (action === 'cancel') {
+        const dateBlock = args[2];
+        const startTime = args[3];
+
+        if (!dateBlock || !startTime || dateBlock.length !== 6) {
+            alert("Format missing. Use: /schedule cancel [ddmmyy] [Start Time]");
+            return;
+        }
+
+        const { error } = await supabase_db.from('temporary_overrides').upsert([{
+            specific_date: dateBlock,
+            start_time: startTime,
+            is_cancelled: true,
+            dj_name: 'tellstream'
+        }], { onConflict: 'specific_date,start_time' });
+
+        if (error) console.error("Database cancel action sync failure:", error.message);
+    }
+}
+
+async function fetchAndRenderWeeklyTimetable() {
+    if (!flyerContainer) return;
+    try {
+        const { data: masterData, error: masterErr } = await supabase_db.from('master_schedule').select('*');
+        const { data: tempOverrides, error: tempErr } = await supabase_db.from('temporary_overrides').select('*');
+
+        if (masterErr || !masterData || masterData.length === 0) {
+            flyerContainer.innerHTML = `<p style="color:#666; text-align:center; padding-top:20px; font-style:italic;">Weekly Transmission Timetable under construction.</p>`;
+            return;
+        }
+
+        const dayOrder = { sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6 };
+        
+        // Grab the viewer's native system time zone city
+        const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+        let processedData = masterData.map(item => {
+            let currentDJ = item.dj_name;
+            let noteLabel = "";
+
+            if (tempOverrides) {
+                const matchOverride = tempOverrides.find(o => o.start_time === item.start_time);
+                if (matchOverride) {
+                    if (matchOverride.is_cancelled) {
+                        currentDJ = "tellstream";
+                        noteLabel = `<span style="color:#ff3333; font-size:0.75rem; margin-left:8px; font-weight:bold;">[CANCELLED]</span>`;
+                    } else {
+                        currentDJ = matchOverride.dj_name;
+                        noteLabel = `<span style="color:#ffdd1a; font-size:0.75rem; margin-left:8px; font-weight:bold;">[COVER SET]</span>`;
+                    }
+                }
+            }
+
+            // Break raw database values ('2000') into numbers
+            const startHours = parseInt(item.start_time.substring(0, 2), 10);
+            const startMins = parseInt(item.start_time.substring(2, 4), 10);
+            const endHours = parseInt(item.end_time.substring(0, 2), 10);
+            const endMins = parseInt(item.end_time.substring(2, 4), 10);
+
+            // Establish dates pinned to Europe/London
+            const baseDate = new Date();
+            const currentDayIndex = baseDate.getDay();
+            const targetDayIndex = dayOrder[item.day_of_week.toLowerCase()];
+            let dayDiff = targetDayIndex - currentDayIndex;
+            
+            baseDate.setDate(baseDate.getDate() + dayDiff);
+
+            const ukStart = new Date(baseDate.toLocaleString('en-US', { timeZone: 'Europe/London' }));
+            ukStart.setHours(startHours, startMins, 0, 0);
+
+            const ukEnd = new Date(baseDate.toLocaleString('en-US', { timeZone: 'Europe/London' }));
+            ukEnd.setHours(endHours, endMins, 0, 0);
+
+            // Shift everything cleanly to the user's local zone
+            const localDayStr = ukStart.toLocaleDateString('en-US', { timeZone: userTimeZone, weekday: 'long' });
+            const localStartStr = ukStart.toLocaleTimeString('en-GB', { timeZone: userTimeZone, hour: '2-digit', minute: '2-digit', hour12: false });
+            const localEndStr = ukEnd.toLocaleTimeString('en-GB', { timeZone: userTimeZone, hour: '2-digit', minute: '2-digit', hour12: false });
+
+            return {
+                sortDay: dayOrder[localDayStr.toLowerCase()],
+                sortTime: localStartStr,
+                html: `
+                    <div class="fb-post-card" style="border-left: 4px solid #00adb5; margin-bottom: 12px; background: rgba(0, 173, 181, 0.03); padding: 14px; border-radius: 4px;">
+                        <div style="font-weight: 900; color: #00adb5; text-transform: uppercase; font-size: 0.95rem; letter-spacing: 1px; display: flex; justify-content: space-between;">
+                            <span>📅 ${localDayStr}</span>
+                            <span style="color: #555; font-size: 0.75rem; text-transform: none; font-weight: normal;">📍 Auto-Translated</span>
+                        </div>
+                        <div style="color: #ffffff; margin-top: 6px; font-size: 1.25rem; font-weight: 900; letter-spacing: 0.5px;">
+                            ⏰ ${localStartStr} - ${localEndStr}
+                        </div>
+                        <div style="color: #a0a0a0; font-size: 0.88rem; margin-top: 8px; border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 8px; display: flex; align-items: center;">
+                            🎙️ <span style="margin-left: 6px;">Presenter: <strong style="color:#fff; font-weight:800;">${currentDJ}</strong></span> ${noteLabel}
+                        </div>
+                    </div>
+                `
+            };
+        });
+
+        // Re-sort the final display array by the VIEWER'S timeline flow
+        processedData.sort((a, b) => {
+            if (a.sortDay !== b.sortDay) return a.sortDay - b.sortDay;
+            return a.sortTime.localeCompare(b.sortTime);
+        });
+
+        flyerContainer.innerHTML = processedData.map(d => d.html).join('');
+
+    } catch (e) {
+        console.error("Timetable translation engine fault:", e);
+        flyerContainer.innerHTML = `<p style="color:#666; text-align:center; padding-top:20px; font-style:italic;">Weekly Transmission Timetable under construction.</p>`;
+    }
+}
+
+// SECURE TIMETABLE REALTIME EVENT LISTENERS
+try {
+    supabase_db.channel('public:master_schedule').on('postgres_changes', { event: '*', pattern: 'public', table: 'master_schedule' }, () => { fetchAndRenderWeeklyTimetable(); }).subscribe();
+    supabase_db.channel('public:temporary_overrides').on('postgres_changes', { event: '*', pattern: 'public', table: 'temporary_overrides' }, () => { fetchAndRenderWeeklyTimetable(); }).subscribe();
+} catch (e) { console.log("Realtime schedule subscription delayed:", e.message); }
+
 (async function initSystem() {
-    renderFacebookFeed();
-    renderActiveFlyers();
+    // 1. Core Lounge Operations (Cannot be affected by outside scripts)
+    try { await syncProfilesMap(); } catch(e){}
+    try { await syncBannedWordsMap(); } catch(e){}
+    try { await syncBannedUsersMap(); } catch(e){}
+    try { await loadMessages(); } catch(e){}
+    try { await loadInitialStreamStatus(); } catch(e){}
+    
     renderHelpContent(false);
     setTimeout(initQuickEmojiCloud, 500);
     
-    // Explicitly await every database profile and configuration mapping sequence completely
-    await syncProfilesMap();
-    await syncBannedWordsMap();
-    await syncBannedUsersMap();
-    
-    // Await historical messages completely before firing greeting layouts
-    await loadMessages();
-    
-    // Synchronize UI locks based on the fully loaded session state parameters
+    const hiddenInputFileTag = document.createElement('input');
+    hiddenInputFileTag.type = 'file';
+    hiddenInputFileTag.id = 'studioLogoHiddenFilePicker';
+    hiddenInputFileTag.accept = 'image/png';
+    hiddenInputFileTag.style.display = 'none';
+    document.body.appendChild(hiddenInputFileTag);
+
+    hiddenInputFileTag.addEventListener('change', async function(e) {
+        const file = e.target.files[0];
+        if (!file || !pendingLogoTargetName) return;
+        try {
+            const uploadFileName = `${pendingLogoTargetName}.png`;
+            const { error } = await supabase_db.storage.from('dj-logos').upload(uploadFileName, file, { upsert: true });
+            if (error) throw error;
+            alert(`✅ Success! Transparent logo saved for: "${pendingLogoTargetName.replace(/_/g, ' ')}"`);
+            await loadInitialStreamStatus();
+        } catch (err) {
+            alert("Cloud Upload Failure: " + err.message);
+        } finally {
+            hiddenInputFileTag.value = '';
+            pendingLogoTargetName = "";
+        }
+    });
+
     const currentUser = usernameInput.value.trim();
     syncDrawerName();
 
-    // Small timeout ensures the DOM has completely rendered the back history messages
     setTimeout(() => {
         const profile = profilesCache[currentUser];
         const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
         const isLoggedIn = profile && profile.passkey === authorizedKey;
-
         const mainBody = "Greetings and welcome to Tellstream Chat. Please help keep this experience a positive blessing for one and all. Remember, at any time, users may have children around them. Bad blessings will be removed. One love from Tellstream.";
 
         if (isLoggedIn) {
@@ -696,16 +1151,17 @@ messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.s
             const todayDateStr = new Date().toDateString();
 
             if (lastSeenDate === todayDateStr) {
-                // Return visit same day: ONLY show the custom prefix message string
                 appendPrivateWelcomeGreeting(prefix);
             } else {
-                // First visit of the day: Combined Prefix + Main Core rules layout block
                 appendPrivateWelcomeGreeting(prefix + mainBody);
                 localStorage.setItem(lastSeenKey, todayDateStr);
             }
         } else {
-            // Unregistered users always receive full guidelines body text tracking cards
             appendPrivateWelcomeGreeting(mainBody);
         }
     }, 200);
+
+    // 2. Auxiliary column scripts load at the ultimate tail of execution
+    try { await renderSiteNewsFeed(); } catch(e){}
+    try { await fetchAndRenderWeeklyTimetable(); } catch(e){}
 })();
