@@ -128,12 +128,24 @@ function listenRoom() {
     .channel("room-" + roomCode)
     .on("postgres_changes", { event: "UPDATE", schema: "public", table: "rooms", filter: `code=eq.${roomCode}` }, payload => {
       state = payload.new.state;
-      const players = payload.new.players;
-      currentTurnColor = COLORS[payload.new.turn % players.length];
+      const players = payload.new.players || [];
+      
+      if (players.length > 0) {
+        currentTurnColor = COLORS[payload.new.turn % players.length];
+      } else {
+        currentTurnColor = "red";
+      }
+      
       currentRoll = state.currentRoll;
       hasRolledThisTurn = state.hasRolled;
       
-      startTurnTimer();
+      if (players.length > 1) {
+        startTurnTimer();
+      } else {
+        clearInterval(turnTimerInterval);
+        document.getElementById("roomInfo").innerText = `ROOM: ${roomCode} | YOU: ${playerColor.toUpperCase()} | WAITING FOR PLAYERS TO JOIN...`;
+      }
+      
       render();
     })
     .subscribe();
@@ -153,7 +165,7 @@ function startTurnTimer() {
 
     if (remaining <= 0 && playerColor === currentTurnColor) {
       clearInterval(turnTimerInterval);
-      passTurn(false); // Force skip turn if timer bottoms out
+      passTurn(false);
     }
   }, 1000);
 }
@@ -212,7 +224,6 @@ function checkCaptures(movingColor, movingIdx) {
   const map = COLOR_MAPS[movingColor];
   const absoluteTrackIndex = (map.startTrackIdx + currentPos) % 52;
 
-  // Standard safe spots: 4 launcher tiles + 4 milestone star paths
   const SAFE_TRACK_INDICES = [0, 8, 13, 21, 26, 34, 39, 47];
   if (SAFE_TRACK_INDICES.includes(absoluteTrackIndex)) return;
 
@@ -327,14 +338,16 @@ window.addEventListener("DOMContentLoaded", async () => {
   const cachedColor = localStorage.getItem("ludo_playerColor");
 
   if (cachedRoom && cachedColor) {
-    const { data } = await supabase.from("rooms").select("*").eq("code", cachedRoom).single();
-    if (data && data.players.includes(cachedColor)) {
+    const { data, error } = await supabase.from("rooms").select("*").eq("code", cachedRoom).maybeSingle();
+    
+    if (data && !error && data.players.includes(cachedColor)) {
       roomCode = cachedRoom;
       playerColor = cachedColor;
       enterGame();
       listenRoom();
     } else {
-      localStorage.clear();
+      localStorage.removeItem("ludo_roomCode");
+      localStorage.removeItem("ludo_playerColor");
     }
   }
 });
