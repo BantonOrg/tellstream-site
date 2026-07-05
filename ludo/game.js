@@ -37,23 +37,23 @@ const COMMON_TRACK = [
 
 const COLOR_MAPS = {
   red: {
-    startTrackIdx: 1, homeStartIdx: 50,
-    homeCoords: [{x:7,y:1}, {x:7,y:2}, {x:7,y:3}, {x:7,y:4}, {x:7,y:5}, {x:7,y:6}],
+    startTrackIdx: 14, homeStartIdx: 11,
+    homeCoords: [{x:1,y:7}, {x:2,y:7}, {x:3,y:7}, {x:4,y:7}, {x:5,y:7}, {x:6,y:7}],
     yard: [{x:2,y:2}, {x:3,y:2}, {x:2,y:3}, {x:3,y:3}]
   },
   green: {
-    startTrackIdx: 14, homeStartIdx: 11,
-    homeCoords: [{x:1,y:7}, {x:2,y:7}, {x:3,y:7}, {x:4,y:7}, {x:5,y:7}, {x:6,y:7}],
+    startTrackIdx: 27, homeStartIdx: 24,
+    homeCoords: [{x:7,y:13}, {x:7,y:12}, {x:7,y:11}, {x:7,y:10}, {x:7,y:9}, {x:7,y:8}],
     yard: [{x:11,y:2}, {x:12,y:2}, {x:11,y:3}, {x:12,y:3}]
   },
   yellow: {
-    startTrackIdx: 27, homeStartIdx: 24,
-    homeCoords: [{x:7,y:13}, {x:7,y:12}, {x:7,y:11}, {x:7,y:10}, {x:7,y:9}, {x:7,y:8}],
+    startTrackIdx: 40, homeStartIdx: 37,
+    homeCoords: [{x:13,y:7}, {x:12,y:7}, {x:11,y:7}, {x:10,y:7}, {x:9,y:7}, {x:8,y:7}],
     yard: [{x:11,y:11}, {x:12,y:11}, {x:11,y:12}, {x:12,y:12}]
   },
   blue: {
-    startTrackIdx: 40, homeStartIdx: 37,
-    homeCoords: [{x:13,y:7}, {x:12,y:7}, {x:11,y:7}, {x:10,y:7}, {x:9,y:7}, {x:8,y:7}],
+    startTrackIdx: 1, homeStartIdx: 50,
+    homeCoords: [{x:7,y:1}, {x:7,y:2}, {x:7,y:3}, {x:7,y:4}, {x:7,y:5}, {x:7,y:6}],
     yard: [{x:2,y:11}, {x:3,y:11}, {x:2,y:12}, {x:3,y:12}]
   }
 };
@@ -280,11 +280,12 @@ function render() {
   dice.innerText = currentRoll || "🎲";
   rollBtn.disabled = (playerColor !== currentTurnColor || hasRolledThisTurn);
 
-  // Determine board rotation angle to keep active player zone focused at the bottom
+// Determine board rotation angle so the active player's yard is always at the bottom-left/bottom orientation
   let boardRotation = 0;
-  if (playerColor === "blue") boardRotation = 270;
+  if (playerColor === "red") boardRotation = 0;
+  if (playerColor === "green") boardRotation = 270;
   if (playerColor === "yellow") boardRotation = 180;
-  if (playerColor === "green") boardRotation = 90;
+  if (playerColor === "blue") boardRotation = 90;
   
   board.style.transform = `rotate(${boardRotation}deg)`;
 
