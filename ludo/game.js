@@ -281,7 +281,7 @@ function handleStateUpdate(roomData) {
     if (!el) return;
     
     const isSeated = !!playersObj[color];
-    let statusText = `${color.toUpperCase(): ${isSeated ? playersObj[color].toUpperCase() : "EMPTY"}`;
+    let statusText = `${color.toUpperCase()}: ${isSeated ? playersObj[color].toUpperCase() : "EMPTY"}`;
     if (isSeated && color === currentTurnColor) {
       const elapsed = Math.floor((Date.now() - state.lastTurnTimestamp) / 1000);
       const remaining = Math.max(0, TURN_TIMEOUT_SECONDS - elapsed);
