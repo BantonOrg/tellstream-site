@@ -336,6 +336,45 @@ function render() {
 
     board.appendChild(tokenEl);
   });
+  // === DOM-BASED GRID DEBUGGING LABELS ===
+// Only run this once to prevent duplicating text elements on every re-render
+if (!document.getElementById("debug-grid-layer")) {
+  const debugLayer = document.createElement("div");
+  debugLayer.id = "debug-grid-layer";
+  debugLayer.style.position = "absolute";
+  debugLayer.style.top = "0";
+  debugLayer.style.left = "0";
+  debugLayer.style.width = "100%";
+  debugLayer.style.height = "100%";
+  debugLayer.style.pointerEvents = "none"; // Let clicks pass right through
+  board.appendChild(debugLayer);
+
+  // Loop through all 15x15 slots
+  for (let row = 0; row < 15; row++) {
+    for (let col = 0; col < 15; col++) {
+      const label = document.createElement("div");
+      label.innerText = `${col},${row}`;
+      label.style.position = "absolute";
+      
+      // Calculate percentages based on a 15-cell grid layout
+      label.style.left = `${(col / 15) * 100}%`;
+      label.style.top = `${(row / 15) * 100}%`;
+      label.style.width = `${100 / 15}%`;
+      label.style.height = `${100 / 15}%`;
+      
+      // Text styling
+      label.style.color = "#000000";
+      label.style.fontWeight = "bold";
+      label.style.fontSize = "9px";
+      label.style.display = "flex";
+      label.style.justifyContent = "center";
+      label.style.alignItems = "center";
+      
+      debugLayer.appendChild(label);
+    }
+  }
+}
+// === END DEBUGGING LABELS ===
 }
 
 function playSound(name) {
