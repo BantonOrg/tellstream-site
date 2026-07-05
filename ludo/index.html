@@ -27,17 +27,21 @@
           Sound
           <input type="checkbox" id="soundToggle">
         </label>
+        <label>
+          Table Theme
+          <select id="themeSelect">
+            <option value="classic">Classic Table</option>
+            <option value="futuristic">Futuristic Board</option>
+          </select>
+        </label>
       </div>
     </div>
   </div>
 
   <div id="boardWrapper">
-    <div id="board"></div>
-  </div>
-
-  <div id="diceArea">
-    <button id="rollBtn">ROLL DICE</button>
-    <div id="dice">🎲</div>
+    <div id="board" class="theme-classic">
+      <div id="yard-controls-container" style="display: contents;"></div>
+    </div>
   </div>
 </div>
 
