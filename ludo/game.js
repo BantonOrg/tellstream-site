@@ -89,13 +89,16 @@ document.getElementById("createBtn").onclick = async () => {
 };
 
 document.getElementById("joinBtn").onclick = async () => {
-  roomCode = document.getElementById("joinCode").value.toUpperCase();
-  const { data } = await supabase.from("rooms").select("*").eq("code", roomCode).single();
+  const inputCode = document.getElementById("joinCode").value.toUpperCase();
+  if (!inputCode || inputCode.length !== 4) return alert("Enter a valid 4-letter room code");
+
+  const { data } = await supabase.from("rooms").select("*").eq("code", inputCode).single();
   if(!data) return alert("Room not found");
 
   const players = data.players || [];
   if (players.length >= 4) return alert("Room full");
   
+  roomCode = inputCode;
   playerColor = COLORS[players.length];
   players.push(playerColor);
 
@@ -280,7 +283,6 @@ function render() {
   dice.innerText = currentRoll || "🎲";
   rollBtn.disabled = (playerColor !== currentTurnColor || hasRolledThisTurn);
 
-// Determine board rotation angle so the active player's yard is always at the bottom-left/bottom orientation
   let boardRotation = 0;
   if (playerColor === "red") boardRotation = 0;
   if (playerColor === "green") boardRotation = 270;
@@ -314,7 +316,6 @@ function render() {
     tokenEl.style.gridColumnStart = token.coords.x + 1;
     tokenEl.style.gridRowStart = token.coords.y + 1;
 
-    // Default stacking offset equations
     let transformString = "";
     const sharedOccupants = coordinateGroups[token.coordKey];
     
@@ -327,12 +328,9 @@ function render() {
       const offsetX = Math.cos(angle) * radius;
       const offsetY = Math.sin(angle) * radius;
       
-      // Calculate layout base offset translation
       transformString = `translate(${offsetX}px, ${offsetY}px) scale(0.8)`;
     }
 
-    // Counter-rotate tokens so their rendering profiles/animations stay vertical 
-    // instead of flipping upside down along with the rotated layout template
     tokenEl.style.transform = `${transformString} rotate(-${boardRotation}deg)`;
 
     if (token.color === playerColor && currentTurnColor === playerColor && hasRolledThisTurn && isValidMove(token.color, token.index, currentRoll)) {
@@ -349,22 +347,23 @@ function playSound(name) {
   a.play().catch(()=>{});
 }
 
-// 9. Runtime Execution: Automated Storage Rehydration Check
-window.addEventListener("DOMContentLoaded", async () => {
-  const cachedRoom = localStorage.getItem("ludo_roomCode");
-  const cachedColor = localStorage.getItem("ludo_playerColor");
+// 9. Runtime Execution: Completely decoupled clean boot sequence
+window.addEventListener("DOMContentLoaded", () => {
+  // Clear any structural initialization loops from previous page reloads immediately on startup
+  const initialRoom = localStorage.getItem("ludo_roomCode");
+  const initialColor = localStorage.getItem("ludo_playerColor");
 
-  if (cachedRoom && cachedColor) {
-    const { data, error } = await supabase.from("rooms").select("*").eq("code", cachedRoom).maybeSingle();
-    
-    if (data && !error && data.players.includes(cachedColor)) {
-      roomCode = cachedRoom;
-      playerColor = cachedColor;
-      enterGame();
-      listenRoom();
-    } else {
-      localStorage.removeItem("ludo_roomCode");
-      localStorage.removeItem("ludo_playerColor");
-    }
+  if (initialRoom && initialColor) {
+    // Check database state strictly via non-blocking asynchronous verification
+    supabase.from("rooms").select("*").eq("code", initialRoom).maybeSingle().then(({ data, error }) => {
+      if (data && !error && data.players.includes(initialColor)) {
+        roomCode = initialRoom;
+        playerColor = initialColor;
+        enterGame();
+        listenRoom();
+      } else {
+        localStorage.clear();
+      }
+    });
   }
 });
