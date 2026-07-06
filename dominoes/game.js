@@ -297,35 +297,34 @@ function renderLiveTable(boardLine) {
         }
 
         // RENDER LIVE PLACEMENTS VIA PURE WRAPPER ROTATIONS
-        boardLine.forEach((tile, index) => {
-            const coords = calculatedCoordinates[index];
-            const placedTile = document.createElement("div");
-            
-            // Explicit canvas base size is permanently vertical
-            placedTile.className = `domino-bone-interactive ${window.activeSkinClass}`;
-            placedTile.style.position = "absolute";
-            
-            // Center alignment shifts based on standard vertical proportions
-            placedTile.style.left = Math.round(coords.x - 84 / 2) + "px";
-            placedTile.style.top = Math.round(coords.y - 173 / 2) + "px";
-            placedTile.style.margin = "0";
+boardLine.forEach((tile, index) => {
+    const coords = calculatedCoordinates[index];
+    const placedTile = document.createElement("div");
+    
+    // Explicit canvas base size remains vertical via CSS skin rules
+    placedTile.className = `domino-bone-interactive ${window.activeSkinClass}`;
+    placedTile.style.position = "absolute";
+    
+    // FIX: Shift the placement center point using the track's calculated layout footprint
+    placedTile.style.left = Math.round(coords.x - coords.w / 2) + "px";
+    placedTile.style.top = Math.round(coords.y - coords.h / 2) + "px";
+    placedTile.style.margin = "0";
 
-            // One unified transform matrix: places and spins the entire vertical canvas block together
-            placedTile.style.transform = `rotate(${coords.angle}deg)`;
+    // One unified transform matrix handles the 90-degree track rotation seamlessly
+    placedTile.style.transform = `rotate(${coords.angle}deg)`;
 
-            let topHalf = generateHalfDisplay(tile.displayTop, true);
-            let bottomHalf = generateHalfDisplay(tile.displayBottom, false);
-            
-            // Static vertical divider layout lines
-            let divStyle = "width: 100%; height: 2px; background: #1a1a1a; flex-shrink: 0; position: relative;";
-            
-            if (coords.flipVisuals) {
-                placedTile.innerHTML = `${bottomHalf}<div style="${divStyle}" class="domino-divider"></div>${topHalf}`;
-            } else {
-                placedTile.innerHTML = `${topHalf}<div style="${divStyle}" class="domino-divider"></div>${bottomHalf}`;
-            }
-            trackContainer.appendChild(placedTile);
-        });
+    let topHalf = generateHalfDisplay(tile.displayTop, true);
+    let bottomHalf = generateHalfDisplay(tile.displayBottom, false);
+    
+    let divStyle = "width: 100%; height: 2px; background: #1a1a1a; flex-shrink: 0; position: relative;";
+    
+    if (coords.flipVisuals) {
+        placedTile.innerHTML = `${bottomHalf}<div style="${divStyle}" class="domino-divider"></div>${topHalf}`;
+    } else {
+        placedTile.innerHTML = `${topHalf}<div style="${divStyle}" class="domino-divider"></div>${bottomHalf}`;
+    }
+    trackContainer.appendChild(placedTile);
+});
     }
 
     // 2. RENDER PLAYER HAND (Always standing up vertical)
