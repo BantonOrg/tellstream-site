@@ -1,5 +1,5 @@
 // ==========================================================================
-// Tellstream Dominoes - Game Board & Player Hand Rendering Layer
+// Tellstream Dominoes - Unified Vertical Canvas Generation & Placement Layer
 // ==========================================================================
 
 let selectedTileId = null;
@@ -16,8 +16,8 @@ const PATH_TRACK = {
     rightX: 2220  // Restored original right boundary point
 };
 
-// Absolute center point for the dealt hand tray
-const HAND_CENTER = { x: 1280, y: 720 };
+// Global active skin tracker - hooks into board settings (can be changed to 'skin-premium' or 'skin-rasta')
+window.activeSkinClass = 'skin-classic';
 
 function renderLiveTable(boardLine) {
     // ==========================================================================
@@ -66,16 +66,8 @@ function renderLiveTable(boardLine) {
     let mat = document.getElementById("game-mat");
     if (!mat || !document.getElementById("domino-track-canvas")) {
         tableView.innerHTML = `
-            <style id="dynamic-45-scale">
-                .domino-bone-interactive { width: 84px !important; height: 173px !important; }
-                .domino-bone-interactive.domino-flat-track { width: 173px !important; height: 84px !important; flex-direction: row !important; }
-                .domino-half { width: 70px !important; height: 70px !important; padding: 6px !important; }
-                .pip { width: 12px !important; height: 12px !important; }
-                .domino-divider::after { width: 6px !important; height: 6px !important; }
-            </style>
-
-<div id="game-mat" style="position: relative; width: 100vw; height: 100vh; background-color: #0b0c10; display: flex; justify-content: center; align-items: center; overflow: hidden; box-sizing: border-box;">
-    <div id="scaled-table-canvas-root" style="position: absolute; display: flex; justify-content: center; align-items: center; background-image: url('assets/table_bg.jpg'); background-size: 100% 100%; background-repeat: no-repeat; background-position: center; flex-shrink: 0;">
+            <div id="game-mat" style="position: relative; width: 100vw; height: 100vh; background-color: #0b0c10; display: flex; justify-content: center; align-items: center; overflow: hidden; box-sizing: border-box;">
+                <div id="scaled-table-canvas-root" style="position: absolute; display: flex; justify-content: center; align-items: center; background-image: url('assets/table_bg.jpg'); background-size: 100% 100%; background-repeat: no-repeat; background-position: center; flex-shrink: 0;">
                     <div id="seat-block-1" style="position: absolute; top: 30px; left: 30px; padding: 12px 28px; background: rgba(11,12,16,0.85); border: 2px solid rgba(102,252,241,0.2); border-radius: 8px; font-size: 1.5rem; z-index: 10; display: flex; gap: 16px; align-items: center; white-space: nowrap;"></div>
                     <div id="seat-block-2" style="position: absolute; top: 30px; right: 30px; padding: 12px 28px; background: rgba(11,12,16,0.85); border: 2px solid rgba(102,252,241,0.2); border-radius: 8px; font-size: 1.5rem; z-index: 10; display: flex; gap: 16px; align-items: center; white-space: nowrap;"></div>
                     <div id="seat-block-3" style="position: absolute; bottom: 50px; right: 30px; padding: 12px 28px; background: rgba(11,12,16,0.85); border: 2px solid rgba(102,252,241,0.2); border-radius: 8px; font-size: 1.5rem; z-index: 10; display: flex; gap: 16px; align-items: center; white-space: nowrap;"></div>
@@ -139,63 +131,63 @@ function renderLiveTable(boardLine) {
     // ==========================================================================
     // DYNAMIC A/B BOSS-ANCHOR PATHING ENGINE
     // ==========================================================================
-    
     function getCornerChoices(state, prevX, prevY, prevIsDouble, currIsDouble) {
         let A, B;
         if (state === 'LEFT_BOTTOM_TO_UP_LEFT') {
             if (!prevIsDouble && !currIsDouble) {
-                A = { x: prevX - 43.25, y: prevY - 134.5, isRotated: false, flipVisuals: false };
-                B = { x: prevX + 43.25, y: prevY - 134.5, isRotated: false, flipVisuals: false };
+                A = { x: prevX - 43.25, y: prevY - 134.5, angle: 0, flipVisuals: false };
+                B = { x: prevX + 43.25, y: prevY - 134.5, angle: 0, flipVisuals: false };
             } else if (!prevIsDouble && currIsDouble) {
-                A = { x: prevX - 134.5, y: prevY, isRotated: false, flipVisuals: false };
+                A = { x: prevX - 134.5, y: prevY, angle: 0, flipVisuals: false };
                 B = A;
             } else if (prevIsDouble && !currIsDouble) {
-                A = { x: prevX + 134.5, y: prevY - 43.25, isRotated: true, flipVisuals: false };
-                B = { x: prevX, y: prevY - 179, isRotated: false, flipVisuals: false };
-            } else { A = { x: prevX, y: prevY - 179, isRotated: false, flipVisuals: false }; B = A; }
+                A = { x: prevX + 134.5, y: prevY - 43.25, angle: 90, flipVisuals: false };
+                B = { x: prevX, y: prevY - 179, angle: 0, flipVisuals: false };
+            } else { A = { x: prevX, y: prevY - 179, angle: 0, flipVisuals: false }; B = A; }
         }
         else if (state === 'RIGHT_BOTTOM_TO_UP_RIGHT') {
             if (!prevIsDouble && !currIsDouble) { 
-                A = { x: prevX + 43.25, y: prevY - 134.5, isRotated: false, flipVisuals: true };
-                B = { x: prevX - 43.25, y: prevY - 134.5, isRotated: false, flipVisuals: true };
+                A = { x: prevX + 43.25, y: prevY - 134.5, angle: 0, flipVisuals: true };
+                B = { x: prevX - 43.25, y: prevY - 134.5, angle: 0, flipVisuals: true };
             } else if (!prevIsDouble && currIsDouble) { 
-                A = { x: prevX + 134.5, y: prevY, isRotated: false, flipVisuals: true };
+                A = { x: prevX + 134.5, y: prevY, angle: 0, flipVisuals: true };
                 B = A;
             } else if (prevIsDouble && !currIsDouble) { 
-                A = { x: prevX - 134.5, y: prevY - 43.25, isRotated: true, flipVisuals: true }; 
-                B = { x: prevX, y: prevY - 179, isRotated: false, flipVisuals: true };
-            } else { A = { x: prevX, y: prevY - 179, isRotated: false, flipVisuals: true }; B = A; }
+                A = { x: prevX - 134.5, y: prevY - 43.25, angle: 90, flipVisuals: true }; 
+                B = { x: prevX, y: prevY - 179, angle: 0, flipVisuals: true };
+            } else { A = { x: prevX, y: prevY - 179, angle: 0, flipVisuals: true }; B = A; }
         }
         else if (state === 'UP_LEFT_TO_RIGHT_TOP') {
             if (!prevIsDouble && !currIsDouble) {
-                A = { x: prevX + 134.5, y: prevY - 43.25, isRotated: true, flipVisuals: true };
-                B = { x: prevX + 134.5, y: prevY + 43.25, isRotated: true, flipVisuals: true };
+                A = { x: prevX + 134.5, y: prevY - 43.25, angle: 90, flipVisuals: true };
+                B = { x: prevX + 134.5, y: prevY + 43.25, angle: 90, flipVisuals: true };
             } else if (!prevIsDouble && currIsDouble) {
-                A = { x: prevX, y: prevY - 134.5, isRotated: true, flipVisuals: true };
+                A = { x: prevX, y: prevY - 134.5, angle: 90, flipVisuals: true };
                 B = A;
             } else if (prevIsDouble && !currIsDouble) {
-                A = { x: prevX + 43.25, y: prevY + 134.5, isRotated: false, flipVisuals: true };
-                B = { x: prevX + 179, y: prevY, isRotated: true, flipVisuals: true };
-            } else { A = { x: prevX + 179, y: prevY, isRotated: true, flipVisuals: true }; B = A; }
+                A = { x: prevX + 43.25, y: prevY + 134.5, angle: 0, flipVisuals: true };
+                B = { x: prevX + 179, y: prevY, angle: 90, flipVisuals: true };
+            } else { A = { x: prevX + 179, y: prevY, angle: 90, flipVisuals: true }; B = A; }
         }
         else if (state === 'UP_RIGHT_TO_LEFT_TOP') {
             if (!prevIsDouble && !currIsDouble) {
-                A = { x: prevX - 134.5, y: prevY - 43.25, isRotated: true, flipVisuals: true };
-                B = { x: prevX - 134.5, y: prevY + 43.25, isRotated: true, flipVisuals: true };
+                A = { x: prevX - 134.5, y: prevY - 43.25, angle: 90, flipVisuals: true };
+                B = { x: prevX - 134.5, y: prevY + 43.25, angle: 90, flipVisuals: true };
             } else if (!prevIsDouble && currIsDouble) {
-                A = { x: prevX, y: prevY - 134.5, isRotated: true, flipVisuals: true };
-                B = A;
+                A = { x: prevX, y: prevY - 134.5, angle: 90, flipVisuals: true };
+                B = a;
             } else if (prevIsDouble && !currIsDouble) {
-                A = { x: prevX - 43.25, y: prevY + 134.5, isRotated: false, flipVisuals: true };
-                B = { x: prevX - 179, y: prevY, isRotated: true, flipVisuals: true };
-            } else { A = { x: prevX - 179, y: prevY, isRotated: true, flipVisuals: true }; B = A; }
+                A = { x: prevX - 43.25, y: prevY + 134.5, angle: 0, flipVisuals: true };
+                B = { x: prevX - 179, y: prevY, angle: 90, flipVisuals: true };
+            } else { A = { x: prevX - 179, y: prevY, angle: 90, flipVisuals: true }; B = A; }
         }
         return [A, B];
     }
 
     function pickBestCorner(A, B, boundary, edgeType) {
-        let wA = A.isRotated ? 173 : 84; let hA = A.isRotated ? 84 : 173;
-        let wB = B.isRotated ? 173 : 84; let hB = B.isRotated ? 84 : 173;
+        // Native physical sizing is always 84x173 in our layout
+        let wA = (A.angle === 90) ? 173 : 84; let hA = (A.angle === 90) ? 84 : 173;
+        let wB = (B.angle === 90) ? 173 : 84; let hB = (B.angle === 90) ? 84 : 173;
         let distA, distB;
 
         if (edgeType === 'leftX') {
@@ -227,7 +219,7 @@ function renderLiveTable(boardLine) {
         let anchorIsDouble = boardLine[initialIndex].top === boardLine[initialIndex].bottom;
         calculatedCoordinates[initialIndex] = {
             x: 1280, y: PATH_TRACK.lowerY,
-            isRotated: anchorIsDouble ? false : true, flipVisuals: false,
+            angle: anchorIsDouble ? 0 : 90, flipVisuals: false,
             w: anchorIsDouble ? 84 : 173, h: anchorIsDouble ? 173 : 84,
             isDouble: anchorIsDouble
         };
@@ -237,34 +229,34 @@ function renderLiveTable(boardLine) {
         for (let i = initialIndex - 1; i >= 0; i--) {
             let prev = calculatedCoordinates[i + 1];
             let currIsDouble = boardLine[i].top === boardLine[i].bottom;
-            let currW, currH, nextX, nextY, rot, flip;
+            let currW, currH, nextX, nextY, rotAngle, flip;
 
             if (stateL === 'LEFT_BOTTOM') {
-                currW = currIsDouble ? 84 : 173; currH = currIsDouble ? 173 : 84; rot = currIsDouble ? false : true; flip = false;
+                currW = currIsDouble ? 84 : 173; currH = currIsDouble ? 173 : 84; rotAngle = currIsDouble ? 0 : 90; flip = false;
                 nextX = prev.x - prev.w/2 - GAP - currW/2;
                 if (nextX - currW/2 < PATH_TRACK.leftX) {
                     stateL = 'UP_LEFT';
                     let [optA, optB] = getCornerChoices('LEFT_BOTTOM_TO_UP_LEFT', prev.x, prev.y, prev.isDouble, currIsDouble);
                     let best = pickBestCorner(optA, optB, PATH_TRACK.leftX, 'leftX');
-                    calculatedCoordinates[i] = { x: best.x, y: best.y, isRotated: best.isRotated, flipVisuals: best.flipVisuals, w: best.isRotated ? 173 : 84, h: best.isRotated ? 84 : 173, isDouble: currIsDouble };
+                    calculatedCoordinates[i] = { x: best.x, y: best.y, angle: best.angle, flipVisuals: best.flipVisuals, w: (best.angle === 90) ? 173 : 84, h: (best.angle === 90) ? 84 : 173, isDouble: currIsDouble };
                 } else {
-                    calculatedCoordinates[i] = { x: nextX, y: PATH_TRACK.lowerY, isRotated: rot, flipVisuals: flip, w: currW, h: currH, isDouble: currIsDouble };
+                    calculatedCoordinates[i] = { x: nextX, y: PATH_TRACK.lowerY, angle: rotAngle, flipVisuals: flip, w: currW, h: currH, isDouble: currIsDouble };
                 }
             } else if (stateL === 'UP_LEFT') {
-                currW = currIsDouble ? 173 : 84; currH = currIsDouble ? 84 : 173; rot = currIsDouble ? true : false; flip = false;
+                currW = currIsDouble ? 173 : 84; currH = currIsDouble ? 84 : 173; rotAngle = currIsDouble ? 90 : 0; flip = false;
                 nextY = prev.y - prev.h/2 - GAP - currH/2;
                 if (nextY - currH/2 < PATH_TRACK.upperY) {
                     stateL = 'RIGHT_TOP';
                     let [optA, optB] = getCornerChoices('UP_LEFT_TO_RIGHT_TOP', prev.x, prev.y, prev.isDouble, currIsDouble);
                     let best = pickBestCorner(optA, optB, PATH_TRACK.upperY, 'upperY');
-                    calculatedCoordinates[i] = { x: best.x, y: best.y, isRotated: best.isRotated, flipVisuals: best.flipVisuals, w: best.isRotated ? 173 : 84, h: best.isRotated ? 84 : 173, isDouble: currIsDouble };
+                    calculatedCoordinates[i] = { x: best.x, y: best.y, angle: best.angle, flipVisuals: best.flipVisuals, w: (best.angle === 90) ? 173 : 84, h: (best.angle === 90) ? 84 : 173, isDouble: currIsDouble };
                 } else {
-                    calculatedCoordinates[i] = { x: prev.x, y: nextY, isRotated: rot, flipVisuals: flip, w: currW, h: currH, isDouble: currIsDouble };
+                    calculatedCoordinates[i] = { x: prev.x, y: nextY, angle: rotAngle, flipVisuals: flip, w: currW, h: currH, isDouble: currIsDouble };
                 }
             } else if (stateL === 'RIGHT_TOP') {
-                currW = currIsDouble ? 84 : 173; currH = currIsDouble ? 173 : 84; rot = currIsDouble ? false : true; flip = true;
+                currW = currIsDouble ? 84 : 173; currH = currIsDouble ? 173 : 84; rotAngle = currIsDouble ? 0 : 90; flip = true;
                 nextX = prev.x + prev.w/2 + GAP + currW/2;
-                calculatedCoordinates[i] = { x: nextX, y: prev.y, isRotated: rot, flipVisuals: flip, w: currW, h: currH, isDouble: currIsDouble };
+                calculatedCoordinates[i] = { x: nextX, y: prev.y, angle: rotAngle, flipVisuals: flip, w: currW, h: currH, isDouble: currIsDouble };
             }
         }
 
@@ -273,87 +265,97 @@ function renderLiveTable(boardLine) {
         for (let i = initialIndex + 1; i < boardLine.length; i++) {
             let prev = calculatedCoordinates[i - 1];
             let currIsDouble = boardLine[i].top === boardLine[i].bottom;
-            let currW, currH, nextX, nextY, rot, flip;
+            let currW, currH, nextX, nextY, rotAngle, flip;
 
             if (stateR === 'RIGHT_BOTTOM') {
-                currW = currIsDouble ? 84 : 173; currH = currIsDouble ? 173 : 84; rot = currIsDouble ? false : true; flip = false;
+                currW = currIsDouble ? 84 : 173; currH = currIsDouble ? 173 : 84; rotAngle = currIsDouble ? 0 : 90; flip = false;
                 nextX = prev.x + prev.w/2 + GAP + currW/2;
                 if (nextX + currW/2 > PATH_TRACK.rightX) {
                     stateR = 'UP_RIGHT';
                     let [optA, optB] = getCornerChoices('RIGHT_BOTTOM_TO_UP_RIGHT', prev.x, prev.y, prev.isDouble, currIsDouble);
                     let best = pickBestCorner(optA, optB, PATH_TRACK.rightX, 'rightX');
-                    calculatedCoordinates[i] = { x: best.x, y: best.y, isRotated: best.isRotated, flipVisuals: best.flipVisuals, w: best.isRotated ? 173 : 84, h: best.isRotated ? 84 : 173, isDouble: currIsDouble };
+                    calculatedCoordinates[i] = { x: best.x, y: best.y, angle: best.angle, flipVisuals: best.flipVisuals, w: (best.angle === 90) ? 173 : 84, h: (best.angle === 90) ? 84 : 173, isDouble: currIsDouble };
                 } else {
-                    calculatedCoordinates[i] = { x: nextX, y: prev.y, isRotated: rot, flipVisuals: flip, w: currW, h: currH, isDouble: currIsDouble };
+                    calculatedCoordinates[i] = { x: nextX, y: prev.y, angle: rotAngle, flipVisuals: flip, w: currW, h: currH, isDouble: currIsDouble };
                 }
             } else if (stateR === 'UP_RIGHT') {
-                currW = currIsDouble ? 173 : 84; currH = currIsDouble ? 84 : 173; rot = currIsDouble ? true : false; flip = true;
+                currW = currIsDouble ? 173 : 84; currH = currIsDouble ? 84 : 173; rotAngle = currIsDouble ? 90 : 0; flip = true;
                 nextY = prev.y - prev.h/2 - GAP - currH/2;
                 if (nextY - currH/2 < PATH_TRACK.upperY) {
                     stateR = 'LEFT_TOP';
                     let [optA, optB] = getCornerChoices('UP_RIGHT_TO_LEFT_TOP', prev.x, prev.y, prev.isDouble, currIsDouble);
                     let best = pickBestCorner(optA, optB, PATH_TRACK.upperY, 'upperY');
-                    calculatedCoordinates[i] = { x: best.x, y: best.y, isRotated: best.isRotated, flipVisuals: best.flipVisuals, w: best.isRotated ? 173 : 84, h: best.isRotated ? 84 : 173, isDouble: currIsDouble };
+                    calculatedCoordinates[i] = { x: best.x, y: best.y, angle: best.angle, flipVisuals: best.flipVisuals, w: (best.angle === 90) ? 173 : 84, h: (best.angle === 90) ? 84 : 173, isDouble: currIsDouble };
                 } else {
-                    calculatedCoordinates[i] = { x: prev.x, y: nextY, isRotated: rot, flipVisuals: flip, w: currW, h: currH, isDouble: currIsDouble };
+                    calculatedCoordinates[i] = { x: prev.x, y: nextY, angle: rotAngle, flipVisuals: flip, w: currW, h: currH, isDouble: currIsDouble };
                 }
             } else if (stateR === 'LEFT_TOP') {
-                currW = currIsDouble ? 84 : 173; currH = currIsDouble ? 173 : 84; rot = currIsDouble ? false : true; flip = true;
+                currW = currIsDouble ? 84 : 173; currH = currIsDouble ? 173 : 84; rotAngle = currIsDouble ? 0 : 90; flip = true;
                 nextX = prev.x - prev.w/2 - GAP - currW/2;
-                calculatedCoordinates[i] = { x: nextX, y: prev.y, isRotated: rot, flipVisuals: flip, w: currW, h: currH, isDouble: currIsDouble };
+                calculatedCoordinates[i] = { x: nextX, y: prev.y, angle: rotAngle, flipVisuals: flip, w: currW, h: currH, isDouble: currIsDouble };
             }
         }
 
-        // RENDER PIXEL-PERFECT COORDINATES
+        // RENDER LIVE PLACEMENTS VIA PURE WRAPPER ROTATIONS
         boardLine.forEach((tile, index) => {
             const coords = calculatedCoordinates[index];
             const placedTile = document.createElement("div");
+            
+            // Explicit canvas base size is permanently vertical
+            placedTile.className = `domino-bone-interactive ${window.activeSkinClass}`;
             placedTile.style.position = "absolute";
             
-            placedTile.style.left = Math.round(coords.x - coords.w / 2) + "px";
-            placedTile.style.top = Math.round(coords.y - coords.h / 2) + "px";
-            placedTile.style.cursor = "default";
+            // Center alignment shifts based on standard vertical proportions
+            placedTile.style.left = Math.round(coords.x - 84 / 2) + "px";
+            placedTile.style.top = Math.round(coords.y - 173 / 2) + "px";
             placedTile.style.margin = "0";
-            placedTile.className = coords.isRotated ? "domino-bone-interactive domino-flat-track" : "domino-bone-interactive";
 
-            let topHalf = generateHalfDisplay(tile.displayTop, coords.isRotated);
-            let bottomHalf = generateHalfDisplay(tile.displayBottom, coords.isRotated);
-            let divStyle = coords.isRotated ? "width: 2px; height: 100%;" : "width: 100%; height: 2px;";
+            // One unified transform matrix: places and spins the entire vertical canvas block together
+            placedTile.style.transform = `rotate(${coords.angle}deg)`;
+
+            let topHalf = generateHalfDisplay(tile.displayTop, true);
+            let bottomHalf = generateHalfDisplay(tile.displayBottom, false);
+            
+            // Static vertical divider layout lines
+            let divStyle = "width: 100%; height: 2px; background: #1a1a1a; flex-shrink: 0; position: relative;";
             
             if (coords.flipVisuals) {
-                placedTile.innerHTML = `${bottomHalf}<div style="${divStyle} background: #1a1a1a; flex-shrink: 0;" class="domino-divider"></div>${topHalf}`;
+                placedTile.innerHTML = `${bottomHalf}<div style="${divStyle}" class="domino-divider"></div>${topHalf}`;
             } else {
-                placedTile.innerHTML = `${topHalf}<div style="${divStyle} background: #1a1a1a; flex-shrink: 0;" class="domino-divider"></div>${bottomHalf}`;
+                placedTile.innerHTML = `${topHalf}<div style="${divStyle}" class="domino-divider"></div>${bottomHalf}`;
             }
             trackContainer.appendChild(placedTile);
         });
     }
 
-// 2. RENDER PLAYER HAND
+    // 2. RENDER PLAYER HAND (Always standing up vertical)
     if (window.localGameState && window.localGameState.players && window.localGameState.players.player1) {
         const hand = window.localGameState.players.player1.hand || [];
         hand.forEach(tile => {
             const tileElement = document.createElement("div");
-            tileElement.className = "domino-bone-interactive";
+            tileElement.className = `domino-bone-interactive ${window.activeSkinClass}`;
             tileElement.id = `hand-tile-${tile.id}`;
             tileElement.style.flexShrink = "0";
             
+            let transformState = "rotate(0deg)";
             if (selectedTileId === tile.id) {
-                tileElement.style.transform = "translateY(-16px)";
+                transformState = "translateY(-16px) rotate(0deg)";
                 tileElement.style.borderColor = "#66fcf1";
                 tileElement.style.boxShadow = "0 0 20px #66fcf1";
                 displayValidPlacements(tile);
             }
 
+            tileElement.style.transform = transformState;
+
             tileElement.onmouseenter = () => {
-                if (selectedTileId !== tile.id) tileElement.style.transform = "translateY(-8px)";
+                if (selectedTileId !== tile.id) tileElement.style.transform = "translateY(-8px) rotate(0deg)";
             };
             tileElement.onmouseleave = () => {
-                if (selectedTileId !== tile.id) tileElement.style.transform = "translateY(0)";
+                if (selectedTileId !== tile.id) tileElement.style.transform = "translateY(0deg) rotate(0deg)";
             };
             
             tileElement.innerHTML = `
-                ${generateHalfDisplay(tile.top, false)}
+                ${generateHalfDisplay(tile.top, true)}
                 <div style="width: 100%; height: 2px; background: #1a1a1a; flex-shrink: 0; position: relative;" class="domino-divider"></div>
                 ${generateHalfDisplay(tile.bottom, false)}
             `;
@@ -368,30 +370,28 @@ function renderLiveTable(boardLine) {
         });
     }
 
-    // Add 3 decorative face-down dominoes shifted down safely away from the top track
+    // Decorative face-down center scatter bones remain untouched
     if (trackContainer) {
         const positions = [
-            { x: 1080, y: 550 }, // Lowered Y from 460 to 550
-            { x: 1260, y: 510 }, // Lowered Y from 410 to 510
-            { x: 1420, y: 570 }  // Lowered Y from 480 to 570
+            { x: 1080, y: 550 }, 
+            { x: 1260, y: 510 }, 
+            { x: 1420, y: 570 } 
         ];
 
         positions.forEach((pos, idx) => {
             const backTile = document.createElement("div");
-            backTile.className = "domino-bone-interactive";
+            
+            // Left without internal half components, instantly loading the back graphic style skin rule
+            backTile.className = `domino-bone-interactive ${window.activeSkinClass}`;
             backTile.style.position = "absolute";
-            backTile.style.width = "173px";
-            backTile.style.height = "84px";
-            backTile.style.background = "url('assets/dom_back.gif') no-repeat center";
-            backTile.style.backgroundSize = "100% 100%";
             backTile.style.border = "none";
             backTile.style.boxShadow = "0 6px 12px rgba(0,0,0,0.5)";
             backTile.style.cursor = "default";
 
             const randomTilt = Math.floor(Math.random() * 90) - 45; 
             
-            backTile.style.left = Math.round(pos.x - 173 / 2) + "px";
-            backTile.style.top = Math.round(pos.y - 84 / 2) + "px";
+            backTile.style.left = Math.round(pos.x - 84 / 2) + "px";
+            backTile.style.top = Math.round(pos.y - 173 / 2) + "px";
             backTile.style.transform = `rotate(${randomTilt}deg)`;
             
             trackContainer.appendChild(backTile);
@@ -424,22 +424,29 @@ function updateCornerSeatBlocks() {
     }
 }
 
-function generateHalfDisplay(value, isHorizontal = false) {
+// 14-Slot Vertical Generation Engine Core
+function generateHalfDisplay(value, isTopHalf = true) {
+    // Standard 7-Pip mapping dictionary
     const pipMaps = {
         0: [],
         1: [4],
-        2: isHorizontal ? [6, 2] : [1, 7],
-        3: isHorizontal ? [6, 4, 2] : [1, 4, 7],
+        2: [1, 7],
+        3: [1, 4, 7],
         4: [1, 2, 6, 7],
         5: [1, 2, 4, 6, 7],
-        6: isHorizontal ? [1, 8, 2, 6, 9, 7] : [1, 2, 3, 5, 6, 7]
+        6: [1, 2, 3, 5, 6, 7]
     };
     
     const activePips = pipMaps[value] || [];
-    let html = `<div class="domino-half">`;
-    for (let p = 1; p <= 9; p++) {
-        const isActive = activePips.includes(p) ? 'active' : '';
-        html += `<div class="pip ${isActive} pos-${p}"></div>`;
+    const halfClass = isTopHalf ? "domino-half top-half" : "domino-half bottom-half";
+    
+    let html = `<div class="${halfClass}">`;
+    
+    // Always map all 7 slots on the canvas. 
+    // Adding '.active' class hides the blank overlay cover patch, uncovering the baked dots.
+    for (let p = 1; p <= 7; p++) {
+        const isUnmasked = activePips.includes(p) ? 'active' : '';
+        html += `<div class="pip ${isUnmasked} pos-${p}"></div>`;
     }
     html += `</div>`;
     return html;
