@@ -1,62 +1,59 @@
 /* ==========================================================================
-   SKIN 1: THE IVORY CLASSIC (Standard Set)
+   SKINS.CSS - Triple Surface Asset Mounting & Mask Bindings
    ========================================================================== */
-/* Front Face */
-.domino-bone-interactive.skin-classic:has(.domino-half) {
+
+/* --------------------------------------------------------------------------
+   SKIN 1: THE IVORY CLASSIC (Standard Set)
+   -------------------------------------------------------------------------- */
+/* Front Face Background */
+.domino-bone-interactive.skin-classic {
     background-image: url('assets/dom_front.gif') !important;
-    background-size: 100% 100% !important;
 }
-/* Back Face */
+
+/* Back Face Background (When no halves exist) */
 .domino-bone-interactive.skin-classic:not(:has(.domino-half)) {
     background-image: url('assets/dom_back.gif') !important;
-    background-size: 100% 100% !important;
-}
-/* Pip Mask Overlay */
-.skin-classic .pip.active {
-    background-image: url('assets/_DOM_PIPS.png') !important;
-    background-size: cover !important;
-    background-color: transparent !important;
-    box-shadow: none !important;
 }
 
-/* ==========================================================================
-   SKIN 2: THE AMBER PREMIUM (Gold/Dark Tint Set)
-   ========================================================================== */
-/* Front Face */
-.domino-bone-interactive.skin-premium:has(.domino-half) {
-    background-image: url('assets/dom_front1.gif') !important;
-    background-size: 100% 100% !important;
+/* Mask Material - Smooth Ivory Texture Patch */
+.skin-classic .pip {
+    background-image: url('assets/_DOM_PIPS.png') !important;
 }
-/* Back Face */
+
+
+/* --------------------------------------------------------------------------
+   SKIN 2: THE AMBER PREMIUM (White/Silver Tint Set)
+   -------------------------------------------------------------------------- */
+/* Front Face Background */
+.domino-bone-interactive.skin-premium {
+    background-image: url('assets/dom_front1.gif') !important;
+}
+
+/* Back Face Background (When no halves exist) */
 .domino-bone-interactive.skin-premium:not(:has(.domino-half)) {
     background-image: url('assets/dom_back1.gif') !important;
-    background-size: 100% 100% !important;
-}
-/* Pip Mask Overlay */
-.skin-premium .pip.active {
-    background-image: url('assets/_DOM_PIPS1.png') !important;
-    background-size: cover !important;
-    background-color: transparent !important;
-    box-shadow: none !important;
 }
 
-/* ==========================================================================
-   SKIN 3: THE RASTA MATRIX (High-Visibility Test Set)
-   ========================================================================== */
-/* Front Face */
-.domino-bone-interactive.skin-rasta:has(.domino-half) {
-    background-image: url('assets/dom_front3.gif') !important;
-    background-size: 100% 100% !important;
+/* Mask Material - Silver/White Texture Patch */
+.skin-premium .pip {
+    background-image: url('assets/_DOM_PIPS1.png') !important;
 }
-/* Back Face */
+
+
+/* --------------------------------------------------------------------------
+   SKIN 3: THE RASTA MATRIX (High-Visibility Green Set)
+   -------------------------------------------------------------------------- */
+/* Front Face Background */
+.domino-bone-interactive.skin-rasta {
+    background-image: url('assets/dom_front3.gif') !important;
+}
+
+/* Back Face Background (When no halves exist) */
 .domino-bone-interactive.skin-rasta:not(:has(.domino-half)) {
     background-image: url('assets/dom_back3.gif') !important;
-    background-size: 100% 100% !important;
 }
-/* Pip Mask Overlay */
-.skin-rasta .pip.active {
+
+/* Mask Material - High-Vis Green Texture Patch */
+.skin-rasta .pip {
     background-image: url('assets/_DOM_PIPS3.png') !important;
-    background-size: cover !important;
-    background-color: transparent !important;
-    box-shadow: none !important;
 }
