@@ -175,7 +175,7 @@ function renderLiveTable(boardLine) {
                 B = { x: prevX - 134.5, y: prevY + 43.25, angle: 90, flipVisuals: true };
             } else if (!prevIsDouble && currIsDouble) {
                 A = { x: prevX, y: prevY - 134.5, angle: 90, flipVisuals: true };
-                B = a;
+                B = A;
             } else if (prevIsDouble && !currIsDouble) {
                 A = { x: prevX - 43.25, y: prevY + 134.5, angle: 0, flipVisuals: true };
                 B = { x: prevX - 179, y: prevY, angle: 90, flipVisuals: true };
@@ -185,7 +185,6 @@ function renderLiveTable(boardLine) {
     }
 
     function pickBestCorner(A, B, boundary, edgeType) {
-        // Native physical sizing is always 84x173 in our layout
         let wA = (A.angle === 90) ? 173 : 84; let hA = (A.angle === 90) ? 84 : 173;
         let wB = (B.angle === 90) ? 173 : 84; let hB = (B.angle === 90) ? 84 : 173;
         let distA, distB;
@@ -296,38 +295,37 @@ function renderLiveTable(boardLine) {
             }
         }
 
-        // RENDER LIVE PLACEMENTS VIA PURE WRAPPER ROTATIONS
-boardLine.forEach((tile, index) => {
-    const coords = calculatedCoordinates[index];
-    const placedTile = document.createElement("div");
-    
-    // Explicit canvas base size remains vertical via CSS skin rules
-    placedTile.className = `domino-bone-interactive ${window.activeSkinClass}`;
-    placedTile.style.position = "absolute";
-    
-    // FIX: Shift the placement center point using the track's calculated layout footprint
-    placedTile.style.left = Math.round(coords.x - coords.w / 2) + "px";
-    placedTile.style.top = Math.round(coords.y - coords.h / 2) + "px";
-    placedTile.style.margin = "0";
+        // FIXED PLACEMENT CORE: Native 84x173 box center shift alignment rules
+        boardLine.forEach((tile, index) => {
+            const coords = calculatedCoordinates[index];
+            const placedTile = document.createElement("div");
+            
+            placedTile.className = `domino-bone-interactive ${window.activeSkinClass}`;
+            placedTile.style.position = "absolute";
+            
+            // Centering math locked cleanly to the native unrotated 84x173 vertical canvas box properties
+            placedTile.style.left = Math.round(coords.x - 84 / 2) + "px";
+            placedTile.style.top = Math.round(coords.y - 173 / 2) + "px";
+            placedTile.style.margin = "0";
 
-    // One unified transform matrix handles the 90-degree track rotation seamlessly
-    placedTile.style.transform = `rotate(${coords.angle}deg)`;
+            // Rotate the entire vertical wrapper container canvas smoothly as one solid box unit
+            placedTile.style.transform = `rotate(${coords.angle}deg)`;
 
-    let topHalf = generateHalfDisplay(tile.displayTop, true);
-    let bottomHalf = generateHalfDisplay(tile.displayBottom, false);
-    
-    let divStyle = "width: 100%; height: 2px; background: #1a1a1a; flex-shrink: 0; position: relative;";
-    
-    if (coords.flipVisuals) {
-        placedTile.innerHTML = `${bottomHalf}<div style="${divStyle}" class="domino-divider"></div>${topHalf}`;
-    } else {
-        placedTile.innerHTML = `${topHalf}<div style="${divStyle}" class="domino-divider"></div>${bottomHalf}`;
+            let topHalf = generateHalfDisplay(tile.displayTop, true);
+            let bottomHalf = generateHalfDisplay(tile.displayBottom, false);
+            
+            let divStyle = "width: 100%; height: 2px; background: #1a1a1a; flex-shrink: 0; position: relative;";
+            
+            if (coords.flipVisuals) {
+                placedTile.innerHTML = `${bottomHalf}<div style="${divStyle}" class="domino-divider"></div>${topHalf}`;
+            } else {
+                placedTile.innerHTML = `${topHalf}<div style="${divStyle}" class="domino-divider"></div>${bottomHalf}`;
+            }
+            trackContainer.appendChild(placedTile);
+        });
     }
-    trackContainer.appendChild(placedTile);
-});
-    }
 
-    // 2. RENDER PLAYER HAND (Always standing up vertical)
+    // 2. RENDER PLAYER HAND (Always standard standing up vertical orientation)
     if (window.localGameState && window.localGameState.players && window.localGameState.players.player1) {
         const hand = window.localGameState.players.player1.hand || [];
         hand.forEach(tile => {
@@ -369,7 +367,7 @@ boardLine.forEach((tile, index) => {
         });
     }
 
-    // Decorative face-down center scatter bones remain untouched
+    // 3. DECORATIVE CENTER SCATTER TILE SYSTEM
     if (trackContainer) {
         const positions = [
             { x: 1080, y: 550 }, 
@@ -380,7 +378,7 @@ boardLine.forEach((tile, index) => {
         positions.forEach((pos, idx) => {
             const backTile = document.createElement("div");
             
-            // Left without internal half components, instantly loading the back graphic style skin rule
+            // Contains no internal halves, auto-routing CSS skin parameters to choose the back logo sticker background
             backTile.className = `domino-bone-interactive ${window.activeSkinClass}`;
             backTile.style.position = "absolute";
             backTile.style.border = "none";
@@ -425,7 +423,6 @@ function updateCornerSeatBlocks() {
 
 // 14-Slot Vertical Generation Engine Core
 function generateHalfDisplay(value, isTopHalf = true) {
-    // Standard 7-Pip mapping dictionary
     const pipMaps = {
         0: [],
         1: [4],
@@ -441,8 +438,8 @@ function generateHalfDisplay(value, isTopHalf = true) {
     
     let html = `<div class="${halfClass}">`;
     
-    // Always map all 7 slots on the canvas. 
-    // Adding '.active' class hides the blank overlay cover patch, uncovering the baked dots.
+    // Maps all 7 vertical mask positions. 
+    // Adding '.active' hides the blank overlay cover patch to reveal the baked graphic dots below.
     for (let p = 1; p <= 7; p++) {
         const isUnmasked = activePips.includes(p) ? 'active' : '';
         html += `<div class="pip ${isUnmasked} pos-${p}"></div>`;
