@@ -1,74 +1,66 @@
 /* ==========================================================================
-   TILES.CSS - Unified Base Structure & Permanent 7-Slot Mask Matrix
+   TILES.CSS - 14-Slot Vertical Masking Matrix (Canvas Core Layout)
    ========================================================================== */
 
-/* Core Vertical Tile Container Physics */
+/* Core Interactive Tile Container Physics - Fixed standard vertical box */
 .domino-bone-interactive {
+    width: 84px !important;    /* Hard locked native structural width */
+    height: 173px !important;  /* Hard locked native structural height */
     position: relative;
     box-sizing: border-box;
-}
-
-/* Universal Front Face Sticker Rule */
-.domino-bone-interactive:has(.domino-half) {
+    display: block !important;
     background-size: 100% 100% !important;
     background-repeat: no-repeat !important;
     background-position: center !important;
 }
 
-/* Universal Back Face Sticker Rule */
-.domino-bone-interactive:not(:has(.domino-half)) {
-    background-size: 100% 100% !important;
-    background-repeat: no-repeat !important;
-    background-position: center !important;
-}
-
-/* Base Half-Tile Box Structural Container */
+/* Invisible Layout Half-Tiles - Purely used as relative coordinate anchors */
 .domino-half {
     position: absolute;
     width: 100% !important;
     height: 50% !important;
+    left: 0;
     box-sizing: border-box;
 }
 
-/* Force Absolute Top Half and Bottom Half Regions */
+/* Hard locked positions relative to the single full-face graphic */
 .domino-half.top-half {
     top: 0;
-    left: 0;
 }
 .domino-half.bottom-half {
     bottom: 0;
-    left: 0;
 }
 
-/* The Master Mask Slot Sticker Core Rules */
+/* The Master Mask System: Covers the baked dots by default */
 .pip {
     position: absolute;
-    width: 12px !important;  /* Locked pixel width matching asset scale */
-    height: 12px !important; /* Locked pixel height matching asset scale */
-    background-size: cover !important;
+    width: 22px !important;   /* Scaled pixel diameter matching asset scale */
+    height: 22px !important;  
+    background-size: 100% 100% !important;
     background-repeat: no-repeat !important;
     background-position: center !important;
     background-color: transparent !important;
-    visibility: hidden;      /* Completely hidden until called by script */
+    visibility: visible !important; /* MASK ON: Blanket is visible by default */
+    z-index: 10;
 }
 
-/* Make it visible only when toggled active */
+/* UNMASK: Hide the mask sticker entirely when called by active script */
 .pip.active {
-    visibility: visible !important;
+    visibility: hidden !important;
 }
 
 /* --------------------------------------------------------------------------
-   PERMANENT 7-SLOT MASK COORDINATES Matrix (Slots 8 and 9 Binned)
+   PERMANENT 7-SLOT PERCENTAGE MATRIX (Mirrored across both invisible halves)
    -------------------------------------------------------------------------- */
-/* Top Row Positions */
-.pip.pos-1 { top: 12px; left: 12px; }
-.pip.pos-2 { top: 12px; right: 12px; }
+/* Top Row of Half */
+.pip.pos-1 { top: 12%; left: 14%; }
+.pip.pos-2 { top: 12%; right: 14%; }
 
-/* Middle Row Positions */
-.pip.pos-3 { top: 50%; left: 12px; transform: translateY(-50%); }
-.pip.pos-4 { top: 50%; left: 50%; transform: translate(-50%, -50%); } /* Exact Center */
-.pip.pos-5 { top: 50%; right: 12px; transform: translateY(-50%); }
+/* Middle Row of Half */
+.pip.pos-3 { top: 42%; left: 14%; }
+.pip.pos-4 { top: 42%; left: 50%; transform: translateX(-50%); } /* Exact Center Pip */
+.pip.pos-5 { top: 42%; right: 14%; }
 
-/* Bottom Row Positions */
-.pip.pos-6 { bottom: 12px; left: 12px; }
-.pip.pos-7 { bottom: 12px; right: 12px; }
+/* Bottom Row of Half */
+.pip.pos-6 { bottom: 14%; left: 14%; }
+.pip.pos-7 { bottom: 14%; right: 14%; }
