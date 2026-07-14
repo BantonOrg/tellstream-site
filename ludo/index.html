@@ -24,56 +24,198 @@
   </script>
 </head>
 <body>
+<div id="app-container">
 
-<div id="menuScreen">
-  <div class="panel">
-    <h1>LUDO REALTIME</h1>
-    <button id="createBtn" class="bigBtn">CREATE GAME</button>
-    <input id="joinCode" maxlength="4" placeholder="ENTER CODE"/>
-    <button id="joinBtn" class="bigBtn">JOIN GAME</button>
-  </div>
-</div>
+    <!-- ================= LOBBY SCREEN ================= -->
+    <div id="lobby-view" class="view-panel">
+        <header class="lobby-header">
+            <div class="logo-area" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="logo-emoji">🎲</span>
+                    <h1>TellStream Lounge <span class="accent-text">Ludo</span></h1>
+                </div>
+                <button onclick="exitGameToLounge()" class="btn secondary-btn" style="padding: 6px 12px; font-size: 0.75rem; border-color: rgba(255,255,255,0.15);">← Back to Lounge</button>
+            </div>
+            <p class="subtitle">Real-time table top multiplayer connectivity</p>
+        </header>
 
-<div id="gameScreen" class="hidden">
-  <div id="topBar" class="hidden">
-    <div id="roomInfo">Connecting...</div>
-  </div>
+        <div class="lobby-grid">
+            <!-- User Profile Card -->
+            <div class="glass-card profile-card">
+                <h2>Your Identity</h2>
+                <div class="form-group">
+                    <label for="username-input">Display Name</label>
+                    <input type="text" id="username-input" placeholder="Enter username..." maxlength="15">
+                    <p class="helper-text">This name will be displayed at the game table.</p>
+                </div>
+            </div>
 
-  <div id="boardWrapper">
-    <div id="board" class="theme-classic">
-      <div class="player-details green" id="details-green">GREEN: Connecting...</div>
-      
-      <div class="player-details yellow" id="details-yellow">
-        <span>YELLOW: Connecting...</span>
-        <div class="system-controls-group">
-          <span id="roomDisplay">ROOM: ----</span>
-          <button id="optionsBtn">⚙️ Settings</button>
-          <button id="exitLudoBtn" style="background:#ff3333; border:none; color:white; padding:4px 10px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.75rem; margin-left:8px;">Exit Game</button>
-          
-          <!-- Custom Radio Remote Controls -->
-          <div class="remote-music-controls" style="display: inline-flex; align-items: center; gap: 8px; border-left: 1px solid rgba(255,255,255,0.2); padding-left: 12px; margin-left: 12px; vertical-align: middle;">
-              <span style="font-size: 0.75rem; font-weight: bold; color: #ffdd1a; letter-spacing: 0.5px; font-family: sans-serif;">📻 RADIO:</span>
-              <button id="remote-play-pause-btn" style="background: transparent; border: none; color: #fff; font-size: 0.85rem; cursor: pointer; padding: 2px 5px; outline: none; transition: transform 0.1s;">⏸️</button>
-              <input type="range" id="remote-volume-slider" min="0" max="1" step="0.05" value="0.5" style="width: 60px; height: 4px; accent-color: #00adb5; cursor: pointer; vertical-align: middle;">
-          </div>
-          <div class="dropdownContent">
-            <label>Sound <input type="checkbox" id="soundToggle"></label>
-            <label>Theme 
-              <select id="themeSelect">
-                <option value="classic">Classic Table</option>
-                <option value="futuristic">Futuristic Board</option>
-              </select>
-            </label>
-          </div>
+            <!-- Create Room Card -->
+            <div class="glass-card create-card">
+                <h2>Host a New Table</h2>
+                <div class="form-group">
+                    <label for="max-players-select">Players count</label>
+                    <select id="max-players-select" class="custom-select">
+                        <option value="2">2 Players</option>
+                        <option value="3">3 Players</option>
+                        <option value="4" selected>4 Players</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="themeSelect">Board Theme</label>
+                    <select id="themeSelect" class="custom-select">
+                        <option value="classic" selected>Classic Table</option>
+                        <option value="futuristic">Futuristic Board</option>
+                    </select>
+                </div>
+                <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+                    <label for="soundToggle" style="cursor: pointer; display: flex; align-items: center; gap: 8px; width: 100%;">
+                        <span>Sound Effects</span>
+                        <input type="checkbox" id="soundToggle" style="width: 18px; height: 18px; cursor: pointer; accent-color: #00adb5;">
+                    </label>
+                </div>
+                <button id="createBtn" class="btn primary-btn large-btn">Create Room</button>
+            </div>
+
+            <!-- Join Room Card -->
+            <div class="glass-card join-card">
+                <h2>Join Existing Table</h2>
+                <div class="form-group">
+                    <label for="joinCode">4-Letter Room Code</label>
+                    <input type="text" id="joinCode" placeholder="e.g. CZTN" autocomplete="off" maxlength="4" class="uppercase-input" style="text-transform: uppercase;">
+                </div>
+                <button id="joinBtn" class="btn primary-btn large-btn">Join Table</button>
+            </div>
         </div>
-      </div>
 
-      <div class="player-details red" id="details-red">RED: Connecting...</div>
-      <div class="player-details blue" id="details-blue">BLUE: Connecting...</div>
-
-      <div id="yard-controls-container" style="display: contents;"></div>
+        <!-- Lobby Chat Section -->
+        <div class="glass-card active-rooms-card lobby-chat-card">
+            <h2>Lounge Lobby Chat</h2>
+            <div class="room-chat lobby-chat-wrapper-main">
+                <div id="lobby-chat-messages" class="chat-messages">
+                    <!-- Populated with global messages -->
+                </div>
+                <div class="chat-input-bar">
+                    <input type="text" id="lobby-chat-input" placeholder="Type message..." maxlength="100">
+                    <button id="send-lobby-chat-btn" class="btn icon-btn">💬</button>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
+
+    <!-- ================= SEATING ROOM SCREEN ================= -->
+    <div id="seating-view" class="view-panel hidden-layout">
+        <header class="lobby-header compact">
+            <button id="leave-room-btn-seating" class="btn text-btn">← Leave Room</button>
+            <h1>Room <span class="accent-text" id="seating-room-code-display">XXXX</span></h1>
+            <div class="room-variant-badge" id="seating-variant-display">Classic Table</div>
+        </header>
+
+        <div class="seating-container">
+            <div class="glass-card seating-layout-card">
+                <h2>Game Players</h2>
+                <p class="seating-hint" id="seating-status-hint">Lobby seating is managed by the game host.</p>
+
+                <div class="seats-grid">
+                    <!-- Seat Red (Host) -->
+                    <div class="seat-card claimed" id="seat-card-red" data-seat="red" style="border-left: 5px solid #ff3333; background: rgba(255, 51, 83, 0.05);">
+                        <div class="seat-header" style="color: #ff3333; font-weight: bold;">RED (Host)</div>
+                        <div class="seat-player-name" id="seat-player-red">Waiting...</div>
+                    </div>
+
+                    <!-- Seat Green -->
+                    <div class="seat-card" id="seat-card-green" data-seat="green" style="border-left: 5px solid #22e532; background: rgba(34, 229, 50, 0.05);">
+                        <div class="seat-header" style="color: #22e532; font-weight: bold;">GREEN</div>
+                        <div class="seat-player-name" id="seat-player-green">Waiting...</div>
+                    </div>
+
+                    <!-- Seat Yellow -->
+                    <div class="seat-card" id="seat-card-yellow" data-seat="yellow" style="border-left: 5px solid #ffdd1a; background: rgba(255, 221, 26, 0.05);">
+                        <div class="seat-header" style="color: #ffdd1a; font-weight: bold;">YELLOW</div>
+                        <div class="seat-player-name" id="seat-player-yellow">Waiting...</div>
+                    </div>
+
+                    <!-- Seat Blue -->
+                    <div class="seat-card" id="seat-card-blue" data-seat="blue" style="border-left: 5px solid #00adb5; background: rgba(0, 173, 181, 0.05);">
+                        <div class="seat-header" style="color: #00adb5; font-weight: bold;">BLUE</div>
+                        <div class="seat-player-name" id="seat-player-blue">Waiting...</div>
+                    </div>
+                </div>
+
+                <div class="spectate-actions">
+                    <button id="start-game-btn" class="btn primary-btn large-btn" disabled>Start Game</button>
+                </div>
+            </div>
+
+            <!-- Lobby Chat/Roster -->
+            <div class="glass-card lobby-roster-card">
+                <h2>Room Roster</h2>
+                <p class="roster-instructions accent-text" id="roster-helper-text" style="display: none;">click name to add or remove to your game</p>
+                <ul id="roster-list" class="roster-list">
+                    <!-- Dynamically filled -->
+                </ul>
+
+                <div class="room-chat">
+                    <div id="room-chat-messages" class="chat-messages">
+                        <!-- Populated with global messages -->
+                    </div>
+                    <div class="chat-input-bar">
+                        <input type="text" id="room-chat-input" placeholder="Type message..." maxlength="100">
+                        <button id="send-chat-btn" class="btn icon-btn">💬</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= GAME TABLE SCREEN ================= -->
+    <div id="gameScreen" class="view-panel hidden-layout" style="width: 100vw; height: 100vh; position: relative;">
+        <!-- Absolute Header Overlay for Controls -->
+        <header class="table-top-bar-overlay" style="position: absolute; top: 0; left: 0; width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; box-sizing: border-box; background: rgba(10, 10, 12, 0.85); backdrop-filter: blur(10px); z-index: 1000; border-bottom: 1px solid rgba(255,255,255,0.06); font-family: 'Space Grotesk', sans-serif;">
+            <div class="bar-left" style="display: flex; align-items: center; gap: 15px;">
+                <button id="exitLudoBtn" class="btn secondary-btn" style="padding: 4px 8px; font-size: 0.75rem; background: rgba(255, 51, 83, 0.15); border-color: rgba(255, 51, 83, 0.3); color: #ff3333; font-weight: bold;">← LEAVE</button>
+                <span class="room-code-tag" style="font-size: 0.85rem; font-weight: bold; background: rgba(255,255,255,0.06); padding: 4px 10px; border-radius: 6px;">ROOM: <strong id="roomDisplay" class="accent-text" style="font-size: 0.95rem;">----</strong></span>
+            </div>
+
+            <div class="bar-right" style="display: flex; align-items: center; gap: 15px;">
+                <!-- Remote Radio Controls -->
+                <div class="remote-music-controls" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 4px 12px; border-radius: 8px;">
+                    <span style="font-size: 0.75rem; font-weight: bold; color: #ffdd1a; letter-spacing: 0.5px; font-family: sans-serif;">📻 RADIO:</span>
+                    <button id="remote-play-pause-btn" style="background: transparent; border: none; color: #fff; font-size: 0.85rem; cursor: pointer; padding: 2px 5px; outline: none; transition: transform 0.1s;">⏸️</button>
+                    <input type="range" id="remote-volume-slider" min="0" max="1" step="0.05" value="0.5" style="width: 60px; height: 4px; accent-color: #00adb5; cursor: pointer; vertical-align: middle;">
+                </div>
+                <!-- Local options trigger dropdown content -->
+                <div style="position: relative; display: inline-block;">
+                    <button id="optionsBtn" class="btn secondary-btn" style="padding: 6px 12px; font-size: 0.75rem; border-color: rgba(255,255,255,0.15);">⚙️ Options</button>
+                    <div class="dropdownContent" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 5px; background: rgba(20,20,25,0.95); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px; min-width: 140px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); z-index: 1010; flex-direction: column; gap: 8px;">
+                        <label style="font-size: 0.78rem; display: flex; align-items: center; gap: 6px; cursor: pointer; color: #aaa;"><input type="checkbox" id="localSoundToggle" checked> Sound</label>
+                        <label style="font-size: 0.78rem; display: flex; flex-direction: column; gap: 4px; color: #aaa;">
+                            Theme
+                            <select id="localThemeSelect" style="background: #111; color: white; border: 1px solid #333; padding: 2px; border-radius: 4px; font-size: 0.75rem;">
+                                <option value="classic">Classic Table</option>
+                                <option value="futuristic">Futuristic Board</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Ludo Board Wrapper -->
+        <div id="boardWrapper" style="padding-top: 70px;">
+            <div id="board" class="theme-classic">
+                <div class="player-details green" id="details-green">GREEN: Connecting...</div>
+                <div class="player-details yellow" id="details-yellow">
+                    <span>YELLOW: Connecting...</span>
+                </div>
+                <div class="player-details red" id="details-red">RED: Connecting...</div>
+                <div class="player-details blue" id="details-blue">BLUE: Connecting...</div>
+                
+                <div id="yard-controls-container" style="display: contents;"></div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <audio id="localRadioPlayer" src="https://a3.asurahosting.com/listen/tellstream/radio.mp3" preload="none"></audio>
@@ -142,6 +284,16 @@
             if (!isRemote) localPlayer.volume = event.data.volume;
         }
     };
+    
+    // Parent window navigation bridge
+    function exitGameToLounge() {
+        window.localStorage.removeItem('tellstream_active_game');
+        if (window.parent && typeof window.parent.closeFullscreenGame === 'function') {
+            window.parent.closeFullscreenGame();
+        } else {
+            window.location.href = "/index.html";
+        }
+    }
 </script>
 </body>
 </html>

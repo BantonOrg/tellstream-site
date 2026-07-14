@@ -58,54 +58,171 @@ const COLOR_MAPS = {
 };
 
 const board = document.getElementById("board");
-const menuScreen = document.getElementById("menuScreen");
+const lobbyView = document.getElementById("lobby-view");
+const seatingView = document.getElementById("seating-view");
 const gameScreen = document.getElementById("gameScreen");
-const soundToggle = document.getElementById("soundToggle");
+
+const usernameInput = document.getElementById("username-input");
+const maxPlayersSelect = document.getElementById("max-players-select");
 const themeSelect = document.getElementById("themeSelect");
+const soundToggle = document.getElementById("soundToggle");
+const createBtn = document.getElementById("createBtn");
+const joinCodeInput = document.getElementById("joinCode");
+const joinBtn = document.getElementById("joinBtn");
+
+const lobbyChatMessages = document.getElementById("lobby-chat-messages");
+const lobbyChatInput = document.getElementById("lobby-chat-input");
+const sendLobbyChatBtn = document.getElementById("send-lobby-chat-btn");
+
+const seatingRoomCodeDisplay = document.getElementById("seating-room-code-display");
+const seatingVariantDisplay = document.getElementById("seating-variant-display");
+const leaveRoomBtnSeating = document.getElementById("leave-room-btn-seating");
+const startGameBtn = document.getElementById("start-game-btn");
+const rosterList = document.getElementById("roster-list");
+
+const roomChatMessages = document.getElementById("room-chat-messages");
+const roomChatInput = document.getElementById("room-chat-input");
+const sendChatBtn = document.getElementById("send-chat-btn");
+
+const localSoundToggle = document.getElementById("localSoundToggle");
+const localThemeSelect = document.getElementById("localThemeSelect");
 const optionsBtn = document.getElementById("optionsBtn");
 const dropdownContent = document.querySelector(".dropdownContent");
 
-soundToggle.onchange = () => soundOn = soundToggle.checked;
-themeSelect.onchange = () => { board.className = ""; board.classList.add(`theme-${themeSelect.value}`); };
-optionsBtn.onclick = (e) => { e.stopPropagation(); dropdownContent.classList.toggle("show"); };
-window.onclick = () => dropdownContent.classList.remove("show");
-
 const exitLudoBtn = document.getElementById("exitLudoBtn");
-if (exitLudoBtn) {
-  exitLudoBtn.onclick = async () => {
-    if (roomCode) {
-      try {
-        const { data } = await supabase.from("lud_room").select("*").eq("room_code", roomCode).single();
-        if (data) {
-          let currentPlayers = { ...data.players };
-          let currentSpectators = (data.connected_spectators || []).filter(name => name !== myUsername);
-          
-          Object.keys(currentPlayers).forEach(color => {
-            if (currentPlayers[color] === myUsername) delete currentPlayers[color];
-          });
 
-          await supabase.from("lud_room").update({
-            players: currentPlayers,
-            connected_spectators: currentSpectators
-          }).eq("room_code", roomCode);
-        }
-      } catch(e) {
-        console.error(e);
-      }
-    }
-    window.localStorage.removeItem('tellstream_active_game');
-    if (window.parent && typeof window.parent.closeFullscreenGame === 'function') {
-      window.parent.closeFullscreenGame();
-    } else {
-      window.location.reload();
-    }
-  };
+// Options toggle setup
+if (optionsBtn && dropdownContent) {
+    optionsBtn.onclick = (e) => {
+        e.stopPropagation();
+        dropdownContent.style.display = dropdownContent.style.display === "flex" ? "none" : "flex";
+    };
+    window.onclick = () => {
+        dropdownContent.style.display = "none";
+    };
 }
+if (localSoundToggle) {
+    localSoundToggle.onchange = () => {
+        soundOn = localSoundToggle.checked;
+        if (soundToggle) soundToggle.checked = soundOn;
+    };
+}
+if (localThemeSelect) {
+    localThemeSelect.onchange = () => {
+        board.className = "";
+        board.classList.add(`theme-${localThemeSelect.value}`);
+        if (themeSelect) themeSelect.value = localThemeSelect.value;
+    };
+}
+
+// 1. Identity Display Name Setup
+if (usernameInput) {
+    const savedUser = window.localStorage.getItem('tellstream_active_user') || window.localStorage.getItem('ludo_username');
+    if (savedUser) {
+        myUsername = savedUser;
+    } else {
+        myUsername = "User_" + Math.floor(1000 + Math.random() * 9000);
+    }
+    usernameInput.value = myUsername;
+    
+    usernameInput.oninput = () => {
+        const val = usernameInput.value.trim();
+        if (val.length > 0) {
+            myUsername = val;
+            window.localStorage.setItem('ludo_username', myUsername);
+            if (roomCode) {
+                updateUsernameInRoom();
+            }
+        }
+    };
+}
+
+// 2. Global Lounge Chat syncing
+async function loadGlobalChat() {
+    try {
+        const { data } = await supabase
+            .from('messages')
+            .select('*')
+            .order('id', { ascending: true })
+            .limit(40);
+            
+        if (data) {
+            if (lobbyChatMessages) lobbyChatMessages.innerHTML = "";
+            if (roomChatMessages) roomChatMessages.innerHTML = "";
+            data.forEach(msg => displayGlobalChatMessage(msg));
+        }
+    } catch (e) {
+        console.error("Failed to load global chat:", e);
+    }
+}
+
+function subscribeToGlobalChat() {
+    supabase.channel('public:messages')
+        .on('postgres_changes', { event: 'INSERT', pattern: 'public', table: 'messages' }, payload => {
+            if (payload.new) {
+                displayGlobalChatMessage(payload.new);
+            }
+        })
+        .subscribe();
+}
+
+async function sendGlobalChatMessage(inputEl) {
+    const text = inputEl.value.trim();
+    if (!text) return;
+    
+    try {
+        await supabase.from('messages').insert([{ username: myUsername, message: text }]);
+        inputEl.value = "";
+    } catch (e) {
+        console.error("Failed to send global message:", e);
+    }
+}
+
+function displayGlobalChatMessage(data) {
+    if (lobbyChatMessages) {
+        const row = document.createElement("div");
+        row.className = "chat-msg-row";
+        row.innerHTML = `<span class="chat-msg-user">${escapeHtml(data.username)}:</span> <span class="chat-msg-text">${escapeHtml(data.message)}</span>`;
+        lobbyChatMessages.appendChild(row);
+        lobbyChatMessages.scrollTop = lobbyChatMessages.scrollHeight;
+    }
+    if (roomChatMessages) {
+        const row = document.createElement("div");
+        row.className = "chat-msg-row";
+        row.innerHTML = `<span class="chat-msg-user">${escapeHtml(data.username)}:</span> <span class="chat-msg-text">${escapeHtml(data.message)}</span>`;
+        roomChatMessages.appendChild(row);
+        roomChatMessages.scrollTop = roomChatMessages.scrollHeight;
+    }
+}
+
+function escapeHtml(text) {
+    if (!text) return "";
+    return text.toString()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+// Bind chat elements
+if (sendLobbyChatBtn && lobbyChatInput) {
+    sendLobbyChatBtn.onclick = () => sendGlobalChatMessage(lobbyChatInput);
+    lobbyChatInput.onkeydown = (e) => { if (e.key === "Enter") sendGlobalChatMessage(lobbyChatInput); };
+}
+if (sendChatBtn && roomChatInput) {
+    sendChatBtn.onclick = () => sendGlobalChatMessage(roomChatInput);
+    roomChatInput.onkeydown = (e) => { if (e.key === "Enter") sendGlobalChatMessage(roomChatInput); };
+}
+
+// Initialize chat on load
+loadGlobalChat();
+subscribeToGlobalChat();
 
 function genCode() { return Math.random().toString(36).substring(2,6).toUpperCase(); }
 
 async function getLoggedInUser() {
-  const savedUser = window.localStorage.getItem('tellstream_active_user');
+  const savedUser = window.localStorage.getItem('tellstream_active_user') || window.localStorage.getItem('ludo_username');
   if (savedUser) {
     return savedUser;
   }
@@ -113,33 +230,54 @@ async function getLoggedInUser() {
 }
 
 // HOST CREATION LOOP
-document.getElementById("createBtn").onclick = async () => {
+createBtn.onclick = async () => {
   myUsername = await getLoggedInUser();
   roomCode = genCode();
   isHost = true;
   playerColor = "red"; 
   
-  const initialPlayersObj = {};
-  initialPlayersObj[playerColor] = myUsername;
+  const maxPlayers = parseInt(maxPlayersSelect.value);
+  const theme = themeSelect.value;
+  const sound = soundToggle.checked;
+  soundOn = sound;
+  if (localSoundToggle) localSoundToggle.checked = sound;
+  if (localThemeSelect) {
+      localThemeSelect.value = theme;
+      board.className = "";
+      board.classList.add(`theme-${theme}`);
+  }
 
-  enterGame();
+  const playersObj = {
+      creator: myUsername,
+      lobby_roster: [myUsername],
+      settings: {
+          max_players: maxPlayers,
+          theme: theme,
+          sound: sound
+      },
+      red: myUsername,
+      green: "Waiting...",
+      yellow: maxPlayers >= 3 ? "Waiting..." : "Not In Use",
+      blue: maxPlayers >= 4 ? "Waiting..." : "Not In Use"
+  };
+
+  enterRoom(roomCode);
   
   const { error } = await supabase.from("lud_room").insert({
     room_code: roomCode,
     game_state: "waiting",
-    players: initialPlayersObj,
+    players: playersObj,
     connected_spectators: [],
     turn: 0,
     state: defaultState()
   });
 
   if (error) console.error("Error creating room:", error);
-  listenRoom();
 };
 
 // GUEST JOINING LOOP
-document.getElementById("joinBtn").onclick = async () => {
-  const inputCode = document.getElementById("joinCode").value.toUpperCase();
+joinBtn.onclick = async () => {
+  const inputCode = joinCodeInput.value.trim().toUpperCase();
   if (!inputCode || inputCode.length !== 4) return alert("Enter a valid 4-letter room code");
   
   myUsername = await getLoggedInUser();
@@ -150,16 +288,16 @@ document.getElementById("joinBtn").onclick = async () => {
   roomCode = inputCode;
   isHost = false;
 
-  let spectators = data.connected_spectators || [];
-  let isSeated = Object.values(data.players).includes(myUsername);
-
-  if (!spectators.includes(myUsername) && !isSeated) {
-    spectators.push(myUsername);
-    await supabase.from("lud_room").update({ connected_spectators: spectators }).eq("room_code", roomCode);
+  const playersObj = data.players || {};
+  if (!playersObj.lobby_roster) playersObj.lobby_roster = [];
+  if (!playersObj.lobby_roster.includes(myUsername)) {
+      playersObj.lobby_roster.push(myUsername);
   }
 
-  enterGame();
-  listenRoom();
+  // Update room roster
+  await supabase.from("lud_room").update({ players: playersObj }).eq("room_code", roomCode);
+
+  enterRoom(roomCode);
 };
 
 function defaultState() {
@@ -171,19 +309,29 @@ function defaultState() {
   };
 }
 
-function enterGame() {
+function enterRoom(code) {
   window.localStorage.setItem('tellstream_active_game', 'ludo');
-  menuScreen.classList.add("hidden");
-  gameScreen.classList.remove("hidden");
-  document.getElementById("roomDisplay").innerText = `ROOM: ${roomCode}`;
-  renderLobbyOverlay();
+  roomCode = code;
+  seatingRoomCodeDisplay.textContent = code;
+  document.getElementById("roomDisplay").textContent = code;
+  
+  listenRoom();
+  showView(seatingView);
+}
+
+function showView(view) {
+    lobbyView.classList.add("hidden-layout");
+    seatingView.classList.add("hidden-layout");
+    gameScreen.classList.add("hidden-layout");
+    
+    view.classList.remove("hidden-layout");
 }
 
 function listenRoom() {
   supabase
     .channel("room-" + roomCode)
-    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "lud_room", filter: `room_code=eq.${roomCode}` }, payload => {
-      handleStateUpdate(payload.new);
+    .on("postgres_changes", { event: "*", schema: "public", table: "lud_room", filter: `room_code=eq.${roomCode}` }, payload => {
+      if (payload.new) handleStateUpdate(payload.new);
     })
     .subscribe(async (status) => {
       if (status === "SUBSCRIBED") {
@@ -193,116 +341,214 @@ function listenRoom() {
     });
 }
 
-function renderLobbyOverlay() {
-  let overlay = document.getElementById("lobby-overlay");
-  if (!overlay) {
-    overlay = document.createElement("div");
-    overlay.id = "lobby-overlay";
-    overlay.style = "position: absolute; top:0; left:0; width:100%; height:100%; background:rgba(11,12,16,0.98); z-index:9999; display:flex; flex-direction:column; justify-content:center; align-items:center; color:#fff; font-family:sans-serif;";
-    gameScreen.appendChild(overlay);
-  }
+// Exit room/leave mechanics
+async function leaveRoom() {
+    if (!roomCode) return;
+    window.localStorage.removeItem('tellstream_active_game');
+    
+    try {
+        const { data } = await supabase.from("lud_room").select("*").eq("room_code", roomCode).single();
+        if (data) {
+            const playersObj = data.players || {};
+            if (playersObj.lobby_roster) {
+                playersObj.lobby_roster = playersObj.lobby_roster.filter(u => u !== myUsername);
+            }
+            COLORS.forEach(color => {
+                if (playersObj[color] === myUsername) {
+                    playersObj[color] = "Waiting...";
+                }
+            });
+            await supabase.from("lud_room").update({ players: playersObj }).eq("room_code", roomCode);
+        }
+    } catch (e) {
+        console.error("Failed to leave room:", e);
+    }
+    
+    roomCode = null;
+    playerColor = null;
+    isHost = false;
+    showView(lobbyView);
 }
 
-async function assignSeat(spectatorName, selectedColor) {
-  const { data } = await supabase.from("lud_room").select("*").eq("room_code", roomCode).single();
-  if (!data) return;
+if (leaveRoomBtnSeating) leaveRoomBtnSeating.onclick = leaveRoom;
+if (exitLudoBtn) exitLudoBtn.onclick = leaveRoom;
 
-  let currentPlayers = { ...data.players };
-  let currentSpectators = (data.connected_spectators || []).filter(name => name !== spectatorName);
+async function updateUsernameInRoom() {
+    if (!roomCode) return;
+    try {
+        const { data } = await supabase.from("lud_room").select("*").eq("room_code", roomCode).single();
+        if (data) {
+            const playersObj = data.players || {};
+            if (playersObj.lobby_roster) {
+                playersObj.lobby_roster = playersObj.lobby_roster.map(n => n.startsWith("User_") ? myUsername : n);
+                if (!playersObj.lobby_roster.includes(myUsername)) {
+                    playersObj.lobby_roster.push(myUsername);
+                }
+            }
+            COLORS.forEach(color => {
+                if (playersObj[color] === myUsername) {
+                    playersObj[color] = myUsername;
+                }
+            });
+            await supabase.from("lud_room").update({ players: playersObj }).eq("room_code", roomCode);
+        }
+    } catch (e) {
+        console.error("Failed to update name in room:", e);
+    }
+}
 
-  Object.keys(currentPlayers).forEach(color => {
-    if (currentPlayers[color] === spectatorName) delete currentPlayers[color];
-  });
-
-  currentPlayers[selectedColor] = spectatorName;
-
-  await supabase.from("lud_room").update({
-    players: currentPlayers,
-    connected_spectators: currentSpectators
-  }).eq("room_code", roomCode);
+// Toggle seating by clicking on roster items
+async function toggleSeating(username) {
+    if (!roomCode) return;
+    try {
+        const { data } = await supabase.from("lud_room").select("*").eq("room_code", roomCode).single();
+        if (data) {
+            const playersObj = data.players || {};
+            if (playersObj.creator !== myUsername) return; // Only host can manage seats
+            if (username === playersObj.creator) return; // Creator cannot be unseated/reseated from RED
+            
+            let seatedColor = null;
+            COLORS.forEach(color => {
+                if (playersObj[color] === username) {
+                    seatedColor = color;
+                }
+            });
+            
+            if (seatedColor) {
+                playersObj[seatedColor] = "Waiting...";
+            } else {
+                let emptyColor = null;
+                for (let i = 0; i < COLORS.length; i++) {
+                    const color = COLORS[i];
+                    if (playersObj[color] === "Waiting...") {
+                        emptyColor = color;
+                        break;
+                    }
+                }
+                if (emptyColor) {
+                    playersObj[emptyColor] = username;
+                } else {
+                    alert("All active game seats are currently full!");
+                    return;
+                }
+            }
+            await supabase.from("lud_room").update({ players: playersObj }).eq("room_code", roomCode);
+        }
+    } catch (e) {
+        console.error("Failed to toggle seating:", e);
+    }
 }
 
 async function launchMatch() {
-  await supabase.from("lud_room").update({
-    game_state: "playing",
-    state: {
-      tokens: { red: [-1,-1,-1,-1], green: [-1,-1,-1,-1], yellow: [-1,-1,-1,-1], blue: [-1,-1,-1,-1] },
-      currentRoll: null,
-      hasRolled: false,
-      lastTurnTimestamp: Date.now()
-    }
-  }).eq("room_code", roomCode);
+    if (!roomCode) return;
+    await supabase.from("lud_room").update({
+        game_state: "playing",
+        state: defaultState()
+    }).eq("room_code", roomCode);
 }
+
+if (startGameBtn) startGameBtn.onclick = launchMatch;
 
 function handleStateUpdate(roomData) {
   state = roomData.state;
   const playersObj = roomData.players || {};
-  const spectators = roomData.connected_spectators || [];
+  const maxPlayers = playersObj.settings?.max_players || 4;
+  const theme = playersObj.settings?.theme || "classic";
+  const sound = playersObj.settings?.sound ?? true;
   
+  soundOn = sound;
+  if (localSoundToggle) localSoundToggle.checked = sound;
+  board.className = "";
+  board.classList.add(`theme-${theme}`);
+  if (localThemeSelect) localThemeSelect.value = theme;
+
   playerColor = null;
-  Object.keys(playersObj).forEach(color => {
+  COLORS.forEach(color => {
     if (playersObj[color] === myUsername) playerColor = color;
   });
 
-  const overlay = document.getElementById("lobby-overlay");
   if (roomData.game_state === "waiting") {
-    if (overlay) {
-      overlay.style.display = "flex";
-      let seatedLayout = "<h3>SEAT ASSIGNMENTS</h3><ul style='list-style:none; padding:0; width:280px;'>";
-      COLORS.forEach(c => {
-        seatedLayout += `<li style='padding:8px; margin:4px 0; background:#1f2833; border-left:5px solid ${c}; display:flex; justify-content:between;'>
-          <span>${c.toUpperCase()}: <strong>${playersObj[c] || "EMPTY"}</strong></span>
-        </li>`;
-      });
-      seatedLayout += "</ul>";
-
-      let queueLayout = "<h3>WAITING POOL</h3><div style='width:280px; max-height:150px; overflow-y:auto;'>";
-      if (spectators.length === 0) queueLayout += "<p style='color:#666; font-size:0.9rem;'>No pending connections...</p>";
+      showView(seatingView);
+      seatingVariantDisplay.textContent = theme === "classic" ? "Classic Table" : "Futuristic Board";
       
-      spectators.forEach(spec => {
-        queueLayout += `<div style='background:#0b0c10; border:1px solid #1f2833; padding:8px; margin:4px 0; display:flex; justify-content:space-between; align-items:center;'>
-          <span>${spec}</span>`;
-        if (isHost) {
-          queueLayout += `<select onchange="this.value ? window.assignSeat('${spec}', this.value) : null" style="background:#1f2833; color:#fff; border:1px solid #66fcf1; border-radius:4px; font-size:0.8rem; padding:2px;">
-            <option value="">Seat...</option>
-            ${COLORS.map(c => !playersObj[c] ? `<option value="${c}">${c}</option>` : '').join('')}
-          </select>`;
-        }
-        queueLayout += `</div>`;
+      const isCreator = (playersObj.creator === myUsername);
+      
+      // Update Seating cards UI
+      COLORS.forEach(color => {
+          const card = document.getElementById(`seat-card-${color}`);
+          const nameEl = document.getElementById(`seat-player-${color}`);
+          if (!card || !nameEl) return;
+          
+          const val = playersObj[color];
+          if (val === "Not In Use") {
+              card.style.display = "none";
+          } else {
+              card.style.display = "flex";
+              nameEl.textContent = val;
+              if (val === "Waiting...") {
+                  card.classList.remove("claimed");
+              } else {
+                  card.classList.add("claimed");
+              }
+          }
       });
-      queueLayout += "</div>";
-
-      let actionButton = "";
-      if (isHost) {
-        const structuralActiveCount = Object.keys(playersObj).length;
-        actionButton = `<button id='startMatchBtn' ${structuralActiveCount < 2 ? 'disabled style="background:#333; cursor:not-allowed;"' : 'style="background:#66fcf1; color:#0b0c10;"'} style='margin-top:20px; padding:10px 24px; font-weight:bold; border:none; border-radius:4px; cursor:pointer;'>START MATCH</button>`;
-      } else {
-        actionButton = `<p style='color:#66fcf1; animation:pulse 1.5s infinite; font-size:0.9rem; margin-top:20px;'>Waiting for host to launch match...</p>`;
+      
+      // Update Roster Roster
+      rosterList.innerHTML = "";
+      const roster = playersObj.lobby_roster || [];
+      
+      const helperText = document.getElementById("roster-helper-text");
+      if (helperText) {
+          helperText.style.display = isCreator ? "block" : "none";
       }
-
-      overlay.innerHTML = `
-        <h2 style='color:#66fcf1; margin-bottom:5px;'>LUDO LOBBY</h2>
-        <p style='margin:0 0 20px 0; color:#888;'>Room Code: <strong style='color:#fff;'>${roomCode}</strong></p>
-        ${seatedLayout}
-        ${queueLayout}
-        ${actionButton}
-      `;
-
-      window.assignSeat = assignSeat;
-
-      if (isHost) {
-        document.getElementById("startMatchBtn").onclick = launchMatch;
+      
+      roster.forEach(user => {
+          const li = document.createElement("li");
+          let seatedColor = null;
+          COLORS.forEach(color => {
+              if (playersObj[color] === user) seatedColor = color;
+          });
+          
+          if (seatedColor) {
+              li.innerHTML = `<span>${escapeHtml(user)}</span> <span class="table-badge" style="margin-left: 10px; text-transform: uppercase;">${seatedColor}</span>`;
+              li.classList.add("seated-player-item");
+          } else {
+              li.textContent = user;
+          }
+          
+          if (isCreator && user !== playersObj.creator) {
+              li.style.cursor = "pointer";
+              li.title = "Click to add or remove player from game";
+              li.addEventListener("click", () => toggleSeating(user));
+          }
+          rosterList.appendChild(li);
+      });
+      
+      // Enable/Disable Start Game
+      if (startGameBtn) {
+          if (isCreator) {
+              startGameBtn.style.display = "block";
+              // Check if all active seats are claimed
+              let allClaimed = true;
+              COLORS.forEach(color => {
+                  if (playersObj[color] === "Waiting...") {
+                      allClaimed = false;
+                  }
+              });
+              startGameBtn.disabled = !allClaimed;
+          } else {
+              startGameBtn.style.display = "none";
+          }
       }
-    }
-    return; 
+      return;
   } else {
-    if (overlay) overlay.style.display = "none";
+      showView(gameScreen);
   }
 
-  const joinedColors = Object.keys(playersObj);
+  const joinedColors = COLORS.filter(color => playersObj[color] && playersObj[color] !== "Waiting..." && playersObj[color] !== "Not In Use");
   const activeSeatsCount = joinedColors.length;
   
-  currentTurnColor = activeSeatsCount > 0 ? COLORS[roomData.turn % activeSeatsCount] : "red";
+  currentTurnColor = activeSeatsCount > 0 ? joinedColors[roomData.turn % activeSeatsCount] : "red";
   currentRoll = state.currentRoll;
   hasRolledThisTurn = state.hasRolled;
   
@@ -310,7 +556,7 @@ function handleStateUpdate(roomData) {
     const el = document.getElementById(`details-${color}`);
     if (!el) return;
     
-    const isSeated = !!playersObj[color];
+    const isSeated = playersObj[color] && playersObj[color] !== "Waiting..." && playersObj[color] !== "Not In Use";
     let statusText = `${color.toUpperCase()}: ${isSeated ? playersObj[color].toUpperCase() : "EMPTY"}`;
     if (isSeated && color === currentTurnColor) {
       const elapsed = Math.floor((Date.now() - state.lastTurnTimestamp) / 1000);
