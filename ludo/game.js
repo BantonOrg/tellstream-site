@@ -6,6 +6,7 @@ const supabase = createClient(
 );
 
 let roomCode = null;
+let roomSubscription = null;
 let playerColor = null; 
 let myUsername = null;
 let isHost = false;
@@ -328,8 +329,14 @@ function showView(view) {
 }
 
 function listenRoom() {
-  supabase
-    .channel("room-" + roomCode)
+  if (roomSubscription) {
+    supabase.removeChannel(roomSubscription);
+    roomSubscription = null;
+  }
+  
+  roomSubscription = supabase.channel("room-" + roomCode);
+  
+  roomSubscription
     .on("postgres_changes", { event: "*", schema: "public", table: "lud_room", filter: `room_code=eq.${roomCode}` }, payload => {
       if (payload.new) handleStateUpdate(payload.new);
     })
@@ -346,8 +353,15 @@ async function leaveRoom() {
     if (!roomCode) return;
     window.localStorage.removeItem('tellstream_active_game');
     
+    const exitingRoomCode = roomCode;
+    
+    if (roomSubscription) {
+        supabase.removeChannel(roomSubscription);
+        roomSubscription = null;
+    }
+    
     try {
-        const { data } = await supabase.from("lud_room").select("*").eq("room_code", roomCode).single();
+        const { data } = await supabase.from("lud_room").select("*").eq("room_code", exitingRoomCode).single();
         if (data) {
             const playersObj = data.players || {};
             if (playersObj.lobby_roster) {
@@ -358,7 +372,7 @@ async function leaveRoom() {
                     playersObj[color] = "Waiting...";
                 }
             });
-            await supabase.from("lud_room").update({ players: playersObj }).eq("room_code", roomCode);
+            await supabase.from("lud_room").update({ players: playersObj }).eq("room_code", exitingRoomCode);
         }
     } catch (e) {
         console.error("Failed to leave room:", e);
@@ -450,6 +464,7 @@ async function launchMatch() {
 if (startGameBtn) startGameBtn.onclick = launchMatch;
 
 function handleStateUpdate(roomData) {
+  if (!roomCode || roomData.room_code !== roomCode) return;
   state = roomData.state;
   const playersObj = roomData.players || {};
   const maxPlayers = playersObj.settings?.max_players || 4;
