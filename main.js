@@ -36,6 +36,7 @@ let bannedUsersCache = {};
 let isNoticeBoardActive = false;
 
 let pendingLogoTargetName = "";
+let pendingFlyerTargetName = "";
 
 const helpInstructions = [
     { title: "Setting Nickname", text: "Fill in the Nickname block before typing to claim your handle in the Lounge panel." },
@@ -64,6 +65,7 @@ const djHelpInstructions = [
 const adminHelpInstructions = [
     { title: "👑 Station Admin Rules (Level 2)", text: "Station Admins (Level 2) have full administrative control over the chat system, including managing presenter assets, noticeboards, and overriding user bans." },
     { title: "🖼️ Presenter Cloud Assets", text: "Example: /upload [Name] & /delete [Name]\nWhat it does: Uploads a custom presenter transparent PNG logo, or deletes an existing logo from cloud storage. Restricted to Level 2." },
+    { title: "🔥 Event Flyer Cloud Assets", text: "Example: /uploadflyer [DDMMYY_Name] & /deleteflyer [DDMMYY_Name]\nWhat it does: Uploads an event flyer image or deletes one from cloud storage. Filename MUST start with 6 digits (DDMMYY). Restricted to Level 2." },
     { title: "⚔️ Global filter management", text: "Example: /add [word], /del [word], /listwords\nWhat it does: Add word to filter list, delete word from filter list, or print the active filter words list." },
     { title: "🚫 Chat Lockout & Ban Overrides", text: "Example: /unban [username]\nWhat it does: Swearing automatically tracks strikes. Strike 3 triggers a 24h lockout, and Strike 4+ triggers a permanent ban. Users can auto-restore 1 strike by typing 'sorry' (once). Use /unban to reset all user strikes and restore chat access." }
 ];
@@ -1214,6 +1216,60 @@ async function sendMessage() {
                 }
             }
 
+            if (text.startsWith('/uploadflyer ') || text.startsWith('/deleteflyer ')) {
+                if (userPowerLevel < 2) {
+                    messageInput.value = '';
+                    alert("🔒 Access Denied: Only Station Admins (Level 2) have authorization to manage event flyer assets.");
+                    return;
+                }
+
+                if (text.startsWith('/uploadflyer ')) {
+                    const uploadNameInput = text.substring(13).trim().substring(0, 50);
+                    if (uploadNameInput) {
+                        const filenameClean = uploadNameInput.toLowerCase().replace(/\s+/g, '_');
+                        const datePrefix = filenameClean.substring(0, 6);
+                        if (!/^\d{6}$/.test(datePrefix)) {
+                            alert("Error Name format! Must start with 6 digits (DDMMYY).");
+                            return;
+                        }
+                        messageInput.value = '';
+                        pendingFlyerTargetName = filenameClean;
+                        const hiddenUploader = document.getElementById('studioFlyerHiddenFilePicker');
+                        if (hiddenUploader) hiddenUploader.click();
+                        return;
+                    }
+                }
+
+                if (text.startsWith('/deleteflyer ')) {
+                    const deleteNameInput = text.substring(13).trim().substring(0, 50);
+                    if (deleteNameInput) {
+                        const filenameClean = deleteNameInput.toLowerCase().replace(/\s+/g, '_');
+                        messageInput.value = '';
+                        try {
+                            const { data: files, error: listError } = await supabase_db.storage.from('flyers').list('', { limit: 100 });
+                            if (listError) throw listError;
+                            
+                            const targetFile = files.find(f => {
+                                const lowerName = f.name.toLowerCase();
+                                return lowerName === filenameClean || lowerName.startsWith(filenameClean + '.');
+                            });
+                            if (!targetFile) {
+                                alert(`❓ Flyer matching "${deleteNameInput}" not found in storage.`);
+                                return;
+                            }
+                            
+                            const { error } = await supabase_db.storage.from('flyers').remove([targetFile.name]);
+                            if (error) throw error;
+                            alert(`🗑️ Flyer successfully deleted: "${targetFile.name}"`);
+                            await renderActiveFlyers();
+                        } catch (err) {
+                            alert("Cloud Deletion Failure: " + err.message);
+                        }
+                        return;
+                    }
+                }
+            }
+
             if (text.startsWith('/add ') || text.startsWith('/del ') || text.startsWith('/unban ') || text === '/listwords') {
                 messageInput.value = '';
                 await handleAdminFilterCommand(text);
@@ -1456,6 +1512,34 @@ try {
         } finally {
             hiddenInputFileTag.value = '';
             pendingLogoTargetName = "";
+        }
+    });
+
+    const hiddenFlyerInputFileTag = document.createElement('input');
+    hiddenFlyerInputFileTag.type = 'file';
+    hiddenFlyerInputFileTag.id = 'studioFlyerHiddenFilePicker';
+    hiddenFlyerInputFileTag.accept = 'image/*';
+    hiddenFlyerInputFileTag.style.display = 'none';
+    document.body.appendChild(hiddenFlyerInputFileTag);
+
+    hiddenFlyerInputFileTag.addEventListener('change', async function(e) {
+        const file = e.target.files[0];
+        if (!file || !pendingFlyerTargetName) return;
+        try {
+            const originalName = file.name;
+            const extIndex = originalName.lastIndexOf('.');
+            const extension = extIndex !== -1 ? originalName.substring(extIndex + 1).toLowerCase() : 'jpg';
+            
+            const uploadFileName = `${pendingFlyerTargetName}.${extension}`;
+            const { error } = await supabase_db.storage.from('flyers').upload(uploadFileName, file, { cacheControl: '3600', upsert: true });
+            if (error) throw error;
+            alert(`✅ Success! Flyer uploaded successfully: "${uploadFileName}"`);
+            await renderActiveFlyers();
+        } catch (err) {
+            alert("Cloud Upload Failure: " + err.message);
+        } finally {
+            hiddenFlyerInputFileTag.value = '';
+            pendingFlyerTargetName = "";
         }
     });
 
