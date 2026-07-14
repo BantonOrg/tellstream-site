@@ -70,15 +70,46 @@ themeSelect.onchange = () => { board.className = ""; board.classList.add(`theme-
 optionsBtn.onclick = (e) => { e.stopPropagation(); dropdownContent.classList.toggle("show"); };
 window.onclick = () => dropdownContent.classList.remove("show");
 
+const exitLudoBtn = document.getElementById("exitLudoBtn");
+if (exitLudoBtn) {
+  exitLudoBtn.onclick = async () => {
+    if (roomCode) {
+      try {
+        const { data } = await supabase.from("lud_room").select("*").eq("room_code", roomCode).single();
+        if (data) {
+          let currentPlayers = { ...data.players };
+          let currentSpectators = (data.connected_spectators || []).filter(name => name !== myUsername);
+          
+          Object.keys(currentPlayers).forEach(color => {
+            if (currentPlayers[color] === myUsername) delete currentPlayers[color];
+          });
+
+          await supabase.from("lud_room").update({
+            players: currentPlayers,
+            connected_spectators: currentSpectators
+          }).eq("room_code", roomCode);
+        }
+      } catch(e) {
+        console.error(e);
+      }
+    }
+    window.localStorage.removeItem('tellstream_active_game');
+    if (window.parent && typeof window.parent.closeFullscreenGame === 'function') {
+      window.parent.closeFullscreenGame();
+    } else {
+      window.location.reload();
+    }
+  };
+}
+
 function genCode() { return Math.random().toString(36).substring(2,6).toUpperCase(); }
 
 async function getLoggedInUser() {
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error || !user) {
-    console.warn("No active Supabase auth session found. Using default.");
-    return "User_" + Math.floor(Math.random() * 1000);
+  const savedUser = window.localStorage.getItem('tellstream_active_user');
+  if (savedUser) {
+    return savedUser;
   }
-  return user.user_metadata?.display_name || user.email.split('@')[0];
+  return "User_" + Math.floor(Math.random() * 1000);
 }
 
 // HOST CREATION LOOP
@@ -141,6 +172,7 @@ function defaultState() {
 }
 
 function enterGame() {
+  window.localStorage.setItem('tellstream_active_game', 'ludo');
   menuScreen.classList.add("hidden");
   gameScreen.classList.remove("hidden");
   document.getElementById("roomDisplay").innerText = `ROOM: ${roomCode}`;
