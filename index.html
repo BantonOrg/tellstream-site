@@ -45,15 +45,33 @@
                 <div class="inner-feed-wrapper" id="fbFeedContainer"></div>
             </div>
             
-            <div class="col-3">
-                <div class="col-title">🔥 Schedule</div>
-                <div class="inner-feed-wrapper" id="flyerContainer"></div>
+            <div class="col-3" id="schedule-accordion-column" style="padding: 0; gap: 0; overflow: hidden;">
+                <!-- Panel 1: Flyers -->
+                <div class="accordion-panel active" id="panel-flyers" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 50px; transition: flex 0.3s ease-in-out;">
+                    <div class="col-title accordion-header" onclick="toggleAccordion('flyers')" style="padding: 15px 20px; margin: 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1); cursor: pointer; background: rgba(255,255,255,0.02); display: flex; justify-content: space-between; align-items: center; user-select: none;">
+                        <span>🔥 Event Flyers</span>
+                        <span class="accordion-indicator" style="font-size: 0.8rem; opacity: 0.7;">▼</span>
+                    </div>
+                    <div class="inner-feed-wrapper accordion-content" id="flyerContainer" style="flex: 1; overflow-y: auto; padding: 20px; display: block;"></div>
+                </div>
+                
+                <!-- Panel 2: Schedule -->
+                <div class="accordion-panel" id="panel-schedule" style="flex: 0 0 50px; display: flex; flex-direction: column; overflow: hidden; min-height: 50px; border-top: 1px solid rgba(255,255,255,0.08); transition: flex 0.3s ease-in-out;">
+                    <div class="col-title accordion-header" onclick="toggleAccordion('schedule')" style="padding: 15px 20px; margin: 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1); cursor: pointer; background: rgba(255,255,255,0.02); display: flex; justify-content: space-between; align-items: center; user-select: none;">
+                        <span>📅 Weekly Timetable</span>
+                        <span class="accordion-indicator" style="font-size: 0.8rem; opacity: 0.7;">▲</span>
+                    </div>
+                    <div class="inner-feed-wrapper accordion-content" id="timetableContainer" style="flex: 1; overflow-y: auto; padding: 20px; display: none;"></div>
+                </div>
             </div>
             
             <div class="col-3">
-                <div class="col-title" style="display: flex; justify-content: space-between; align-items: center;">
-                    <span>💡 Chat help and emoji codes</span>
-                    <a id="banton-dominoes-link" href="/dominoes/dominoes.html" style="display: none; background: #00adb5; color: #ffffff; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; text-decoration: none; font-weight: bold; border: 1px solid #ffffff;">🎲 Test</a>
+                <div class="col-title" style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <span style="font-size: 0.95rem; white-space: nowrap;">💡 Chat help and emoji codes</span>
+                    <div style="display: flex; gap: 4px;">
+                        <button onclick="launchFullscreenGame('dominoes')" style="background: #00adb5; color: #ffffff; padding: 2px 6px; border-radius: 4px; font-size: 0.72rem; text-decoration: none; font-weight: bold; border: 1px solid rgba(255,255,255,0.2); white-space: nowrap; cursor: pointer;">🎲 Dominoes</button>
+                        <button onclick="launchFullscreenGame('ludo')" style="background: #22e532; color: #000000; padding: 2px 6px; border-radius: 4px; font-size: 0.72rem; text-decoration: none; font-weight: bold; border: 1px solid rgba(255,255,255,0.2); white-space: nowrap; cursor: pointer;">🎲 Ludo</button>
+                    </div>
                 </div>
                 <div class="sub-panel-top" id="helpCardsContainer"></div>
                 <div class="sub-panel-bottom">
@@ -183,28 +201,21 @@
     </div>
 
     <script src="/src/assets/emojis.js"></script>
-    <script src="main.js"></script>
+    <!-- Fullscreen Game Overlay Container -->
+    <div id="game-overlay-container" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 99999; background: #0a0a0c;">
+        <iframe id="game-overlay-frame" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+    </div>
+
+    <script type="module" src="main.js"></script>
 
     <script>
         const observer = new MutationObserver(() => {
             const bodyText = document.body.innerText;
-            let activeUser = null;
-
-            if (bodyText.includes("Welcome back Banton")) {
-                activeUser = "Banton";
-            } else if (bodyText.includes("Welcome back TellaSecurity")) {
-                activeUser = "TellaSecurity";
-            }
-
-            if (activeUser) {
-                // Instantly lock active username into browser storage so dominoes app can read it
+            const match = bodyText.match(/Welcome back ([a-zA-Z0-9_\s-]+)/i);
+            if (match) {
+                const activeUser = match[1].split(',')[0].trim();
                 window.localStorage.setItem('tellstream_active_user', activeUser);
-                
-                const link = document.getElementById('banton-dominoes-link');
-                if (link && link.style.display === 'none') {
-                    link.style.display = 'inline-block';
-                    observer.disconnect(); // Stop checking once revealed
-                }
+                observer.disconnect(); // Stop checking once resolved
             }
         });
         observer.observe(document.body, { childList: true, subtree: true });

@@ -830,3 +830,11 @@ body.chat-is-fullscreen .chat-fs-help-panel {
         display: none !important;
     }
 }
+
+/* Accordion Panel Styles */
+.accordion-header:hover {
+    background: rgba(255, 255, 255, 0.06) !important;
+}
+.accordion-panel {
+    transition: flex 0.3s ease-in-out, min-height 0.3s ease-in-out;
+}

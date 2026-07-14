@@ -8,6 +8,7 @@ const messageInput = document.getElementById('messageInput');
 const sendBtn = document.getElementById('sendBtn');
 const audioPlayer = document.getElementById('radioPlayer');
 const flyerContainer = document.getElementById('flyerContainer');
+const timetableContainer = document.getElementById('timetableContainer');
 const quickEmojiList = document.getElementById('quickEmojiList');
 const quickEmojiListFS = document.getElementById('quickEmojiListFS');
 const fbFeedContainer = document.getElementById('fbFeedContainer');
@@ -57,8 +58,14 @@ const djHelpInstructions = [
     { title: "🗓️ /schedule perm [Day] [Start Time] [End Time] [Time Zone]", text: "Example: /schedule perm Friday 2000 2200 BST \nWhat it does: Locks weekly show detail in permanently." },
     { title: "🚨 /schedule temp [ddmmyy] [Start Time] [End Time] [Time Zone]", text: "Example: /schedule temp 100726 2000 2200 BST \nWhat it does: Adds a one-off temporary change for a specific date." },
     { title: "❌ /schedule cancel [ddmmyy] [Start Time]", text: "Example: /schedule cancel 100726 2000 \nWhat it does: Cancels a show already added (perm or temp)." },
-    { title: "🖼️ /upload [Name] & /delete [Name]", text: "Example: /upload Big John \nWhat it does: Manages transparent PNG logo assets in the cloud." },
-    { title: "⚔️ Moderation Shortcuts", text: "/add [word], /del [word], /unban [username], or /listwords to manage filters live." }
+    { title: "⚔️ Live Filter Management", text: "Example: /add [word], /del [word], /listwords \nWhat it does: Manage live chat filter words directly in the console." }
+];
+
+const adminHelpInstructions = [
+    { title: "👑 Station Admin Rules (Level 2)", text: "Station Admins (Level 2) have full administrative control over the chat system, including managing presenter assets, noticeboards, and overriding user bans." },
+    { title: "🖼️ Presenter Cloud Assets", text: "Example: /upload [Name] & /delete [Name]\nWhat it does: Uploads a custom presenter transparent PNG logo, or deletes an existing logo from cloud storage. Restricted to Level 2." },
+    { title: "⚔️ Global filter management", text: "Example: /add [word], /del [word], /listwords\nWhat it does: Add word to filter list, delete word from filter list, or print the active filter words list." },
+    { title: "🚫 Chat Lockout & Ban Overrides", text: "Example: /unban [username]\nWhat it does: Swearing automatically tracks strikes. Strike 3 triggers a 24h lockout, and Strike 4+ triggers a permanent ban. Users can auto-restore 1 strike by typing 'sorry' (once). Use /unban to reset all user strikes and restore chat access." }
 ];
 
 // CELL-LEFT ISOLATED ENGINE (DYNAMIC BOUNDS & AUTOMATED MODE SWITCH)
@@ -460,6 +467,37 @@ async function renderActiveFlyers() {
     flyerContainer.innerHTML = renderedHtml || `<p style="color:#666; text-align:center; padding-top:20px;">No current event flyers listed.</p>`;
 }
 
+function toggleAccordion(target) {
+    const panelFlyers = document.getElementById('panel-flyers');
+    const panelSchedule = document.getElementById('panel-schedule');
+    const contentFlyers = document.getElementById('flyerContainer');
+    const contentSchedule = document.getElementById('timetableContainer');
+    const indicatorFlyers = panelFlyers.querySelector('.accordion-indicator');
+    const indicatorSchedule = panelSchedule.querySelector('.accordion-indicator');
+
+    if (target === 'flyers') {
+        panelFlyers.style.flex = "1";
+        panelFlyers.classList.add('active');
+        contentFlyers.style.display = "block";
+        indicatorFlyers.innerText = "▼";
+
+        panelSchedule.style.flex = "0 0 50px";
+        panelSchedule.classList.remove('active');
+        contentSchedule.style.display = "none";
+        indicatorSchedule.innerText = "▲";
+    } else {
+        panelSchedule.style.flex = "1";
+        panelSchedule.classList.add('active');
+        contentSchedule.style.display = "block";
+        indicatorSchedule.innerText = "▼";
+
+        panelFlyers.style.flex = "0 0 50px";
+        panelFlyers.classList.remove('active');
+        contentFlyers.style.display = "none";
+        indicatorFlyers.innerText = "▲";
+    }
+}
+
 function renderHelpContent(useNoticeboardGuide = false) {
     const activeDataset = useNoticeboardGuide ? noticeboardHelpInstructions : helpInstructions;
     let html = activeDataset.map(item => `
@@ -472,7 +510,10 @@ function renderHelpContent(useNoticeboardGuide = false) {
     const currentUser = usernameInput.value.trim();
     const profile = profilesCache[currentUser];
     const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
-    const isVerifiedDJ = profile && profile.passkey === authorizedKey && parseInt(profile.power_level || 0) >= 1;
+    
+    const powerLevel = profile && profile.passkey === authorizedKey ? parseInt(profile.power_level || 0) : 0;
+    const isVerifiedDJ = powerLevel >= 1;
+    const isVerifiedAdmin = powerLevel >= 2;
 
     if (isVerifiedDJ && !useNoticeboardGuide) {
         const djHtml = djHelpInstructions.map(item => `
@@ -482,6 +523,16 @@ function renderHelpContent(useNoticeboardGuide = false) {
             </div>
         `).join('');
         html = djHtml + html; 
+    }
+
+    if (isVerifiedAdmin && !useNoticeboardGuide) {
+        const adminHtml = adminHelpInstructions.map(item => `
+            <div class="help-item-card" style="border-left: 4px solid #ff3333; background: rgba(255, 51, 51, 0.05);">
+                <h5 style="color: #ff3333; font-weight: bold;">${item.title}</h5>
+                <p style="color: #fffbdf; white-space: pre-line;">${item.text}</p>
+            </div>
+        `).join('');
+        html = adminHtml + html; 
     }
 
     helpCardsContainer.innerHTML = html;
@@ -567,6 +618,70 @@ function toggleNoticeBoardView() {
         anchorChatToBottom();
     }
 }
+
+// Setup cross-tab BroadcastChannel for remote radio controls
+const radioChannel = new BroadcastChannel('tellstream_radio_control');
+radioChannel.onmessage = (event) => {
+    const player = document.getElementById('radioPlayer');
+    if (!player) return;
+    
+    if (event.data.action === 'play') {
+        player.play().catch(e => console.log("Play blocked:", e));
+    } else if (event.data.action === 'pause') {
+        player.pause();
+    } else if (event.data.action === 'volume') {
+        player.volume = event.data.value;
+    }
+};
+
+// Sync player state changes back to game tabs
+setTimeout(() => {
+    const player = document.getElementById('radioPlayer');
+    if (player) {
+        player.addEventListener('play', () => {
+            radioChannel.postMessage({ state: 'playing', volume: player.volume });
+        });
+        player.addEventListener('pause', () => {
+            radioChannel.postMessage({ state: 'paused', volume: player.volume });
+        });
+        player.addEventListener('volumechange', () => {
+            radioChannel.postMessage({ state: player.paused ? 'paused' : 'playing', volume: player.volume });
+        });
+    }
+}, 1000);
+
+function launchFullscreenGame(gameName) {
+    const activeGame = localStorage.getItem('tellstream_active_game');
+    if (activeGame && activeGame !== gameName) {
+        alert(`🔒 You are currently in an active ${activeGame === 'ludo' ? 'Ludo' : 'Dominoes'} game. Please exit the ${activeGame === 'ludo' ? 'Ludo' : 'Dominoes'} table first before switching!`);
+        return;
+    }
+    
+    const overlay = document.getElementById('game-overlay-container');
+    const frame = document.getElementById('game-overlay-frame');
+    if (overlay && frame) {
+        frame.src = gameName === 'dominoes' ? '/dominoes/' : '/ludo/';
+        overlay.style.display = 'block';
+    }
+}
+
+function closeFullscreenGame() {
+    const activeGame = localStorage.getItem('tellstream_active_game');
+    if (activeGame) {
+        alert(`⚠️ Please leave the game table inside the board first before exiting!`);
+        return;
+    }
+    
+    const overlay = document.getElementById('game-overlay-container');
+    const frame = document.getElementById('game-overlay-frame');
+    if (overlay && frame) {
+        frame.src = '';
+        overlay.style.display = 'none';
+    }
+}
+
+window.launchFullscreenGame = launchFullscreenGame;
+window.closeFullscreenGame = closeFullscreenGame;
 
 function evaluateNoticeBoardForms() {
     const currentUser = usernameInput.value.trim();
@@ -907,7 +1022,7 @@ async function handleSecuritySubmit() {
             alert("Identity checked and authorized!");
             securityDrawer.classList.remove('open');
             chatBox.innerHTML = ""; 
-            if (isNoticeBoardActive) evaluateNoticeBoardForms();
+            syncDrawerName();
             loadMessages();
         } else {
             alert("Invalid Passkey entry sequence.");
@@ -1211,13 +1326,13 @@ async function processScheduleConsoleInjections(text, djUser) {
 }
 
 async function fetchAndRenderWeeklyTimetable() {
-    if (!flyerContainer) return;
+    if (!timetableContainer) return;
     try {
         const { data: masterData, error: masterErr } = await supabase_db.from('master_schedule').select('*');
         const { data: tempOverrides, error: tempErr } = await supabase_db.from('temporary_overrides').select('*');
 
         if (masterErr || !masterData || masterData.length === 0) {
-            flyerContainer.innerHTML = `<p style="color:#666; text-align:center; padding-top:20px; font-style:italic;">Weekly Transmission Timetable under construction.</p>`;
+            timetableContainer.innerHTML = `<p style="color:#666; text-align:center; padding-top:20px; font-style:italic;">Weekly Transmission Timetable under construction.</p>`;
             return;
         }
 
@@ -1294,11 +1409,11 @@ async function fetchAndRenderWeeklyTimetable() {
             return a.sortTime.localeCompare(b.sortTime);
         });
 
-        flyerContainer.innerHTML = processedData.map(d => d.html).join('');
+        timetableContainer.innerHTML = processedData.map(d => d.html).join('');
 
     } catch (e) {
         console.error("Timetable translation engine fault:", e);
-        flyerContainer.innerHTML = `<p style="color:#666; text-align:center; padding-top:20px; font-style:italic;">Weekly Transmission Timetable under construction.</p>`;
+        timetableContainer.innerHTML = `<p style="color:#666; text-align:center; padding-top:20px; font-style:italic;">Weekly Transmission Timetable under construction.</p>`;
     }
 }
 
@@ -1317,6 +1432,7 @@ try {
     try { await loadInitialStreamStatus(); } catch(e){}
     
     renderHelpContent(false);
+    try { await renderActiveFlyers(); } catch(e){}
     setTimeout(initQuickEmojiCloud, 500);
     
     const hiddenInputFileTag = document.createElement('input');
