@@ -405,6 +405,7 @@ async function updateRoomState(updatedFields) {
 }
 
 function enterRoom(code) {
+    window.localStorage.setItem('tellstream_active_game', 'dominoes');
     currentRoomCode = code;
     seatingRoomCodeDisplay.textContent = code;
     tableRoomCodeDisplay.textContent = code;
@@ -443,6 +444,7 @@ function subscribeToRoom(code) {
 
 async function leaveRoom() {
     if (!currentRoomCode) return;
+    window.localStorage.removeItem('tellstream_active_game');
     
     try {
         const { data, error } = await supabase_db

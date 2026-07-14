@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,15 +12,18 @@
     <!-- Premium Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Space+Grotesk:wght@400;700&display=swap"
+        rel="stylesheet">
     <!-- Supabase JS Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="dominoes.css?v=114">
 </head>
+
 <body>
     <!-- App Container -->
     <div id="app-container">
-        
+
         <!-- ================= LOBBY SCREEN ================= -->
         <div id="lobby-view" class="view-panel">
             <header class="lobby-header">
@@ -91,7 +95,8 @@
                     <h2>Join Existing Table</h2>
                     <div class="form-group">
                         <label for="room-code-input">4-Letter Room Code</label>
-                        <input type="text" id="room-code-input" placeholder="e.g. CZTN" autocomplete="off" maxlength="4" class="uppercase-input">
+                        <input type="text" id="room-code-input" placeholder="e.g. CZTN" autocomplete="off" maxlength="4"
+                            class="uppercase-input">
                     </div>
                     <button id="join-room-btn" class="btn primary-btn large-btn">Join Table</button>
                 </div>
@@ -124,14 +129,14 @@
                 <div class="glass-card seating-layout-card">
                     <h2>Game Players</h2>
                     <p class="seating-hint" id="seating-status-hint">Lobby seating is managed by the game host.</p>
-                    
+
                     <div class="seats-grid">
                         <!-- Seat 1 (North/Host) -->
                         <div class="seat-card" id="seat-card-1" data-seat="1">
                             <div class="seat-header">Seat 1 (Host)</div>
                             <div class="seat-player-name" id="seat-player-1">Waiting...</div>
                         </div>
-                        
+
                         <!-- Seat 2 (East) -->
                         <div class="seat-card" id="seat-card-2" data-seat="2">
                             <div class="seat-header">Seat 2</div>
@@ -164,11 +169,12 @@
                 <!-- Lobby Chat/Roster -->
                 <div class="glass-card lobby-roster-card">
                     <h2>Room Roster</h2>
-                    <p class="roster-instructions accent-text" id="roster-helper-text" style="display: none;">click name to add or remove to your game</p>
+                    <p class="roster-instructions accent-text" id="roster-helper-text" style="display: none;">click name
+                        to add or remove to your game</p>
                     <ul id="roster-list" class="roster-list">
                         <!-- Dynamically filled -->
                     </ul>
-                    
+
                     <div class="room-chat">
                         <div id="room-chat-messages" class="chat-messages">
                             <!-- Populated with global messages -->
@@ -193,15 +199,17 @@
                         <button id="leave-room-btn-table" class="btn text-btn-small">← LEAVE</button>
                         <span class="room-code-tag">Room: <strong id="table-room-code-display">XXXX</strong></span>
                     </div>
-                    
+
                     <div class="bar-center">
                         <div class="table-top-status-banner">
-                            ROOM: <span id="table-room-code-val">XXXX</span> | TURN: <span id="table-active-turn-val">NAME</span>
+                            ROOM: <span id="table-room-code-val">XXXX</span> | TURN: <span
+                                id="table-active-turn-val">NAME</span>
                         </div>
                     </div>
 
                     <div class="bar-right">
-                        <span class="boneyard-counter">Boneyard: <strong id="boneyard-count-display">0</strong> left</span>
+                        <span class="boneyard-counter">Boneyard: <strong id="boneyard-count-display">0</strong>
+                            left</span>
                         <button id="audio-toggle-btn" class="btn icon-btn" title="Toggle Sound">🔊</button>
                     </div>
                 </header>
@@ -224,100 +232,103 @@
                 <div id="board-track-container" class="board-track-container">
                     <div id="board-dominoes-line" class="board-dominoes-line">
                         <div class="empty-board-msg">Board is empty. Play any tile to start the line!</div>
-                </div>
-                
-                <!-- Interactive Boneyard Deck -->
-                <div id="boneyard-deck" class="boneyard-deck">
-                    <div class="boneyard-info">
-                        <div class="boneyard-info-title">BONEYARD</div>
-                        <div class="boneyard-info-subtitle">Tiles left:</div>
-                        <div class="boneyard-info-count" id="boneyard-deck-count-val">0</div>
                     </div>
-                    <div class="boneyard-pile" id="boneyard-deck-pile"></div>
-                </div>
 
-                <div id="turn-indicator-banner" class="turn-banner">Waiting for turn...</div>
-
-                <!-- Left/Right Play indicators -->
-                <div id="play-placement-overlay" class="placement-overlay hidden-layout">
-                    <div class="placement-prompt">Select where to connect tile:</div>
-                    <div class="placement-buttons">
-                        <button id="play-left-btn" class="btn placement-btn">Left End</button>
-                        <button id="play-right-btn" class="btn placement-btn">Right End</button>
-                        <button id="cancel-placement-btn" class="btn secondary-btn">Cancel</button>
-                    </div>
-                </div>
-
-                <!-- Player Hand and Draw button area in center bottom -->
-                <div id="player-hand-container-outer" class="player-hand-container-outer">
-                    <div class="hand-row-wrapper">
-                        <div id="player-hand-row" class="player-hand-row">
-                            <!-- Domino tiles in hand -->
+                    <!-- Interactive Boneyard Deck -->
+                    <div id="boneyard-deck" class="boneyard-deck">
+                        <div class="boneyard-info">
+                            <div class="boneyard-info-title">BONEYARD</div>
+                            <div class="boneyard-info-subtitle">Tiles left:</div>
+                            <div class="boneyard-info-count" id="boneyard-deck-count-val">0</div>
                         </div>
-                        <div class="draw-and-badge-column">
-                            <button id="draw-boneyard-btn" class="btn action-btn draw-btn" disabled>DRAW TILE</button>
-                            <div id="my-player-capsule" class="player-corner-badge my-player-capsule hidden-layout">
-                                <span class="player-name" id="my-player-capsule-name">Player</span>
-                                <span class="player-status" id="my-player-capsule-status">Bones: 0</span>
+                        <div class="boneyard-pile" id="boneyard-deck-pile"></div>
+                    </div>
+
+                    <div id="turn-indicator-banner" class="turn-banner">Waiting for turn...</div>
+
+                    <!-- Left/Right Play indicators -->
+                    <div id="play-placement-overlay" class="placement-overlay hidden-layout">
+                        <div class="placement-prompt">Select where to connect tile:</div>
+                        <div class="placement-buttons">
+                            <button id="play-left-btn" class="btn placement-btn">Left End</button>
+                            <button id="play-right-btn" class="btn placement-btn">Right End</button>
+                            <button id="cancel-placement-btn" class="btn secondary-btn">Cancel</button>
+                        </div>
+                    </div>
+
+                    <!-- Player Hand and Draw button area in center bottom -->
+                    <div id="player-hand-container-outer" class="player-hand-container-outer">
+                        <div class="hand-row-wrapper">
+                            <div id="player-hand-row" class="player-hand-row">
+                                <!-- Domino tiles in hand -->
+                            </div>
+                            <div class="draw-and-badge-column">
+                                <button id="draw-boneyard-btn" class="btn action-btn draw-btn" disabled>DRAW
+                                    TILE</button>
+                                <div id="my-player-capsule" class="player-corner-badge my-player-capsule hidden-layout">
+                                    <span class="player-name" id="my-player-capsule-name">Player</span>
+                                    <span class="player-status" id="my-player-capsule-status">Bones: 0</span>
+                                </div>
                             </div>
                         </div>
+                        <div id="spectator-indicator" class="spectator-badge hidden-layout">Spectating Mode</div>
                     </div>
-                    <div id="spectator-indicator" class="spectator-badge hidden-layout">Spectating Mode</div>
-                </div>
 
-                <!-- Transparent Chat Overlay on right side -->
-                <aside class="table-sidebar transparent-chat">
-                    <div class="sidebar-section-title">LOUNGE CHAT</div>
-                    <div class="room-chat table-chat-wrapper">
-                        <div id="table-chat-messages" class="chat-messages">
-                            <!-- Populated with global messages -->
+                    <!-- Transparent Chat Overlay on right side -->
+                    <aside class="table-sidebar transparent-chat">
+                        <div class="sidebar-section-title">LOUNGE CHAT</div>
+                        <div class="room-chat table-chat-wrapper">
+                            <div id="table-chat-messages" class="chat-messages">
+                                <!-- Populated with global messages -->
+                            </div>
+                            <div class="chat-input-bar">
+                                <input type="text" id="table-chat-input" placeholder="Type message..." maxlength="100">
+                                <button id="send-table-chat-btn" class="btn icon-btn">💬</button>
+                            </div>
                         </div>
-                        <div class="chat-input-bar">
-                            <input type="text" id="table-chat-input" placeholder="Type message..." maxlength="100">
-                            <button id="send-table-chat-btn" class="btn icon-btn">💬</button>
+
+                        <div class="sidebar-section-title log-section-header">TABLE LOGS</div>
+                        <div class="sidebar-logs-wrapper">
+                            <div id="table-log-entries" class="log-entries">
+                                <div>Game created. Waiting to start.</div>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="sidebar-section-title log-section-header">TABLE LOGS</div>
-                    <div class="sidebar-logs-wrapper">
-                        <div id="table-log-entries" class="log-entries">
-                            <div>Game created. Waiting to start.</div>
-                        </div>
-                    </div>
-                </aside>
-            </div>
-        </div>
-
-        <!-- ================= GAME OVER MODAL ================= -->
-        <div id="game-over-overlay" class="modal-overlay hidden-layout">
-            <div class="glass-card modal-content-card animated-zoom">
-                <h1 id="game-over-title">Round Over!</h1>
-                <div class="winner-announcement">
-                    <span class="trophy-emoji">🏆</span>
-                    <span id="winner-name-display" class="winner-name">Player 1 wins!</span>
-                </div>
-                
-                <div class="results-breakdown">
-                    <h3>Pips Score details:</h3>
-                    <div id="game-over-scores-list" class="scores-list">
-                        <!-- Scores detail lists -->
-                    </div>
-                </div>
-
-                <div id="game-over-countdown" class="game-over-countdown" style="display: none; margin: 15px 0; font-size: 1.1rem; font-weight: 500;">
-                    Next round starting in <span id="countdown-seconds" class="accent-text">5</span> seconds...
-                </div>
-
-                <div class="modal-actions">
-                    <button id="restart-game-btn" class="btn primary-btn large-btn">Play Another Round</button>
-                    <button id="go-to-lobby-btn" class="btn secondary-btn large-btn">Back to Lobby</button>
+                    </aside>
                 </div>
             </div>
+
+            <!-- ================= GAME OVER MODAL ================= -->
+            <div id="game-over-overlay" class="modal-overlay hidden-layout">
+                <div class="glass-card modal-content-card animated-zoom">
+                    <h1 id="game-over-title">Round Over!</h1>
+                    <div class="winner-announcement">
+                        <span class="trophy-emoji">🏆</span>
+                        <span id="winner-name-display" class="winner-name">Player 1 wins!</span>
+                    </div>
+
+                    <div class="results-breakdown">
+                        <h3>Pips Score details:</h3>
+                        <div id="game-over-scores-list" class="scores-list">
+                            <!-- Scores detail lists -->
+                        </div>
+                    </div>
+
+                    <div id="game-over-countdown" class="game-over-countdown"
+                        style="display: none; margin: 15px 0; font-size: 1.1rem; font-weight: 500;">
+                        Next round starting in <span id="countdown-seconds" class="accent-text">5</span> seconds...
+                    </div>
+
+                    <div class="modal-actions">
+                        <button id="restart-game-btn" class="btn primary-btn large-btn">Play Another Round</button>
+                        <button id="go-to-lobby-btn" class="btn secondary-btn large-btn">Back to Lobby</button>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
-    </div>
-
-    <!-- Main Game Code -->
-    <script src="dominoes.js?v=114"></script>
+        <!-- Main Game Code -->
+        <script src="dominoes.js?v=114"></script>
 </body>
+
 </html>
