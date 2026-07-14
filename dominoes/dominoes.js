@@ -446,11 +446,18 @@ async function leaveRoom() {
     if (!currentRoomCode) return;
     window.localStorage.removeItem('tellstream_active_game');
     
+    const exitingRoomCode = currentRoomCode;
+    
+    if (roomSubscription) {
+        supabase_db.removeChannel(roomSubscription);
+        roomSubscription = null;
+    }
+    
     try {
         const { data, error } = await supabase_db
             .from('domino_rooms')
             .select('*')
-            .eq('room_code', currentRoomCode)
+            .eq('room_code', exitingRoomCode)
             .single();
             
         if (data) {
@@ -466,15 +473,10 @@ async function leaveRoom() {
             await supabase_db
                 .from('domino_rooms')
                 .update({ players: players })
-                .eq('room_code', currentRoomCode);
+                .eq('room_code', exitingRoomCode);
         }
     } catch(err) {
         console.error("Error leaving room:", err);
-    }
-    
-    if (roomSubscription) {
-        supabase_db.removeChannel(roomSubscription);
-        roomSubscription = null;
     }
     
     currentRoomCode = null;
@@ -515,6 +517,7 @@ async function updateUsernameInRoom() {
 
 // REALTIME UPDATE HANDLER
 function handleRoomUpdate(roomData) {
+    if (!currentRoomCode || roomData.room_code !== currentRoomCode) return;
     localState = roomData;
     currentGameState = roomData.game_state;
     
