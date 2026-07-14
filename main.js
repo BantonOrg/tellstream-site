@@ -799,7 +799,7 @@ function syncDrawerName() {
             forgotLink.style.display = "block";
         }
         
-        drawerSubmitBtn.innerText = "Authorize Device Local Memory";
+        drawerSubmitBtn.innerText = "Log In";
     } else {
         lockStatusBtn.innerText = "🔓";
         drawerTitle.innerText = "Secure Current Handle";
@@ -1478,6 +1478,21 @@ try {
     supabase_db.channel('public:master_schedule').on('postgres_changes', { event: '*', pattern: 'public', table: 'master_schedule' }, () => { fetchAndRenderWeeklyTimetable(); }).subscribe();
     supabase_db.channel('public:temporary_overrides').on('postgres_changes', { event: '*', pattern: 'public', table: 'temporary_overrides' }, () => { fetchAndRenderWeeklyTimetable(); }).subscribe();
 } catch (e) { console.log("Realtime schedule subscription delayed:", e.message); }
+
+// Expose functions to global window scope for inline onclick/oninput event handlers in index.html
+window.toggleAccordion = toggleAccordion;
+window.toggleNoticeBoardView = toggleNoticeBoardView;
+window.toggleChatFullscreen = toggleChatFullscreen;
+window.handleSecuritySubmit = handleSecuritySubmit;
+window.toggleForgotPasskeyForm = toggleForgotPasskeyForm;
+window.sendResetVerificationCode = sendResetVerificationCode;
+window.verifyAndResetPasskey = verifyAndResetPasskey;
+window.submitNoticeUpdate = submitNoticeUpdate;
+window.toggleSecurityDrawer = toggleSecurityDrawer;
+window.closeFlyerLightbox = closeFlyerLightbox;
+window.launchFlyerLightbox = launchFlyerLightbox;
+window.insertEmojiCode = insertEmojiCode;
+window.syncDrawerName = syncDrawerName;
 
 (async function initSystem() {
     // 1. Core Lounge Operations (Cannot be affected by outside scripts)
