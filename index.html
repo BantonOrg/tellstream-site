@@ -12,6 +12,7 @@
     <meta property="og:type" content="website">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -85,6 +86,31 @@
             </div>
             <button class="drawer-action-btn" id="drawerSubmitBtn" onclick="handleSecuritySubmit()">Lock Name Globally</button>
             <p id="reminderHintDisplay" style="font-size:0.75rem; color:#ffdd1a; margin-top:6px; display:none; text-align:center;"></p>
+            
+            <!-- Forgot Passkey Step 1: Link to enter reset flow -->
+            <div id="forgotPasskeyLink" style="font-size:0.75rem; text-align:center; margin-top:10px; cursor:pointer; color:#00adb5; text-decoration:underline; display:none;" onclick="toggleForgotPasskeyForm('request')">Forgot Passkey?</div>
+            
+            <!-- Forgot Passkey Step 2: Request Verification Code -->
+            <div id="forgotPasskeyRequestForm" style="display:none; flex-direction:column; gap:8px; margin-top:10px; border-top:1px solid #2d2d2d; padding-top:10px;">
+                <p style="font-size:0.75rem; color:#aaa; text-align:center;">Enter your recovery email. We will send a 6-digit verification code to reset your passkey:</p>
+                <input type="email" id="resetRecoveryEmailInput" placeholder="Enter recovery email..." style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
+                <div style="display:flex; gap:6px;">
+                    <button class="drawer-action-btn" id="sendCodeBtn" style="background:#00adb5; flex:1;" onclick="sendResetVerificationCode()">Send Code</button>
+                    <button class="drawer-action-btn" style="background:#444; flex:1;" onclick="toggleForgotPasskeyForm('login')">Cancel</button>
+                </div>
+            </div>
+
+            <!-- Forgot Passkey Step 3: Verify Code & Reset Passkey -->
+            <div id="forgotPasskeyVerifyForm" style="display:none; flex-direction:column; gap:8px; margin-top:10px; border-top:1px solid #2d2d2d; padding-top:10px;">
+                <p style="font-size:0.75rem; color:#aaa; text-align:center;">Enter the 6-digit code sent to your email and choose a new passkey:</p>
+                <input type="text" id="resetCodeInput" placeholder="6-Digit Verification Code" style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none; text-align:center; letter-spacing:4px; font-weight:bold;">
+                <input type="password" id="resetNewPasskeyInput" placeholder="New Secret Passkey" style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
+                <input type="text" id="resetNewReminderInput" placeholder="New Key Reminder Hint" style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
+                <div style="display:flex; gap:6px;">
+                    <button class="drawer-action-btn" id="confirmResetBtn" style="background:#22e532; flex:1; color:#000;" onclick="verifyAndResetPasskey()">Reset Passkey</button>
+                    <button class="drawer-action-btn" style="background:#444; flex:1;" onclick="toggleForgotPasskeyForm('request')">Back</button>
+                </div>
+            </div>
         </div>
         
         <div class="chat-split-body">

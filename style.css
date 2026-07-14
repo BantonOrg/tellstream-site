@@ -465,7 +465,7 @@ body {
     padding: 0 15px;
 }
 .security-drawer.open {
-    max-height: 230px;
+    max-height: 500px;
     padding: 15px;
 }
 .security-drawer h4 {

@@ -652,16 +652,36 @@ async function submitNoticeUpdate(boardType) {
     }
 }
 
+// 1.5 EMAILJS CONFIGURATION (FOR PASSWORD RESET SELF-SERVICE)
+// Populate these with your EmailJS credentials
+const EMAILJS_SERVICE_ID = "service_qqn3spd";
+const EMAILJS_TEMPLATE_ID = "template_mhk0398";
+const EMAILJS_PUBLIC_KEY = "DsoGYxn2vGdYMBK7Y";
+
 function syncDrawerName() {
     const currentName = usernameInput.value.trim();
     regNameInput.value = currentName;
     reminderHintDisplay.style.display = "none";
+    
+    // Hide forgot passkey buttons/forms by default and reset state
+    const forgotLink = document.getElementById('forgotPasskeyLink');
+    if (forgotLink) forgotLink.style.display = "none";
+    toggleForgotPasskeyForm('login');
     
     if (profilesCache[currentName]) {
         lockStatusBtn.innerText = "🔒";
         drawerTitle.innerText = "Name is Secured: Log In";
         regReminderInput.style.display = "none";
         regEmailInput.style.display = "none";
+        
+        // Only show "Forgot Passkey?" link if the user is NOT already logged in on this browser
+        const loggedInUser = usernameInput.value.trim();
+        const authorizedKey = localStorage.getItem('tellstream_key_' + loggedInUser);
+        const isSelfLoggedIn = currentName === loggedInUser && profilesCache[currentName].passkey === authorizedKey;
+        if (!isSelfLoggedIn && forgotLink) {
+            forgotLink.style.display = "block";
+        }
+        
         drawerSubmitBtn.innerText = "Authorize Device Local Memory";
     } else {
         lockStatusBtn.innerText = "🔓";
@@ -672,6 +692,194 @@ function syncDrawerName() {
     }
     if (isNoticeBoardActive) evaluateNoticeBoardForms();
     renderHelpContent(isNoticeBoardActive);
+}
+
+function toggleForgotPasskeyForm(step) {
+    const link = document.getElementById('forgotPasskeyLink');
+    const reqForm = document.getElementById('forgotPasskeyRequestForm');
+    const verifyForm = document.getElementById('forgotPasskeyVerifyForm');
+    
+    const regPasskey = document.getElementById('regPasskeyInput');
+    const drawerSubmit = document.getElementById('drawerSubmitBtn');
+    
+    if (!link || !reqForm || !verifyForm || !regPasskey || !drawerSubmit) return;
+    
+    if (step === 'request') {
+        // Step 2: Show recovery email form, hide everything else
+        link.style.display = "none";
+        reqForm.style.display = "flex";
+        verifyForm.style.display = "none";
+        regPasskey.style.display = "none";
+        drawerSubmit.style.display = "none";
+    } else if (step === 'verify') {
+        // Step 3: Show verification code entry form, hide everything else
+        link.style.display = "none";
+        reqForm.style.display = "none";
+        verifyForm.style.display = "flex";
+        regPasskey.style.display = "none";
+        drawerSubmit.style.display = "none";
+    } else {
+        // Step 1: Default Login Drawer state
+        const currentName = usernameInput.value.trim();
+        const loggedInUser = usernameInput.value.trim();
+        const authorizedKey = localStorage.getItem('tellstream_key_' + loggedInUser);
+        const isSelfLoggedIn = currentName === loggedInUser && profilesCache[currentName] && profilesCache[currentName].passkey === authorizedKey;
+        
+        link.style.display = (profilesCache[currentName] && !isSelfLoggedIn) ? "block" : "none";
+        reqForm.style.display = "none";
+        verifyForm.style.display = "none";
+        regPasskey.style.display = "block";
+        drawerSubmit.style.display = "block";
+    }
+}
+
+async function sendResetVerificationCode() {
+    const currentName = usernameInput.value.trim();
+    const emailInputVal = document.getElementById('resetRecoveryEmailInput').value.trim();
+    const sendBtn = document.getElementById('sendCodeBtn');
+    
+    if (!currentName) {
+        alert("Please enter a username.");
+        return;
+    }
+    if (!emailInputVal) {
+        alert("Please enter your recovery email.");
+        return;
+    }
+    
+    const profile = profilesCache[currentName];
+    if (!profile) {
+        alert("This handle is not secured yet.");
+        return;
+    }
+    
+    const registeredEmail = (profile.email || "").trim().toLowerCase();
+    if (!registeredEmail) {
+        alert("No recovery email was set for this handle during registration. Please contact lounge admins directly.");
+        return;
+    }
+    
+    if (emailInputVal.toLowerCase() !== registeredEmail) {
+        alert("Recovery email does not match registered email.");
+        return;
+    }
+    
+    // Generate a 6-digit random code
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes from now
+    
+    sendBtn.disabled = true;
+    sendBtn.innerText = "Sending...";
+    
+    try {
+        // Save the code & expiry timestamp to Supabase secured_profiles
+        const { error } = await supabase_db
+            .from('secured_profiles')
+            .update({ 
+                reset_code: code,
+                reset_code_expires: expiresAt
+            })
+            .eq('username', currentName);
+            
+        if (error) throw error;
+        
+        // Dispatch the email via EmailJS
+        if (EMAILJS_SERVICE_ID === "service_xxxxxx" || EMAILJS_PUBLIC_KEY === "your_public_key") {
+            // If they haven't configured EmailJS yet, alert the code locally for testing
+            console.log(`[TEST MODE] Reset code for ${currentName}: ${code}`);
+            alert(`[TEST MODE] Reset code is: ${code}\n\n(Configure your EmailJS credentials at the top of main.js to send actual emails.)`);
+        } else {
+            // Initialize EmailJS
+            emailjs.init(EMAILJS_PUBLIC_KEY);
+            
+            // Send email
+            await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+                to_name: currentName,
+                to_email: emailInputVal,
+                reset_code: code
+            });
+        }
+        
+        alert("Verification code sent to your email!");
+        toggleForgotPasskeyForm('verify');
+    } catch (err) {
+        alert("Could not send verification code: " + err.message);
+    } finally {
+        sendBtn.disabled = false;
+        sendBtn.innerText = "Send Code";
+    }
+}
+
+async function verifyAndResetPasskey() {
+    const currentName = usernameInput.value.trim();
+    const enteredCode = document.getElementById('resetCodeInput').value.trim();
+    const newPasskey = document.getElementById('resetNewPasskeyInput').value.trim();
+    const newReminder = document.getElementById('resetNewReminderInput').value.trim();
+    const confirmBtn = document.getElementById('confirmResetBtn');
+    
+    if (!enteredCode || !newPasskey) {
+        alert("Please enter the verification code and your new passkey.");
+        return;
+    }
+    
+    confirmBtn.disabled = true;
+    confirmBtn.innerText = "Resetting...";
+    
+    try {
+        // Query the database to get the code & expiry directly
+        const { data, error } = await supabase_db
+            .from('secured_profiles')
+            .select('reset_code, reset_code_expires')
+            .eq('username', currentName)
+            .single();
+            
+        if (error || !data) {
+            throw new Error("Could not verify code. Please request a new one.");
+        }
+        
+        const dbCode = data.reset_code;
+        const expiry = new Date(data.reset_code_expires);
+        
+        if (!dbCode || dbCode !== enteredCode) {
+            throw new Error("Invalid verification code.");
+        }
+        
+        if (expiry < new Date()) {
+            throw new Error("Verification code has expired. Please request a new one.");
+        }
+        
+        // Update passkey and reminder, clear code fields
+        const { error: updateError } = await supabase_db
+            .from('secured_profiles')
+            .update({
+                passkey: newPasskey,
+                key_reminder: newReminder,
+                reset_code: null,
+                reset_code_expires: null
+            })
+            .eq('username', currentName);
+            
+        if (updateError) throw updateError;
+        
+        // Save new passkey locally to log in the user
+        localStorage.setItem('tellstream_key_' + currentName, newPasskey);
+        localStorage.setItem('tellstream_saved_username', currentName);
+        
+        alert("Passkey successfully reset! You are now logged in.");
+        
+        // Clean up inputs and close drawer
+        document.getElementById('resetCodeInput').value = "";
+        document.getElementById('resetNewPasskeyInput').value = "";
+        document.getElementById('resetNewReminderInput').value = "";
+        
+        await syncProfilesMap();
+        securityDrawer.classList.remove('open');
+    } catch (err) {
+        alert("Reset failed: " + err.message);
+    } finally {
+        confirmBtn.disabled = false;
+        confirmBtn.innerText = "Reset Passkey";
+    }
 }
 
 async function toggleSecurityDrawer() {
