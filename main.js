@@ -66,6 +66,7 @@ const adminHelpInstructions = [
     { title: "👑 Station Admin Rules (Level 2)", text: "Station Admins (Level 2) have full administrative control over the chat system, including managing presenter assets, noticeboards, and overriding user bans." },
     { title: "🖼️ Presenter Cloud Assets", text: "Example: /upload [Name] & /delete [Name]\nWhat it does: Uploads a custom presenter transparent PNG logo, or deletes an existing logo from cloud storage. Restricted to Level 2." },
     { title: "🔥 Event Flyer Cloud Assets", text: "Example: /uploadflyer [DDMMYY_Name] & /deleteflyer [DDMMYY_Name]\nWhat it does: Uploads an event flyer image or deletes one from cloud storage. Filename MUST start with 6 digits (DDMMYY). Restricted to Level 2." },
+    { title: "👑 Promote / Demote Users", text: "Example: /promote [username] [1 or 2] & /demote [username] [0 or 1]\nWhat it does: Promotes a registered user to Level 1 (DJ Selector) or Level 2 (Station Admin), or demotes a user to Level 1 or Level 0. Restricted to Level 2." },
     { title: "⚔️ Global filter management", text: "Example: /add [word], /del [word], /listwords\nWhat it does: Add word to filter list, delete word from filter list, or print the active filter words list." },
     { title: "🚫 Chat Lockout & Ban Overrides", text: "Example: /unban [username]\nWhat it does: Swearing automatically tracks strikes. Strike 3 triggers a 24h lockout, and Strike 4+ triggers a permanent ban. Users can auto-restore 1 strike by typing 'sorry' (once). Use /unban to reset all user strikes and restore chat access." }
 ];
@@ -359,6 +360,74 @@ async function handleAdminFilterCommand(text) {
     }
     else if (text === '/listwords') {
         alert(bannedWordsCache.length === 0 ? "Filter is empty." : "Filtered Words:\n" + bannedWordsCache.join(', '));
+    }
+}
+
+async function handlePromoteDemoteCommand(text) {
+    const isPromote = text.startsWith('/promote');
+    const cmdName = isPromote ? '/promote' : '/demote';
+    
+    const rawBody = text.substring(cmdName.length).trim();
+    if (!rawBody) {
+        alert(`Usage:\n${cmdName} [username] [level]`);
+        return;
+    }
+    
+    const lastSpaceIndex = rawBody.lastIndexOf(' ');
+    if (lastSpaceIndex === -1) {
+        alert(`Usage:\n${cmdName} [username] [level]`);
+        return;
+    }
+    
+    const targetUsername = rawBody.substring(0, lastSpaceIndex).trim();
+    const targetLevelStr = rawBody.substring(lastSpaceIndex + 1).trim();
+    const targetLevel = parseInt(targetLevelStr);
+    
+    if (isNaN(targetLevel)) {
+        alert(`Usage:\n${cmdName} [username] [level]`);
+        return;
+    }
+    
+    if (isPromote) {
+        if (targetLevel !== 1 && targetLevel !== 2) {
+            alert("Invalid level. /promote target level must be 1 (DJ Selector) or 2 (Station Admin).");
+            return;
+        }
+    } else {
+        if (targetLevel !== 0 && targetLevel !== 1) {
+            alert("Invalid level. /demote target level must be 0 (Tella Fambily) or 1 (DJ Selector).");
+            return;
+        }
+    }
+    
+    const targetProfile = Object.values(profilesCache).find(p => p.username.toLowerCase() === targetUsername.toLowerCase());
+    if (!targetProfile) {
+        alert(`User "${targetUsername}" does not have a secured profile (not registered).`);
+        return;
+    }
+    
+    let newHoverTitle = targetProfile.hover_title || "Tella Fambily";
+    if (targetLevel === 2) {
+        newHoverTitle = "Station Admin";
+    } else if (targetLevel === 1) {
+        newHoverTitle = "DJ Selector";
+    } else if (targetLevel === 0) {
+        newHoverTitle = "Tella Fambily";
+    }
+    
+    try {
+        const { error } = await supabase_db
+            .from('secured_profiles')
+            .update({
+                power_level: targetLevel,
+                hover_title: newHoverTitle
+            })
+            .eq('username', targetProfile.username);
+            
+        if (error) throw error;
+        alert(`Success: "${targetProfile.username}" has been ${isPromote ? 'promoted' : 'demoted'} to Level ${targetLevel} (${newHoverTitle}).`);
+    } catch (err) {
+        alert("Database Update Failure: " + err.message);
     }
 }
 
@@ -1178,6 +1247,17 @@ async function sendMessage() {
                     await updateDatabaseStreamStatus(showNameInput);
                     return;
                 }
+            }
+
+            if (text.startsWith('/promote') || text.startsWith('/demote')) {
+                if (userPowerLevel < 2) {
+                    messageInput.value = '';
+                    alert("🔒 Access Denied: Only Station Admins (Level 2) have authorization to promote or demote users.");
+                    return;
+                }
+                messageInput.value = '';
+                await handlePromoteDemoteCommand(text);
+                return;
             }
             
             if (text.startsWith('/upload ') || text.startsWith('/delete ')) {
