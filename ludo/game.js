@@ -18,6 +18,10 @@ let soundOn = false;
 let turnTimerInterval = null;
 const TURN_TIMEOUT_SECONDS = 30;
 
+let isProcessing = false;
+let localTokenPositions = null;
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
 const COLORS = ["red", "green", "yellow", "blue"];
 
 const COMMON_TRACK = [
@@ -463,8 +467,101 @@ async function launchMatch() {
 
 if (startGameBtn) startGameBtn.onclick = launchMatch;
 
+async function runMovementAnimation(movedColor, tokenIdx, targetPos, finalRoomData) {
+  isProcessing = true;
+  const startPos = localTokenPositions[movedColor][tokenIdx];
+
+  // Walk step by step
+  if (startPos === -1) {
+    localTokenPositions[movedColor][tokenIdx] = 0;
+    render();
+    if (soundOn) playSound("move");
+    await delay(250);
+  } else {
+    let cur = startPos;
+    while (cur < targetPos) {
+      cur++;
+      localTokenPositions[movedColor][tokenIdx] = cur;
+      render();
+      if (soundOn) playSound("move");
+      await delay(250);
+    }
+  }
+
+  // Check if any token was captured
+  let captured = false;
+  COLORS.forEach(c => {
+    for (let i = 0; i < 4; i++) {
+      if (finalRoomData.state.tokens[c][i] === -1 && localTokenPositions[c][i] >= 0) {
+        captured = true;
+      }
+    }
+  });
+
+  if (captured && soundOn) {
+    playSound("capture");
+  }
+
+  localTokenPositions = {
+    red: [...finalRoomData.state.tokens.red],
+    green: [...finalRoomData.state.tokens.green],
+    yellow: [...finalRoomData.state.tokens.yellow],
+    blue: [...finalRoomData.state.tokens.blue]
+  };
+
+  isProcessing = false;
+  handleStateUpdate(finalRoomData);
+}
+
 function handleStateUpdate(roomData) {
   if (!roomCode || roomData.room_code !== roomCode) return;
+
+  // Animation check
+  let animated = false;
+  if (localTokenPositions && roomData.game_state === "playing" && roomData.state && roomData.state.tokens) {
+    for (let c of COLORS) {
+      for (let i = 0; i < 4; i++) {
+        const oldPos = localTokenPositions[c][i];
+        const newPos = roomData.state.tokens[c][i];
+        if (newPos > oldPos) {
+          animated = true;
+          state = roomData.state;
+          const playersObj = roomData.players || {};
+          const theme = playersObj.settings?.theme || "classic";
+          const sound = playersObj.settings?.sound ?? true;
+          soundOn = sound;
+          if (localSoundToggle) localSoundToggle.checked = sound;
+          board.className = "";
+          board.classList.add(`theme-${theme}`);
+          if (localThemeSelect) localThemeSelect.value = theme;
+          playerColor = null;
+          COLORS.forEach(color => {
+            if (playersObj[color] === myUsername) playerColor = color;
+          });
+          const joinedColors = COLORS.filter(color => playersObj[color] && playersObj[color] !== "Waiting..." && playersObj[color] !== "Not In Use");
+          const activeSeatsCount = joinedColors.length;
+          currentTurnColor = activeSeatsCount > 0 ? joinedColors[roomData.turn % activeSeatsCount] : "red";
+          currentRoll = state.currentRoll;
+          hasRolledThisTurn = state.hasRolled;
+          showView(gameScreen);
+
+          runMovementAnimation(c, i, newPos, roomData);
+          break;
+        }
+      }
+      if (animated) break;
+    }
+  }
+
+  if (animated) return;
+
+  localTokenPositions = roomData.state ? {
+    red: [...roomData.state.tokens.red],
+    green: [...roomData.state.tokens.green],
+    yellow: [...roomData.state.tokens.yellow],
+    blue: [...roomData.state.tokens.blue]
+  } : null;
+
   state = roomData.state;
   const playersObj = roomData.players || {};
   const maxPlayers = playersObj.settings?.max_players || 4;
@@ -620,6 +717,7 @@ function startTurnTimer() {
 }
 
 async function handleDiceRoll() {
+  if (isProcessing) return;
   if (playerColor !== currentTurnColor) return;
   if (hasRolledThisTurn) return;
 
@@ -630,7 +728,11 @@ async function handleDiceRoll() {
   state.hasRolled = true;
 
   if (!hasValidMoves(playerColor, roll)) {
-    setTimeout(() => passTurn(roll === 6), 1500);
+    isProcessing = true;
+    setTimeout(async () => {
+      await passTurn(roll === 6);
+      isProcessing = false;
+    }, 1500);
   }
   await updateDatabaseState();
 }
@@ -647,10 +749,11 @@ function isValidMove(color, tokenIdx, roll) {
 }
 
 async function selectTokenToMove(tokenIdx) {
+  if (isProcessing) return;
   if (playerColor !== currentTurnColor || !hasRolledThisTurn) return;
   if (!isValidMove(playerColor, tokenIdx, currentRoll)) return;
 
-  if (soundOn) playSound("move");
+  isProcessing = true;
   
   let currentPos = state.tokens[playerColor][tokenIdx];
   if (currentPos === -1 && currentRoll === 6) {
@@ -753,9 +856,10 @@ function render() {
 
   const coordinateGroups = {};
   const tokensToRender = [];
+  const positionsToUse = localTokenPositions || state.tokens;
 
   COLORS.forEach(c => {
-    state.tokens[c].forEach((pos, idx) => {
+    positionsToUse[c].forEach((pos, idx) => {
       const coords = getTokenGridCoords(c, pos, idx);
       const coordKey = `${coords.x},${coords.y}`;
       
@@ -786,7 +890,7 @@ function render() {
     }
     tokenEl.style.transform = transformString;
 
-    if (token.color === playerColor && currentTurnColor === playerColor && hasRolledThisTurn && isValidMove(token.color, token.index, currentRoll)) {
+    if (!isProcessing && token.color === playerColor && currentTurnColor === playerColor && hasRolledThisTurn && isValidMove(token.color, token.index, currentRoll)) {
       tokenEl.classList.add("movable");
       tokenEl.onclick = () => selectTokenToMove(token.index);
     }

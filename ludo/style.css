@@ -4,12 +4,12 @@
     --bg-dark: #0a0a0c;
     --card-bg: rgba(20, 20, 25, 0.65);
     --border-color: rgba(255, 255, 255, 0.08);
-    --accent-glow: #00adb5;
-    --accent-glow-rgb: 0, 173, 181;
+    --accent-glow: #22e532;
+    --accent-glow-rgb: 34, 229, 50;
     --text-primary: #f5f5f7;
     --text-secondary: #9ca3af;
-    --btn-primary: #00adb5;
-    --btn-primary-hover: #008f96;
+    --btn-primary: #22e532;
+    --btn-primary-hover: #1cb528;
     --btn-danger: #ea4335;
     --btn-danger-hover: #c53026;
     --transition-speed: 0.25s;
