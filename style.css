@@ -72,7 +72,7 @@ body {
     white-space: nowrap;
 }
 .header-cell h1 {
-    color: #00adb5;
+    color: #22e532;
     font-size: 1.8rem;
     text-transform: uppercase;
     font-weight: 800;
@@ -118,7 +118,7 @@ body {
 
 .col-title {
     font-size: 1.1rem;
-    color: #00adb5;
+    color: #22e532;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     padding-bottom: 8px;
     flex-shrink: 0;
@@ -142,10 +142,11 @@ body {
 }
 
 .emoji-master-link {
-    background: #00adb5;
+    background: #22e532;
+    color: #000;
 }
 .emoji-master-link:hover {
-    background: #008c94;
+    background: #1cb528;
 }
 
 .inner-feed-wrapper {
@@ -171,7 +172,7 @@ body {
 }
 .fb-post-meta {
     font-size: 0.75rem;
-    color: #00adb5;
+    color: #22e532;
     font-weight: bold;
     margin-bottom: 6px;
 }
@@ -220,7 +221,7 @@ body {
     background: rgba(255, 255, 255, 0.03);
     padding: 8px 12px;
     border-radius: 6px;
-    border-left: 3px solid #00adb5;
+    border-left: 3px solid #22e532;
 }
 .help-item-card h5 {
     font-size: 0.85rem;
@@ -249,8 +250,8 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.02);
 }
 .emoji-grid-item:hover {
-    background: rgba(0, 173, 181, 0.2);
-    border-color: #00adb5;
+    background: rgba(34, 229, 50, 0.2);
+    border-color: #22e532;
 }
 
 /* ==========================================================================
@@ -268,41 +269,50 @@ body {
 }
 
 .chat-header {
-    padding: 20px;
+    padding: 12px 15px;
     background: rgba(30, 30, 30, 0.8);
     border-bottom: 1px solid rgba(45, 45, 45, 0.5);
     font-weight: bold;
-    font-size: 1.2rem;
-    color: #00adb5;
+    font-size: 1.1rem;
+    color: #22e532;
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-shrink: 0;
 }
 
-.nav-controls-row {
+.header-games-row, .nav-controls-row {
     display: flex;
     gap: 6px;
     align-items: center;
 }
 
-.fullscreen-btn {
-    background: rgba(255, 255, 255, 0.1);
+.chat-header-btn {
+    background: rgba(255, 255, 255, 0.05);
     color: #fff;
-    border: none;
+    border: 1px solid rgba(255, 255, 255, 0.08);
     padding: 6px 12px;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     border-radius: 4px;
     cursor: pointer;
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s ease;
 }
-.fullscreen-btn:hover {
-    background: #00adb5;
+
+.chat-header-btn:hover {
+    background: rgba(34, 229, 50, 0.15);
+    border-color: #22e532;
+    color: #22e532;
+    box-shadow: 0 0 8px rgba(34, 229, 50, 0.2);
 }
 
 #toggle-notice-btn {
-    background: rgba(0, 173, 181, 0.15);
-    border: 1px solid rgba(0, 173, 181, 0.3);
-    color: #00adb5;
+    background: rgba(34, 229, 50, 0.15);
+    border: 1px solid rgba(34, 229, 50, 0.3);
+    color: #22e532;
     display: inline-block; 
 }
 
@@ -373,7 +383,7 @@ body {
     padding: 8px;
     border-radius: 4px;
     font-size: 0.85rem;
-    border-left: 2px solid rgba(0, 173, 181, 0.4);
+    border-left: 2px solid rgba(34, 229, 50, 0.4);
 }
 .notice-input-form-block {
     display: none;
@@ -394,11 +404,11 @@ body {
     border-radius: 4px;
     outline: none;
 }
-.notice-row-input input:focus { border-color: #00adb5; }
+.notice-row-input input:focus { border-color: #22e532; }
 .notice-inline-btn {
-    background: #00adb5;
+    background: #22e532;
     border: none;
-    color: #fff;
+    color: #000;
     font-weight: bold;
     padding: 0 12px;
     font-size: 0.75rem;
@@ -458,7 +468,7 @@ body {
 
 .security-drawer {
     background: rgba(28, 28, 28, 0.98);
-    border-bottom: 1px solid rgba(0, 173, 181, 0.3);
+    border-bottom: 1px solid rgba(34, 229, 50, 0.3);
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.3s ease-out;
@@ -470,7 +480,7 @@ body {
 }
 .security-drawer h4 {
     font-size: 0.85rem;
-    color: #00adb5;
+    color: #22e532;
     margin-bottom: 10px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -491,11 +501,11 @@ body {
     outline: none;
 }
 .form-grid input:focus {
-    border-color: #00adb5;
+    border-color: #22e532;
 }
 .drawer-action-btn {
-    background: #00adb5;
-    color: white;
+    background: #22e532;
+    color: #000;
     border: none;
     padding: 6px 12px;
     border-radius: 4px;
@@ -504,7 +514,7 @@ body {
     cursor: pointer;
     width: 100%;
 }
-.drawer-action-btn:hover { background: #008c94; }
+.drawer-action-btn:hover { background: #1cb528; }
 
 /* ==========================================================================
    🎮 CONSOLE INPUT HUB (SWAPPED LAYER ORDER FOR TEXTAREA FLUSH-LEFT POSITIONING)
@@ -538,7 +548,7 @@ body {
     box-sizing: border-box;
 }
 .chat-input-area textarea#messageInput:focus {
-    border-color: rgba(0, 173, 181, 0.4);
+    border-color: rgba(34, 229, 50, 0.4);
 }
 
 /* Lock toggle sits perfectly in between components */
@@ -583,9 +593,9 @@ body {
 .left-control-stack button.send-main-btn {
     width: 100%;
     height: 30px; 
-    background: #00adb5;
+    background: #22e532;
     border: none;
-    color: white;
+    color: black;
     border-radius: 4px;
     font-weight: bold;
     font-size: 0.8rem;
@@ -594,7 +604,7 @@ body {
     box-sizing: border-box;
 }
 .left-control-stack button.send-main-btn:hover {
-    background: #008c94;
+    background: #1cb528;
 }
 
 body.chat-is-fullscreen .main-content {
@@ -699,8 +709,8 @@ body.chat-is-fullscreen .chat-fs-help-panel {
     object-fit: contain;
 }
 .modal-close-btn {
-    background: #00adb5;
-    color: white;
+    background: #22e532;
+    color: black;
     border: none;
     padding: 8px 24px;
     border-radius: 6px;
@@ -711,7 +721,7 @@ body.chat-is-fullscreen .chat-fs-help-panel {
     transition: background 0.2s;
 }
 .modal-close-btn:hover {
-    background: #008c94;
+    background: #1cb528;
 }
 
 /* ==========================================================================

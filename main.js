@@ -662,6 +662,7 @@ function toggleNoticeBoardView() {
     const mainTitle = document.getElementById('sidebarPanelTitle');
     const toggleBtn = document.getElementById('toggle-notice-btn');
     const emojiSectionFS = quickEmojiListFS.parentElement;
+    const gamesRow = document.getElementById('headerGamesRow');
 
     if (!isNoticeBoardActive) {
         document.body.classList.add('chat-is-fullscreen');
@@ -669,7 +670,13 @@ function toggleNoticeBoardView() {
         inputContainer.style.display = 'none'; 
         securityDrawer.classList.remove('open'); 
         noticePanel.style.display = 'flex';
-        mainTitle.innerText = "📋 Noticeboard";
+        if (mainTitle) {
+            mainTitle.innerText = "📋 Noticeboard";
+            mainTitle.style.display = 'block';
+        }
+        if (gamesRow) {
+            gamesRow.style.display = 'none';
+        }
         toggleBtn.innerText = "❌ Exit Noticeboard";
         isNoticeBoardActive = true;
         if (emojiSectionFS) emojiSectionFS.style.display = 'none';
@@ -681,7 +688,12 @@ function toggleNoticeBoardView() {
         noticePanel.style.display = 'none';
         streamChat.style.display = 'flex';
         inputContainer.style.display = 'flex';
-        mainTitle.innerText = "🔊 Listener Lounge";
+        if (mainTitle) {
+            mainTitle.style.display = 'none';
+        }
+        if (gamesRow) {
+            gamesRow.style.display = 'flex';
+        }
         toggleBtn.innerText = "📋 Noticeboard";
         isNoticeBoardActive = false;
         if (emojiSectionFS) emojiSectionFS.style.display = 'block';
@@ -1523,8 +1535,8 @@ async function fetchAndRenderWeeklyTimetable() {
                 sortDay: dayOrder[localDayStr.toLowerCase()],
                 sortTime: localStartStr,
                 html: `
-                    <div class="fb-post-card" style="border-left: 4px solid #00adb5; margin-bottom: 12px; background: rgba(0, 173, 181, 0.03); padding: 14px; border-radius: 4px;">
-                        <div style="font-weight: 900; color: #00adb5; text-transform: uppercase; font-size: 0.95rem; letter-spacing: 1px; display: flex; justify-content: space-between;">
+                    <div class="fb-post-card" style="border-left: 4px solid #22e532; margin-bottom: 12px; background: rgba(34, 229, 50, 0.03); padding: 14px; border-radius: 4px;">
+                        <div style="font-weight: 900; color: #22e532; text-transform: uppercase; font-size: 0.95rem; letter-spacing: 1px; display: flex; justify-content: space-between;">
                             <span>📅 ${localDayStr}</span>
                             <span style="color: #555; font-size: 0.75rem; text-transform: none; font-weight: normal;">📍 Auto-Translated</span>
                         </div>

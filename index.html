@@ -66,17 +66,13 @@
             </div>
             
             <div class="col-3">
-                <div class="col-title" style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;">
-                    <span style="font-size: 0.95rem; white-space: nowrap;">💡 Chat help and emoji codes</span>
-                    <div style="display: flex; gap: 4px;">
-                        <button onclick="launchFullscreenGame('dominoes')" style="background: #00adb5; color: #ffffff; padding: 2px 6px; border-radius: 4px; font-size: 0.72rem; text-decoration: none; font-weight: bold; border: 1px solid rgba(255,255,255,0.2); white-space: nowrap; cursor: pointer;">🎲 Dominoes</button>
-                        <button onclick="launchFullscreenGame('ludo')" style="background: #22e532; color: #000000; padding: 2px 6px; border-radius: 4px; font-size: 0.72rem; text-decoration: none; font-weight: bold; border: 1px solid rgba(255,255,255,0.2); white-space: nowrap; cursor: pointer;">🎲 Ludo</button>
-                    </div>
+                <div class="col-title">
+                    <span>💡 Chat help and emoji codes</span>
                 </div>
                 <div class="sub-panel-top" id="helpCardsContainer"></div>
                 <div class="sub-panel-bottom">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                        <span style="font-size:0.85rem; color:#00adb5; font-weight:bold;">✨ Quick Emojis</span>
+                        <span style="font-size:0.85rem; color:#22e532; font-weight:bold;">✨ Quick Emojis</span>
                         <a href="https://tellstream-emojis.pages.dev/" target="_blank" class="emoji-master-link">See All Codes</a>
                     </div>
                     <div class="emoji-grid-list" id="quickEmojiList"></div>
@@ -87,10 +83,14 @@
 
     <div class="chat-sidebar">
         <div class="chat-header">
-            <span id="sidebarPanelTitle">🔊 Listener Lounge</span>
+            <span id="sidebarPanelTitle" style="display: none;">🔊 Listener Lounge</span>
+            <div class="header-games-row" id="headerGamesRow">
+                <button onclick="launchFullscreenGame('dominoes')" class="chat-header-btn">🎲 Dominoes</button>
+                <button onclick="launchFullscreenGame('ludo')" class="chat-header-btn">🎲 Ludo</button>
+            </div>
             <div class="nav-controls-row">
-                <button class="fullscreen-btn" id="toggle-notice-btn" onclick="toggleNoticeBoardView()">📋 Noticeboard</button>
-                <button class="fullscreen-btn" id="fsToggleBtn" onclick="toggleChatFullscreen()">Maximize Chat</button>
+                <button class="chat-header-btn" id="toggle-notice-btn" onclick="toggleNoticeBoardView()">📋 Noticeboard</button>
+                <button class="chat-header-btn" id="fsToggleBtn" onclick="toggleChatFullscreen()">Maximize Chat</button>
             </div>
         </div>
         
@@ -106,14 +106,14 @@
             <p id="reminderHintDisplay" style="font-size:0.75rem; color:#ffdd1a; margin-top:6px; display:none; text-align:center;"></p>
             
             <!-- Forgot Passkey Step 1: Link to enter reset flow -->
-            <div id="forgotPasskeyLink" style="font-size:0.75rem; text-align:center; margin-top:10px; cursor:pointer; color:#00adb5; text-decoration:underline; display:none;" onclick="toggleForgotPasskeyForm('request')">Forgot Passkey?</div>
+            <div id="forgotPasskeyLink" style="font-size:0.75rem; text-align:center; margin-top:10px; cursor:pointer; color:#22e532; text-decoration:underline; display:none;" onclick="toggleForgotPasskeyForm('request')">Forgot Passkey?</div>
             
             <!-- Forgot Passkey Step 2: Request Verification Code -->
             <div id="forgotPasskeyRequestForm" style="display:none; flex-direction:column; gap:8px; margin-top:10px; border-top:1px solid #2d2d2d; padding-top:10px;">
                 <p style="font-size:0.75rem; color:#aaa; text-align:center;">Enter your recovery email. We will send a 6-digit verification code to reset your passkey:</p>
                 <input type="email" id="resetRecoveryEmailInput" placeholder="Enter recovery email..." style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
                 <div style="display:flex; gap:6px;">
-                    <button class="drawer-action-btn" id="sendCodeBtn" style="background:#00adb5; flex:1;" onclick="sendResetVerificationCode()">Send Code</button>
+                    <button class="drawer-action-btn" id="sendCodeBtn" style="background:#22e532; color:#000; flex:1;" onclick="sendResetVerificationCode()">Send Code</button>
                     <button class="drawer-action-btn" style="background:#444; flex:1;" onclick="toggleForgotPasskeyForm('login')">Cancel</button>
                 </div>
             </div>
@@ -175,7 +175,7 @@
                 <div class="help-cards-wrapper-fs" id="helpCardsContainerFS" style="display:flex; flex-direction:column; gap:8px;"></div>
                 <div class="sub-panel-bottom" style="background:transparent; padding:0; border:none; display:flex; flex-direction:column; gap:8px; margin-top:10px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                        <span style="font-size:0.85rem; color:#00adb5; font-weight:bold;">✨ Quick Emojis</span>
+                        <span style="font-size:0.85rem; color:#22e532; font-weight:bold;">✨ Quick Emojis</span>
                         <a href="https://tellstream-emojis.pages.dev/" target="_blank" class="emoji-master-link">See All Codes</a>
                     </div>
                     <div class="emoji-grid-list" id="quickEmojiListFS"></div>
