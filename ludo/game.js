@@ -42,22 +42,22 @@ const COMMON_TRACK = [
 const COLOR_MAPS = {
   green: {
     startTrackIdx: 47, homeStartIdx: 50,
-    homeCoords: [{x:7,y:1}, {x:7,y:2}, {x:7,y:3}, {x:7,y:4}, {x:7,y:5}, {x:7,y:6}],
+    homeCoords: [{x:1,y:7}, {x:2,y:7}, {x:3,y:7}, {x:4,y:7}, {x:5,y:7}, {x:6,y:7}],
     yard: [{x:0,y:4}, {x:1,y:4}, {x:0,y:5}, {x:1,y:5}]
   },
   yellow: {
     startTrackIdx: 8, homeStartIdx: 50,
-    homeCoords: [{x:13,y:7}, {x:12,y:7}, {x:11,y:7}, {x:10,y:7}, {x:9,y:7}, {x:8,y:7}],
+    homeCoords: [{x:7,y:1}, {x:7,y:2}, {x:7,y:3}, {x:7,y:4}, {x:7,y:5}, {x:7,y:6}],
     yard: [{x:9,y:1}, {x:10,y:1}, {x:9,y:2}, {x:10,y:2}]
   },
   blue: {
     startTrackIdx: 21, homeStartIdx: 50,
-    homeCoords: [{x:7,y:13}, {x:7,y:12}, {x:7,y:11}, {x:7,y:10}, {x:7,y:9}, {x:7,y:8}],
+    homeCoords: [{x:13,y:7}, {x:12,y:7}, {x:11,y:7}, {x:10,y:7}, {x:9,y:7}, {x:8,y:7}],
     yard: [{x:13,y:9}, {x:14,y:9}, {x:13,y:10}, {x:14,y:10}]
   },
   red: {
     startTrackIdx: 34, homeStartIdx: 50,
-    homeCoords: [{x:1,y:7}, {x:2,y:7}, {x:3,y:7}, {x:4,y:7}, {x:5,y:7}, {x:6,y:7}],
+    homeCoords: [{x:7,y:13}, {x:7,y:12}, {x:7,y:11}, {x:7,y:10}, {x:7,y:9}, {x:7,y:8}],
     yard: [{x:4,y:12}, {x:5,y:12}, {x:4,y:13}, {x:5,y:13}]
   }
 };
