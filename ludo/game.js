@@ -518,7 +518,7 @@ function handleStateUpdate(roomData) {
 
   // Animation check
   let animated = false;
-  if (localTokenPositions && roomData.game_state === "playing" && roomData.state && roomData.state.tokens) {
+  if (localTokenPositions && (roomData.game_state === "playing" || roomData.game_state === "finished") && roomData.state && roomData.state.tokens) {
     for (let c of COLORS) {
       for (let i = 0; i < 4; i++) {
         const oldPos = localTokenPositions[c][i];
@@ -554,6 +554,14 @@ function handleStateUpdate(roomData) {
   }
 
   if (animated) return;
+
+  if (roomData.game_state === "finished") {
+      showView(gameScreen);
+      const playersObj = roomData.players || {};
+      const winnerName = playersObj[roomData.winner] || roomData.winner;
+      showWinnerAnnounce(winnerName);
+      return;
+  }
 
   localTokenPositions = roomData.state ? {
     red: [...roomData.state.tokens.red],
@@ -763,7 +771,19 @@ async function selectTokenToMove(tokenIdx) {
   }
 
   checkCaptures(playerColor, tokenIdx);
-  await passTurn(currentRoll === 6);
+  
+  const hasWon = state.tokens[playerColor].every(pos => pos === 57);
+  if (hasWon) {
+    state.currentRoll = null;
+    state.hasRolled = false;
+    await supabase.from("lud_room").update({
+      game_state: "finished",
+      state: state,
+      winner: playerColor
+    }).eq("room_code", roomCode);
+  } else {
+    await passTurn(currentRoll === 6);
+  }
 }
 
 function checkCaptures(movingColor, movingIdx) {
@@ -901,4 +921,50 @@ function render() {
 function playSound(name) {
   let a = new Audio(`assets/sfx/${name}.mp3`);
   a.play().catch(()=>{});
+}
+
+function showWinnerAnnounce(winnerName) {
+  let overlay = document.getElementById("winner-overlay");
+  if (!overlay) {
+    overlay = document.createElement("div");
+    overlay.id = "winner-overlay";
+    overlay.style = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(10px);
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+    `;
+    overlay.innerHTML = `
+      <h1 style="font-size: 3rem; color: #22e532; text-shadow: 0 0 20px rgba(34,229,50,0.5); font-family: 'Space Grotesk', sans-serif;">🏆 GAME OVER 🏆</h1>
+      <p style="font-size: 1.5rem; color: white;" id="winner-name-display"></p>
+      <button onclick="location.reload()" class="btn primary-btn" style="padding: 10px 20px; font-size: 1rem; border-radius: 8px; font-family: 'Space Grotesk', sans-serif; cursor: pointer;">Back to Lobby</button>
+    `;
+    document.body.appendChild(overlay);
+  }
+  document.getElementById("winner-name-display").innerText = `🎉 ${winnerName.toUpperCase()} HAS WON THE GAME! 🎉`;
+}
+
+window.simulateLudoTestState = async () => {
+  if (!roomCode || !playerColor) {
+    alert("Please join or create a game room first!");
+    return;
+  }
+  state.tokens[playerColor] = [57, 57, 57, 50];
+  state.currentRoll = null;
+  state.hasRolled = false;
+  await supabase.from("lud_room").update({ state }).eq("room_code", roomCode);
+  alert("Ludo test state set successfully!\n- 3 tokens at Goal (57)\n- 1 token at chevron entrance (50)\n\nRoll the dice to walk the last token home!");
+};
+
+if (window.parent) {
+  window.parent.simulateLudoTestState = window.simulateLudoTestState;
 }
