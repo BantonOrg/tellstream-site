@@ -470,7 +470,8 @@ if (startGameBtn) startGameBtn.onclick = launchMatch;
 
 async function runMovementAnimation(movedColor, tokenIdx, targetPos, finalRoomData) {
   isProcessing = true;
-  const startPos = localTokenPositions[movedColor][tokenIdx];
+  try {
+    const startPos = localTokenPositions[movedColor][tokenIdx];
 
   // Walk step by step
   if (startPos === -1) {
