@@ -15,7 +15,7 @@ window.emojiMapping = {
     "loj": "loj.gif", "jahhh": "jah.gif", "can": "can.gif", "gb": "gb.gif",
     "usa": "usa.gif", "jf": "jf.gif", "bless": "bless.gif", "daville": "daville.gif",
     "delly": "delly.gif", "fran": "fran.gif", "rasta": "rastadance.gif", "lc": "lc.gif",
-    "libertone": "libertone.gif", "security": "security.gif", "katz": "katz.gif", "unknown": "unknown.gif",
+    "libertone": "libertone.gif", "security": "security.gif", "katz": "katz.gif",
     "sk": "sk.gif", "knight": "knight.gif", "cj": "cj.gif", "rev": "rev.gif",
     "whodat": "whodat.gif", "raydon": "raydon.gif", "tony": "tony.gif", "platinum": "platinum.gif",
     "goodas": "goodas.gif", "posh": "posh.gif", "rdz": "rdz.gif", "cure": "cure.gif",
