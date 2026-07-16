@@ -20,6 +20,7 @@ const TURN_TIMEOUT_SECONDS = 30;
 
 let isProcessing = false;
 let localTokenPositions = null;
+let currentTurnNumber = 0;
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 const COLORS = ["red", "green", "yellow", "blue"];
@@ -503,18 +504,22 @@ async function runMovementAnimation(movedColor, tokenIdx, targetPos, finalRoomDa
   }
 
   localTokenPositions = {
-    red: [...finalRoomData.state.tokens.red],
-    green: [...finalRoomData.state.tokens.green],
-    yellow: [...finalRoomData.state.tokens.yellow],
-    blue: [...finalRoomData.state.tokens.blue]
-  };
-
-  isProcessing = false;
-  handleStateUpdate(finalRoomData);
+      red: [...finalRoomData.state.tokens.red],
+      green: [...finalRoomData.state.tokens.green],
+      yellow: [...finalRoomData.state.tokens.yellow],
+      blue: [...finalRoomData.state.tokens.blue]
+    };
+  } catch (err) {
+    console.error("Error in movement animation:", err);
+  } finally {
+    isProcessing = false;
+    handleStateUpdate(finalRoomData);
+  }
 }
 
 function handleStateUpdate(roomData) {
   if (!roomCode || roomData.room_code !== roomCode) return;
+  currentTurnNumber = roomData.turn;
 
   // Animation check
   let animated = false;
@@ -558,7 +563,8 @@ function handleStateUpdate(roomData) {
   if (roomData.game_state === "finished") {
       showView(gameScreen);
       const playersObj = roomData.players || {};
-      const winnerName = playersObj[roomData.winner] || roomData.winner;
+      const winnerColor = (roomData.state && roomData.state.winner) ? roomData.state.winner : "red";
+      const winnerName = playersObj[winnerColor] || winnerColor;
       showWinnerAnnounce(winnerName);
       return;
   }
@@ -738,8 +744,13 @@ async function handleDiceRoll() {
   if (!hasValidMoves(playerColor, roll)) {
     isProcessing = true;
     setTimeout(async () => {
-      await passTurn(roll === 6);
-      isProcessing = false;
+      try {
+        await passTurn(roll === 6);
+      } catch (err) {
+        console.error("Error passing turn:", err);
+      } finally {
+        isProcessing = false;
+      }
     }, 1500);
   }
   await updateDatabaseState();
@@ -762,27 +773,31 @@ async function selectTokenToMove(tokenIdx) {
   if (!isValidMove(playerColor, tokenIdx, currentRoll)) return;
 
   isProcessing = true;
-  
-  let currentPos = state.tokens[playerColor][tokenIdx];
-  if (currentPos === -1 && currentRoll === 6) {
-    state.tokens[playerColor][tokenIdx] = 0;
-  } else {
-    state.tokens[playerColor][tokenIdx] += currentRoll;
-  }
+  try {
+    let currentPos = state.tokens[playerColor][tokenIdx];
+    if (currentPos === -1 && currentRoll === 6) {
+      state.tokens[playerColor][tokenIdx] = 0;
+    } else {
+      state.tokens[playerColor][tokenIdx] += currentRoll;
+    }
 
-  checkCaptures(playerColor, tokenIdx);
-  
-  const hasWon = state.tokens[playerColor].every(pos => pos === 57);
-  if (hasWon) {
-    state.currentRoll = null;
-    state.hasRolled = false;
-    await supabase.from("lud_room").update({
-      game_state: "finished",
-      state: state,
-      winner: playerColor
-    }).eq("room_code", roomCode);
-  } else {
-    await passTurn(currentRoll === 6);
+    checkCaptures(playerColor, tokenIdx);
+    
+    const hasWon = state.tokens[playerColor].every(pos => pos === 57);
+    if (hasWon) {
+      state.currentRoll = null;
+      state.hasRolled = false;
+      state.winner = playerColor;
+      await supabase.from("lud_room").update({
+        game_state: "finished",
+        state: state
+      }).eq("room_code", roomCode);
+    } else {
+      await passTurn(currentRoll === 6);
+    }
+  } catch (err) {
+    console.error("Error moving token:", err);
+    isProcessing = false;
   }
 }
 
@@ -813,8 +828,7 @@ function checkCaptures(movingColor, movingIdx) {
 }
 
 async function passTurn(getsBonusRoll) {
-  const { data } = await supabase.from("lud_room").select("*").eq("room_code", roomCode).single();
-  let nextTurn = data.turn;
+  let nextTurn = currentTurnNumber;
   if (!getsBonusRoll) nextTurn += 1;
 
   state.currentRoll = null;
