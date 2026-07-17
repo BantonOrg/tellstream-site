@@ -1304,9 +1304,13 @@ async function sendMessage() {
                         messageInput.value = '';
                         const targetFileName = deleteNameInput.toLowerCase().replace(/\s+/g, '_') + '.png';
                         try {
-                            const { error } = await supabase_db.storage.from('dj-logos').remove([targetFileName]);
+                            const { data, error } = await supabase_db.storage.from('dj-logos').remove([targetFileName]);
                             if (error) throw error;
-                            alert(`🗑️ Logo successfully deleted for: "${deleteNameInput}"`);
+                            if (!data || data.length === 0) {
+                                alert(`⚠️ Deletion succeeded but no files were removed. The file "${targetFileName}" may not exist, or you lack DELETE permissions in Supabase Storage.`);
+                            } else {
+                                alert(`🗑️ Logo successfully deleted for: "${deleteNameInput}"`);
+                            }
                             await loadInitialStreamStatus();
                         } catch (err) {
                             alert("Cloud Deletion Failure: " + err.message);
