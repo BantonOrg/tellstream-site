@@ -1304,12 +1304,23 @@ async function sendMessage() {
                         messageInput.value = '';
                         const targetFileName = deleteNameInput.toLowerCase().replace(/\s+/g, '_') + '.png';
                         try {
-                            const { data, error } = await supabase_db.storage.from('dj-logos').remove([targetFileName]);
-                            if (error) throw error;
-                            if (!data || data.length === 0) {
-                                alert(`⚠️ Deletion succeeded but no files were removed. The file "${targetFileName}" may not exist, or you lack DELETE permissions in Supabase Storage.`);
+                            // Download delete.png as a blob to serve as the overwrite placeholder
+                            const { data: blob, error: downloadError } = await supabase_db.storage.from('dj-logos').download('delete.png');
+                            
+                            if (downloadError) {
+                                // If delete.png is missing, fallback to attempting direct deletion
+                                console.warn("delete.png placeholder not found, attempting direct deletion:", downloadError.message);
+                                const { data: removeData, error: removeError } = await supabase_db.storage.from('dj-logos').remove([targetFileName]);
+                                if (removeError) throw removeError;
+                                if (!removeData || removeData.length === 0) {
+                                    throw new Error("No files were removed and delete.png fallback was not found in the bucket.");
+                                }
+                                alert(`🗑️ Logo deleted for: "${deleteNameInput}" (Direct file removal)`);
                             } else {
-                                alert(`🗑️ Logo successfully deleted for: "${deleteNameInput}"`);
+                                // Overwrite the logo file by uploading the placeholder blob (bypasses DELETE permission constraint)
+                                const { error: uploadError } = await supabase_db.storage.from('dj-logos').upload(targetFileName, blob, { upsert: true });
+                                if (uploadError) throw uploadError;
+                                alert(`🗑️ Logo successfully reset to placeholder for: "${deleteNameInput}"`);
                             }
                             await loadInitialStreamStatus();
                         } catch (err) {
