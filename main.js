@@ -34,7 +34,7 @@ const imgBaseUrl = "https://tellstream-emojis.pages.dev/";
 
 let profilesCache = {};
 let bannedWordsCache = [];
-let bannedUsersCache = {}; 
+let bannedUsersCache = {};
 let isNoticeBoardActive = false;
 
 let pendingLogoTargetName = "";
@@ -114,7 +114,6 @@ function renderStreamHeader(showName) {
         const imgCloudUrl = data.publicUrl + '?v=' + Date.now();
 
         const imageProbe = new Image();
-        imageProbe.src = imgCloudUrl;
 
         imageProbe.onload = function() {
             // STATE B: IMAGE FOUND -> Switch to image-driven physics matching the middle cell
@@ -126,7 +125,7 @@ function renderStreamHeader(showName) {
             cellLeft.style.position = 'relative';
             cellLeft.style.height = 'auto'; 
             
-            logoImg.src = imgCloudUrl;
+            logoImg.src = imageProbe.src; // Set to the successfully loaded URL (custom or fallback)
             logoImg.style.position = 'relative'; // Removes absolute locking
             logoImg.style.display = 'block';
 
@@ -146,32 +145,40 @@ function renderStreamHeader(showName) {
         };
 
         imageProbe.onerror = function() {
-            // STATE A: NO IMAGE FOUND -> Fallback completely to structural text parameters
-            logoImg.style.display = 'none';
-            logoImg.style.position = 'absolute';
-            
-            cellLeft.style.height = ''; // Clear forced rules, return to base CSS flow
-            
-            if (wrapper) {
-                wrapper.querySelectorAll('h1, p').forEach(el => el.style.display = 'block');
-                if (display.parentElement !== wrapper) {
-                    wrapper.appendChild(display);
-                }
-                // Normalize text behavior for normal text boxes
-                display.style.position = 'static';
-                display.style.transform = 'none';
-                display.style.marginTop = '4px';
-                display.style.width = 'auto';
-                display.style.textAlign = 'left';
-                display.style.zIndex = 'auto';
-            }
-
-            if (cleanName.toLowerCase() === 'tellstream') {
-                display.innerText = "TELLSTREAM NONE STOP";
+            // Fallback: If custom logo fails and we haven't tried delete.png yet, try loading it
+            if (imageProbe.src.includes(safeFileName)) {
+                const { data: fallbackData } = supabase_db.storage.from('dj-logos').getPublicUrl('delete.png');
+                imageProbe.src = fallbackData.publicUrl + '?v=' + Date.now();
             } else {
-                display.innerText = `${cleanName} - LIVE`;
+                // STATE A: NO IMAGE FOUND -> Fallback completely to structural text parameters
+                logoImg.style.display = 'none';
+                logoImg.style.position = 'absolute';
+                
+                cellLeft.style.height = ''; // Clear forced rules, return to base CSS flow
+                
+                if (wrapper) {
+                    wrapper.querySelectorAll('h1, p').forEach(el => el.style.display = 'block');
+                    if (display.parentElement !== wrapper) {
+                        wrapper.appendChild(display);
+                    }
+                    // Normalize text behavior for normal text boxes
+                    display.style.position = 'static';
+                    display.style.transform = 'none';
+                    display.style.marginTop = '4px';
+                    display.style.width = 'auto';
+                    display.style.textAlign = 'left';
+                    display.style.zIndex = 'auto';
+                }
+
+                if (cleanName.toLowerCase() === 'tellstream') {
+                    display.innerText = "TELLSTREAM NONE STOP";
+                } else {
+                    display.innerText = `${cleanName} - LIVE`;
+                }
             }
         };
+
+        imageProbe.src = imgCloudUrl; // Set source last to prevent race conditions
     }
 }
 
@@ -197,12 +204,12 @@ async function loadInitialStreamStatus() {
 if (usernameInput) {
     const savedName = localStorage.getItem('tellstream_saved_username');
     if (savedName) usernameInput.value = savedName;
-    
+
     let verificationTimeout = null;
     usernameInput.addEventListener('input', () => {
         localStorage.setItem('tellstream_saved_username', usernameInput.value.trim());
         syncDrawerName();
-        
+
         clearTimeout(verificationTimeout);
         verificationTimeout = setTimeout(async () => {
             await verifyCurrentSession();
@@ -255,7 +262,7 @@ function appendPrivateWelcomeGreeting(compiledMessageText) {
     if (!chatBox) return;
     const systemDiv = document.createElement('div');
     systemDiv.className = 'msg';
-    systemDiv.style.borderLeft = '4px solid #00E676'; 
+    systemDiv.style.borderLeft = '4px solid #00E676';
     systemDiv.style.background = 'rgba(0, 230, 118, 0.05)';
     systemDiv.innerHTML = `<div class="user" style="color: #00E676; font-weight: 900;">TELLA SECURITY</div><div style="color: #e0f2f1; font-size: 0.88rem; line-height: 1.4;">${compiledMessageText} <br><span style="opacity: 0.4; font-size: 0.75rem; font-style: italic;">(Only you can see this message)</span></div>`;
     chatBox.appendChild(systemDiv);
@@ -355,13 +362,13 @@ async function handleAdminFilterCommand(text) {
         if (!wordToAdd) return;
         const { error } = await supabase_db.from('banned_words').insert([{ word: wordToAdd }]);
         if (!error) alert(`"${wordToAdd}" added to filter list.`);
-    } 
+    }
     else if (text.startsWith('/del ')) {
         const wordToDel = text.substring(5).trim().toLowerCase();
         if (!wordToDel) return;
         const { error } = await supabase_db.from('banned_words').delete().eq('word', wordToDel);
         if (!error) alert(`"${wordToDel}" removed from filter list.`);
-    } 
+    }
     else if (text.startsWith('/unban ')) {
         const userToUnban = text.substring(7).trim().toLowerCase();
         if (!userToUnban) return;
@@ -376,28 +383,28 @@ async function handleAdminFilterCommand(text) {
 async function handlePromoteDemoteCommand(text) {
     const isPromote = text.startsWith('/promote');
     const cmdName = isPromote ? '/promote' : '/demote';
-    
+
     const rawBody = text.substring(cmdName.length).trim();
     if (!rawBody) {
         alert(`Usage:\n${cmdName} [username] [level]`);
         return;
     }
-    
+
     const lastSpaceIndex = rawBody.lastIndexOf(' ');
     if (lastSpaceIndex === -1) {
         alert(`Usage:\n${cmdName} [username] [level]`);
         return;
     }
-    
+
     const targetUsername = rawBody.substring(0, lastSpaceIndex).trim();
     const targetLevelStr = rawBody.substring(lastSpaceIndex + 1).trim();
     const targetLevel = parseInt(targetLevelStr);
-    
+
     if (isNaN(targetLevel)) {
         alert(`Usage:\n${cmdName} [username] [level]`);
         return;
     }
-    
+
     if (isPromote) {
         if (targetLevel !== 1 && targetLevel !== 2) {
             alert("Invalid level. /promote target level must be 1 (DJ Selector) or 2 (Station Admin).");
@@ -409,13 +416,13 @@ async function handlePromoteDemoteCommand(text) {
             return;
         }
     }
-    
+
     const targetProfile = Object.values(profilesCache).find(p => p.username.toLowerCase() === targetUsername.toLowerCase());
     if (!targetProfile) {
         alert(`User "${targetUsername}" does not have a secured profile (not registered).`);
         return;
     }
-    
+
     let newHoverTitle = targetProfile.hover_title || "Tella Fambily";
     if (targetLevel === 2) {
         newHoverTitle = "Station Admin";
@@ -424,7 +431,7 @@ async function handlePromoteDemoteCommand(text) {
     } else if (targetLevel === 0) {
         newHoverTitle = "Tella Fambily";
     }
-    
+
     const adminUser = localStorage.getItem('tellstream_saved_username') || "";
     const adminPasskey = localStorage.getItem('tellstream_key_' + adminUser) || "";
     try {
@@ -435,7 +442,7 @@ async function handlePromoteDemoteCommand(text) {
             p_target_level: targetLevel,
             p_new_hover_title: newHoverTitle
         });
-            
+
         if (error) throw error;
         alert(`Success: "${targetProfile.username}" has been ${isPromote ? 'promoted' : 'demoted'} to Level ${targetLevel} (${newHoverTitle}).`);
     } catch (err) {
@@ -453,7 +460,7 @@ async function renderSiteNewsFeed() {
             colHeader.style.justifyContent = 'space-between';
             colHeader.style.alignItems = 'center';
             colHeader.style.width = '100%';
-            
+
             colHeader.innerHTML = `
                 <span>📰 Site News</span>
                 <a href="https://www.facebook.com/tellstream.dem" target="_blank" style="display: flex; align-items: center; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
@@ -463,7 +470,7 @@ async function renderSiteNewsFeed() {
                 </a>
             `;
         }
-        
+
         // Fetch the 12 newest combined records from the boss and selectors boards
         const { data: records, error } = await supabase_db
             .from('notice_board')
@@ -487,7 +494,7 @@ async function renderSiteNewsFeed() {
             const isBoss = item.board_type === 'boss';
             const badgeColor = isBoss ? '#ff3333' : '#ffdd1a';
             const badgeText = isBoss ? 'STATION ADMIN' : 'DJ SELECTOR';
-            
+
             return `
                 <div class="fb-post-card" style="border-left: 4px solid ${badgeColor}; margin-bottom: 12px;">
                     <div class="fb-post-meta" style="color: ${badgeColor}; font-weight: bold;">
@@ -510,13 +517,13 @@ async function renderSiteNewsFeed() {
         `;
 
         fbFeedContainer.innerHTML = html;
-    } catch(e) { console.error(e); }
+    } catch (e) { console.error(e); }
 }
 
 async function renderActiveFlyers() {
     const today = new Date();
     today.setDate(today.getDate() - 1);
-    today.setHours(0,0,0,0);
+    today.setHours(0, 0, 0, 0);
 
     const { data: files, error } = await supabase_db.storage.from('flyers').list('', { limit: 100 });
     if (error || !files || files.length === 0) {
@@ -594,7 +601,7 @@ function renderHelpContent(useNoticeboardGuide = false) {
     const profile = profilesCache[currentUser];
     const savedUser = localStorage.getItem('tellstream_saved_username');
     const isVerified = profile && isCurrentUserVerified && currentUser === savedUser;
-    
+
     const powerLevel = isVerified ? parseInt(profile.power_level || 0) : 0;
     const isVerifiedDJ = powerLevel >= 1;
     const isVerifiedAdmin = powerLevel >= 2;
@@ -606,7 +613,7 @@ function renderHelpContent(useNoticeboardGuide = false) {
                 <p style="color: #fffbdf; white-space: pre-line;">${item.text}</p>
             </div>
         `).join('');
-        html = djHtml + html; 
+        html = djHtml + html;
     }
 
     if (isVerifiedAdmin && !useNoticeboardGuide) {
@@ -616,7 +623,7 @@ function renderHelpContent(useNoticeboardGuide = false) {
                 <p style="color: #fffbdf; white-space: pre-line;">${item.text}</p>
             </div>
         `).join('');
-        html = adminHtml + html; 
+        html = adminHtml + html;
     }
 
     helpCardsContainer.innerHTML = html;
@@ -644,21 +651,21 @@ function toggleChatFullscreen() {
 
 function initQuickEmojiCloud() {
     if (!window.emojiMapping) return;
-    
+
     // 1. Get all available emoji shorthand keys from your mapping file
     const allKeys = Object.keys(window.emojiMapping);
-    
+
     // 2. Shuffle the entire array randomly
     const shuffledKeys = allKeys.sort(() => 0.5 - Math.random());
-    
+
     // 3. Take the first 32 random keys out of the shuffled deck
     const randomSelection = shuffledKeys.slice(0, 32);
-    
+
     // 4. Render the grid items
     const html = randomSelection.map(key => `
         <div class="emoji-grid-item" onclick="insertEmojiCode('${key}')">:${key}:</div>
     `).join('');
-    
+
     quickEmojiList.innerHTML = html;
     quickEmojiListFS.innerHTML = html;
 }
@@ -680,8 +687,8 @@ function toggleNoticeBoardView() {
     if (!isNoticeBoardActive) {
         document.body.classList.add('chat-is-fullscreen');
         streamChat.style.display = 'none';
-        inputContainer.style.display = 'none'; 
-        securityDrawer.classList.remove('open'); 
+        inputContainer.style.display = 'none';
+        securityDrawer.classList.remove('open');
         noticePanel.style.display = 'flex';
         if (mainTitle) {
             mainTitle.innerText = "📋 Noticeboard";
@@ -720,7 +727,7 @@ const radioChannel = new BroadcastChannel('tellstream_radio_control');
 radioChannel.onmessage = (event) => {
     const player = document.getElementById('radioPlayer');
     if (!player) return;
-    
+
     if (event.data.action === 'play') {
         player.play().catch(e => console.log("Play blocked:", e));
     } else if (event.data.action === 'pause') {
@@ -752,7 +759,7 @@ function launchFullscreenGame(gameName) {
         alert(`🔒 You are currently in an active ${activeGame === 'ludo' ? 'Ludo' : 'Dominoes'} game. Please exit the ${activeGame === 'ludo' ? 'Ludo' : 'Dominoes'} table first before switching!`);
         return;
     }
-    
+
     const overlay = document.getElementById('game-overlay-container');
     const frame = document.getElementById('game-overlay-frame');
     if (overlay && frame) {
@@ -767,7 +774,7 @@ function closeFullscreenGame() {
         alert(`⚠️ Please leave the game table inside the board first before exiting!`);
         return;
     }
-    
+
     const overlay = document.getElementById('game-overlay-container');
     const frame = document.getElementById('game-overlay-frame');
     if (overlay && frame) {
@@ -841,7 +848,7 @@ async function submitNoticeUpdate(boardType) {
     if (containsSwearWords(textContent)) {
         await handleUserStrike(currentUser, textContent);
         inputField.value = "";
-        return; 
+        return;
     }
 
     const wasApology = await checkAndProcessApology(currentUser, textContent);
@@ -874,25 +881,25 @@ function syncDrawerName() {
     const currentName = usernameInput.value.trim();
     regNameInput.value = currentName;
     reminderHintDisplay.style.display = "none";
-    
+
     // Hide forgot passkey buttons/forms by default and reset state
     const forgotLink = document.getElementById('forgotPasskeyLink');
     if (forgotLink) forgotLink.style.display = "none";
     toggleForgotPasskeyForm('login');
-    
+
     if (profilesCache[currentName]) {
         lockStatusBtn.innerText = "🔒";
         drawerTitle.innerText = "Name is Secured: Log In";
         regReminderInput.style.display = "none";
         regEmailInput.style.display = "none";
-        
+
         // Only show "Forgot Passkey?" link if the user is NOT already logged in on this browser
         const loggedInUser = localStorage.getItem('tellstream_saved_username');
         const isSelfLoggedIn = currentName === loggedInUser && isCurrentUserVerified;
         if (!isSelfLoggedIn && forgotLink) {
             forgotLink.style.display = "block";
         }
-        
+
         drawerSubmitBtn.innerText = "Log In";
     } else {
         lockStatusBtn.innerText = "🔓";
@@ -909,12 +916,12 @@ function toggleForgotPasskeyForm(step) {
     const link = document.getElementById('forgotPasskeyLink');
     const reqForm = document.getElementById('forgotPasskeyRequestForm');
     const verifyForm = document.getElementById('forgotPasskeyVerifyForm');
-    
+
     const regPasskey = document.getElementById('regPasskeyInput');
     const drawerSubmit = document.getElementById('drawerSubmitBtn');
-    
+
     if (!link || !reqForm || !verifyForm || !regPasskey || !drawerSubmit) return;
-    
+
     if (step === 'request') {
         // Step 2: Show recovery email form, hide everything else
         link.style.display = "none";
@@ -934,7 +941,7 @@ function toggleForgotPasskeyForm(step) {
         const currentName = usernameInput.value.trim();
         const loggedInUser = localStorage.getItem('tellstream_saved_username');
         const isSelfLoggedIn = currentName === loggedInUser && isCurrentUserVerified;
-        
+
         link.style.display = (profilesCache[currentName] && !isSelfLoggedIn) ? "block" : "none";
         reqForm.style.display = "none";
         verifyForm.style.display = "none";
@@ -947,7 +954,7 @@ async function sendResetVerificationCode() {
     const currentName = usernameInput.value.trim();
     const emailInputVal = document.getElementById('resetRecoveryEmailInput').value.trim();
     const sendBtn = document.getElementById('sendCodeBtn');
-    
+
     if (!currentName) {
         alert("Please enter a username.");
         return;
@@ -956,14 +963,14 @@ async function sendResetVerificationCode() {
         alert("Please enter your recovery email.");
         return;
     }
-    
+
     // Generate a 6-digit random code
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes from now
-    
+
     sendBtn.disabled = true;
     sendBtn.innerText = "Sending...";
-    
+
     try {
         // Save the code & expiry timestamp using secure RPC
         const { data: setSuccess, error } = await supabase_db.rpc('set_reset_code', {
@@ -972,11 +979,11 @@ async function sendResetVerificationCode() {
             p_code: code,
             p_expires_at: expiresAt
         });
-            
+
         if (error || !setSuccess) {
             throw new Error("Could not verify recovery details. Ensure the email is correct.");
         }
-        
+
         // Dispatch the email via EmailJS
         if (EMAILJS_SERVICE_ID === "service_xxxxxx" || EMAILJS_PUBLIC_KEY === "your_public_key") {
             // If they haven't configured EmailJS yet, alert the code locally for testing
@@ -985,7 +992,7 @@ async function sendResetVerificationCode() {
         } else {
             // Initialize EmailJS
             emailjs.init(EMAILJS_PUBLIC_KEY);
-            
+
             // Send email
             await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
                 to_name: currentName,
@@ -993,7 +1000,7 @@ async function sendResetVerificationCode() {
                 reset_code: code
             });
         }
-        
+
         alert("Verification code sent to your email!");
         toggleForgotPasskeyForm('verify');
     } catch (err) {
@@ -1010,15 +1017,15 @@ async function verifyAndResetPasskey() {
     const newPasskey = document.getElementById('resetNewPasskeyInput').value.trim();
     const newReminder = document.getElementById('resetNewReminderInput').value.trim();
     const confirmBtn = document.getElementById('confirmResetBtn');
-    
+
     if (!enteredCode || !newPasskey) {
         alert("Please enter the verification code and your new passkey.");
         return;
     }
-    
+
     confirmBtn.disabled = true;
     confirmBtn.innerText = "Resetting...";
-    
+
     try {
         // Reset passkey and reminder, clear code fields via secure RPC
         const { data: resetSuccess, error: updateError } = await supabase_db.rpc('reset_passkey_with_code', {
@@ -1027,22 +1034,22 @@ async function verifyAndResetPasskey() {
             p_new_passkey: newPasskey,
             p_new_reminder: newReminder
         });
-            
+
         if (updateError || !resetSuccess) {
             throw new Error("Invalid or expired verification code.");
         }
-        
+
         // Save new passkey locally to log in the user
         localStorage.setItem('tellstream_key_' + currentName, newPasskey);
         localStorage.setItem('tellstream_saved_username', currentName);
-        
+
         alert("Passkey successfully reset! You are now logged in.");
-        
+
         // Clean up inputs and close drawer
         document.getElementById('resetCodeInput').value = "";
         document.getElementById('resetNewPasskeyInput').value = "";
         document.getElementById('resetNewReminderInput').value = "";
-        
+
         await syncProfilesMap();
         securityDrawer.classList.remove('open');
     } catch (err) {
@@ -1072,9 +1079,9 @@ async function handleSecuritySubmit() {
     }
 
     if (profilesCache[currentName]) {
-        const { data: isValid, error: rpcErr } = await supabase_db.rpc('verify_user_passkey', { 
-            p_username: currentName, 
-            p_passkey: passkey 
+        const { data: isValid, error: rpcErr } = await supabase_db.rpc('verify_user_passkey', {
+            p_username: currentName,
+            p_passkey: passkey
         });
         if (isValid && !rpcErr) {
             localStorage.setItem('tellstream_key_' + currentName, passkey);
@@ -1082,7 +1089,7 @@ async function handleSecuritySubmit() {
             isCurrentUserVerified = true;
             alert("Identity checked and authorized!");
             securityDrawer.classList.remove('open');
-            chatBox.innerHTML = ""; 
+            chatBox.innerHTML = "";
             syncDrawerName();
             loadMessages();
             if (isNoticeBoardActive) evaluateNoticeBoardForms();
@@ -1132,9 +1139,9 @@ async function verifyCurrentSession() {
     const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
     if (currentUser && authorizedKey) {
         try {
-            const { data, error } = await supabase_db.rpc('verify_user_passkey', { 
-                p_username: currentUser, 
-                p_passkey: authorizedKey 
+            const { data, error } = await supabase_db.rpc('verify_user_passkey', {
+                p_username: currentUser,
+                p_passkey: authorizedKey
             });
             isCurrentUserVerified = !error && data;
         } catch (e) {
@@ -1215,9 +1222,9 @@ async function loadMessages() {
 supabase_db.channel('public:messages').on('postgres_changes', { event: 'INSERT', pattern: 'public', table: 'messages' }, payload => { appendMessage(payload.new); }).subscribe();
 supabase_db.channel('public:secured_profiles').on('postgres_changes', { event: '*', pattern: 'public', table: 'secured_profiles' }, async () => { await syncProfilesMap(); }).subscribe();
 
-supabase_db.channel('public:notice_board').on('postgres_changes', { event: '*', pattern: 'public', table: 'notice_board' }, payload => { 
-    renderSiteNewsFeed(); 
-    if (isNoticeBoardActive) fetchNoticeBoardRecords(); 
+supabase_db.channel('public:notice_board').on('postgres_changes', { event: '*', pattern: 'public', table: 'notice_board' }, payload => {
+    renderSiteNewsFeed();
+    if (isNoticeBoardActive) fetchNoticeBoardRecords();
 }).subscribe();
 
 supabase_db.channel('public:banned_words').on('postgres_changes', { event: '*', pattern: 'public', table: 'banned_words' }, async () => { await syncBannedWordsMap(); }).subscribe();
@@ -1235,11 +1242,11 @@ async function sendMessage() {
     if (text.startsWith('/')) {
         const profile = profilesCache[user];
         const userPowerLevel = parseInt(profile?.power_level || 0);
-        
+
         const savedUser = localStorage.getItem('tellstream_saved_username');
         const isVerified = user === savedUser && isCurrentUserVerified;
         if (profile && isVerified && userPowerLevel >= 1) {
-            
+
             // CONSOLE INJECTION INTERCEPTOR FOR ZERO-SLASH SCHEDULE SYSTEM
             if (text.startsWith('/schedule ')) {
                 messageInput.value = '';
@@ -1250,7 +1257,7 @@ async function sendMessage() {
             if (text.startsWith('/show')) {
                 let showNameInput = "";
                 if (text.trim() === '/show live') {
-                    showNameInput = user; 
+                    showNameInput = user;
                 } else if (text.startsWith('/show ')) {
                     showNameInput = text.substring(6).trim().substring(0, 50);
                 }
@@ -1272,7 +1279,7 @@ async function sendMessage() {
                 await handlePromoteDemoteCommand(text);
                 return;
             }
-            
+
             if (text.startsWith('/upload ') || text.startsWith('/delete ')) {
                 if (userPowerLevel < 2) {
                     messageInput.value = '';
@@ -1341,7 +1348,7 @@ async function sendMessage() {
                         try {
                             const { data: files, error: listError } = await supabase_db.storage.from('flyers').list('', { limit: 100 });
                             if (listError) throw listError;
-                            
+
                             const targetFile = files.find(f => {
                                 const lowerName = f.name.toLowerCase();
                                 return lowerName === filenameClean || lowerName.startsWith(filenameClean + '.');
@@ -1350,7 +1357,7 @@ async function sendMessage() {
                                 alert(`❓ Flyer matching "${deleteNameInput}" not found in storage.`);
                                 return;
                             }
-                            
+
                             const { error } = await supabase_db.storage.from('flyers').remove([targetFile.name]);
                             if (error) throw error;
                             alert(`🗑️ Flyer successfully deleted: "${targetFile.name}"`);
@@ -1368,7 +1375,7 @@ async function sendMessage() {
                 await handleAdminFilterCommand(text);
                 return;
             }
-            
+
             messageInput.value = '';
             alert("❓ Unknown Command: That command does not exist. Use /show live to switch banners.");
             return;
@@ -1395,7 +1402,7 @@ async function sendMessage() {
     if (containsSwearWords(text)) {
         messageInput.value = '';
         await handleUserStrike(user, text);
-        return; 
+        return;
     }
 
     const wasApology = await checkAndProcessApology(user, text);
@@ -1436,9 +1443,9 @@ async function processScheduleConsoleInjections(text, djUser) {
         });
 
         if (error) console.error("Database master schedule record failure:", error.message);
-    } 
+    }
     else if (action === 'temp') {
-        const dateBlock = args[2]; 
+        const dateBlock = args[2];
         const startTime = args[3];
         const endTime = args[4];
         const timeZone = args[5];
@@ -1460,7 +1467,7 @@ async function processScheduleConsoleInjections(text, djUser) {
         });
 
         if (error) console.error("Database temporary override record failure:", error.message);
-    } 
+    }
     else if (action === 'cancel') {
         const dateBlock = args[2];
         const startTime = args[3];
@@ -1497,7 +1504,7 @@ async function fetchAndRenderWeeklyTimetable() {
         }
 
         const dayOrder = { sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6 };
-        
+
         // Grab the viewer's native system time zone city
         const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -1529,7 +1536,7 @@ async function fetchAndRenderWeeklyTimetable() {
             const currentDayIndex = baseDate.getDay();
             const targetDayIndex = dayOrder[item.day_of_week.toLowerCase()];
             let dayDiff = targetDayIndex - currentDayIndex;
-            
+
             baseDate.setDate(baseDate.getDate() + dayDiff);
 
             const ukStart = new Date(baseDate.toLocaleString('en-US', { timeZone: 'Europe/London' }));
@@ -1600,17 +1607,17 @@ window.syncDrawerName = syncDrawerName;
 
 (async function initSystem() {
     // 1. Core Lounge Operations (Cannot be affected by outside scripts)
-    try { await syncProfilesMap(); } catch(e){}
-    try { await verifyCurrentSession(); } catch(e){}
-    try { await syncBannedWordsMap(); } catch(e){}
-    try { await syncBannedUsersMap(); } catch(e){}
-    try { await loadMessages(); } catch(e){}
-    try { await loadInitialStreamStatus(); } catch(e){}
-    
+    try { await syncProfilesMap(); } catch (e) { }
+    try { await verifyCurrentSession(); } catch (e) { }
+    try { await syncBannedWordsMap(); } catch (e) { }
+    try { await syncBannedUsersMap(); } catch (e) { }
+    try { await loadMessages(); } catch (e) { }
+    try { await loadInitialStreamStatus(); } catch (e) { }
+
     renderHelpContent(false);
-    try { await renderActiveFlyers(); } catch(e){}
+    try { await renderActiveFlyers(); } catch (e) { }
     setTimeout(initQuickEmojiCloud, 500);
-    
+
     const hiddenInputFileTag = document.createElement('input');
     hiddenInputFileTag.type = 'file';
     hiddenInputFileTag.id = 'studioLogoHiddenFilePicker';
@@ -1618,7 +1625,7 @@ window.syncDrawerName = syncDrawerName;
     hiddenInputFileTag.style.display = 'none';
     document.body.appendChild(hiddenInputFileTag);
 
-    hiddenInputFileTag.addEventListener('change', async function(e) {
+    hiddenInputFileTag.addEventListener('change', async function (e) {
         const file = e.target.files[0];
         if (!file || !pendingLogoTargetName) return;
         try {
@@ -1642,14 +1649,14 @@ window.syncDrawerName = syncDrawerName;
     hiddenFlyerInputFileTag.style.display = 'none';
     document.body.appendChild(hiddenFlyerInputFileTag);
 
-    hiddenFlyerInputFileTag.addEventListener('change', async function(e) {
+    hiddenFlyerInputFileTag.addEventListener('change', async function (e) {
         const file = e.target.files[0];
         if (!file || !pendingFlyerTargetName) return;
         try {
             const originalName = file.name;
             const extIndex = originalName.lastIndexOf('.');
             const extension = extIndex !== -1 ? originalName.substring(extIndex + 1).toLowerCase() : 'jpg';
-            
+
             const uploadFileName = `${pendingFlyerTargetName}.${extension}`;
             const { error } = await supabase_db.storage.from('flyers').upload(uploadFileName, file, { cacheControl: '3600', upsert: true });
             if (error) throw error;
@@ -1690,6 +1697,6 @@ window.syncDrawerName = syncDrawerName;
     }, 200);
 
     // 2. Auxiliary column scripts load at the ultimate tail of execution
-    try { await renderSiteNewsFeed(); } catch(e){}
-    try { await fetchAndRenderWeeklyTimetable(); } catch(e){}
+    try { await renderSiteNewsFeed(); } catch (e) { }
+    try { await fetchAndRenderWeeklyTimetable(); } catch (e) { }
 })();
