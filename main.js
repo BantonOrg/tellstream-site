@@ -111,7 +111,7 @@ function renderStreamHeader(showName) {
         const safeFileName = cleanName.toLowerCase().replace(/\s+/g, '_') + '.png';
         
         const { data } = supabase_db.storage.from('dj-logos').getPublicUrl(safeFileName);
-        const imgCloudUrl = data.publicUrl;
+        const imgCloudUrl = data.publicUrl + '?v=' + Date.now();
 
         const imageProbe = new Image();
         imageProbe.src = imgCloudUrl;
