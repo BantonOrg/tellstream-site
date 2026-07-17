@@ -125,7 +125,7 @@ function renderStreamHeader(showName) {
             cellLeft.style.position = 'relative';
             cellLeft.style.height = 'auto'; 
             
-            logoImg.src = imageProbe.src; // Set to the successfully loaded URL (custom or fallback)
+            logoImg.src = imgCloudUrl;
             logoImg.style.position = 'relative'; // Removes absolute locking
             logoImg.style.display = 'block';
 
@@ -145,40 +145,34 @@ function renderStreamHeader(showName) {
         };
 
         imageProbe.onerror = function() {
-            // Fallback: If custom logo fails and we haven't tried delete.png yet, try loading it
-            if (imageProbe.src.includes(safeFileName)) {
-                const { data: fallbackData } = supabase_db.storage.from('dj-logos').getPublicUrl('delete.png');
-                imageProbe.src = fallbackData.publicUrl + '?v=' + Date.now();
-            } else {
-                // STATE A: NO IMAGE FOUND -> Fallback completely to structural text parameters
-                logoImg.style.display = 'none';
-                logoImg.style.position = 'absolute';
-                
-                cellLeft.style.height = ''; // Clear forced rules, return to base CSS flow
-                
-                if (wrapper) {
-                    wrapper.querySelectorAll('h1, p').forEach(el => el.style.display = 'block');
-                    if (display.parentElement !== wrapper) {
-                        wrapper.appendChild(display);
-                    }
-                    // Normalize text behavior for normal text boxes
-                    display.style.position = 'static';
-                    display.style.transform = 'none';
-                    display.style.marginTop = '4px';
-                    display.style.width = 'auto';
-                    display.style.textAlign = 'left';
-                    display.style.zIndex = 'auto';
+            // STATE A: NO IMAGE FOUND -> Fallback completely to structural text parameters
+            logoImg.style.display = 'none';
+            logoImg.style.position = 'absolute';
+            
+            cellLeft.style.height = ''; // Clear forced rules, return to base CSS flow
+            
+            if (wrapper) {
+                wrapper.querySelectorAll('h1, p').forEach(el => el.style.display = 'block');
+                if (display.parentElement !== wrapper) {
+                    wrapper.appendChild(display);
                 }
+                // Normalize text behavior for normal text boxes
+                display.style.position = 'static';
+                display.style.transform = 'none';
+                display.style.marginTop = '4px';
+                display.style.width = 'auto';
+                display.style.textAlign = 'left';
+                display.style.zIndex = 'auto';
+            }
 
-                if (cleanName.toLowerCase() === 'tellstream') {
-                    display.innerText = "TELLSTREAM NONE STOP";
-                } else {
-                    display.innerText = `${cleanName} - LIVE`;
-                }
+            if (cleanName.toLowerCase() === 'tellstream') {
+                display.innerText = "TELLSTREAM NONE STOP";
+            } else {
+                display.innerText = `${cleanName} - LIVE`;
             }
         };
 
-        imageProbe.src = imgCloudUrl; // Set source last to prevent race conditions
+        imageProbe.src = imgCloudUrl; // Set source last to avoid race conditions
     }
 }
 
@@ -1304,24 +1298,9 @@ async function sendMessage() {
                         messageInput.value = '';
                         const targetFileName = deleteNameInput.toLowerCase().replace(/\s+/g, '_') + '.png';
                         try {
-                            // Download delete.png as a blob to serve as the overwrite placeholder
-                            const { data: blob, error: downloadError } = await supabase_db.storage.from('dj-logos').download('delete.png');
-                            
-                            if (downloadError) {
-                                // If delete.png is missing, fallback to attempting direct deletion
-                                console.warn("delete.png placeholder not found, attempting direct deletion:", downloadError.message);
-                                const { data: removeData, error: removeError } = await supabase_db.storage.from('dj-logos').remove([targetFileName]);
-                                if (removeError) throw removeError;
-                                if (!removeData || removeData.length === 0) {
-                                    throw new Error("No files were removed and delete.png fallback was not found in the bucket.");
-                                }
-                                alert(`🗑️ Logo deleted for: "${deleteNameInput}" (Direct file removal)`);
-                            } else {
-                                // Overwrite the logo file by uploading the placeholder blob (bypasses DELETE permission constraint)
-                                const { error: uploadError } = await supabase_db.storage.from('dj-logos').upload(targetFileName, blob, { upsert: true });
-                                if (uploadError) throw uploadError;
-                                alert(`🗑️ Logo successfully reset to placeholder for: "${deleteNameInput}"`);
-                            }
+                            const { error } = await supabase_db.storage.from('dj-logos').remove([targetFileName]);
+                            if (error) throw error;
+                            alert(`🗑️ Logo successfully deleted for: "${deleteNameInput}"`);
                             await loadInitialStreamStatus();
                         } catch (err) {
                             alert("Cloud Deletion Failure: " + err.message);
