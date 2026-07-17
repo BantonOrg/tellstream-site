@@ -2,6 +2,8 @@ const SUPABASE_URL = "https://vegwferwmyuunwvfqpsf.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZ3dmZXJ3bXl1dW53dmZxcHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODU5NDQsImV4cCI6MjA5Nzk2MTk0NH0.7F3HUEY59BGE5phlD9AukhZzRa3Ied_ZT43j8YZeIy8";
 const supabase_db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+let isCurrentUserVerified = false;
+
 const chatBox = document.getElementById('chatBox');
 const usernameInput = document.getElementById('usernameInput');
 const messageInput = document.getElementById('messageInput');
@@ -196,9 +198,17 @@ if (usernameInput) {
     const savedName = localStorage.getItem('tellstream_saved_username');
     if (savedName) usernameInput.value = savedName;
     
+    let verificationTimeout = null;
     usernameInput.addEventListener('input', () => {
         localStorage.setItem('tellstream_saved_username', usernameInput.value.trim());
         syncDrawerName();
+        
+        clearTimeout(verificationTimeout);
+        verificationTimeout = setTimeout(async () => {
+            await verifyCurrentSession();
+            if (isNoticeBoardActive) evaluateNoticeBoardForms();
+            renderHelpContent(isNoticeBoardActive);
+        }, 500);
     });
 }
 
@@ -415,14 +425,16 @@ async function handlePromoteDemoteCommand(text) {
         newHoverTitle = "Tella Fambily";
     }
     
+    const adminUser = localStorage.getItem('tellstream_saved_username') || "";
+    const adminPasskey = localStorage.getItem('tellstream_key_' + adminUser) || "";
     try {
-        const { error } = await supabase_db
-            .from('secured_profiles')
-            .update({
-                power_level: targetLevel,
-                hover_title: newHoverTitle
-            })
-            .eq('username', targetProfile.username);
+        const { error } = await supabase_db.rpc('secure_promote_demote', {
+            p_admin_username: adminUser,
+            p_admin_passkey: adminPasskey,
+            p_target_username: targetProfile.username,
+            p_target_level: targetLevel,
+            p_new_hover_title: newHoverTitle
+        });
             
         if (error) throw error;
         alert(`Success: "${targetProfile.username}" has been ${isPromote ? 'promoted' : 'demoted'} to Level ${targetLevel} (${newHoverTitle}).`);
@@ -580,9 +592,10 @@ function renderHelpContent(useNoticeboardGuide = false) {
 
     const currentUser = usernameInput.value.trim();
     const profile = profilesCache[currentUser];
-    const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
+    const savedUser = localStorage.getItem('tellstream_saved_username');
+    const isVerified = profile && isCurrentUserVerified && currentUser === savedUser;
     
-    const powerLevel = profile && profile.passkey === authorizedKey ? parseInt(profile.power_level || 0) : 0;
+    const powerLevel = isVerified ? parseInt(profile.power_level || 0) : 0;
     const isVerifiedDJ = powerLevel >= 1;
     const isVerifiedAdmin = powerLevel >= 2;
 
@@ -770,8 +783,8 @@ function evaluateNoticeBoardForms() {
     const currentUser = usernameInput.value.trim();
     const warningBanner = document.getElementById('notice-footer-warning');
     const profile = profilesCache[currentUser];
-    const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
-    const isVerified = profile && profile.passkey === authorizedKey;
+    const savedUser = localStorage.getItem('tellstream_saved_username');
+    const isVerified = profile && isCurrentUserVerified && currentUser === savedUser;
 
     if (!isVerified) {
         warningBanner.style.display = 'block';
@@ -811,8 +824,9 @@ async function submitNoticeUpdate(boardType) {
     if (!textContent) return;
 
     const profile = profilesCache[currentUser];
-    const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
-    if (!profile || profile.passkey !== authorizedKey) return;
+    const savedUser = localStorage.getItem('tellstream_saved_username');
+    const isVerified = profile && isCurrentUserVerified && currentUser === savedUser;
+    if (!isVerified) return;
 
     const pLevel = parseInt(profile.power_level || 0);
     if (boardType === 'boss' && pLevel < 2) return;
@@ -873,9 +887,8 @@ function syncDrawerName() {
         regEmailInput.style.display = "none";
         
         // Only show "Forgot Passkey?" link if the user is NOT already logged in on this browser
-        const loggedInUser = usernameInput.value.trim();
-        const authorizedKey = localStorage.getItem('tellstream_key_' + loggedInUser);
-        const isSelfLoggedIn = currentName === loggedInUser && profilesCache[currentName].passkey === authorizedKey;
+        const loggedInUser = localStorage.getItem('tellstream_saved_username');
+        const isSelfLoggedIn = currentName === loggedInUser && isCurrentUserVerified;
         if (!isSelfLoggedIn && forgotLink) {
             forgotLink.style.display = "block";
         }
@@ -919,9 +932,8 @@ function toggleForgotPasskeyForm(step) {
     } else {
         // Step 1: Default Login Drawer state
         const currentName = usernameInput.value.trim();
-        const loggedInUser = usernameInput.value.trim();
-        const authorizedKey = localStorage.getItem('tellstream_key_' + loggedInUser);
-        const isSelfLoggedIn = currentName === loggedInUser && profilesCache[currentName] && profilesCache[currentName].passkey === authorizedKey;
+        const loggedInUser = localStorage.getItem('tellstream_saved_username');
+        const isSelfLoggedIn = currentName === loggedInUser && isCurrentUserVerified;
         
         link.style.display = (profilesCache[currentName] && !isSelfLoggedIn) ? "block" : "none";
         reqForm.style.display = "none";
@@ -945,23 +957,6 @@ async function sendResetVerificationCode() {
         return;
     }
     
-    const profile = profilesCache[currentName];
-    if (!profile) {
-        alert("This handle is not secured yet.");
-        return;
-    }
-    
-    const registeredEmail = (profile.email || "").trim().toLowerCase();
-    if (!registeredEmail) {
-        alert("No recovery email was set for this handle during registration. Please contact lounge admins directly.");
-        return;
-    }
-    
-    if (emailInputVal.toLowerCase() !== registeredEmail) {
-        alert("Recovery email does not match registered email.");
-        return;
-    }
-    
     // Generate a 6-digit random code
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes from now
@@ -970,16 +965,17 @@ async function sendResetVerificationCode() {
     sendBtn.innerText = "Sending...";
     
     try {
-        // Save the code & expiry timestamp to Supabase secured_profiles
-        const { error } = await supabase_db
-            .from('secured_profiles')
-            .update({ 
-                reset_code: code,
-                reset_code_expires: expiresAt
-            })
-            .eq('username', currentName);
+        // Save the code & expiry timestamp using secure RPC
+        const { data: setSuccess, error } = await supabase_db.rpc('set_reset_code', {
+            p_username: currentName,
+            p_email: emailInputVal,
+            p_code: code,
+            p_expires_at: expiresAt
+        });
             
-        if (error) throw error;
+        if (error || !setSuccess) {
+            throw new Error("Could not verify recovery details. Ensure the email is correct.");
+        }
         
         // Dispatch the email via EmailJS
         if (EMAILJS_SERVICE_ID === "service_xxxxxx" || EMAILJS_PUBLIC_KEY === "your_public_key") {
@@ -1024,40 +1020,17 @@ async function verifyAndResetPasskey() {
     confirmBtn.innerText = "Resetting...";
     
     try {
-        // Query the database to get the code & expiry directly
-        const { data, error } = await supabase_db
-            .from('secured_profiles')
-            .select('reset_code, reset_code_expires')
-            .eq('username', currentName)
-            .single();
+        // Reset passkey and reminder, clear code fields via secure RPC
+        const { data: resetSuccess, error: updateError } = await supabase_db.rpc('reset_passkey_with_code', {
+            p_username: currentName,
+            p_code: enteredCode,
+            p_new_passkey: newPasskey,
+            p_new_reminder: newReminder
+        });
             
-        if (error || !data) {
-            throw new Error("Could not verify code. Please request a new one.");
+        if (updateError || !resetSuccess) {
+            throw new Error("Invalid or expired verification code.");
         }
-        
-        const dbCode = data.reset_code;
-        const expiry = new Date(data.reset_code_expires);
-        
-        if (!dbCode || dbCode !== enteredCode) {
-            throw new Error("Invalid verification code.");
-        }
-        
-        if (expiry < new Date()) {
-            throw new Error("Verification code has expired. Please request a new one.");
-        }
-        
-        // Update passkey and reminder, clear code fields
-        const { error: updateError } = await supabase_db
-            .from('secured_profiles')
-            .update({
-                passkey: newPasskey,
-                key_reminder: newReminder,
-                reset_code: null,
-                reset_code_expires: null
-            })
-            .eq('username', currentName);
-            
-        if (updateError) throw updateError;
         
         // Save new passkey locally to log in the user
         localStorage.setItem('tellstream_key_' + currentName, newPasskey);
@@ -1099,14 +1072,21 @@ async function handleSecuritySubmit() {
     }
 
     if (profilesCache[currentName]) {
-        if (profilesCache[currentName].passkey === passkey) {
+        const { data: isValid, error: rpcErr } = await supabase_db.rpc('verify_user_passkey', { 
+            p_username: currentName, 
+            p_passkey: passkey 
+        });
+        if (isValid && !rpcErr) {
             localStorage.setItem('tellstream_key_' + currentName, passkey);
             localStorage.setItem('tellstream_saved_username', currentName);
+            isCurrentUserVerified = true;
             alert("Identity checked and authorized!");
             securityDrawer.classList.remove('open');
             chatBox.innerHTML = ""; 
             syncDrawerName();
             loadMessages();
+            if (isNoticeBoardActive) evaluateNoticeBoardForms();
+            renderHelpContent(isNoticeBoardActive);
         } else {
             alert("Invalid Passkey entry sequence.");
             if (profilesCache[currentName].key_reminder) {
@@ -1136,6 +1116,7 @@ async function handleSecuritySubmit() {
         } else {
             localStorage.setItem('tellstream_key_' + currentName, passkey);
             localStorage.setItem('tellstream_saved_username', currentName);
+            isCurrentUserVerified = true;
             alert("Registration complete!");
             await syncProfilesMap();
             securityDrawer.classList.remove('open');
@@ -1146,8 +1127,26 @@ async function handleSecuritySubmit() {
     }
 }
 
+async function verifyCurrentSession() {
+    const currentUser = usernameInput.value.trim();
+    const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
+    if (currentUser && authorizedKey) {
+        try {
+            const { data, error } = await supabase_db.rpc('verify_user_passkey', { 
+                p_username: currentUser, 
+                p_passkey: authorizedKey 
+            });
+            isCurrentUserVerified = !error && data;
+        } catch (e) {
+            isCurrentUserVerified = false;
+        }
+    } else {
+        isCurrentUserVerified = false;
+    }
+}
+
 async function syncProfilesMap() {
-    const { data } = await supabase_db.from('secured_profiles').select('*');
+    const { data } = await supabase_db.from('secured_profiles').select('username, power_level, key_reminder, hover_title');
     profilesCache = {};
     if (data) data.forEach(p => { profilesCache[p.username] = p; });
     syncDrawerName();
@@ -1237,7 +1236,9 @@ async function sendMessage() {
         const profile = profilesCache[user];
         const userPowerLevel = parseInt(profile?.power_level || 0);
         
-        if (profile && userPowerLevel >= 1) { 
+        const savedUser = localStorage.getItem('tellstream_saved_username');
+        const isVerified = user === savedUser && isCurrentUserVerified;
+        if (profile && isVerified && userPowerLevel >= 1) {
             
             // CONSOLE INJECTION INTERCEPTOR FOR ZERO-SLASH SCHEDULE SYSTEM
             if (text.startsWith('/schedule ')) {
@@ -1379,7 +1380,9 @@ async function sendMessage() {
     }
 
     if (profilesCache[user]) {
-        if (localStorage.getItem('tellstream_key_' + user) !== profilesCache[user].passkey) {
+        const loggedInUser = localStorage.getItem('tellstream_saved_username');
+        const isVerified = user === loggedInUser && isCurrentUserVerified;
+        if (!isVerified) {
             alert("This handle name has been secured! Please unlock the identity box.");
             toggleSecurityDrawer();
             return;
@@ -1409,6 +1412,7 @@ messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.s
 async function processScheduleConsoleInjections(text, djUser) {
     const args = text.trim().split(/\s+/);
     const action = args[1]?.toLowerCase();
+    const passkey = localStorage.getItem('tellstream_key_' + djUser) || "";
 
     if (action === 'perm') {
         const dayName = args[2];
@@ -1421,13 +1425,15 @@ async function processScheduleConsoleInjections(text, djUser) {
             return;
         }
 
-        const { error } = await supabase_db.from('master_schedule').upsert([{
-            day_of_week: dayName.toLowerCase(),
-            start_time: startTime,
-            end_time: endTime,
-            time_zone: timeZone.toUpperCase(),
-            dj_name: djUser
-        }], { onConflict: 'day_of_week,start_time' });
+        const { error } = await supabase_db.rpc('secure_upsert_master_schedule', {
+            p_auth_username: djUser,
+            p_auth_passkey: passkey,
+            p_day_of_week: dayName.toLowerCase(),
+            p_start_time: startTime,
+            p_end_time: endTime,
+            p_time_zone: timeZone.toUpperCase(),
+            p_dj_name: djUser
+        });
 
         if (error) console.error("Database master schedule record failure:", error.message);
     } 
@@ -1442,14 +1448,16 @@ async function processScheduleConsoleInjections(text, djUser) {
             return;
         }
 
-        const { error } = await supabase_db.from('temporary_overrides').upsert([{
-            specific_date: dateBlock,
-            start_time: startTime,
-            end_time: endTime,
-            time_zone: timeZone.toUpperCase(),
-            dj_name: djUser,
-            is_cancelled: false
-        }], { onConflict: 'specific_date,start_time' });
+        const { error } = await supabase_db.rpc('secure_upsert_temporary_override', {
+            p_auth_username: djUser,
+            p_auth_passkey: passkey,
+            p_specific_date: dateBlock,
+            p_start_time: startTime,
+            p_end_time: endTime,
+            p_time_zone: timeZone.toUpperCase(),
+            p_dj_name: djUser,
+            p_is_cancelled: false
+        });
 
         if (error) console.error("Database temporary override record failure:", error.message);
     } 
@@ -1462,12 +1470,16 @@ async function processScheduleConsoleInjections(text, djUser) {
             return;
         }
 
-        const { error } = await supabase_db.from('temporary_overrides').upsert([{
-            specific_date: dateBlock,
-            start_time: startTime,
-            is_cancelled: true,
-            dj_name: 'tellstream'
-        }], { onConflict: 'specific_date,start_time' });
+        const { error } = await supabase_db.rpc('secure_upsert_temporary_override', {
+            p_auth_username: djUser,
+            p_auth_passkey: passkey,
+            p_specific_date: dateBlock,
+            p_start_time: startTime,
+            p_end_time: null,
+            p_time_zone: 'UTC',
+            p_dj_name: 'tellstream',
+            p_is_cancelled: true
+        });
 
         if (error) console.error("Database cancel action sync failure:", error.message);
     }
@@ -1589,6 +1601,7 @@ window.syncDrawerName = syncDrawerName;
 (async function initSystem() {
     // 1. Core Lounge Operations (Cannot be affected by outside scripts)
     try { await syncProfilesMap(); } catch(e){}
+    try { await verifyCurrentSession(); } catch(e){}
     try { await syncBannedWordsMap(); } catch(e){}
     try { await syncBannedUsersMap(); } catch(e){}
     try { await loadMessages(); } catch(e){}
