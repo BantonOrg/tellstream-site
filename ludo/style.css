@@ -626,47 +626,54 @@ input[type="text"]:focus {
 }
 
 .yard-roll-btn.active-turn.red {
-  border-color: #ff3333;
-  box-shadow: 0 0 15px rgba(255, 51, 51, 0.35);
-  background: rgba(255, 51, 51, 0.12);
-  color: #ff5555;
+  border: 2px solid #ff6666;
+  box-shadow: 0 0 25px rgba(255, 51, 83, 0.95), inset 0 0 10px rgba(255, 51, 83, 0.6);
+  background: rgba(255, 51, 83, 0.95);
+  color: #ffffff;
+  font-weight: 800;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 .yard-roll-btn.active-turn.red:hover:not(:disabled) {
-  background: rgba(255, 51, 51, 0.25);
-  box-shadow: 0 0 20px rgba(255, 51, 51, 0.55);
+  background: #ff3333;
+  box-shadow: 0 0 30px rgba(255, 51, 83, 1.0);
 }
 
 .yard-roll-btn.active-turn.green {
-  border-color: #22e532;
-  box-shadow: 0 0 15px rgba(34, 229, 50, 0.35);
-  background: rgba(34, 229, 50, 0.12);
-  color: #4aff5f;
+  border: 2px solid #6aff82;
+  box-shadow: 0 0 25px rgba(34, 229, 50, 0.95), inset 0 0 10px rgba(34, 229, 50, 0.6);
+  background: rgba(34, 229, 50, 0.95);
+  color: #ffffff;
+  font-weight: 800;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 .yard-roll-btn.active-turn.green:hover:not(:disabled) {
-  background: rgba(34, 229, 50, 0.25);
-  box-shadow: 0 0 20px rgba(34, 229, 50, 0.55);
+  background: #22e532;
+  box-shadow: 0 0 30px rgba(34, 229, 50, 1.0);
 }
 
 .yard-roll-btn.active-turn.yellow {
-  border-color: #ffdd1a;
-  box-shadow: 0 0 15px rgba(255, 221, 26, 0.35);
-  background: rgba(255, 221, 26, 0.12);
-  color: #ffeb60;
+  border: 2px solid #ffeb60;
+  box-shadow: 0 0 25px rgba(255, 221, 26, 0.95), inset 0 0 10px rgba(255, 221, 26, 0.6);
+  background: rgba(255, 221, 26, 0.95);
+  color: #000000;
+  font-weight: 800;
 }
 .yard-roll-btn.active-turn.yellow:hover:not(:disabled) {
-  background: rgba(255, 221, 26, 0.25);
-  box-shadow: 0 0 20px rgba(255, 221, 26, 0.55);
+  background: #ffdd1a;
+  box-shadow: 0 0 30px rgba(255, 221, 26, 1.0);
 }
 
 .yard-roll-btn.active-turn.blue {
-  border-color: #0088ff;
-  box-shadow: 0 0 15px rgba(0, 136, 255, 0.35);
-  background: rgba(0, 136, 255, 0.12);
-  color: #33aaff;
+  border: 2px solid #66b2ff;
+  box-shadow: 0 0 25px rgba(0, 136, 255, 0.95), inset 0 0 10px rgba(0, 136, 255, 0.6);
+  background: rgba(0, 136, 255, 0.95);
+  color: #ffffff;
+  font-weight: 800;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 .yard-roll-btn.active-turn.blue:hover:not(:disabled) {
-  background: rgba(0, 136, 255, 0.25);
-  box-shadow: 0 0 20px rgba(0, 136, 255, 0.55);
+  background: #0088ff;
+  box-shadow: 0 0 30px rgba(0, 136, 255, 1.0);
 }
 
 .yard-dice-view {
