@@ -59,7 +59,7 @@ const COLOR_MAPS = {
   red: {
     startTrackIdx: 34, homeStartIdx: 50,
     homeCoords: [{x:7,y:13}, {x:7,y:12}, {x:7,y:11}, {x:7,y:10}, {x:7,y:9}, {x:7,y:8}],
-    yard: [{x:4,y:12}, {x:5,y:12}, {x:4,y:13}, {x:5,y:13}]
+    yard: [{x:4,y:13}, {x:5,y:13}, {x:4,y:14}, {x:5,y:14}]
   }
 };
 
@@ -103,6 +103,9 @@ if (optionsBtn && dropdownContent) {
         e.stopPropagation();
         dropdownContent.style.display = dropdownContent.style.display === "flex" ? "none" : "flex";
     };
+    dropdownContent.onclick = (e) => {
+        e.stopPropagation();
+    };
     window.onclick = () => {
         dropdownContent.style.display = "none";
     };
@@ -115,9 +118,11 @@ if (localSoundToggle) {
 }
 if (localThemeSelect) {
     localThemeSelect.onchange = () => {
+        const theme = localThemeSelect.value;
+        window.localStorage.setItem('ludo_local_theme', theme);
         board.className = "";
-        board.classList.add(`theme-${localThemeSelect.value}`);
-        if (themeSelect) themeSelect.value = localThemeSelect.value;
+        board.classList.add(`theme-${theme}`);
+        if (themeSelect) themeSelect.value = theme;
     };
 }
 
@@ -533,7 +538,8 @@ function handleStateUpdate(roomData) {
           animated = true;
           state = roomData.state;
           const playersObj = roomData.players || {};
-          const theme = playersObj.settings?.theme || "classic";
+          const localTheme = window.localStorage.getItem('ludo_local_theme');
+          const theme = localTheme || playersObj.settings?.theme || "classic";
           const sound = playersObj.settings?.sound ?? true;
           soundOn = sound;
           if (localSoundToggle) localSoundToggle.checked = sound;
@@ -577,10 +583,10 @@ function handleStateUpdate(roomData) {
     blue: [...roomData.state.tokens.blue]
   } : null;
 
-  state = roomData.state;
   const playersObj = roomData.players || {};
   const maxPlayers = playersObj.settings?.max_players || 4;
-  const theme = playersObj.settings?.theme || "classic";
+  const localTheme = window.localStorage.getItem('ludo_local_theme');
+  const theme = localTheme || playersObj.settings?.theme || "classic";
   const sound = playersObj.settings?.sound ?? true;
   
   soundOn = sound;
