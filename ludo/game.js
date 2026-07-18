@@ -576,6 +576,8 @@ function handleStateUpdate(roomData) {
       return;
   }
 
+  state = roomData.state || defaultState();
+
   localTokenPositions = roomData.state ? {
     red: [...roomData.state.tokens.red],
     green: [...roomData.state.tokens.green],
