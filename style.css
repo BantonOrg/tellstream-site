@@ -787,9 +787,7 @@ body.chat-is-fullscreen .chat-fs-help-panel {
         background-size: 100% 100% !important;
     }
     .cell-middle {
-        background-image: url('header-bg2m.jpg') !important;
-        background-position: center center !important;
-        background-size: 100% 100% !important;
+        display: none !important;
     }
     .cell-right {
         background-image: url('header-bg3m.jpg') !important;
@@ -797,6 +795,8 @@ body.chat-is-fullscreen .chat-fs-help-panel {
         background-size: 100% 100% !important;
         justify-content: center !important;
         padding-right: 0px !important;
+        max-width: none !important;
+        align-items: center !important;
     }
     
     .columns-container {
