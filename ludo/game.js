@@ -21,6 +21,10 @@ const TURN_TIMEOUT_SECONDS = 30;
 let isProcessing = false;
 let localTokenPositions = null;
 let currentTurnNumber = 0;
+let isDiceRollingLocal = false;
+let localDiceVal = null;
+let observerRollingColor = null;
+let observerDiceVal = null;
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 const COLORS = ["red", "green", "yellow", "blue"];
@@ -523,8 +527,41 @@ async function runMovementAnimation(movedColor, tokenIdx, targetPos, finalRoomDa
   }
 }
 
+function triggerObserverDiceRollAnimation(color) {
+  if (isDiceRollingLocal) return;
+  
+  observerRollingColor = color;
+  let count = 0;
+  if (soundOn) playSound("roll");
+  
+  const interval = setInterval(() => {
+    observerDiceVal = Math.floor(Math.random() * 6) + 1;
+    render();
+    count++;
+    if (count >= 12) {
+      clearInterval(interval);
+      observerRollingColor = null;
+      observerDiceVal = null;
+      render();
+    }
+  }, 50);
+}
+
 function handleStateUpdate(roomData) {
   if (!roomCode || roomData.room_code !== roomCode) return;
+
+  if (roomData.state && roomData.players) {
+    const playersObjForAnim = roomData.players || {};
+    const joinedColorsForAnim = COLORS.filter(color => playersObjForAnim[color] && playersObjForAnim[color] !== "Waiting..." && playersObjForAnim[color] !== "Not In Use");
+    const activeSeatsCountForAnim = joinedColorsForAnim.length;
+    const incomingTurnColor = activeSeatsCountForAnim > 0 ? joinedColorsForAnim[roomData.turn % activeSeatsCountForAnim] : "red";
+
+    const isNewRoll = roomData.state.hasRolled && (!state || !state.hasRolled);
+    if (isNewRoll && incomingTurnColor !== playerColor) {
+      triggerObserverDiceRollAnimation(incomingTurnColor);
+    }
+  }
+
   currentTurnNumber = roomData.turn;
 
   // Animation check
@@ -744,25 +781,43 @@ async function handleDiceRoll() {
   if (playerColor !== currentTurnColor) return;
   if (hasRolledThisTurn) return;
 
-  const roll = Math.floor(Math.random() * 6) + 1;
-  if(soundOn) playSound("roll");
+  isProcessing = true;
+  isDiceRollingLocal = true;
+  if (soundOn) playSound("roll");
 
-  state.currentRoll = roll;
-  state.hasRolled = true;
-
-  if (!hasValidMoves(playerColor, roll)) {
-    isProcessing = true;
-    setTimeout(async () => {
-      try {
-        await passTurn(roll === 6);
-      } catch (err) {
-        console.error("Error passing turn:", err);
-      } finally {
+  let rollCount = 0;
+  const interval = setInterval(async () => {
+    localDiceVal = Math.floor(Math.random() * 6) + 1;
+    render();
+    rollCount++;
+    
+    if (rollCount >= 12) {
+      clearInterval(interval);
+      
+      const roll = Math.floor(Math.random() * 6) + 1;
+      state.currentRoll = roll;
+      state.hasRolled = true;
+      
+      isDiceRollingLocal = false;
+      localDiceVal = null;
+      
+      if (!hasValidMoves(playerColor, roll)) {
+        setTimeout(async () => {
+          try {
+            await passTurn(roll === 6);
+          } catch (err) {
+            console.error("Error passing turn:", err);
+          } finally {
+            isProcessing = false;
+          }
+        }, 1500);
+      } else {
         isProcessing = false;
       }
-    }, 1500);
-  }
-  await updateDatabaseState();
+      
+      await updateDatabaseState();
+    }
+  }, 50);
 }
 
 function hasValidMoves(color, roll) {
@@ -874,26 +929,45 @@ function render() {
     const rollBox = document.createElement("div");
     rollBox.className = `yard-control roll ${color}`;
     
-    if (color === currentTurnColor) {
-      const rollButton = document.createElement("button");
-      rollButton.className = "yard-roll-btn";
-      rollButton.innerText = playerColor === currentTurnColor ? "ROLL" : "DICE";
-      rollButton.disabled = (playerColor !== currentTurnColor || hasRolledThisTurn);
-      rollButton.onclick = handleDiceRoll;
-      rollBox.appendChild(rollButton);
+    const rollButton = document.createElement("button");
+    rollButton.className = `yard-roll-btn ${color}`;
+    rollButton.innerText = playerColor === color ? "ROLL" : "DICE";
+    
+    const isActive = (color === currentTurnColor);
+    const isMyTurn = (playerColor === currentTurnColor);
+    
+    if (isActive) {
+      rollButton.classList.add("active-turn");
     }
+    
+    rollButton.disabled = !isActive || !isMyTurn || hasRolledThisTurn || isProcessing;
+    rollButton.onclick = handleDiceRoll;
+    rollBox.appendChild(rollButton);
     controlsContainer.appendChild(rollBox);
 
     const diceBox = document.createElement("div");
     diceBox.className = `yard-control dice ${color}`;
     
-    if (color === currentTurnColor) {
-      const diceDisplay = document.createElement("div");
-      diceDisplay.className = "yard-dice-view";
-      const diceEmojis = ["🎲", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
-      diceDisplay.innerText = currentRoll ? diceEmojis[currentRoll] : "🎲";
-      diceBox.appendChild(diceDisplay);
+    const diceDisplay = document.createElement("div");
+    diceDisplay.className = `yard-dice-view ${color}`;
+    
+    if (isActive) {
+      diceDisplay.classList.add("active-dice");
     }
+    
+    const diceEmojis = ["🎲", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
+    
+    if (isActive && isDiceRollingLocal) {
+      diceDisplay.classList.add("rolling");
+      diceDisplay.innerText = localDiceVal ? diceEmojis[localDiceVal] : "🎲";
+    } else if (color === observerRollingColor) {
+      diceDisplay.classList.add("rolling");
+      diceDisplay.innerText = observerDiceVal ? diceEmojis[observerDiceVal] : "🎲";
+    } else {
+      diceDisplay.innerText = (isActive && currentRoll) ? diceEmojis[currentRoll] : "🎲";
+    }
+    
+    diceBox.appendChild(diceDisplay);
     controlsContainer.appendChild(diceBox);
   });
 

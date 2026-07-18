@@ -599,27 +599,125 @@ input[type="text"]:focus {
 .yard-control.dice.blue   { grid-column: 12 / 14; }
 
 .yard-roll-btn {
-  width: 85%;
-  height: 75%;
-  background: #00f0ff;
-  border: none;
-  color: black;
-  font-weight: bold;
+  width: 90%;
+  height: 80%;
+  background: rgba(20, 20, 25, 0.60);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  font-family: var(--font-heading);
+  font-weight: 700;
   font-size: 11px;
   cursor: pointer;
-  border-radius: 4px;
-  box-shadow: 0 0 8px rgba(240,255,0.3);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
+
 .yard-roll-btn:disabled {
-  background: #222d3d;
-  color: #55657e;
+  background: rgba(10, 10, 15, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.15);
   cursor: not-allowed;
   box-shadow: none;
-  border: 1px solid #3a475c;
 }
+
+.yard-roll-btn.active-turn.red {
+  border-color: #ff3333;
+  box-shadow: 0 0 15px rgba(255, 51, 51, 0.35);
+  background: rgba(255, 51, 51, 0.12);
+  color: #ff5555;
+}
+.yard-roll-btn.active-turn.red:hover:not(:disabled) {
+  background: rgba(255, 51, 51, 0.25);
+  box-shadow: 0 0 20px rgba(255, 51, 51, 0.55);
+}
+
+.yard-roll-btn.active-turn.green {
+  border-color: #22e532;
+  box-shadow: 0 0 15px rgba(34, 229, 50, 0.35);
+  background: rgba(34, 229, 50, 0.12);
+  color: #4aff5f;
+}
+.yard-roll-btn.active-turn.green:hover:not(:disabled) {
+  background: rgba(34, 229, 50, 0.25);
+  box-shadow: 0 0 20px rgba(34, 229, 50, 0.55);
+}
+
+.yard-roll-btn.active-turn.yellow {
+  border-color: #ffdd1a;
+  box-shadow: 0 0 15px rgba(255, 221, 26, 0.35);
+  background: rgba(255, 221, 26, 0.12);
+  color: #ffeb60;
+}
+.yard-roll-btn.active-turn.yellow:hover:not(:disabled) {
+  background: rgba(255, 221, 26, 0.25);
+  box-shadow: 0 0 20px rgba(255, 221, 26, 0.55);
+}
+
+.yard-roll-btn.active-turn.blue {
+  border-color: #0088ff;
+  box-shadow: 0 0 15px rgba(0, 136, 255, 0.35);
+  background: rgba(0, 136, 255, 0.12);
+  color: #33aaff;
+}
+.yard-roll-btn.active-turn.blue:hover:not(:disabled) {
+  background: rgba(0, 136, 255, 0.25);
+  box-shadow: 0 0 20px rgba(0, 136, 255, 0.55);
+}
+
 .yard-dice-view {
   font-size: 2.2rem;
   line-height: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 52px;
+  height: 52px;
+  background: rgba(20, 20, 25, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+  transition: all 0.3s ease;
+}
+
+.yard-dice-view.active-dice.red {
+  border-color: rgba(255, 51, 51, 0.4);
+  box-shadow: 0 0 15px rgba(255, 51, 51, 0.25);
+}
+.yard-dice-view.active-dice.green {
+  border-color: rgba(34, 229, 50, 0.4);
+  box-shadow: 0 0 15px rgba(34, 229, 50, 0.25);
+}
+.yard-dice-view.active-dice.yellow {
+  border-color: rgba(255, 221, 26, 0.4);
+  box-shadow: 0 0 15px rgba(255, 221, 26, 0.25);
+}
+.yard-dice-view.active-dice.blue {
+  border-color: rgba(0, 136, 255, 0.4);
+  box-shadow: 0 0 15px rgba(0, 136, 255, 0.25);
+}
+
+@keyframes rollDiceAnimation {
+  0% { transform: scale(1) rotate(0deg) translate(0, 0); }
+  15% { transform: scale(1.25) rotate(-20deg) translate(-4px, -2px); }
+  30% { transform: scale(1.25) rotate(20deg) translate(4px, 2px); }
+  45% { transform: scale(1.25) rotate(-15deg) translate(-3px, 1px); }
+  60% { transform: scale(1.25) rotate(15deg) translate(3px, -1px); }
+  75% { transform: scale(1.15) rotate(-10deg) translate(-2px, 0); }
+  90% { transform: scale(1.05) rotate(5deg) translate(1px, 0); }
+  100% { transform: scale(1) rotate(0deg) translate(0, 0); }
+}
+
+.yard-dice-view.rolling {
+  animation: rollDiceAnimation 0.6s ease-in-out;
+  border-color: #fff !important;
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.6) !important;
 }
 
 /* TOKENS DESIGN */
