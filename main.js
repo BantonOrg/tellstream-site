@@ -445,73 +445,30 @@ async function handlePromoteDemoteCommand(text) {
 }
 
 async function renderSiteNewsFeed() {
-    if (!fbFeedContainer) return;
+    const ticker = document.getElementById('newsTickerContent');
+    if (!ticker) return;
     try {
-        // Direct header override logic to patch "Facebook Activity" out dynamically
-        const colHeader = fbFeedContainer.previousElementSibling;
-        if (colHeader && (colHeader.innerText.includes("Facebook") || colHeader.querySelector('a'))) {
-            colHeader.style.display = 'flex';
-            colHeader.style.justifyContent = 'space-between';
-            colHeader.style.alignItems = 'center';
-            colHeader.style.width = '100%';
-
-            colHeader.innerHTML = `
-                <span>📰 Site News</span>
-                <a href="https://www.facebook.com/tellstream.dem" target="_blank" style="display: flex; align-items: center; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="#1877F2" style="display: block;">
-                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                    </svg>
-                </a>
-            `;
-        }
-
-        // Fetch the 12 newest combined records from the boss and selectors boards
+        // Fetch the single newest record from the notice_board (either boss or selectors)
         const { data: records, error } = await supabase_db
             .from('notice_board')
             .select('*')
             .in('board_type', ['boss', 'selectors'])
             .order('created_at', { ascending: false })
-            .limit(12);
+            .limit(1);
 
         if (error || !records || records.length === 0) {
-            fbFeedContainer.innerHTML = `
-                <p style="color:#666; text-align:center; padding-top:20px; font-style:italic;">No station notices posted.</p>
-                <div class="fb-post-card" style="text-align:center; margin-top:15px; cursor:pointer; border-left:4px solid #ffdd1a;" onclick="toggleNoticeBoardView();">
-                    <div class="fb-post-text" style="font-weight:bold; color:#ffdd1a;">📋 OPEN NOTICEBOARD HISTORY</div>
-                </div>
-            `;
+            ticker.innerText = "Welcome to Tellstream Lounge! | Enjoy the music and chat | No current announcements posted.";
             return;
         }
 
-        // Build the visual HTML feed blocks
-        let html = records.map(item => {
-            const isBoss = item.board_type === 'boss';
-            const badgeColor = isBoss ? '#ff3333' : '#ffdd1a';
-            const badgeText = isBoss ? 'STATION ADMIN' : 'DJ SELECTOR';
-
-            return `
-                <div class="fb-post-card" style="border-left: 4px solid ${badgeColor}; margin-bottom: 12px;">
-                    <div class="fb-post-meta" style="color: ${badgeColor}; font-weight: bold;">
-                        👑 ${escapeHTML(item.username)} • <span style="font-size:0.75rem; opacity:0.8;">${badgeText}</span>
-                    </div>
-                    <div class="fb-post-text" style="color: #e0f2f1; margin-top: 5px; line-height: 1.4;">
-                        ${escapeHTML(item.notice_text)}
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-        // Append the clickable history link node to the very bottom
-        html += `
-            <div class="fb-post-card" style="text-align:center; margin-top:20px; cursor:pointer; background: rgba(255,221,26,0.05); border: 1px dashed #ffdd1a;" onclick="toggleNoticeBoardView();">
-                <div class="fb-post-text" style="font-weight:bold; color:#ffdd1a; font-size:0.9rem;">
-                    📋 VIEW FULL NOTICEBOARD HISTORY
-                </div>
-            </div>
-        `;
-
-        fbFeedContainer.innerHTML = html;
-    } catch (e) { console.error(e); }
+        const item = records[0];
+        const isBoss = item.board_type === 'boss';
+        const prefix = isBoss ? "👑 ADMIN NOTICE" : "🎙️ DJ BULLETIN";
+        
+        // Flatten text for horizontal marquee scrolling
+        const flatNotice = item.notice_text.replace(/\s+/g, ' ').trim();
+        ticker.innerText = `🔥 ${prefix} (${item.username}): ${flatNotice} ★★★ Welcome to the Lounge! Enjoy the great vibes all day every day! ★★★`;
+    } catch (e) { console.error("Error rendering site news:", e); }
 }
 
 async function renderActiveFlyers() {
@@ -552,34 +509,7 @@ async function renderActiveFlyers() {
 }
 
 function toggleAccordion(target) {
-    const panelFlyers = document.getElementById('panel-flyers');
-    const panelSchedule = document.getElementById('panel-schedule');
-    const contentFlyers = document.getElementById('flyerContainer');
-    const contentSchedule = document.getElementById('timetableContainer');
-    const indicatorFlyers = panelFlyers.querySelector('.accordion-indicator');
-    const indicatorSchedule = panelSchedule.querySelector('.accordion-indicator');
-
-    if (target === 'flyers') {
-        panelFlyers.style.flex = "1";
-        panelFlyers.classList.add('active');
-        contentFlyers.style.display = "block";
-        indicatorFlyers.innerText = "▼";
-
-        panelSchedule.style.flex = "0 0 50px";
-        panelSchedule.classList.remove('active');
-        contentSchedule.style.display = "none";
-        indicatorSchedule.innerText = "▲";
-    } else {
-        panelSchedule.style.flex = "1";
-        panelSchedule.classList.add('active');
-        contentSchedule.style.display = "block";
-        indicatorSchedule.innerText = "▼";
-
-        panelFlyers.style.flex = "0 0 50px";
-        panelFlyers.classList.remove('active');
-        contentFlyers.style.display = "none";
-        indicatorFlyers.innerText = "▲";
-    }
+    // Accordion styling removed in favor of static column structures
 }
 
 function renderHelpContent(useNoticeboardGuide = false) {
@@ -718,6 +648,39 @@ function toggleNoticeBoardView() {
 
 // Setup cross-tab BroadcastChannel for remote radio controls
 const radioChannel = new BroadcastChannel('tellstream_radio_control');
+
+const customPlayBtn = document.getElementById('player-play-btn');
+const customVolSlider = document.getElementById('player-volume-slider');
+
+function updatePlayerUI(player) {
+    if (customPlayBtn) {
+        customPlayBtn.innerText = player.paused ? '▶️' : '⏸️';
+    }
+    if (customVolSlider) {
+        customVolSlider.value = player.volume;
+    }
+}
+
+if (customPlayBtn) {
+    customPlayBtn.addEventListener('click', () => {
+        const player = document.getElementById('radioPlayer');
+        if (!player) return;
+        if (player.paused) {
+            player.play().catch(e => console.log("Play blocked:", e));
+        } else {
+            player.pause();
+        }
+    });
+}
+
+if (customVolSlider) {
+    customVolSlider.addEventListener('input', (e) => {
+        const player = document.getElementById('radioPlayer');
+        if (!player) return;
+        player.volume = parseFloat(e.target.value);
+    });
+}
+
 radioChannel.onmessage = (event) => {
     const player = document.getElementById('radioPlayer');
     if (!player) return;
@@ -731,17 +694,22 @@ radioChannel.onmessage = (event) => {
     }
 };
 
-// Sync player state changes back to game tabs
+// Sync player state changes back to game tabs and update custom UI
 setTimeout(() => {
     const player = document.getElementById('radioPlayer');
     if (player) {
+        updatePlayerUI(player);
+
         player.addEventListener('play', () => {
+            updatePlayerUI(player);
             radioChannel.postMessage({ state: 'playing', volume: player.volume });
         });
         player.addEventListener('pause', () => {
+            updatePlayerUI(player);
             radioChannel.postMessage({ state: 'paused', volume: player.volume });
         });
         player.addEventListener('volumechange', () => {
+            updatePlayerUI(player);
             radioChannel.postMessage({ state: player.paused ? 'paused' : 'playing', volume: player.volume });
         });
     }
@@ -1493,16 +1461,22 @@ async function fetchAndRenderWeeklyTimetable() {
         const { data: tempOverrides, error: tempErr } = await supabase_db.from('temporary_overrides').select('*');
 
         if (masterErr || !masterData || masterData.length === 0) {
-            timetableContainer.innerHTML = `<p style="color:#666; text-align:center; padding-top:20px; font-style:italic;">Weekly Transmission Timetable under construction.</p>`;
+            timetableContainer.innerHTML = `<p style="color:#666; text-align:center; padding-top:20px; font-style:italic;">Today's schedule under construction.</p>`;
             return;
         }
 
         const dayOrder = { sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6 };
+        const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
         // Grab the viewer's native system time zone city
         const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-        let processedData = masterData.map(item => {
+        // Initialize grouped schedule lists
+        const groupedByDay = {
+            sunday: [], monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: []
+        };
+
+        masterData.forEach(item => {
             let currentDJ = item.dj_name;
             let noteLabel = "";
 
@@ -1511,10 +1485,10 @@ async function fetchAndRenderWeeklyTimetable() {
                 if (matchOverride) {
                     if (matchOverride.is_cancelled) {
                         currentDJ = "tellstream";
-                        noteLabel = `<span style="color:#ff3333; font-size:0.75rem; margin-left:8px; font-weight:bold;">[CANCELLED]</span>`;
+                        noteLabel = `<span style="color:#ff3333; font-size:0.7rem; font-weight:bold; background:rgba(255,51,51,0.1); padding:2px 6px; border-radius:3px; margin-left:8px;">[CANCELLED]</span>`;
                     } else {
                         currentDJ = matchOverride.dj_name;
-                        noteLabel = `<span style="color:#ffdd1a; font-size:0.75rem; margin-left:8px; font-weight:bold;">[COVER SET]</span>`;
+                        noteLabel = `<span style="color:#ffdd1a; font-size:0.7rem; font-weight:bold; background:rgba(255,221,26,0.1); padding:2px 6px; border-radius:3px; margin-left:8px;">[COVER SET]</span>`;
                     }
                 }
             }
@@ -1544,37 +1518,114 @@ async function fetchAndRenderWeeklyTimetable() {
             const localStartStr = ukStart.toLocaleTimeString('en-GB', { timeZone: userTimeZone, hour: '2-digit', minute: '2-digit', hour12: false });
             const localEndStr = ukEnd.toLocaleTimeString('en-GB', { timeZone: userTimeZone, hour: '2-digit', minute: '2-digit', hour12: false });
 
-            return {
-                sortDay: dayOrder[localDayStr.toLowerCase()],
-                sortTime: localStartStr,
-                html: `
-                    <div class="fb-post-card" style="border-left: 4px solid #22e532; margin-bottom: 12px; background: rgba(34, 229, 50, 0.03); padding: 14px; border-radius: 4px;">
-                        <div style="font-weight: 900; color: #22e532; text-transform: uppercase; font-size: 0.95rem; letter-spacing: 1px; display: flex; justify-content: space-between;">
-                            <span>📅 ${localDayStr}</span>
-                            <span style="color: #555; font-size: 0.75rem; text-transform: none; font-weight: normal;">📍 Auto-Translated</span>
+            const localDayLower = localDayStr.toLowerCase();
+            if (groupedByDay[localDayLower]) {
+                groupedByDay[localDayLower].push({
+                    start: localStartStr,
+                    end: localEndStr,
+                    dj: currentDJ,
+                    badge: noteLabel,
+                    sortTime: localStartStr
+                });
+            }
+        });
+
+        // 1. RENDER TODAY'S TIMETABLE IN COLUMN 2
+        const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+        const todayShows = groupedByDay[todayName] || [];
+        todayShows.sort((a, b) => a.sortTime.localeCompare(b.sortTime));
+
+        if (todayShows.length === 0) {
+            timetableContainer.innerHTML = `
+                <div class="fb-post-card" style="border-left: 4px solid #555; background: rgba(255, 255, 255, 0.02); padding: 14px; border-radius: 4px; text-align: center;">
+                    <p style="color:#666; font-style:italic; margin:0;">No transmissions scheduled for today.</p>
+                </div>
+            `;
+        } else {
+            timetableContainer.innerHTML = todayShows.map(show => `
+                <div class="fb-post-card" style="border-left: 4px solid #22e532; margin-bottom: 12px; background: rgba(34, 229, 50, 0.03); padding: 14px; border-radius: 4px;">
+                    <div style="font-weight: 900; color: #22e532; text-transform: uppercase; font-size: 0.95rem; letter-spacing: 1px; display: flex; justify-content: space-between;">
+                        <span>📅 Today</span>
+                        <span style="color: #555; font-size: 0.75rem; text-transform: none; font-weight: normal;">📍 Auto-Translated</span>
+                    </div>
+                    <div style="color: #ffffff; margin-top: 6px; font-size: 1.25rem; font-weight: 900; letter-spacing: 0.5px;">
+                        ⏰ ${show.start} - ${show.end}
+                    </div>
+                    <div style="color: #a0a0a0; font-size: 0.88rem; margin-top: 8px; border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 8px; display: flex; align-items: center;">
+                        🎙️ <span style="margin-left: 6px;">Presenter: <strong style="color:#fff; font-weight:800;">${show.dj}</strong></span> ${show.badge}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 2. RENDER THE 2x3 REST OF THE WEEK GRID IN THE MODAL
+        const gridContainer = document.getElementById('scheduleGridContainer');
+        if (gridContainer) {
+            const todayIndex = new Date().getDay(); // 0 (Sunday) to 6 (Saturday)
+            let otherDaysHtml = "";
+
+            for (let i = 1; i <= 6; i++) {
+                const idx = (todayIndex + i) % 7;
+                const dayName = dayNames[idx];
+                const dayShows = groupedByDay[dayName] || [];
+                dayShows.sort((a, b) => a.sortTime.localeCompare(b.sortTime));
+
+                let showsHtml = "";
+                if (dayShows.length === 0) {
+                    showsHtml = `<p style="color:#555; text-align:center; font-style:italic; font-size:0.85rem; margin-top:20px;">No shows scheduled.</p>`;
+                } else {
+                    showsHtml = dayShows.map(show => `
+                        <div style="border-left: 3px solid #22e532; background: rgba(34, 229, 50, 0.02); padding: 10px 12px; border-radius: 6px; font-size: 0.85rem; display: flex; flex-direction: column; gap: 4px;">
+                            <div style="color: #ffffff; font-weight: 800; font-size: 0.95rem; display: flex; justify-content: space-between; align-items: center;">
+                                <span>⏰ ${show.start} - ${show.end}</span>
+                                ${show.badge}
+                            </div>
+                            <div style="color: #aaa; display: flex; align-items: center; gap: 6px; font-size: 0.8rem; margin-top: 2px;">
+                                🎙️ <span>Presenter: <strong style="color: #fff;">${show.dj}</strong></span>
+                            </div>
                         </div>
-                        <div style="color: #ffffff; margin-top: 6px; font-size: 1.25rem; font-weight: 900; letter-spacing: 0.5px;">
-                            ⏰ ${localStartStr} - ${localEndStr}
-                        </div>
-                        <div style="color: #a0a0a0; font-size: 0.88rem; margin-top: 8px; border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 8px; display: flex; align-items: center;">
-                            🎙️ <span style="margin-left: 6px;">Presenter: <strong style="color:#fff; font-weight:800;">${currentDJ}</strong></span> ${noteLabel}
+                    `).join('');
+                }
+
+                const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+                otherDaysHtml += `
+                    <div class="schedule-day-card">
+                        <div class="schedule-day-header">📅 ${capitalizedDay}</div>
+                        <div class="schedule-day-list">
+                            ${showsHtml}
                         </div>
                     </div>
-                `
-            };
-        });
+                `;
+            }
 
-        // Re-sort the final display array by the VIEWER'S timeline flow
-        processedData.sort((a, b) => {
-            if (a.sortDay !== b.sortDay) return a.sortDay - b.sortDay;
-            return a.sortTime.localeCompare(b.sortTime);
-        });
-
-        timetableContainer.innerHTML = processedData.map(d => d.html).join('');
+            gridContainer.innerHTML = otherDaysHtml;
+        }
 
     } catch (e) {
         console.error("Timetable translation engine fault:", e);
-        timetableContainer.innerHTML = `<p style="color:#666; text-align:center; padding-top:20px; font-style:italic;">Weekly Transmission Timetable under construction.</p>`;
+        timetableContainer.innerHTML = `<p style="color:#666; text-align:center; padding-top:20px; font-style:italic;">Timetable load error.</p>`;
+    }
+}
+
+function openScheduleGrid() {
+    const modal = document.getElementById('schedule-overlay-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+        // Trigger reflow to start transition
+        modal.offsetHeight;
+        modal.classList.add('active');
+    }
+}
+
+function closeScheduleGrid() {
+    const modal = document.getElementById('schedule-overlay-modal');
+    if (modal) {
+        modal.classList.remove('active');
+        setTimeout(() => {
+            if (!modal.classList.contains('active')) {
+                modal.style.display = 'none';
+            }
+        }, 250);
     }
 }
 
@@ -1586,6 +1637,9 @@ try {
 
 // Expose functions to global window scope for inline onclick/oninput event handlers in index.html
 window.toggleAccordion = toggleAccordion;
+window.openScheduleGrid = openScheduleGrid;
+window.closeScheduleGrid = closeScheduleGrid;
+
 window.toggleNoticeBoardView = toggleNoticeBoardView;
 window.toggleChatFullscreen = toggleChatFullscreen;
 window.handleSecuritySubmit = handleSecuritySubmit;
@@ -1689,6 +1743,80 @@ window.syncDrawerName = syncDrawerName;
             appendPrivateWelcomeGreeting(mainBody);
         }
     }, 200);
+
+    // ROBUST LIVE AUDIO STREAM AUTO-RECOVERY WATCHDOG
+    setTimeout(() => {
+        const player = document.getElementById('radioPlayer');
+        if (!player) return;
+
+        let stallCheckInterval = null;
+        let lastTime = 0;
+        let stalledCount = 0;
+
+        function startStallCheck() {
+            if (stallCheckInterval) clearInterval(stallCheckInterval);
+            lastTime = player.currentTime;
+            stalledCount = 0;
+            stallCheckInterval = setInterval(() => {
+                if (player.paused) return;
+                
+                if (player.currentTime === lastTime) {
+                    stalledCount++;
+                    console.log(`[Stream Watchdog] Stalled count: ${stalledCount}/6`);
+                    if (stalledCount >= 6) { // ~6 seconds of unchanged time
+                        console.log("[Stream Watchdog] Stream stalled. Triggering auto-recovery...");
+                        recoverStream();
+                    }
+                } else {
+                    stalledCount = 0;
+                    lastTime = player.currentTime;
+                }
+            }, 1000);
+        }
+
+        function stopStallCheck() {
+            if (stallCheckInterval) {
+                clearInterval(stallCheckInterval);
+                stallCheckInterval = null;
+            }
+        }
+
+        function recoverStream() {
+            const currentSrc = player.src;
+            console.log("[Stream Watchdog] Reloading stream source:", currentSrc);
+            player.src = ""; // Force disconnect
+            player.load();
+            
+            setTimeout(() => {
+                player.src = currentSrc;
+                player.load();
+                player.play().then(() => {
+                    console.log("[Stream Watchdog] Stream successfully recovered and playing.");
+                    stalledCount = 0;
+                    lastTime = player.currentTime;
+                }).catch(err => {
+                    console.warn("[Stream Watchdog] Playback recovery resume failed, will retry on next check:", err);
+                });
+            }, 1000);
+        }
+
+        player.addEventListener('play', startStallCheck);
+        player.addEventListener('pause', stopStallCheck);
+
+        player.addEventListener('error', (e) => {
+            console.error("[Stream Watchdog] Audio element error event detected:", e);
+            setTimeout(recoverStream, 3000);
+        });
+
+        player.addEventListener('ended', () => {
+            console.log("[Stream Watchdog] Audio ended event detected. Recovering...");
+            recoverStream();
+        });
+
+        if (!player.paused) {
+            startStallCheck();
+        }
+    }, 2000);
 
     // 2. Auxiliary column scripts load at the ultimate tail of execution
     try { await renderSiteNewsFeed(); } catch (e) { }

@@ -848,3 +848,215 @@ body.chat-is-fullscreen .chat-fs-help-panel {
 .accordion-panel {
     transition: flex 0.3s ease-in-out, min-height 0.3s ease-in-out;
 }
+
+/* ==========================================================================
+   📅 FULLSCREEN SCHEDULE GRID OVERLAY
+   ========================================================================== */
+.schedule-modal-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(10, 10, 10, 0.85);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    z-index: 100000 !important;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+.schedule-modal-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+
+.schedule-modal-content {
+    width: 90%;
+    max-width: 1200px;
+    height: 85vh;
+    background: rgba(20, 20, 20, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+    overflow: hidden;
+}
+
+.schedule-grid-container {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 20px;
+    overflow: hidden;
+}
+
+.schedule-day-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow: hidden;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.schedule-day-card:hover {
+    border-color: rgba(34, 229, 50, 0.3);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.schedule-day-header {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #22e532;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 8px;
+    flex-shrink: 0;
+}
+
+.schedule-day-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-right: 4px;
+}
+
+/* Custom Scrollbar for Schedule Day List */
+.schedule-day-list::-webkit-scrollbar {
+    width: 6px;
+}
+.schedule-day-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 4px;
+}
+.schedule-day-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+.schedule-day-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(34, 229, 50, 0.5);
+}
+
+@media (max-width: 900px) {
+    .schedule-grid-container {
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(3, 1fr);
+        gap: 15px;
+    }
+}
+@media (max-width: 600px) {
+    .schedule-grid-container {
+        grid-template-columns: 1fr;
+        grid-template-rows: repeat(6, 1fr);
+        gap: 12px;
+        overflow-y: auto;
+    }
+    .schedule-modal-content {
+        height: 95vh;
+        padding: 20px;
+    }
+}
+
+/* ==========================================================================
+   📻 CUSTOM HEADER PLAYER & NEWS TICKER
+   ========================================================================== */
+.custom-player-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    background: rgba(20, 20, 20, 0.7);
+    border: 1px solid rgba(34, 229, 50, 0.25);
+    border-radius: 8px;
+    padding: 12px 20px;
+    width: 100%;
+    box-sizing: border-box;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+.player-label {
+    font-size: 0.85rem;
+    font-weight: 900;
+    color: #ffdd1a;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.player-btn {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 1.3rem;
+    cursor: pointer;
+    padding: 4px;
+    outline: none;
+    transition: transform 0.1s;
+    display: flex;
+    align-items: center;
+    line-height: 1;
+}
+.player-btn:hover {
+    transform: scale(1.1);
+}
+
+.player-slider {
+    width: 130px;
+    height: 8px;
+    accent-color: #22e532;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    outline: none;
+}
+
+/* News Ticker Wrapper */
+.ticker-wrap {
+    width: 100%;
+    overflow: hidden;
+    height: 30px;
+    background: rgba(20, 20, 20, 0.6);
+    border: 1px dashed rgba(34, 229, 50, 0.2);
+    border-radius: 6px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.ticker {
+    display: inline-block;
+    white-space: nowrap;
+    padding-left: 100%;
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #22e532;
+    animation: ticker 25s linear infinite;
+    position: absolute;
+    will-change: transform;
+}
+
+@keyframes ticker {
+    0% {
+        transform: translate3d(0, 0, 0);
+    }
+    100% {
+        transform: translate3d(-100%, 0, 0);
+    }
+}
+
+
