@@ -786,8 +786,13 @@ body.chat-is-fullscreen .chat-fs-help-panel {
         background-position: center center !important;
         background-size: 100% 100% !important;
     }
+    /* ✅ Fixed: Removed display:none and added mobile background adjustments */
     .cell-middle {
-        display: none !important;
+        background-image: url('header-bg2.jpg') !important; /* or 'header-bg2m.jpg' if you have a mobile version */
+        background-position: center center !important;
+        background-size: 100% 100% !important;
+        width: 100% !important;
+        height: 140px !important;
     }
     .cell-right {
         background-image: url('header-bg3m.jpg') !important;
@@ -797,6 +802,10 @@ body.chat-is-fullscreen .chat-fs-help-panel {
         padding-right: 0px !important;
         max-width: none !important;
         align-items: center !important;
+    }
+    .custom-player-container,
+    .ticker-wrap {
+        max-width: none !important;
     }
     
     .columns-container {
@@ -983,6 +992,7 @@ body.chat-is-fullscreen .chat-fs-help-panel {
     border-radius: 8px;
     padding: 12px 20px;
     width: 100%;
+    max-width: 320px;
     box-sizing: border-box;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(5px);
@@ -1027,6 +1037,7 @@ body.chat-is-fullscreen .chat-fs-help-panel {
 /* News Ticker Wrapper */
 .ticker-wrap {
     width: 100%;
+    max-width: 320px;
     overflow: hidden;
     height: 30px;
     background: rgba(20, 20, 20, 0.6);
