@@ -788,7 +788,7 @@ body.chat-is-fullscreen .chat-fs-help-panel {
     }
     /* ✅ Fixed: Removed display:none and added mobile background adjustments */
     .cell-middle {
-        background-image: url('header-bg2.jpg') !important; /* or 'header-bg2m.jpg' if you have a mobile version */
+        background-image: url('header-bg2m.jpg') !important; 
         background-position: center center !important;
         background-size: 100% 100% !important;
         width: 100% !important;
