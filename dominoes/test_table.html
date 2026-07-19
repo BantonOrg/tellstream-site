@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="dominoes.css">
+</head>
+<body>
+    <div id="results">Running CSS rule check...</div>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            const resultsDiv = document.getElementById('results');
+            try {
+                const sheet = document.styleSheets[0];
+                const rules = sheet.cssRules || sheet.rules;
+                let matches = [];
+                for (let i = 0; i < rules.length; i++) {
+                    const rule = rules[i];
+                    if (rule.selectorText && rule.selectorText.includes('felt-table')) {
+                        matches.push(rule.cssText);
+                    }
+                }
+                resultsDiv.innerHTML = "<h3>Felt Table Rules:</h3><pre>" + matches.join('\n\n') + "</pre>";
+            } catch (e) {
+                resultsDiv.innerHTML = "Error: " + e.message;
+            }
+        });
+    </script>
+</body>
+</html>

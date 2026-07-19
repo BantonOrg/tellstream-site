@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="dominoes.css">
+</head>
+<body>
+    <div id="results">Running CSS, JS, and HTML checks...</div>
+    <script>
+        async function runChecks() {
+            const resultsDiv = document.getElementById('results');
+            let output = "";
+            try {
+                // 1. Check CSS Rules
+                const sheet = document.styleSheets[0];
+                const rules = sheet.cssRules || sheet.rules;
+                let cssMatches = [];
+                for (let i = 0; i < rules.length; i++) {
+                    const rule = rules[i];
+                    if (rule.selectorText && (
+                        rule.selectorText.includes('neon') ||
+                        rule.selectorText.includes('border') ||
+                        rule.cssText.includes('0 0 15px') ||
+                        rule.cssText.includes('accent-glow')
+                    )) {
+                        cssMatches.push(rule.selectorText + " { ... }");
+                    }
+                }
+                output += "<h3>CSS Selectors matching:</h3><pre>" + cssMatches.join('\n') + "</pre>";
+
+                // 2. Fetch and Check JS File
+                const jsRes = await fetch('dominoes.js');
+                const jsText = await jsRes.text();
+                let jsMatches = [];
+                const jsLines = jsText.split('\n');
+                jsLines.forEach((line, idx) => {
+                    if (line.includes('neon') || line.includes('border-box') || line.includes('accent-glow')) {
+                        jsMatches.push(`Line ${idx+1}: ${line.trim()}`);
+                    }
+                });
+                output += "<h3>JS Matches:</h3><pre>" + (jsMatches.length ? jsMatches.join('\n') : 'None') + "</pre>";
+
+                // 3. Fetch and Check HTML File
+                const htmlRes = await fetch('dominoes.html');
+                const htmlText = await htmlRes.text();
+                let htmlMatches = [];
+                const htmlLines = htmlText.split('\n');
+                htmlLines.forEach((line, idx) => {
+                    if (line.includes('neon') || line.includes('border-box') || line.includes('accent-glow')) {
+                        htmlMatches.push(`Line ${idx+1}: ${line.trim()}`);
+                    }
+                });
+                output += "<h3>HTML Matches:</h3><pre>" + (htmlMatches.length ? htmlMatches.join('\n') : 'None') + "</pre>";
+
+                resultsDiv.innerHTML = output;
+            } catch (e) {
+                resultsDiv.innerHTML = "Error: " + e.message;
+            }
+        }
+        runChecks();
+    </script>
+</body>
+</html>
