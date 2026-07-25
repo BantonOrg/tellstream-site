@@ -81,50 +81,50 @@ function renderStreamHeader(showName) {
 
     let display = document.getElementById('stream-name-display');
     let logoImg = document.getElementById('stream-logo-display');
-    
+
     // 1. Structural Setup: Build components if they don't exist yet
     if (!logoImg) {
         logoImg = document.createElement('img');
         logoImg.id = 'stream-logo-display';
         logoImg.style.width = '100%';
         logoImg.style.height = 'auto'; // Fluid scaling allows image aspect ratio to dictate cell height
-        logoImg.style.display = 'none';      
+        logoImg.style.display = 'none';
         cellLeft.appendChild(logoImg);
     }
 
     if (!display) {
         display = document.createElement('p');
         display.id = 'stream-name-display';
-        display.style.color = '#ffffff'; 
+        display.style.color = '#ffffff';
         display.style.fontSize = '1.1rem';
         display.style.fontWeight = '900'; // Changed from 'bold' to ultra-heavy '900'
         display.style.webkitTextStroke = '1.8px #000000'; // Thickened black outline edge definition
-        display.style.textShadow = '3px 3px 6px rgba(0, 0, 0, 0.95), -2px -2px 4px rgba(0, 0, 0, 0.8)';        display.style.textTransform = 'uppercase';
+        display.style.textShadow = '3px 3px 6px rgba(0, 0, 0, 0.95), -2px -2px 4px rgba(0, 0, 0, 0.8)'; display.style.textTransform = 'uppercase';
         display.style.lineHeight = '1.2';
         display.style.maxWidth = '95%';
         display.style.textAlign = 'center';
         cellLeft.appendChild(display);
     }
-    
+
     if (showName) {
         const cleanName = showName.trim();
         const safeFileName = cleanName.toLowerCase().replace(/\s+/g, '_') + '.png';
-        
+
         const { data } = supabase_db.storage.from('dj-logos').getPublicUrl(safeFileName);
         const imgCloudUrl = data.publicUrl + '?v=' + Date.now();
 
         const imageProbe = new Image();
 
-        imageProbe.onload = function() {
+        imageProbe.onload = function () {
             // STATE B: IMAGE FOUND -> Switch to image-driven physics matching the middle cell
             if (wrapper) {
                 wrapper.querySelectorAll('h1, p').forEach(el => el.style.display = 'none');
             }
-            
+
             // Strip text absolute constraints; let the natural image flow control the container height
             cellLeft.style.position = 'relative';
-            cellLeft.style.height = 'auto'; 
-            
+            cellLeft.style.height = 'auto';
+
             logoImg.src = imgCloudUrl;
             logoImg.style.position = 'relative'; // Removes absolute locking
             logoImg.style.display = 'block';
@@ -144,13 +144,13 @@ function renderStreamHeader(showName) {
             }
         };
 
-        imageProbe.onerror = function() {
+        imageProbe.onerror = function () {
             // STATE A: NO IMAGE FOUND -> Fallback completely to structural text parameters
             logoImg.style.display = 'none';
             logoImg.style.position = 'absolute';
-            
+
             cellLeft.style.height = ''; // Clear forced rules, return to base CSS flow
-            
+
             if (wrapper) {
                 wrapper.querySelectorAll('h1, p').forEach(el => el.style.display = 'block');
                 if (display.parentElement !== wrapper) {
@@ -464,7 +464,7 @@ async function renderSiteNewsFeed() {
         const item = records[0];
         const isBoss = item.board_type === 'boss';
         const prefix = isBoss ? "👑 ADMIN NOTICE" : "🎙️ DJ BULLETIN";
-        
+
         // Flatten text for horizontal marquee scrolling
         const flatNotice = item.notice_text.replace(/\s+/g, ' ').trim();
         ticker.innerText = `🔥 ${prefix} (${item.username}): ${flatNotice} ★★★ Welcome to the Lounge! Enjoy the great vibes all day every day! ★★★`;
@@ -1132,7 +1132,6 @@ async function syncBannedUsersMap() {
     if (data) data.forEach(u => { bannedUsersCache[u.username.toLowerCase()] = u; });
 }
 
-audioPlayer.addEventListener('stalled', () => { recoverStream(); });
 audioPlayer.addEventListener('error', () => { recoverStream(); });
 
 function recoverStream() {
@@ -1759,7 +1758,7 @@ window.syncDrawerName = syncDrawerName;
             stalledCount = 0;
             stallCheckInterval = setInterval(() => {
                 if (player.paused) return;
-                
+
                 if (player.currentTime === lastTime) {
                     stalledCount++;
                     console.log(`[Stream Watchdog] Stalled count: ${stalledCount}/6`);
@@ -1786,7 +1785,7 @@ window.syncDrawerName = syncDrawerName;
             console.log("[Stream Watchdog] Reloading stream source:", currentSrc);
             player.src = ""; // Force disconnect
             player.load();
-            
+
             setTimeout(() => {
                 player.src = currentSrc;
                 player.load();
