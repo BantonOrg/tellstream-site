@@ -458,8 +458,9 @@ body {
     display: inline-block;
     position: relative;
 }
-.user-unregistered { color: #22e532; } 
-.user-registered { color: #ffdd1a; cursor: help; } 
+.user-unregistered { color: #ffffff; } 
+.user-registered { color: #22e532; cursor: help; } 
+.user-selector { color: #ffdd1a; cursor: help; } 
 .user-admin { color: #ff3333; cursor: help; } 
 
 .msg .user[title] {
@@ -788,7 +789,7 @@ body.chat-is-fullscreen .chat-fs-help-panel {
     }
     /* ✅ Fixed: Removed display:none and added mobile background adjustments */
     .cell-middle {
-        background-image: url('header-bg2m.jpg') !important; 
+        background-image: url('header-bg2.jpg') !important; /* or 'header-bg2m.jpg' if you have a mobile version */
         background-position: center center !important;
         background-size: 100% 100% !important;
         width: 100% !important;

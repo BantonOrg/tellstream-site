@@ -290,7 +290,14 @@ function appendPrivateWarning(user, text, strikeCount, customMessage = null) {
         let nameClass = "user-unregistered";
         let hoverAttribute = "";
         if (profile) {
-            nameClass = (profile.power_level >= 1) ? "user-admin" : "user-registered";
+            const pLevel = parseInt(profile.power_level || 0);
+            if (pLevel >= 2) {
+                nameClass = "user-admin";
+            } else if (pLevel === 1) {
+                nameClass = "user-selector";
+            } else {
+                nameClass = "user-registered";
+            }
             if (profile.hover_title) hoverAttribute = `title="${escapeHTML(profile.hover_title)}"`;
         }
         msgDiv.innerHTML = `<div class="user ${nameClass}" ${hoverAttribute}>${escapeHTML(user)}</div><div>${escapeHTML(maskedText)}</div>`;
@@ -1171,7 +1178,14 @@ function appendMessage(data) {
     let hoverAttribute = "";
 
     if (profile) {
-        nameClass = (profile.power_level >= 1) ? "user-admin" : "user-registered";
+        const pLevel = parseInt(profile.power_level || 0);
+        if (pLevel >= 2) {
+            nameClass = "user-admin";
+        } else if (pLevel === 1) {
+            nameClass = "user-selector";
+        } else {
+            nameClass = "user-registered";
+        }
         if (profile.hover_title) hoverAttribute = `title="${escapeHTML(profile.hover_title)}"`;
     }
 
