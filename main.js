@@ -1004,6 +1004,7 @@ async function verifyAndResetPasskey() {
         // Save new passkey locally to log in the user
         localStorage.setItem('tellstream_key_' + currentName, newPasskey);
         localStorage.setItem('tellstream_saved_username', currentName);
+        localStorage.setItem('tellstream_active_user', currentName);
 
         alert("Passkey successfully reset! You are now logged in.");
 
@@ -1048,6 +1049,7 @@ async function handleSecuritySubmit() {
         if (isValid && !rpcErr) {
             localStorage.setItem('tellstream_key_' + currentName, passkey);
             localStorage.setItem('tellstream_saved_username', currentName);
+            localStorage.setItem('tellstream_active_user', currentName);
             isCurrentUserVerified = true;
             alert("Identity checked and authorized!");
             securityDrawer.classList.remove('open');
@@ -1085,6 +1087,7 @@ async function handleSecuritySubmit() {
         } else {
             localStorage.setItem('tellstream_key_' + currentName, passkey);
             localStorage.setItem('tellstream_saved_username', currentName);
+            localStorage.setItem('tellstream_active_user', currentName);
             isCurrentUserVerified = true;
             alert("Registration complete!");
             await syncProfilesMap();
@@ -1106,11 +1109,18 @@ async function verifyCurrentSession() {
                 p_passkey: authorizedKey
             });
             isCurrentUserVerified = !error && data;
+            if (isCurrentUserVerified) {
+                localStorage.setItem('tellstream_active_user', currentUser);
+            } else {
+                localStorage.removeItem('tellstream_active_user');
+            }
         } catch (e) {
             isCurrentUserVerified = false;
+            localStorage.removeItem('tellstream_active_user');
         }
     } else {
         isCurrentUserVerified = false;
+        localStorage.removeItem('tellstream_active_user');
     }
 }
 
@@ -1720,13 +1730,24 @@ window.syncDrawerName = syncDrawerName;
     const currentUser = usernameInput.value.trim();
     syncDrawerName();
 
-    setTimeout(() => {
-        const profile = profilesCache[currentUser];
+    setTimeout(async () => {
         const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
-        const isLoggedIn = profile && profile.passkey === authorizedKey;
+        let isLoggedIn = false;
+        if (currentUser && authorizedKey) {
+            try {
+                const { data, error } = await supabase_db.rpc('verify_user_passkey', {
+                    p_username: currentUser,
+                    p_passkey: authorizedKey
+                });
+                isLoggedIn = !error && data;
+            } catch (e) {
+                isLoggedIn = false;
+            }
+        }
         const mainBody = "Greetings and welcome to Tellstream Chat. Please help keep this experience a positive blessing for one and all. Remember, at any time, users may have children around them. Bad blessings will be removed. One love from Tellstream.";
 
         if (isLoggedIn) {
+            localStorage.setItem('tellstream_active_user', currentUser);
             const prefix = `Welcome back ${currentUser}, we are blessed you are here. Please continue to fulljoy the vibes. `;
             const lastSeenKey = `tellstream_greeting_${currentUser.toLowerCase()}`;
             const lastSeenDate = localStorage.getItem(lastSeenKey);
@@ -1739,6 +1760,7 @@ window.syncDrawerName = syncDrawerName;
                 localStorage.setItem(lastSeenKey, todayDateStr);
             }
         } else {
+            localStorage.removeItem('tellstream_active_user');
             appendPrivateWelcomeGreeting(mainBody);
         }
     }, 200);
