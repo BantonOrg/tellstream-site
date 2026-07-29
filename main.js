@@ -2152,6 +2152,176 @@ async function unblockUserAndRefresh(otherUser) {
     await removeRelationship(otherUser);
 }
 
+async function openProfileCard(targetUsername) {
+    const modal = document.getElementById('profileCardModal');
+    if (!modal) return;
+    
+    const currentUser = usernameInput.value.trim();
+    
+    // Set loading/default values
+    document.getElementById('profileCardUsername').innerText = targetUsername;
+    const avatarImg = document.getElementById('profileCardAvatar');
+    avatarImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23444'/><text x='50' y='60' font-size='30' font-family='sans-serif' text-anchor='middle' fill='%23fff'>?</text></svg>";
+    
+    const levelSpan = document.getElementById('profileCardLevel');
+    const profile = profilesCache[targetUsername];
+    let levelText = "Registered Member";
+    let levelStyle = "background:rgba(34,229,50,0.15); color:#22e532;";
+    
+    if (profile) {
+        const pLevel = parseInt(profile.power_level || 0);
+        if (pLevel >= 2) {
+            levelText = "Station Admin";
+            levelStyle = "background:rgba(255,51,83,0.15); color:#ff3353;";
+        } else if (pLevel === 1) {
+            levelText = "DJ / Selector";
+            levelStyle = "background:rgba(255,221,26,0.15); color:#ffdd1a;";
+        }
+    }
+    levelSpan.innerText = levelText;
+    levelSpan.style = levelStyle;
+    
+    // Clear details first
+    document.getElementById('profileCardLocation').innerText = "Hidden";
+    document.getElementById('profileCardSocials').innerText = "Hidden";
+    document.getElementById('profileCardBio').innerText = "This user hasn't written a bio yet.";
+    
+    const actionsDiv = document.getElementById('profileCardActions');
+    actionsDiv.innerHTML = ""; // Clear actions
+
+    // Show modal
+    modal.style.display = "flex";
+
+    // Query profile details from DB
+    try {
+        const { data, error } = await supabase_db.from('secured_profiles')
+            .select('location, socials, bio, profile_visibility, avatar_url')
+            .eq('username', targetUsername)
+            .single();
+            
+        if (data && !error) {
+            if (data.avatar_url) avatarImg.src = data.avatar_url;
+            
+            // Check visibility
+            const visibility = data.profile_visibility || 'fambily';
+            let allowedToSee = false;
+            
+            if (visibility === 'everyone' || targetUsername === currentUser) {
+                allowedToSee = true;
+            } else if (visibility === 'fambily') {
+                const rel = relationshipMap[targetUsername];
+                if (rel && rel.status === 'fambily') {
+                    allowedToSee = true;
+                }
+            }
+            
+            if (allowedToSee) {
+                document.getElementById('profileCardLocation').innerText = data.location || "Not specified";
+                document.getElementById('profileCardSocials').innerText = data.socials || "Not specified";
+                document.getElementById('profileCardBio').innerText = data.bio || "No bio written.";
+            } else {
+                document.getElementById('profileCardLocation').innerText = "Fambily Only";
+                document.getElementById('profileCardSocials').innerText = "Fambily Only";
+                document.getElementById('profileCardBio').innerText = "Fambily Only details.";
+            }
+        }
+    } catch(e) {
+        console.error(e);
+    }
+
+    // Insert actions based on relationship
+    if (targetUsername !== currentUser && isCurrentUserVerified) {
+        const rel = relationshipMap[targetUsername];
+        const isBlocked = rel && rel.status === 'blocked';
+        
+        if (!isBlocked) {
+            const weAreBlocked = await checkBlockedStatus(currentUser, targetUsername);
+            if (!weAreBlocked) {
+                const dmBtn = document.createElement('button');
+                dmBtn.className = "drawer-action-inline-btn btn-green";
+                dmBtn.innerText = "Message";
+                dmBtn.onclick = () => {
+                    closeProfileCard();
+                    openPrivateChatTab(targetUsername);
+                };
+                actionsDiv.appendChild(dmBtn);
+            }
+        }
+        
+        // Fambily status button
+        if (!rel) {
+            const addBtn = document.createElement('button');
+            addBtn.className = "drawer-action-inline-btn btn-green";
+            addBtn.innerText = "Add Fambily";
+            addBtn.onclick = async () => {
+                await sendFambilyRequestTo(targetUsername);
+                openProfileCard(targetUsername);
+            };
+            actionsDiv.appendChild(addBtn);
+        } else if (rel.status === 'request') {
+            if (rel.receiver === currentUser) {
+                const acceptBtn = document.createElement('button');
+                acceptBtn.className = "drawer-action-inline-btn btn-green";
+                acceptBtn.innerText = "Accept Fambily";
+                acceptBtn.onclick = async () => {
+                    await acceptFambilyRequestFrom(targetUsername);
+                    openProfileCard(targetUsername);
+                };
+                actionsDiv.appendChild(acceptBtn);
+                
+                const ignoreBtn = document.createElement('button');
+                ignoreBtn.className = "drawer-action-inline-btn btn-red";
+                ignoreBtn.innerText = "Ignore";
+                ignoreBtn.onclick = async () => {
+                    await ignoreFambilyRequestFrom(targetUsername);
+                    openProfileCard(targetUsername);
+                };
+                actionsDiv.appendChild(ignoreBtn);
+            } else {
+                const pendingBtn = document.createElement('button');
+                pendingBtn.className = "drawer-action-inline-btn";
+                pendingBtn.innerText = "Request Pending";
+                pendingBtn.disabled = true;
+                actionsDiv.appendChild(pendingBtn);
+            }
+        } else if (rel.status === 'fambily') {
+            const removeBtn = document.createElement('button');
+            removeBtn.className = "drawer-action-inline-btn btn-red";
+            removeBtn.innerText = "Remove Fambily";
+            removeBtn.onclick = async () => {
+                if (confirm(`Remove ${targetUsername} from your Fambily list?`)) {
+                    await removeRelationship(targetUsername);
+                    openProfileCard(targetUsername);
+                }
+            };
+            actionsDiv.appendChild(removeBtn);
+        }
+        
+        // Block button
+        if (rel && rel.status === 'blocked' && rel.sender === currentUser) {
+            const unblockBtn = document.createElement('button');
+            unblockBtn.className = "drawer-action-inline-btn btn-green";
+            unblockBtn.innerText = "Unblock";
+            unblockBtn.onclick = async () => {
+                await removeRelationship(targetUsername);
+                openProfileCard(targetUsername);
+            };
+            actionsDiv.appendChild(unblockBtn);
+        } else {
+            const blockBtn = document.createElement('button');
+            blockBtn.className = "drawer-action-inline-btn btn-red";
+            blockBtn.innerText = "Block";
+            blockBtn.onclick = async () => {
+                if (confirm(`Block ${targetUsername}? They will not be able to send you messages or requests.`)) {
+                    await blockUserAndRelationship(targetUsername);
+                    openProfileCard(targetUsername);
+                }
+            };
+            actionsDiv.appendChild(blockBtn);
+        }
+    }
+}
+
 function closeProfileCard() {
     const modal = document.getElementById('profileCardModal');
     if (modal) modal.style.display = "none";
