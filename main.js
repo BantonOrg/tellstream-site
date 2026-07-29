@@ -2364,6 +2364,12 @@ function closeChatTab(username, event) {
     }
 }
 
+function togglePasskeyVisibility(inputId) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    input.type = (input.type === "password") ? "text" : "password";
+}
+
 function renderChatTabs() {
     const tabsBar = document.getElementById('chatTabsBar');
     if (!tabsBar) return;
@@ -2681,6 +2687,7 @@ window.closeProfileCard = closeProfileCard;
 window.handleAvatarSelected = handleAvatarSelected;
 window.switchChatMode = switchChatMode;
 window.closeChatTab = closeChatTab;
+window.togglePasskeyVisibility = togglePasskeyVisibility;
 
 (async function initSystem() {
     // 1. Core Lounge Operations (Cannot be affected by outside scripts)
