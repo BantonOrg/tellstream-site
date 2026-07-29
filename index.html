@@ -30,7 +30,7 @@
                 <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" style="width: 150px; height: 140px; display: block; visibility: hidden;" alt="spacer">
             </div>
             
-            <div class="header-cell cell-right" style="display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 8px; max-width: 320px; width: 100%;">
+            <div class="header-cell cell-right" style="display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 8px;">
                 <audio id="radioPlayer" src="https://a3.asurahosting.com/listen/tellstream/radio.mp3" preload="auto"></audio>
                 
                 <!-- Custom Player Controls -->
@@ -130,9 +130,106 @@
                 </div>
             </div>
         </div>
-        
+
+        <!-- Fambily & Profile Drawer -->
+        <div class="fambily-drawer" id="fambilyDrawer">
+            <div class="fambily-drawer-tabs">
+                <button class="fambily-tab-btn active" id="fambily-tab-btn-profile" onclick="switchFambilyTab('profile')">Profile</button>
+                <button class="fambily-tab-btn" id="fambily-tab-btn-fambily" onclick="switchFambilyTab('fambily')">Fambily</button>
+                <button class="fambily-tab-btn" id="fambily-tab-btn-requests" onclick="switchFambilyTab('requests')">Requests</button>
+                <button class="fambily-tab-btn" id="fambily-tab-btn-blocked" onclick="switchFambilyTab('blocked')">Blocked</button>
+            </div>
+            
+            <!-- PROFILE TAB CONTENT -->
+            <div class="fambily-tab-content" id="fambily-tab-profile">
+                <div class="profile-avatar-row">
+                    <img id="myAvatarImg" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23444'/><text x='50' y='60' font-size='30' font-family='sans-serif' text-anchor='middle' fill='%23fff'>?</text></svg>" class="my-avatar-preview">
+                    <div class="avatar-upload-col">
+                        <label class="drawer-action-btn" style="background:#22e532; color:#000; text-align:center; display:block; cursor:pointer; font-size:0.75rem; padding:6px 12px; border-radius:4px; font-weight:bold;">
+                            Upload Photo
+                            <input type="file" id="avatarFileInput" accept="image/*" style="display:none;" onchange="handleAvatarSelected(event)">
+                        </label>
+                        <span style="font-size:0.65rem; color:#888;">Max 500KB. Cropped to square.</span>
+                    </div>
+                </div>
+                <div class="form-grid" style="margin-top:8px;">
+                    <input type="text" id="profileLocationInput" placeholder="Location (e.g. Earth, Canada)" style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
+                    <input type="text" id="profileSocialsInput" placeholder="Socials (e.g. @instagram)" style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
+                </div>
+                <textarea id="profileBioInput" placeholder="Bio: Say anything you like..." style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none; width:100%; height:45px; resize:none; margin-bottom:8px; font-family:inherit;"></textarea>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <span style="font-size:0.75rem; color:#aaa;">Profile Visibility:</span>
+                    <select id="profileVisibilitySelect" style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:4px 8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none; cursor:pointer;">
+                        <option value="fambily">Fambily only (Default)</option>
+                        <option value="everyone">Everyone</option>
+                        <option value="none">None</option>
+                    </select>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <span style="font-size:0.75rem; color:#aaa;">Go Invisible:</span>
+                    <input type="checkbox" id="profileInvisibleCheckbox" style="accent-color:#22e532; transform:scale(1.2); cursor:pointer;">
+                </div>
+                <button class="drawer-action-btn" style="background:#22e532; color:#000; width:100%;" onclick="saveProfileChanges()">Save Profile</button>
+            </div>
+            
+            <!-- FAMBILY TAB CONTENT -->
+            <div class="fambily-tab-content" id="fambily-tab-fambily" style="display:none;">
+                <div style="display:flex; gap:6px; margin-bottom:8px;">
+                    <input type="text" id="addFambilyInput" placeholder="Request to username..." style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:6px 8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none; flex:1;">
+                    <button class="notice-inline-btn" onclick="sendFambilyRequest()" style="background:#22e532; color:#000; font-size:0.75rem; padding:0 10px;">Send</button>
+                </div>
+                <div class="drawer-list-container" id="fambilyListContainer" style="max-height:180px; overflow-y:auto;">
+                    <p style="font-size:0.75rem; color:#666; text-align:center; padding:10px;">No Fambily members added yet.</p>
+                </div>
+            </div>
+            
+            <!-- REQUESTS TAB CONTENT -->
+            <div class="fambily-tab-content" id="fambily-tab-requests" style="display:none;">
+                <h5 class="drawer-sub-title" style="margin: 0 0 6px 0; font-size: 0.75rem; color: #22e532; text-transform: uppercase;">Incoming Requests</h5>
+                <div class="drawer-list-container" id="incomingReqsContainer" style="max-height:90px; overflow-y:auto; margin-bottom:10px; border:1px solid rgba(255,255,255,0.04); border-radius:4px;">
+                    <p style="font-size:0.75rem; color:#666; text-align:center; padding:5px;">No incoming requests.</p>
+                </div>
+                <h5 class="drawer-sub-title" style="margin: 0 0 6px 0; font-size: 0.75rem; color: #22e532; text-transform: uppercase;">Sent Requests</h5>
+                <div class="drawer-list-container" id="outgoingReqsContainer" style="max-height:90px; overflow-y:auto; border:1px solid rgba(255,255,255,0.04); border-radius:4px;">
+                    <p style="font-size:0.75rem; color:#666; text-align:center; padding:5px;">No sent requests.</p>
+                </div>
+            </div>
+            
+            <!-- BLOCKED TAB CONTENT -->
+            <div class="fambily-tab-content" id="fambily-tab-blocked" style="display:none;">
+                <div id="blockedRevealContainer" style="text-align:center; padding:15px;">
+                    <p style="font-size:0.75rem; color:#aaa; margin-bottom:8px;">Blocked users list is hidden to protect privacy.</p>
+                    <button class="drawer-action-btn" style="background:#444; font-size:0.75rem;" onclick="revealBlockedList()">Reveal Blocked List</button>
+                </div>
+                <div id="blockedContentContainer" style="display:none;">
+                    <div class="drawer-list-container" id="blockedListContainer" style="max-height:180px; overflow-y:auto;">
+                        <p style="font-size:0.75rem; color:#666; text-align:center; padding:10px;">No blocked users.</p>
+                    </div>
+                    <div style="text-align:center; margin-top:8px;">
+                        <button class="drawer-action-btn" style="background:#222; font-size:0.65rem; border:1px solid #444;" onclick="hideBlockedList()">Hide List Again</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="chat-split-body">
+            <!-- Tabs Bar for routing DMs and Lounge -->
+            <div class="chat-tabs-bar" id="chatTabsBar">
+                <div class="chat-tab-btn active" id="tab-lounge" onclick="switchChatMode('lounge')">Lounge</div>
+                <!-- Dynamic tabs added here -->
+            </div>
+            
             <div class="chat-messages" id="chatBox"></div>
+            
+            <!-- Who's Online Panel (Visible only in fullscreen mode) -->
+            <div id="online-users-panel" class="online-users-panel">
+                <div class="col-title" style="margin-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:5px;">
+                    <span>🟢 Who's Online</span>
+                </div>
+                <div class="online-users-list" id="onlineUsersList" style="display:flex; flex-direction:column; gap:8px;">
+                    <p style="font-size:0.75rem; color:#666; text-align:center; padding:10px;">No users online.</p>
+                </div>
+            </div>
             
             <div id="noticeboard-view-panel">
                 <div class="notice-column-box notice-box-boss">
@@ -188,7 +285,10 @@
                 <input type="text" id="usernameInput" placeholder="Nickname" oninput="syncDrawerName()">
                 <button class="send-main-btn" id="sendBtn">Send</button>
             </div>
-            <button class="lock-toggle-btn" id="lockStatusBtn" onclick="toggleSecurityDrawer()" title="Secure/Verify identity handle">🔒</button>
+            <div style="display:flex; flex-direction:column; gap:4px;">
+                <button class="lock-toggle-btn" id="lockStatusBtn" onclick="toggleSecurityDrawer()" title="Secure/Verify identity handle">🔒</button>
+                <button class="lock-toggle-btn" id="fambilyDrawerBtn" onclick="toggleFambilyDrawer()" title="Fambily & Profile Settings" style="background:rgba(34,229,50,0.1); border:1px solid rgba(34,229,50,0.3); color:#22e532;">💚</button>
+            </div>
             <textarea id="messageInput" placeholder="Type a message..." maxlength="120"></textarea>
         </div>
     </div>
@@ -214,6 +314,28 @@
     </div>
 
     <script src="/src/assets/emojis.js"></script>
+    <!-- User Profile Card Modal -->
+    <div class="profile-card-modal-overlay" id="profileCardModal" onclick="closeProfileCard()" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:100000; background:rgba(0,0,0,0.6); align-items:center; justify-content:center;">
+        <div class="profile-card-card" onclick="event.stopPropagation();" style="background:#18181a; border:1px solid rgba(34,229,50,0.2); width:320px; border-radius:8px; padding:20px; position:relative; box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+            <button onclick="closeProfileCard()" style="position:absolute; top:10px; right:10px; background:none; border:none; color:#888; font-size:1.1rem; cursor:pointer; line-height:1;">×</button>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:10px; text-align:center;">
+                <img id="profileCardAvatar" src="" style="width:80px; height:80px; border-radius:50%; border:2px solid #22e532; object-fit:cover; background:#222;">
+                <div>
+                    <h3 id="profileCardUsername" style="margin:0; color:#fff; font-size:1.2rem;"></h3>
+                    <span id="profileCardLevel" style="font-size:0.7rem; padding:2px 6px; border-radius:4px; font-weight:bold; text-transform:uppercase; margin-top:4px; display:inline-block;"></span>
+                </div>
+                <div id="profileCardDetailsContainer" style="width:100%; border-top:1px solid rgba(255,255,255,0.05); padding-top:10px; margin-top:5px; text-align:left; display:flex; flex-direction:column; gap:6px;">
+                    <div><span style="font-size:0.7rem; color:#666; display:block;">Location</span><span id="profileCardLocation" style="font-size:0.85rem; color:#ccc;"></span></div>
+                    <div><span style="font-size:0.7rem; color:#666; display:block;">Socials</span><span id="profileCardSocials" style="font-size:0.85rem; color:#ccc;"></span></div>
+                    <div><span style="font-size:0.7rem; color:#666; display:block;">Bio</span><p id="profileCardBio" style="font-size:0.85rem; color:#ccc; margin:0; white-space:pre-wrap; word-break:break-word;"></p></div>
+                </div>
+                <div id="profileCardActions" style="width:100%; border-top:1px solid rgba(255,255,255,0.05); padding-top:10px; margin-top:5px; display:flex; gap:6px; justify-content:center;">
+                    <!-- Action buttons dynamically inserted (Add Fambily, Message, Block) -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Fullscreen Game Overlay Container -->
     <div id="game-overlay-container" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999; background: #0a0a0c;">
         <iframe id="game-overlay-frame" src="" style="width: 100%; height: 100%; border: none; display: block;"></iframe>
