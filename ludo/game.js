@@ -939,7 +939,7 @@ function captureAllOnStartSquare(activeColor) {
 function isValidMove(color, tokenIdx, roll) {
   const pos = state.tokens[color][tokenIdx];
   if (pos === -1 && roll !== 6) return false;
-  if (pos >= 0 && pos + roll > 57) return false;
+  if (pos >= 0 && pos + roll > 56) return false;
   
   if (pos === -1 && roll === 6) {
     if (isStartSquareBlocked(color)) {
@@ -965,7 +965,7 @@ async function selectTokenToMove(tokenIdx) {
       logTableAction(`${playerColor.toUpperCase()} released a piece to the start square!`);
     } else {
       state.tokens[playerColor][tokenIdx] += currentRoll;
-      if (state.tokens[playerColor][tokenIdx] === 57) {
+      if (state.tokens[playerColor][tokenIdx] === 56) {
         reachesHome = true;
         logTableAction(`🎉 ${playerColor.toUpperCase()}'s piece reached HOME!`, "accent-text");
       } else {
@@ -975,7 +975,7 @@ async function selectTokenToMove(tokenIdx) {
 
     checkCaptures(playerColor, tokenIdx);
     
-    const hasWon = state.tokens[playerColor].every(pos => pos === 57);
+    const hasWon = state.tokens[playerColor].every(pos => pos === 56);
     if (hasWon) {
       state.currentRoll = null;
       state.hasRolled = false;
@@ -1039,7 +1039,6 @@ async function updateDatabaseState() {
 function getTokenGridCoords(color, pos, tokenIdx) {
   const map = COLOR_MAPS[color];
   if (pos === -1) return map.yard[tokenIdx];
-  if (pos === 57) return {x: 7, y: 7};
 
   if (pos > map.homeStartIdx) {
     const homeStep = pos - (map.homeStartIdx + 1);
@@ -1201,11 +1200,11 @@ window.simulateLudoTestState = async () => {
     alert("Please join or create a game room first!");
     return;
   }
-  state.tokens[playerColor] = [57, 57, 57, 50];
+  state.tokens[playerColor] = [56, 56, 56, 50];
   state.currentRoll = null;
   state.hasRolled = false;
   await supabase.from("lud_room").update({ state }).eq("room_code", roomCode);
-  alert("Ludo test state set successfully!\n- 3 tokens at Goal (57)\n- 1 token at chevron entrance (50)\n\nRoll the dice to walk the last token home!");
+  alert("Ludo test state set successfully!\n- 3 tokens at Goal (56)\n- 1 token at chevron entrance (50)\n\nRoll the dice to walk the last token home!");
 };
 
 if (window.parent) {
