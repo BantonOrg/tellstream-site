@@ -681,9 +681,15 @@ if (customPlayBtn) {
         const player = document.getElementById('radioPlayer');
         if (!player) return;
         if (player.paused) {
+            if (!player.src || player.src === window.location.href || !player.src.includes('radio.mp3')) {
+                player.src = "https://a3.asurahosting.com/listen/tellstream/radio.mp3";
+            }
+            player.load();
             player.play().catch(e => console.log("Play blocked:", e));
         } else {
             player.pause();
+            player.removeAttribute('src');
+            player.load();
         }
     });
 }
@@ -701,11 +707,23 @@ radioChannel.onmessage = (event) => {
     if (!player) return;
 
     if (event.data.action === 'play') {
+        if (!player.src || player.src === window.location.href || !player.src.includes('radio.mp3')) {
+            player.src = "https://a3.asurahosting.com/listen/tellstream/radio.mp3";
+            player.load();
+        }
         player.play().catch(e => console.log("Play blocked:", e));
     } else if (event.data.action === 'pause') {
         player.pause();
+        player.removeAttribute('src');
+        player.load();
     } else if (event.data.action === 'volume') {
         player.volume = event.data.value;
+    } else if (event.data.action === 'ping') {
+        radioChannel.postMessage({
+            action: 'pong',
+            state: (player.paused || !player.src || !player.src.includes('radio.mp3')) ? 'paused' : 'playing',
+            volume: player.volume
+        });
     }
 };
 
@@ -725,7 +743,7 @@ setTimeout(() => {
         });
         player.addEventListener('volumechange', () => {
             updatePlayerUI(player);
-            radioChannel.postMessage({ state: player.paused ? 'paused' : 'playing', volume: player.volume });
+            radioChannel.postMessage({ state: (player.paused || !player.src || !player.src.includes('radio.mp3')) ? 'paused' : 'playing', volume: player.volume });
         });
     }
 }, 1000);
@@ -1163,16 +1181,6 @@ async function syncBannedUsersMap() {
     if (data) data.forEach(u => { bannedUsersCache[u.username.toLowerCase()] = u; });
 }
 
-audioPlayer.addEventListener('error', () => { recoverStream(); });
-
-function recoverStream() {
-    const currentSrc = audioPlayer.src;
-    if (!currentSrc) return;
-    audioPlayer.src = "";
-    audioPlayer.load();
-    audioPlayer.src = currentSrc;
-    audioPlayer.play().catch(err => console.log(err));
-}
 
 function appendMessage(data) {
     const msgDiv = document.createElement('div');
@@ -2801,12 +2809,16 @@ window.togglePasskeyVisibility = togglePasskeyVisibility;
         let lastTime = 0;
         let stalledCount = 0;
 
+        function isStreamActive() {
+            return player.src && player.src.includes('radio.mp3') && player.src !== window.location.href;
+        }
+
         function startStallCheck() {
             if (stallCheckInterval) clearInterval(stallCheckInterval);
             lastTime = player.currentTime;
             stalledCount = 0;
             stallCheckInterval = setInterval(() => {
-                if (player.paused) return;
+                if (player.paused || !isStreamActive()) return;
 
                 if (player.currentTime === lastTime) {
                     stalledCount++;
@@ -2830,20 +2842,32 @@ window.togglePasskeyVisibility = togglePasskeyVisibility;
         }
 
         function recoverStream() {
-            const currentSrc = player.src;
+            if (player.paused || !isStreamActive()) return;
+            const currentSrc = "https://a3.asurahosting.com/listen/tellstream/radio.mp3";
             console.log("[Stream Watchdog] Reloading stream source:", currentSrc);
-            player.src = ""; // Force disconnect
+            
+            // Unbind pause listener temporarily to avoid state sync trigger on clear
+            player.removeEventListener('pause', stopStallCheck);
+            
+            player.pause();
+            player.removeAttribute('src');
             player.load();
 
             setTimeout(() => {
+                if (player.paused) {
+                    player.addEventListener('pause', stopStallCheck);
+                    return;
+                }
                 player.src = currentSrc;
                 player.load();
                 player.play().then(() => {
                     console.log("[Stream Watchdog] Stream successfully recovered and playing.");
                     stalledCount = 0;
                     lastTime = player.currentTime;
+                    player.addEventListener('pause', stopStallCheck);
                 }).catch(err => {
                     console.warn("[Stream Watchdog] Playback recovery resume failed, will retry on next check:", err);
+                    player.addEventListener('pause', stopStallCheck);
                 });
             }, 1000);
         }
@@ -2852,16 +2876,20 @@ window.togglePasskeyVisibility = togglePasskeyVisibility;
         player.addEventListener('pause', stopStallCheck);
 
         player.addEventListener('error', (e) => {
+            if (player.paused || !isStreamActive()) return;
             console.error("[Stream Watchdog] Audio element error event detected:", e);
-            setTimeout(recoverStream, 3000);
+            setTimeout(() => {
+                recoverStream();
+            }, 3000);
         });
 
         player.addEventListener('ended', () => {
+            if (player.paused || !isStreamActive()) return;
             console.log("[Stream Watchdog] Audio ended event detected. Recovering...");
             recoverStream();
         });
 
-        if (!player.paused) {
+        if (!player.paused && isStreamActive()) {
             startStallCheck();
         }
     }, 2000);
