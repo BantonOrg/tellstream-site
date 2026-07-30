@@ -22,9 +22,9 @@ let isProcessing = false;
 let localTokenPositions = null;
 let currentTurnNumber = 0;
 let isDiceRollingLocal = false;
-let localDiceVal = null;
+let localTumbleFrame = null;
 let observerRollingColor = null;
-let observerDiceVal = null;
+let observerTumbleFrame = null;
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 const COLORS = ["red", "green", "yellow", "blue"];
@@ -244,6 +244,11 @@ function logTableAction(text, highlightType = "") {
     tableLogEntries.scrollTop = tableLogEntries.scrollHeight;
 }
 
+function isSameUser(user1, user2) {
+    if (!user1 || !user2) return false;
+    return user1.trim().toLowerCase() === user2.trim().toLowerCase();
+}
+
 // Bind chat elements
 if (sendLobbyChatBtn && lobbyChatInput) {
     sendLobbyChatBtn.onclick = () => sendGlobalChatMessage(lobbyChatInput);
@@ -460,12 +465,12 @@ async function toggleSeating(username) {
         const { data } = await supabase.from("lud_room").select("*").eq("room_code", roomCode).single();
         if (data) {
             const playersObj = data.players || {};
-            if (playersObj.creator !== myUsername) return; // Only host can manage seats
-            if (username === playersObj.creator) return; // Creator cannot be unseated/reseated from RED
+            if (!isSameUser(playersObj.creator, myUsername)) return; // Only host can manage seats
+            if (isSameUser(username, playersObj.creator)) return; // Creator cannot be unseated/reseated from RED
             
             let seatedColor = null;
             COLORS.forEach(color => {
-                if (playersObj[color] === username) {
+                if (isSameUser(playersObj[color], username)) {
                     seatedColor = color;
                 }
             });
@@ -561,9 +566,17 @@ function triggerObserverDiceRollAnimation(color) {
   observerRollingColor = color;
   if (soundOn) playSound("roll");
   
+  observerTumbleFrame = Math.floor(Math.random() * 4) + 1;
   render();
   
+  const interval = setInterval(() => {
+    observerTumbleFrame = Math.floor(Math.random() * 4) + 1;
+    render();
+  }, 80);
+  
   setTimeout(() => {
+    clearInterval(interval);
+    observerTumbleFrame = null;
     observerRollingColor = null;
     render();
   }, 800);
@@ -608,7 +621,7 @@ function handleStateUpdate(roomData) {
           if (localThemeSelect) localThemeSelect.value = theme;
           playerColor = null;
           COLORS.forEach(color => {
-            if (playersObj[color] === myUsername) playerColor = color;
+            if (isSameUser(playersObj[color], myUsername)) playerColor = color;
           });
           const joinedColors = COLORS.filter(color => playersObj[color] && playersObj[color] !== "Waiting..." && playersObj[color] !== "Not In Use");
           const activeSeatsCount = joinedColors.length;
@@ -668,14 +681,14 @@ function handleStateUpdate(roomData) {
 
   playerColor = null;
   COLORS.forEach(color => {
-    if (playersObj[color] === myUsername) playerColor = color;
+    if (isSameUser(playersObj[color], myUsername)) playerColor = color;
   });
 
   if (roomData.game_state === "waiting") {
       showView(seatingView);
       seatingVariantDisplay.textContent = theme === "classic" ? "Classic Table" : "Futuristic Board";
       
-      const isCreator = (playersObj.creator === myUsername);
+      const isCreator = isSameUser(playersObj.creator, myUsername);
       
       // Update Seating cards UI
       COLORS.forEach(color => {
@@ -710,7 +723,7 @@ function handleStateUpdate(roomData) {
           const li = document.createElement("li");
           let seatedColor = null;
           COLORS.forEach(color => {
-              if (playersObj[color] === user) seatedColor = color;
+              if (isSameUser(playersObj[color], user)) seatedColor = color;
           });
           
           if (seatedColor) {
@@ -720,7 +733,7 @@ function handleStateUpdate(roomData) {
               li.textContent = user;
           }
           
-          if (isCreator && user !== playersObj.creator) {
+          if (isCreator && !isSameUser(user, playersObj.creator)) {
               li.style.cursor = "pointer";
               li.title = "Click to add or remove player from game";
               li.addEventListener("click", () => toggleSeating(user));
@@ -824,13 +837,21 @@ async function handleDiceRoll() {
 
   logTableAction(`${playerColor.toUpperCase()} rolled a ${roll}!`);
 
+  localTumbleFrame = Math.floor(Math.random() * 4) + 1;
   render();
+
+  const interval = setInterval(() => {
+    localTumbleFrame = Math.floor(Math.random() * 4) + 1;
+    render();
+  }, 80);
 
   // Update DB immediately so other players see we started rolling this final number
   await updateDatabaseState();
 
   // Wait 800ms for the GIF roll animation to complete
   setTimeout(async () => {
+    clearInterval(interval);
+    localTumbleFrame = null;
     isDiceRollingLocal = false;
     
     if (!hasValidMoves(playerColor, roll)) {
@@ -1075,19 +1096,20 @@ function render() {
     const val = rollVal || 1;
     if (isRolling) {
       dicePiece.classList.add("rolling");
-      diceImg.src = `assets/dice/${val}.gif?t=${Date.now()}`;
+      const tf = isDiceRollingLocal ? (localTumbleFrame || 1) : (observerTumbleFrame || 1);
+      diceImg.src = `assets/dice/tumble${tf}.png`;
     } else {
       diceImg.src = `assets/dice/${val}.gif`;
     }
 
     // Seed deterministic random offsets so the landing spot is identical on all clients
     const seed = (rollVal || 1) * (currentTurnNumber || 1);
-    const randX = Math.floor(Math.sin(seed) * 30); // -30px to 30px
-    const randY = Math.floor(Math.cos(seed) * 30); // -30px to 30px
+    const randX = Math.floor(Math.sin(seed) * 30); // -30% to 30%
+    const randY = Math.floor(Math.cos(seed) * 30); // -30% to 30%
     const randRot = Math.floor(Math.abs(Math.sin(seed + 1)) * 360); // 0 to 360deg
 
-    dicePiece.style.setProperty('--rest-x', `${randX}px`);
-    dicePiece.style.setProperty('--rest-y', `${randY}px`);
+    dicePiece.style.setProperty('--rest-x', `${randX}%`);
+    dicePiece.style.setProperty('--rest-y', `${randY}%`);
     dicePiece.style.setProperty('--rest-rot', `${randRot}deg`);
 
     dicePiece.appendChild(diceImg);
