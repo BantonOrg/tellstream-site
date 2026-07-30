@@ -783,10 +783,10 @@ input[type="text"]:focus {
 /* Absolute transparent chat sidebar - Dominoes Style */
 .table-sidebar.transparent-chat {
     position: absolute;
-    top: 155px;
+    top: 70px;
     right: 15px;
     width: 240px;
-    max-height: 460px;
+    max-height: calc(100vh - 90px);
     background: rgba(10, 10, 12, 0.45);
     backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.08);

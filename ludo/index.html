@@ -40,18 +40,31 @@
         </header>
 
         <div class="lobby-grid">
-            <!-- User Profile Card -->
-            <div class="glass-card profile-card">
-                <h2>Your Identity</h2>
-                <div class="form-group">
-                    <label for="username-input">Display Name</label>
-                    <input type="text" id="username-input" placeholder="Enter username..." maxlength="15">
-                    <p class="helper-text">This name will be displayed at the game table.</p>
+            <!-- Left Column: Identity + Join Room -->
+            <div class="lobby-left-column" style="display: flex; flex-direction: column; gap: 24px;">
+                <!-- User Profile Card -->
+                <div class="glass-card profile-card" style="margin: 0; flex: 1; display: flex; flex-direction: column; justify-content: center;">
+                    <h2>Your Identity</h2>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="username-input">Display Name</label>
+                        <input type="text" id="username-input" placeholder="Enter username..." maxlength="15">
+                        <p class="helper-text" style="margin-bottom: 0;">This name will be displayed at the game table.</p>
+                    </div>
+                </div>
+
+                <!-- Join Room Card -->
+                <div class="glass-card join-card" style="margin: 0; flex: 1; display: flex; flex-direction: column; justify-content: center;">
+                    <h2>Join Existing Table</h2>
+                    <div class="form-group">
+                        <label for="joinCode">4-Letter Room Code</label>
+                        <input type="text" id="joinCode" placeholder="e.g. CZTN" autocomplete="off" maxlength="4" class="uppercase-input" style="text-transform: uppercase;">
+                    </div>
+                    <button id="joinBtn" class="btn primary-btn large-btn">Join Table</button>
                 </div>
             </div>
 
-            <!-- Create Room Card -->
-            <div class="glass-card create-card">
+            <!-- Center Column: Create Room -->
+            <div class="glass-card create-card" style="margin: 0; display: flex; flex-direction: column; justify-content: space-between;">
                 <h2>Host a New Table</h2>
                 <div class="form-group">
                     <label for="max-players-select">Players count</label>
@@ -68,7 +81,7 @@
                         <option value="futuristic">Futuristic Board</option>
                     </select>
                 </div>
-                <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+                <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
                     <label for="soundToggle" style="cursor: pointer; display: flex; align-items: center; gap: 8px; width: 100%;">
                         <span>Sound Effects</span>
                         <input type="checkbox" id="soundToggle" style="width: 18px; height: 18px; cursor: pointer; accent-color: #22e532;">
@@ -77,27 +90,17 @@
                 <button id="createBtn" class="btn primary-btn large-btn">Create Room</button>
             </div>
 
-            <!-- Join Room Card -->
-            <div class="glass-card join-card">
-                <h2>Join Existing Table</h2>
-                <div class="form-group">
-                    <label for="joinCode">4-Letter Room Code</label>
-                    <input type="text" id="joinCode" placeholder="e.g. CZTN" autocomplete="off" maxlength="4" class="uppercase-input" style="text-transform: uppercase;">
-                </div>
-                <button id="joinBtn" class="btn primary-btn large-btn">Join Table</button>
-            </div>
-        </div>
-
-        <!-- Lobby Chat Section -->
-        <div class="glass-card active-rooms-card lobby-chat-card">
-            <h2>Lounge Lobby Chat</h2>
-            <div class="room-chat lobby-chat-wrapper-main">
-                <div id="lobby-chat-messages" class="chat-messages">
-                    <!-- Populated with global messages -->
-                </div>
-                <div class="chat-input-bar">
-                    <input type="text" id="lobby-chat-input" placeholder="Type message..." maxlength="100">
-                    <button id="send-lobby-chat-btn" class="btn icon-btn">💬</button>
+            <!-- Right Column: Lobby Chat Section -->
+            <div class="glass-card active-rooms-card lobby-chat-card" style="margin: 0; display: flex; flex-direction: column; min-height: 0; height: 100%;">
+                <h2>Lounge Lobby Chat</h2>
+                <div class="room-chat lobby-chat-wrapper-main" style="flex: 1; display: flex; flex-direction: column; min-height: 0; justify-content: space-between;">
+                    <div id="lobby-chat-messages" class="chat-messages" style="flex: 1; overflow-y: auto; max-height: 230px;">
+                        <!-- Populated with global messages -->
+                    </div>
+                    <div class="chat-input-bar" style="margin-top: 10px;">
+                        <input type="text" id="lobby-chat-input" placeholder="Type message..." maxlength="100">
+                        <button id="send-lobby-chat-btn" class="btn icon-btn">💬</button>
+                    </div>
                 </div>
             </div>
         </div>
