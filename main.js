@@ -2661,10 +2661,131 @@ try {
     supabase_db.channel('public:temporary_overrides').on('postgres_changes', { event: '*', pattern: 'public', table: 'temporary_overrides' }, () => { fetchAndRenderWeeklyTimetable(); }).subscribe();
 } catch (e) { console.log("Realtime schedule subscription delayed:", e.message); }
 
+// Emoji modal overlay functions & pagination
+let currentEmojiPage = 1;
+const EMOJIS_PER_PAGE = 100;
+
+function openEmojiModal() {
+    const modal = document.getElementById('emoji-overlay-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+        modal.offsetHeight; // force reflow
+        modal.classList.add('active');
+        
+        const searchInput = document.getElementById('emojiSearchInput');
+        if (searchInput) {
+            searchInput.value = '';
+            setTimeout(() => searchInput.focus(), 100);
+        }
+        
+        currentEmojiPage = 1;
+        renderEmojiModalGrid('');
+    }
+}
+
+function closeEmojiModal() {
+    const modal = document.getElementById('emoji-overlay-modal');
+    if (modal) {
+        modal.classList.remove('active');
+        setTimeout(() => {
+            if (!modal.classList.contains('active')) {
+                modal.style.display = 'none';
+            }
+        }, 250);
+    }
+}
+
+function renderEmojiModalGrid(searchTerm = '') {
+    const gridContainer = document.getElementById('emojiModalGridContainer');
+    const paginationContainer = document.getElementById('emojiModalPagination');
+    if (!gridContainer || !window.emojiMapping) return;
+    
+    const allKeys = Object.keys(window.emojiMapping);
+    const normalizedSearch = searchTerm.toLowerCase().trim();
+    
+    const filteredKeys = allKeys.filter(key => key.toLowerCase().includes(normalizedSearch));
+    const totalItems = filteredKeys.length;
+    
+    if (totalItems === 0) {
+        gridContainer.innerHTML = `<div style="grid-column: 1 / -1; color: #666; font-size: 0.95rem; text-align: center; margin-top: 40px; font-weight: 500;">No emojis found matching "${escapeHTML(searchTerm)}"</div>`;
+        if (paginationContainer) paginationContainer.innerHTML = '';
+        return;
+    }
+    
+    const totalPages = Math.ceil(totalItems / EMOJIS_PER_PAGE);
+    // Clamp current page to valid bounds
+    if (currentEmojiPage > totalPages) currentEmojiPage = totalPages;
+    if (currentEmojiPage < 1) currentEmojiPage = 1;
+    
+    const startIndex = (currentEmojiPage - 1) * EMOJIS_PER_PAGE;
+    const endIndex = Math.min(startIndex + EMOJIS_PER_PAGE, totalItems);
+    const pageKeys = filteredKeys.slice(startIndex, endIndex);
+    
+    const html = pageKeys.map(key => {
+        const filename = window.emojiMapping[key];
+        return `
+            <div class="emoji-modal-card" onclick="insertEmojiCodeFromModal('${key}')">
+                <img src="${imgBaseUrl}${filename}" alt="${key}" loading="lazy">
+                <span>:${key}:</span>
+            </div>
+        `;
+    }).join('');
+    
+    gridContainer.innerHTML = html;
+    
+    // Render pagination controls
+    if (paginationContainer) {
+        if (totalPages <= 1) {
+            paginationContainer.innerHTML = '';
+        } else {
+            paginationContainer.innerHTML = `
+                <button onclick="changeEmojiPage(-1)" ${currentEmojiPage === 1 ? 'disabled' : ''} 
+                    class="emoji-page-btn">← Previous</button>
+                <span style="font-size: 0.9rem; color: #aaa; font-weight: 500;">Page <strong>${currentEmojiPage}</strong> of <strong>${totalPages}</strong></span>
+                <button onclick="changeEmojiPage(1)" ${currentEmojiPage === totalPages ? 'disabled' : ''} 
+                    class="emoji-page-btn">Next →</button>
+            `;
+        }
+    }
+}
+
+function changeEmojiPage(direction) {
+    currentEmojiPage += direction;
+    const searchInput = document.getElementById('emojiSearchInput');
+    const searchTerm = searchInput ? searchInput.value : '';
+    renderEmojiModalGrid(searchTerm);
+    
+    // Scroll modal grid back to top when page changes
+    const gridContainer = document.getElementById('emojiModalGridContainer');
+    if (gridContainer) gridContainer.scrollTop = 0;
+}
+
+function filterEmojiModal() {
+    const searchInput = document.getElementById('emojiSearchInput');
+    currentEmojiPage = 1;
+    if (searchInput) {
+        renderEmojiModalGrid(searchInput.value);
+    }
+}
+
+function insertEmojiCodeFromModal(code) {
+    if (typeof insertEmojiCode === 'function') {
+        insertEmojiCode(code);
+    } else {
+        messageInput.value += ` :${code}: `;
+        messageInput.focus();
+    }
+}
+
 // Expose functions to global window scope for inline onclick/oninput event handlers in index.html
 window.toggleAccordion = toggleAccordion;
 window.openScheduleGrid = openScheduleGrid;
 window.closeScheduleGrid = closeScheduleGrid;
+window.openEmojiModal = openEmojiModal;
+window.closeEmojiModal = closeEmojiModal;
+window.filterEmojiModal = filterEmojiModal;
+window.insertEmojiCodeFromModal = insertEmojiCodeFromModal;
+window.changeEmojiPage = changeEmojiPage;
 
 window.toggleNoticeBoardView = toggleNoticeBoardView;
 window.toggleChatFullscreen = toggleChatFullscreen;

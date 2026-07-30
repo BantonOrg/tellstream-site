@@ -1359,5 +1359,132 @@ body.chat-is-fullscreen .online-users-panel {
     }
 }
 
+/* ==========================================================================
+   ✨ FULLSCREEN EMOJI GRID OVERLAY
+   ========================================================================== */
+.emoji-modal-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(10, 10, 10, 0.85);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    z-index: 100000 !important;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+.emoji-modal-overlay.active {
+    display: flex;
+    opacity: 1;
+}
 
+.emoji-modal-content {
+    width: 90%;
+    max-width: 900px;
+    height: 85vh;
+    background: rgba(20, 20, 20, 0.95);
+    border: 1px solid rgba(34, 229, 50, 0.2);
+    border-radius: 16px;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+    overflow: hidden;
+}
 
+#emojiSearchInput:focus {
+    border-color: #22e532 !important;
+    box-shadow: 0 0 8px rgba(34, 229, 50, 0.3);
+}
+
+.emoji-modal-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    width: 100%;
+    padding: 12px 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.emoji-modal-card:hover {
+    background: rgba(34, 229, 50, 0.1);
+    border-color: #22e532;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(34, 229, 50, 0.15);
+}
+
+.emoji-modal-card img {
+    max-height: 40px;
+    max-width: 80%;
+    object-fit: contain;
+    border-radius: 4px;
+    transition: transform 0.2s ease;
+}
+
+.emoji-modal-card:hover img {
+    transform: scale(1.15);
+}
+
+.emoji-modal-card span {
+    font-size: 0.7rem;
+    color: #888;
+    text-align: center;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.emoji-modal-card:hover span {
+    color: #22e532;
+}
+
+/* Custom scrollbar for emoji modal */
+.emoji-modal-grid-container::-webkit-scrollbar {
+    width: 6px;
+}
+.emoji-modal-grid-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+}
+.emoji-modal-grid-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+.emoji-modal-grid-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(34, 229, 50, 0.4);
+}
+
+.emoji-page-btn {
+    transition: all 0.2s ease;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.emoji-page-btn:disabled {
+    opacity: 0.25;
+    cursor: not-allowed !important;
+    background: rgba(255,255,255,0.02) !important;
+    border-color: rgba(255,255,255,0.05) !important;
+    color: #888 !important;
+}
+.emoji-page-btn:not(:disabled):hover {
+    background: rgba(34, 229, 50, 0.15) !important;
+    border-color: #22e532 !important;
+    color: #22e532 !important;
+}

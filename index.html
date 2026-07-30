@@ -89,8 +89,7 @@
                 <div class="sub-panel-bottom">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                         <span style="font-size:0.85rem; color:#22e532; font-weight:bold;">✨ Quick Emojis</span>
-                        <a href="https://tellstream-emojis.pages.dev/" target="_blank" class="emoji-master-link">See All
-                            Codes</a>
+                        <a href="#" onclick="event.preventDefault(); openEmojiModal();" class="emoji-master-link">See All Codes</a>
                     </div>
                     <div class="emoji-grid-list" id="quickEmojiList"></div>
                 </div>
@@ -345,8 +344,7 @@
                         style="background:transparent; padding:0; border:none; display:flex; flex-direction:column; gap:8px; margin-top:10px;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                             <span style="font-size:0.85rem; color:#22e532; font-weight:bold;">✨ Quick Emojis</span>
-                            <a href="https://tellstream-emojis.pages.dev/" target="_blank" class="emoji-master-link">See All
-                                Codes</a>
+                            <a href="#" onclick="event.preventDefault(); openEmojiModal();" class="emoji-master-link">See All Codes</a>
                         </div>
                         <div class="emoji-grid-list" id="quickEmojiListFS"></div>
                     </div>
@@ -366,7 +364,7 @@
                     title="Fambily & Profile Settings"
                     style="background:rgba(34,229,50,0.1); border:1px solid rgba(34,229,50,0.3); color:#22e532;">💚</button>
             </div>
-            <textarea id="messageInput" placeholder="Type a message..." maxlength="120"></textarea>
+            <textarea id="messageInput" placeholder="Type a message..." maxlength="333"></textarea>
         </div>
     </div>
 
@@ -392,6 +390,28 @@
             </div>
             <div class="schedule-grid-container" id="scheduleGridContainer">
                 <!-- 2x3 Grid populated dynamically by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Fullscreen Emoji Overlay Modal -->
+    <div class="emoji-modal-overlay" id="emoji-overlay-modal" onclick="closeEmojiModal()">
+        <div class="emoji-modal-content" onclick="event.stopPropagation();">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 15px; flex-shrink: 0; gap: 20px;">
+                <h2 style="color: #22e532; margin: 0; font-size: 1.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
+                    ✨ Emoji Codes</h2>
+                <input type="text" id="emojiSearchInput" placeholder="Search emoji codes..." oninput="filterEmojiModal()"
+                    style="background: #252525; border: 1px solid rgba(255, 255, 255, 0.1); padding: 8px 12px; border-radius: 8px; color: #fff; font-size: 0.9rem; outline: none; flex: 1; max-width: 300px; transition: border-color 0.2s;">
+                <button onclick="closeEmojiModal()"
+                    style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.1); color: #fff; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s;"
+                    onmouseover="this.style.background='rgba(255,255,255,0.1)'"
+                    onmouseout="this.style.background='rgba(255,255,255,0.06)'">Back to Lounge</button>
+            </div>
+            <div class="emoji-modal-grid-container" id="emojiModalGridContainer" style="flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; padding: 10px 5px; justify-items: center; align-content: start;">
+                <!-- Populated dynamically by JS -->
+            </div>
+            <div id="emojiModalPagination" style="display: flex; justify-content: center; align-items: center; gap: 15px; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 15px; flex-shrink: 0;">
+                <!-- Populated dynamically by JS -->
             </div>
         </div>
     </div>
