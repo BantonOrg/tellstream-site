@@ -214,6 +214,27 @@
                 <div id="yard-controls-container" style="display: contents;"></div>
             </div>
         </div>
+
+        <!-- Transparent Chat Overlay on right side -->
+        <aside class="table-sidebar transparent-chat">
+            <div class="sidebar-section-title">LOUNGE CHAT</div>
+            <div class="room-chat table-chat-wrapper">
+                <div id="table-chat-messages" class="chat-messages">
+                    <!-- Populated with global messages -->
+                </div>
+                <div class="chat-input-bar">
+                    <input type="text" id="table-chat-input" placeholder="Type message..." maxlength="100">
+                    <button id="send-table-chat-btn" class="btn icon-btn">💬</button>
+                </div>
+            </div>
+
+            <div class="sidebar-section-title log-section-header">TABLE LOGS</div>
+            <div class="sidebar-logs-wrapper">
+                <div id="table-log-entries" class="log-entries">
+                    <div>Game created. Waiting to start.</div>
+                </div>
+            </div>
+        </aside>
     </div>
 
 </div>

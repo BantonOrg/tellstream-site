@@ -53,7 +53,7 @@ const COLOR_MAPS = {
   yellow: {
     startTrackIdx: 8, homeStartIdx: 50,
     homeCoords: [{x:7,y:1}, {x:7,y:2}, {x:7,y:3}, {x:7,y:4}, {x:7,y:5}, {x:7,y:6}],
-    yard: [{x:9,y:1}, {x:10,y:1}, {x:9,y:2}, {x:10,y:2}]
+    yard: [{x:9,y:0}, {x:10,y:0}, {x:9,y:1}, {x:10,y:1}]
   },
   blue: {
     startTrackIdx: 21, homeStartIdx: 50,
@@ -93,6 +93,11 @@ const rosterList = document.getElementById("roster-list");
 const roomChatMessages = document.getElementById("room-chat-messages");
 const roomChatInput = document.getElementById("room-chat-input");
 const sendChatBtn = document.getElementById("send-chat-btn");
+
+const tableChatMessages = document.getElementById("table-chat-messages");
+const tableChatInput = document.getElementById("table-chat-input");
+const sendTableChatBtn = document.getElementById("send-table-chat-btn");
+const tableLogEntries = document.getElementById("table-log-entries");
 
 const localSoundToggle = document.getElementById("localSoundToggle");
 const localThemeSelect = document.getElementById("localThemeSelect");
@@ -158,13 +163,14 @@ async function loadGlobalChat() {
         const { data } = await supabase
             .from('messages')
             .select('*')
-            .order('id', { ascending: true })
+            .order('id', { ascending: false })
             .limit(40);
             
         if (data) {
             if (lobbyChatMessages) lobbyChatMessages.innerHTML = "";
             if (roomChatMessages) roomChatMessages.innerHTML = "";
-            data.forEach(msg => displayGlobalChatMessage(msg));
+            if (tableChatMessages) tableChatMessages.innerHTML = "";
+            data.reverse().forEach(msg => displayGlobalChatMessage(msg));
         }
     } catch (e) {
         console.error("Failed to load global chat:", e);
@@ -208,6 +214,13 @@ function displayGlobalChatMessage(data) {
         roomChatMessages.appendChild(row);
         roomChatMessages.scrollTop = roomChatMessages.scrollHeight;
     }
+    if (tableChatMessages) {
+        const row = document.createElement("div");
+        row.className = "chat-msg-row";
+        row.innerHTML = `<span class="chat-msg-user">${escapeHtml(data.username)}:</span> <span class="chat-msg-text">${escapeHtml(data.message)}</span>`;
+        tableChatMessages.appendChild(row);
+        tableChatMessages.scrollTop = tableChatMessages.scrollHeight;
+    }
 }
 
 function escapeHtml(text) {
@@ -220,6 +233,17 @@ function escapeHtml(text) {
         .replace(/'/g, "&#039;");
 }
 
+function logTableAction(text, highlightType = "") {
+    if (!tableLogEntries) return;
+    const div = document.createElement("div");
+    if (highlightType) {
+        div.className = highlightType;
+    }
+    div.textContent = `[${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}] ${text}`;
+    tableLogEntries.appendChild(div);
+    tableLogEntries.scrollTop = tableLogEntries.scrollHeight;
+}
+
 // Bind chat elements
 if (sendLobbyChatBtn && lobbyChatInput) {
     sendLobbyChatBtn.onclick = () => sendGlobalChatMessage(lobbyChatInput);
@@ -228,6 +252,10 @@ if (sendLobbyChatBtn && lobbyChatInput) {
 if (sendChatBtn && roomChatInput) {
     sendChatBtn.onclick = () => sendGlobalChatMessage(roomChatInput);
     roomChatInput.onkeydown = (e) => { if (e.key === "Enter") sendGlobalChatMessage(roomChatInput); };
+}
+if (sendTableChatBtn && tableChatInput) {
+    sendTableChatBtn.onclick = () => sendGlobalChatMessage(tableChatInput);
+    tableChatInput.onkeydown = (e) => { if (e.key === "Enter") sendGlobalChatMessage(tableChatInput); };
 }
 
 // Initialize chat on load
@@ -531,20 +559,14 @@ function triggerObserverDiceRollAnimation(color) {
   if (isDiceRollingLocal) return;
   
   observerRollingColor = color;
-  let count = 0;
   if (soundOn) playSound("roll");
   
-  const interval = setInterval(() => {
-    observerDiceVal = Math.floor(Math.random() * 6) + 1;
+  render();
+  
+  setTimeout(() => {
+    observerRollingColor = null;
     render();
-    count++;
-    if (count >= 12) {
-      clearInterval(interval);
-      observerRollingColor = null;
-      observerDiceVal = null;
-      render();
-    }
-  }, 50);
+  }, 800);
 }
 
 function handleStateUpdate(roomData) {
@@ -559,6 +581,7 @@ function handleStateUpdate(roomData) {
     const isNewRoll = roomData.state.hasRolled && (!state || !state.hasRolled);
     if (isNewRoll && incomingTurnColor !== playerColor) {
       triggerObserverDiceRollAnimation(incomingTurnColor);
+      logTableAction(`${incomingTurnColor.toUpperCase()} rolled a ${roomData.state.currentRoll}!`);
     }
   }
 
@@ -606,6 +629,15 @@ function handleStateUpdate(roomData) {
 
   if (roomData.game_state === "finished") {
       showView(gameScreen);
+      state = roomData.state || defaultState();
+      localTokenPositions = roomData.state ? {
+        red: [...roomData.state.tokens.red],
+        green: [...roomData.state.tokens.green],
+        yellow: [...roomData.state.tokens.yellow],
+        blue: [...roomData.state.tokens.blue]
+      } : null;
+      render();
+
       const playersObj = roomData.players || {};
       const winnerColor = (roomData.state && roomData.state.winner) ? roomData.state.winner : "red";
       const winnerName = playersObj[winnerColor] || winnerColor;
@@ -785,49 +817,115 @@ async function handleDiceRoll() {
   isDiceRollingLocal = true;
   if (soundOn) playSound("roll");
 
-  let rollCount = 0;
-  const interval = setInterval(async () => {
-    localDiceVal = Math.floor(Math.random() * 6) + 1;
-    render();
-    rollCount++;
+  // Determine roll outcome immediately
+  const roll = Math.floor(Math.random() * 6) + 1;
+  state.currentRoll = roll;
+  state.hasRolled = true;
+
+  logTableAction(`${playerColor.toUpperCase()} rolled a ${roll}!`);
+
+  render();
+
+  // Update DB immediately so other players see we started rolling this final number
+  await updateDatabaseState();
+
+  // Wait 800ms for the GIF roll animation to complete
+  setTimeout(async () => {
+    isDiceRollingLocal = false;
     
-    if (rollCount >= 12) {
-      clearInterval(interval);
-      
-      const roll = Math.floor(Math.random() * 6) + 1;
-      state.currentRoll = roll;
-      state.hasRolled = true;
-      
-      isDiceRollingLocal = false;
-      localDiceVal = null;
-      
-      if (!hasValidMoves(playerColor, roll)) {
-        setTimeout(async () => {
-          try {
-            await passTurn(roll === 6);
-          } catch (err) {
-            console.error("Error passing turn:", err);
-          } finally {
-            isProcessing = false;
-          }
-        }, 1500);
-      } else {
-        isProcessing = false;
-      }
-      
-      await updateDatabaseState();
+    if (!hasValidMoves(playerColor, roll)) {
+      setTimeout(async () => {
+        try {
+          await passTurn(false);
+        } catch (err) {
+          console.error("Error passing turn:", err);
+        } finally {
+          isProcessing = false;
+          render();
+        }
+      }, 1500);
+    } else {
+      isProcessing = false;
+      render();
     }
-  }, 50);
+  }, 800);
 }
 
 function hasValidMoves(color, roll) {
   return state.tokens[color].some((pos, idx) => isValidMove(color, idx, roll));
 }
 
+function isStartSquareBlocked(activeColor) {
+  const map = COLOR_MAPS[activeColor];
+  const startTrackIdx = map.startTrackIdx;
+  const targetCoords = COMMON_TRACK[startTrackIdx];
+
+  // Count opponent pieces on this start square
+  const opponentCounts = {};
+  COLORS.forEach(c => {
+    opponentCounts[c] = 0;
+  });
+
+  COLORS.forEach(color => {
+    if (color === activeColor) return;
+    state.tokens[color].forEach((pos, idx) => {
+      if (pos >= 0 && pos <= 51) {
+        const coords = getTokenGridCoords(color, pos, idx);
+        if (coords.x === targetCoords.x && coords.y === targetCoords.y) {
+          opponentCounts[color]++;
+        }
+      }
+    });
+  });
+
+  // Blocked condition: any opponent has 2 or more pieces on the start square
+  let isBlocked = false;
+  COLORS.forEach(color => {
+    if (color === activeColor) return;
+    if (opponentCounts[color] >= 2) {
+      isBlocked = true;
+    }
+  });
+
+  return isBlocked;
+}
+
+function captureAllOnStartSquare(activeColor) {
+  const map = COLOR_MAPS[activeColor];
+  const startTrackIdx = map.startTrackIdx;
+  const targetCoords = COMMON_TRACK[startTrackIdx];
+  let capturedAny = false;
+
+  COLORS.forEach(color => {
+    if (color === activeColor) return;
+    state.tokens[color].forEach((pos, idx) => {
+      if (pos >= 0 && pos <= 51) {
+        const coords = getTokenGridCoords(color, pos, idx);
+        if (coords.x === targetCoords.x && coords.y === targetCoords.y) {
+          state.tokens[color][idx] = -1; // Send home!
+          capturedAny = true;
+          logTableAction(`💥 Captured ${color.toUpperCase()}'s piece on start square!`, "accent-text");
+        }
+      }
+    });
+  });
+
+  if (capturedAny && soundOn) {
+    playSound("capture");
+  }
+}
+
 function isValidMove(color, tokenIdx, roll) {
   const pos = state.tokens[color][tokenIdx];
   if (pos === -1 && roll !== 6) return false;
   if (pos >= 0 && pos + roll > 57) return false;
+  
+  if (pos === -1 && roll === 6) {
+    if (isStartSquareBlocked(color)) {
+      return false;
+    }
+  }
+  
   return true;
 }
 
@@ -839,10 +937,19 @@ async function selectTokenToMove(tokenIdx) {
   isProcessing = true;
   try {
     let currentPos = state.tokens[playerColor][tokenIdx];
+    let reachesHome = false;
     if (currentPos === -1 && currentRoll === 6) {
       state.tokens[playerColor][tokenIdx] = 0;
+      captureAllOnStartSquare(playerColor);
+      logTableAction(`${playerColor.toUpperCase()} released a piece to the start square!`);
     } else {
       state.tokens[playerColor][tokenIdx] += currentRoll;
+      if (state.tokens[playerColor][tokenIdx] === 57) {
+        reachesHome = true;
+        logTableAction(`🎉 ${playerColor.toUpperCase()}'s piece reached HOME!`, "accent-text");
+      } else {
+        logTableAction(`${playerColor.toUpperCase()} moved token ${tokenIdx + 1} from ${currentPos} to ${currentPos + currentRoll}.`);
+      }
     }
 
     checkCaptures(playerColor, tokenIdx);
@@ -852,12 +959,13 @@ async function selectTokenToMove(tokenIdx) {
       state.currentRoll = null;
       state.hasRolled = false;
       state.winner = playerColor;
+      logTableAction(`🏆 ${playerColor.toUpperCase()} WON THE GAME!`, "accent-text");
       await supabase.from("lud_room").update({
         game_state: "finished",
         state: state
       }).eq("room_code", roomCode);
     } else {
-      await passTurn(currentRoll === 6);
+      await passTurn(currentRoll === 6 || reachesHome);
     }
   } catch (err) {
     console.error("Error moving token:", err);
@@ -884,6 +992,7 @@ function checkCaptures(movingColor, movingIdx) {
         const otherCoords = getTokenGridCoords(color, pos, idx);
         if (otherCoords.x === targetCoords.x && otherCoords.y === targetCoords.y) {
           state.tokens[color][idx] = -1;
+          logTableAction(`💥 Captured ${color.toUpperCase()}'s piece at position ${pos}!`, "accent-text");
           if (soundOn) playSound("capture");
         }
       }
@@ -945,31 +1054,46 @@ function render() {
     rollBox.appendChild(rollButton);
     controlsContainer.appendChild(rollBox);
 
-    const diceBox = document.createElement("div");
-    diceBox.className = `yard-control dice ${color}`;
-    
-    const diceDisplay = document.createElement("div");
-    diceDisplay.className = `yard-dice-view ${color}`;
-    
-    if (isActive) {
-      diceDisplay.classList.add("active-dice");
-    }
-    
-    const diceEmojis = ["🎲", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
-    
-    if (isActive && isDiceRollingLocal) {
-      diceDisplay.classList.add("rolling");
-      diceDisplay.innerText = localDiceVal ? diceEmojis[localDiceVal] : "🎲";
-    } else if (color === observerRollingColor) {
-      diceDisplay.classList.add("rolling");
-      diceDisplay.innerText = observerDiceVal ? diceEmojis[observerDiceVal] : "🎲";
-    } else {
-      diceDisplay.innerText = (isActive && currentRoll) ? diceEmojis[currentRoll] : "🎲";
-    }
-    
-    diceBox.appendChild(diceDisplay);
-    controlsContainer.appendChild(diceBox);
   });
+
+  // Remove existing yard dice containers from the board
+  board.querySelectorAll('.yard-dice-container').forEach(el => el.remove());
+
+  // Only render dice in the active player's yard if there's an active roll or rolling animation
+  const isRolling = isDiceRollingLocal || (observerRollingColor !== null);
+  const activeColor = isDiceRollingLocal ? playerColor : (observerRollingColor || currentTurnColor);
+  const rollVal = isDiceRollingLocal ? state.currentRoll : (observerRollingColor ? state.currentRoll : currentRoll);
+
+  if (activeColor && (rollVal || isRolling)) {
+    const diceContainer = document.createElement("div");
+    diceContainer.className = `yard-dice-container ${activeColor}`;
+
+    const dicePiece = document.createElement("div");
+    dicePiece.className = "dice-piece";
+
+    const diceImg = document.createElement("img");
+    const val = rollVal || 1;
+    if (isRolling) {
+      dicePiece.classList.add("rolling");
+      diceImg.src = `assets/dice/${val}.gif?t=${Date.now()}`;
+    } else {
+      diceImg.src = `assets/dice/${val}.gif`;
+    }
+
+    // Seed deterministic random offsets so the landing spot is identical on all clients
+    const seed = (rollVal || 1) * (currentTurnNumber || 1);
+    const randX = Math.floor(Math.sin(seed) * 30); // -30px to 30px
+    const randY = Math.floor(Math.cos(seed) * 30); // -30px to 30px
+    const randRot = Math.floor(Math.abs(Math.sin(seed + 1)) * 360); // 0 to 360deg
+
+    dicePiece.style.setProperty('--rest-x', `${randX}px`);
+    dicePiece.style.setProperty('--rest-y', `${randY}px`);
+    dicePiece.style.setProperty('--rest-rot', `${randRot}deg`);
+
+    dicePiece.appendChild(diceImg);
+    diceContainer.appendChild(dicePiece);
+    board.appendChild(diceContainer);
+  }
 
   const coordinateGroups = {};
   const tokensToRender = [];
