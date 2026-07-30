@@ -853,22 +853,26 @@ async function handleDiceRoll() {
     clearInterval(interval);
     localTumbleFrame = null;
     isDiceRollingLocal = false;
+    render();
     
-    if (!hasValidMoves(playerColor, roll)) {
-      setTimeout(async () => {
-        try {
-          await passTurn(false);
-        } catch (err) {
-          console.error("Error passing turn:", err);
-        } finally {
-          isProcessing = false;
-          render();
-        }
-      }, 1500);
-    } else {
-      isProcessing = false;
-      render();
-    }
+    // 1000ms post-roll wait for sync & visual recognition
+    setTimeout(async () => {
+      if (!hasValidMoves(playerColor, roll)) {
+        setTimeout(async () => {
+          try {
+            await passTurn(false);
+          } catch (err) {
+            console.error("Error passing turn:", err);
+          } finally {
+            isProcessing = false;
+            render();
+          }
+        }, 1500);
+      } else {
+        isProcessing = false;
+        render();
+      }
+    }, 1000);
   }, 800);
 }
 
@@ -1098,7 +1102,7 @@ function render() {
       const tf = isDiceRollingLocal ? (localTumbleFrame || 1) : (observerTumbleFrame || 1);
       diceImg.src = `assets/dice/tumble${tf}.png`;
     } else {
-      diceImg.src = `assets/dice/${val}.gif`;
+      diceImg.src = `assets/dice/${val}.png`;
     }
 
     // Seed deterministic random offsets so the landing spot is identical on all clients
