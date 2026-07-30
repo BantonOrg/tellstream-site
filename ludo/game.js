@@ -860,7 +860,7 @@ async function handleDiceRoll() {
       if (!hasValidMoves(playerColor, roll)) {
         setTimeout(async () => {
           try {
-            await passTurn(false);
+            await passTurn(roll === 6);
           } catch (err) {
             console.error("Error passing turn:", err);
           } finally {
@@ -915,12 +915,73 @@ function isStartSquareBlocked(activeColor) {
   return isBlocked;
 }
 
-function captureAllOnStartSquare(activeColor) {
+function isSquareBlocked(movingColor, targetCoords) {
+  if (!targetCoords) return false;
+  const counts = {};
+  COLORS.forEach(c => { counts[c] = 0; });
+  
+  COLORS.forEach(color => {
+    if (color === movingColor) return;
+    state.tokens[color].forEach((pos, idx) => {
+      if (pos >= 0 && pos <= 51) {
+        const coords = getTokenGridCoords(color, pos, idx);
+        if (coords.x === targetCoords.x && coords.y === targetCoords.y) {
+          counts[color]++;
+        }
+      }
+    });
+  });
+  
+  let blocked = false;
+  COLORS.forEach(color => {
+    if (color === movingColor) return;
+    if (counts[color] >= 2) {
+      blocked = true;
+    }
+  });
+  return blocked;
+}
+
+function captureAllOnStartSquare(activeColor, tokenIdx) {
   const map = COLOR_MAPS[activeColor];
   const startTrackIdx = map.startTrackIdx;
   const targetCoords = COMMON_TRACK[startTrackIdx];
-  let capturedAny = false;
 
+  // Count opponent pieces on this start square
+  const opponentCounts = {};
+  COLORS.forEach(c => { opponentCounts[c] = 0; });
+
+  COLORS.forEach(color => {
+    if (color === activeColor) return;
+    state.tokens[color].forEach((pos, idx) => {
+      if (pos >= 0 && pos <= 51) {
+        const coords = getTokenGridCoords(color, pos, idx);
+        if (coords.x === targetCoords.x && coords.y === targetCoords.y) {
+          opponentCounts[color]++;
+        }
+      }
+    });
+  });
+
+  // Check if any opponent has a block (2 or more pieces)
+  let opponentWithBlock = null;
+  COLORS.forEach(color => {
+    if (color === activeColor) return;
+    if (opponentCounts[color] >= 2) {
+      opponentWithBlock = color;
+    }
+  });
+
+  if (opponentWithBlock) {
+    // Releasing piece lands on opponent block -> send releasing piece home!
+    state.tokens[activeColor][tokenIdx] = -1;
+    logTableAction(`💥 ${activeColor.toUpperCase()}'s released piece landed on ${opponentWithBlock.toUpperCase()}'s wall and was sent HOME!`, "accent-text");
+    if (soundOn) playSound("capture");
+    return;
+  }
+
+  // Normal capture
+  let capturedAny = false;
   COLORS.forEach(color => {
     if (color === activeColor) return;
     state.tokens[color].forEach((pos, idx) => {
@@ -945,9 +1006,16 @@ function isValidMove(color, tokenIdx, roll) {
   if (pos === -1 && roll !== 6) return false;
   if (pos >= 0 && pos + roll > 56) return false;
   
-  if (pos === -1 && roll === 6) {
-    if (isStartSquareBlocked(color)) {
-      return false;
+  if (pos >= 0) {
+    // Check intermediate cells (excluding landing cell) for blocks
+    for (let step = 1; step < roll; step++) {
+      const intermediatePos = pos + step;
+      if (intermediatePos <= 51) {
+        const coords = getTokenGridCoords(color, intermediatePos, tokenIdx);
+        if (isSquareBlocked(color, coords)) {
+          return false; // Intermediate step is blocked by opponent wall
+        }
+      }
     }
   }
   
@@ -965,8 +1033,10 @@ async function selectTokenToMove(tokenIdx) {
     let reachesHome = false;
     if (currentPos === -1 && currentRoll === 6) {
       state.tokens[playerColor][tokenIdx] = 0;
-      captureAllOnStartSquare(playerColor);
-      logTableAction(`${playerColor.toUpperCase()} released a piece to the start square!`);
+      captureAllOnStartSquare(playerColor, tokenIdx);
+      if (state.tokens[playerColor][tokenIdx] === 0) {
+        logTableAction(`${playerColor.toUpperCase()} released a piece to the start square!`);
+      }
     } else {
       state.tokens[playerColor][tokenIdx] += currentRoll;
       if (state.tokens[playerColor][tokenIdx] === 56) {
@@ -1005,11 +1075,43 @@ function checkCaptures(movingColor, movingIdx) {
   const map = COLOR_MAPS[movingColor];
   const absoluteTrackIndex = (map.startTrackIdx + currentPos) % 52;
 
-  const SAFE_TRACK_INDICES = [2, 8, 15, 21, 28, 34, 41, 47];
+  const SAFE_TRACK_INDICES = [3, 8, 16, 21, 29, 34, 42, 47];
   if (SAFE_TRACK_INDICES.includes(absoluteTrackIndex)) return;
 
   const targetCoords = getTokenGridCoords(movingColor, currentPos, movingIdx);
 
+  // Check if there is an opponent block on targetCoords
+  let opponentColorWithBlock = null;
+  const opponentCounts = {};
+  COLORS.forEach(c => { opponentCounts[c] = 0; });
+  
+  COLORS.forEach(color => {
+    if (color === movingColor) return;
+    state.tokens[color].forEach((pos, idx) => {
+      if (pos >= 0 && pos <= 51) {
+        const otherCoords = getTokenGridCoords(color, pos, idx);
+        if (otherCoords.x === targetCoords.x && otherCoords.y === targetCoords.y) {
+          opponentCounts[color]++;
+        }
+      }
+    });
+  });
+  
+  COLORS.forEach(color => {
+    if (opponentCounts[color] >= 2) {
+      opponentColorWithBlock = color;
+    }
+  });
+
+  if (opponentColorWithBlock) {
+    // Landed on block -> send moving piece home!
+    state.tokens[movingColor][movingIdx] = -1;
+    logTableAction(`💥 ${movingColor.toUpperCase()}'s piece landed on ${opponentColorWithBlock.toUpperCase()}'s wall and was sent HOME!`, "accent-text");
+    if (soundOn) playSound("capture");
+    return;
+  }
+
+  // Normal capture
   COLORS.forEach(color => {
     if (color === movingColor) return;
     state.tokens[color].forEach((pos, idx) => {

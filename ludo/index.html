@@ -94,11 +94,11 @@
             <div class="glass-card active-rooms-card lobby-chat-card" style="margin: 0; display: flex; flex-direction: column; min-height: 0; height: 100%;">
                 <h2>Lounge Lobby Chat</h2>
                 <div class="room-chat lobby-chat-wrapper-main" style="flex: 1; display: flex; flex-direction: column; min-height: 0; justify-content: space-between;">
-                    <div id="lobby-chat-messages" class="chat-messages" style="flex: 1; overflow-y: auto; max-height: 230px;">
+                    <div id="lobby-chat-messages" class="chat-messages" style="flex: 1; overflow-y: auto;">
                         <!-- Populated with global messages -->
                     </div>
                     <div class="chat-input-bar" style="margin-top: 10px;">
-                        <input type="text" id="lobby-chat-input" placeholder="Type message..." maxlength="100">
+                        <input type="text" id="lobby-chat-input" placeholder="Type message..." maxlength="333">
                         <button id="send-lobby-chat-btn" class="btn icon-btn">💬</button>
                     </div>
                 </div>
@@ -163,7 +163,7 @@
                         <!-- Populated with global messages -->
                     </div>
                     <div class="chat-input-bar">
-                        <input type="text" id="room-chat-input" placeholder="Type message..." maxlength="100">
+                        <input type="text" id="room-chat-input" placeholder="Type message..." maxlength="333">
                         <button id="send-chat-btn" class="btn icon-btn">💬</button>
                     </div>
                 </div>
@@ -226,7 +226,7 @@
                     <!-- Populated with global messages -->
                 </div>
                 <div class="chat-input-bar">
-                    <input type="text" id="table-chat-input" placeholder="Type message..." maxlength="100">
+                    <input type="text" id="table-chat-input" placeholder="Type message..." maxlength="333">
                     <button id="send-table-chat-btn" class="btn icon-btn">💬</button>
                 </div>
             </div>
