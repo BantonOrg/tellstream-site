@@ -1,458 +1,320 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tellstream - Live Lounge</title>
-
-    <meta property="og:title" content="Tellstream - Live Lounge">
-    <meta property="og:description"
-        content="Join the Listener Lounge, check out live event flyers, and stream music on Tellstream.">
-    <meta property="og:image" content="/src/assets/ogmetaLOGO.jpg">
-    <meta property="og:url" content="https://tellstream.banton.org">
-    <meta property="og:type" content="website">
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-Time Ludo</title>
+  <link rel="stylesheet" href="/ludo/style.css">
+  <script>
+      // Security gate: Redirect to root if not logged in or active in other game
+      (function() {
+          const savedUser = localStorage.getItem('tellstream_active_user');
+          const savedKey = localStorage.getItem('tellstream_key_' + savedUser);
+          if (!savedUser || !savedKey) {
+              alert("🔒 Access Denied: Please register and log in on the main Tellstream Lounge page first!");
+              window.top.location.href = "/index.html";
+              return;
+          }
+          const activeGame = localStorage.getItem('tellstream_active_game');
+          if (activeGame && activeGame !== 'ludo') {
+              alert("🔒 Access Denied: You are currently active in a Dominoes game. Please leave Dominoes first!");
+              window.top.location.href = "/index.html";
+          }
+      })();
+  </script>
 </head>
-
 <body>
+<div id="app-container">
 
-    <div class="main-content">
-        <div class="header-container">
-            <div class="header-cell cell-left">
-                <div class="tagline-wrapper">
-                    <h1>Great Music</h1>
-                    <p>ALL DAY • EVERY DAY</p>
+    <!-- ================= LOBBY SCREEN ================= -->
+    <div id="lobby-view" class="view-panel">
+        <header class="lobby-header">
+            <div class="logo-area" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="logo-emoji">🎲</span>
+                    <h1>TellStream Lounge <span class="accent-text">Ludo</span></h1>
+                </div>
+                <button onclick="exitGameToLounge()" class="btn secondary-btn" style="padding: 6px 12px; font-size: 0.75rem; border-color: rgba(255,255,255,0.15);">← Back to Lounge</button>
+            </div>
+            <p class="subtitle">Real-time table top multiplayer connectivity</p>
+        </header>
+
+        <div class="lobby-grid">
+            <!-- User Profile Card -->
+            <div class="glass-card profile-card">
+                <h2>Your Identity</h2>
+                <div class="form-group">
+                    <label for="username-input">Display Name</label>
+                    <input type="text" id="username-input" placeholder="Enter username..." maxlength="15">
+                    <p class="helper-text">This name will be displayed at the game table.</p>
                 </div>
             </div>
 
-            <div class="header-cell cell-middle">
-                <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
-                    style="width: 150px; height: 140px; display: block; visibility: hidden;" alt="spacer">
-            </div>
-
-            <div class="header-cell cell-right"
-                style="display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 8px;">
-                <audio id="radioPlayer" src="https://a3.asurahosting.com/listen/tellstream/radio.mp3"
-                    preload="auto"></audio>
-
-                <!-- Custom Player Controls -->
-                <div class="custom-player-container">
-                    <span class="player-label">📻 Live Radio</span>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <button id="player-play-btn" class="player-btn">⏸️</button>
-                        <input type="range" id="player-volume-slider" min="0" max="1" step="0.05" value="0.5"
-                            class="player-slider">
-                    </div>
-                </div>
-
-                <!-- News Ticker -->
-                <div class="ticker-wrap">
-                    <div class="ticker" id="newsTickerContent">Loading station announcements...</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="columns-container">
-            <div class="col-3" id="flyers-column"
-                style="display: flex; flex-direction: column; overflow: hidden; padding: 20px;">
-                <div class="col-title" style="margin-bottom: 8px; flex-shrink: 0;">
-                    <span>🔥 Event Flyers</span>
-                </div>
-                <div id="flyerContainer" class="inner-feed-wrapper"
-                    style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-right: 4px;">
-                </div>
-            </div>
-
-            <div class="col-3" id="today-schedule-column"
-                style="display: flex; flex-direction: column; overflow: hidden; padding: 20px;">
-                <div class="col-title"
-                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-shrink: 0;">
-                    <span>📅 Today's Schedule</span>
-                    <button id="fullscreen-schedule-btn" onclick="openScheduleGrid()"
-                        style="background: rgba(34, 229, 50, 0.1); border: 1px solid rgba(34, 229, 50, 0.3); color: #22e532; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; cursor: pointer; transition: all 0.2s;"
-                        onmouseover="this.style.background='rgba(34,229,50,0.2)'"
-                        onmouseout="this.style.background='rgba(34,229,50,0.1)'">⛶ Rest of Week</button>
-                </div>
-                <div id="timetableContainer" class="inner-feed-wrapper"
-                    style="flex: 1; overflow-y: auto; padding-right: 4px;"></div>
-            </div>
-
-            <div class="col-3">
-                <div class="col-title">
-                    <span>💡 Chat help and emoji codes</span>
-                </div>
-                <div class="sub-panel-top" id="helpCardsContainer"></div>
-                <div class="sub-panel-bottom">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                        <span style="font-size:0.85rem; color:#22e532; font-weight:bold;">✨ Quick Emojis</span>
-                        <a href="https://tellstream-emojis.pages.dev/" target="_blank" class="emoji-master-link">See All
-                            Codes</a>
-                    </div>
-                    <div class="emoji-grid-list" id="quickEmojiList"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="chat-sidebar">
-        <div class="chat-header">
-            <span id="sidebarPanelTitle" style="display: none;">🔊 Listener Lounge</span>
-            <div class="header-games-row" id="headerGamesRow">
-                <button onclick="launchFullscreenGame('dominoes')" class="chat-header-btn">🎲 Dominoes</button>
-                <button onclick="launchFullscreenGame('ludo')" class="chat-header-btn">🎲 Ludo</button>
-            </div>
-            <div class="nav-controls-row">
-                <button class="chat-header-btn" id="toggle-notice-btn" onclick="toggleNoticeBoardView()">📋
-                    Noticeboard</button>
-                <button class="chat-header-btn" id="fsToggleBtn" onclick="toggleChatFullscreen()">Maximize Chat</button>
-            </div>
-        </div>
-
-        <div class="security-drawer" id="securityDrawer">
-            <h4 id="drawerTitle">Secure Current Handle</h4>
-            <div class="form-grid">
-                <input type="text" id="regNameInput" placeholder="Name to lock" readonly>
-                <input type="password" id="regPasskeyInput" placeholder="Secret Passkey">
-                <input type="text" id="regReminderInput" placeholder="Key Reminder Hint">
-                <input type="email" id="regEmailInput" placeholder="Recovery Email">
-            </div>
-            <div style="display:flex; align-items:center; gap:6px; margin: 8px 0; font-size:0.75rem; color:#aaa; user-select:none;">
-                <input type="checkbox" id="showPasskeyCheckbox" onclick="togglePasskeyVisibility('regPasskeyInput')" style="accent-color:#22e532; cursor:pointer;">
-                <label for="showPasskeyCheckbox" style="cursor:pointer;">Show Passkey text</label>
-            </div>
-            <button class="drawer-action-btn" id="drawerSubmitBtn" onclick="handleSecuritySubmit()">Lock Name Globally</button>
-            <p id="reminderHintDisplay"
-                style="font-size:0.75rem; color:#ffdd1a; margin-top:6px; display:none; text-align:center;"></p>
-
-            <!-- Forgot Passkey Step 1: Link to enter reset flow -->
-            <div id="forgotPasskeyLink"
-                style="font-size:0.75rem; text-align:center; margin-top:10px; cursor:pointer; color:#22e532; text-decoration:underline; display:none;"
-                onclick="toggleForgotPasskeyForm('request')">Forgot Passkey?</div>
-
-            <!-- Forgot Passkey Step 2: Request Verification Code -->
-            <div id="forgotPasskeyRequestForm"
-                style="display:none; flex-direction:column; gap:8px; margin-top:10px; border-top:1px solid #2d2d2d; padding-top:10px;">
-                <p style="font-size:0.75rem; color:#aaa; text-align:center;">Enter your recovery email. We will send a
-                    6-digit verification code to reset your passkey:</p>
-                <input type="email" id="resetRecoveryEmailInput" placeholder="Enter recovery email..."
-                    style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
-                <div style="display:flex; gap:6px;">
-                    <button class="drawer-action-btn" id="sendCodeBtn" style="background:#22e532; color:#000; flex:1;"
-                        onclick="sendResetVerificationCode()">Send Code</button>
-                    <button class="drawer-action-btn" style="background:#444; flex:1;"
-                        onclick="toggleForgotPasskeyForm('login')">Cancel</button>
-                </div>
-            </div>
-
-            <!-- Forgot Passkey Step 3: Verify Code & Reset Passkey -->
-            <div id="forgotPasskeyVerifyForm"
-                style="display:none; flex-direction:column; gap:8px; margin-top:10px; border-top:1px solid #2d2d2d; padding-top:10px;">
-                <p style="font-size:0.75rem; color:#aaa; text-align:center;">Enter the 6-digit code sent to your email
-                    and choose a new passkey:</p>
-                <input type="text" id="resetCodeInput" placeholder="6-Digit Verification Code"
-                    style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none; text-align:center; letter-spacing:4px; font-weight:bold;">
-                <input type="password" id="resetNewPasskeyInput" placeholder="New Secret Passkey"
-                    style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
-                <input type="text" id="resetNewReminderInput" placeholder="New Key Reminder Hint"
-                    style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
-                <div style="display:flex; gap:6px;">
-                    <button class="drawer-action-btn" id="confirmResetBtn"
-                        style="background:#22e532; flex:1; color:#000;" onclick="verifyAndResetPasskey()">Reset
-                        Passkey</button>
-                    <button class="drawer-action-btn" style="background:#444; flex:1;"
-                        onclick="toggleForgotPasskeyForm('request')">Back</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Fambily & Profile Drawer -->
-        <div class="fambily-drawer" id="fambilyDrawer">
-            <div class="fambily-drawer-tabs">
-                <button class="fambily-tab-btn active" id="fambily-tab-btn-profile"
-                    onclick="switchFambilyTab('profile')">Profile</button>
-                <button class="fambily-tab-btn" id="fambily-tab-btn-fambily"
-                    onclick="switchFambilyTab('fambily')">Fambily</button>
-                <button class="fambily-tab-btn" id="fambily-tab-btn-requests"
-                    onclick="switchFambilyTab('requests')">Requests</button>
-                <button class="fambily-tab-btn" id="fambily-tab-btn-blocked"
-                    onclick="switchFambilyTab('blocked')">Blocked</button>
-            </div>
-
-            <!-- PROFILE TAB CONTENT -->
-            <div class="fambily-tab-content" id="fambily-tab-profile">
-                <div class="profile-avatar-row">
-                    <img id="myAvatarImg"
-                        src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23444'/><text x='50' y='60' font-size='30' font-family='sans-serif' text-anchor='middle' fill='%23fff'>?</text></svg>"
-                        class="my-avatar-preview">
-                    <div class="avatar-upload-col">
-                        <label class="drawer-action-btn"
-                            style="background:#22e532; color:#000; text-align:center; display:block; cursor:pointer; font-size:0.75rem; padding:6px 12px; border-radius:4px; font-weight:bold;">
-                            Upload Photo
-                            <input type="file" id="avatarFileInput" accept="image/*" style="display:none;"
-                                onchange="handleAvatarSelected(event)">
-                        </label>
-                        <span style="font-size:0.65rem; color:#888;">Max 500KB. Cropped to square.</span>
-                    </div>
-                </div>
-                <div class="form-grid" style="margin-top:8px;">
-                    <input type="text" id="profileLocationInput" placeholder="Location (e.g. Earth, Canada)"
-                        style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
-                    <input type="text" id="profileSocialsInput" placeholder="Socials (e.g. @instagram)"
-                        style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
-                </div>
-                <textarea id="profileBioInput" placeholder="Bio: Say anything you like..."
-                    style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none; width:100%; height:45px; resize:none; margin-bottom:8px; font-family:inherit;"></textarea>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <span style="font-size:0.75rem; color:#aaa;">Profile Visibility:</span>
-                    <select id="profileVisibilitySelect"
-                        style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:4px 8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none; cursor:pointer;">
-                        <option value="fambily">Fambily only (Default)</option>
-                        <option value="everyone">Everyone</option>
-                        <option value="none">None</option>
+            <!-- Create Room Card -->
+            <div class="glass-card create-card">
+                <h2>Host a New Table</h2>
+                <div class="form-group">
+                    <label for="max-players-select">Players count</label>
+                    <select id="max-players-select" class="custom-select">
+                        <option value="2">2 Players</option>
+                        <option value="3">3 Players</option>
+                        <option value="4" selected>4 Players</option>
                     </select>
                 </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <span style="font-size:0.75rem; color:#aaa;">Go Invisible:</span>
-                    <input type="checkbox" id="profileInvisibleCheckbox"
-                        style="accent-color:#22e532; transform:scale(1.2); cursor:pointer;">
+                <div class="form-group">
+                    <label for="themeSelect">Board Theme</label>
+                    <select id="themeSelect" class="custom-select">
+                        <option value="classic" selected>Classic Table</option>
+                        <option value="futuristic">Futuristic Board</option>
+                    </select>
                 </div>
-                <button class="drawer-action-btn" style="background:#22e532; color:#000; width:100%;"
-                    onclick="saveProfileChanges()">Save Profile</button>
+                <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+                    <label for="soundToggle" style="cursor: pointer; display: flex; align-items: center; gap: 8px; width: 100%;">
+                        <span>Sound Effects</span>
+                        <input type="checkbox" id="soundToggle" style="width: 18px; height: 18px; cursor: pointer; accent-color: #22e532;">
+                    </label>
+                </div>
+                <button id="createBtn" class="btn primary-btn large-btn">Create Room</button>
             </div>
 
-            <!-- FAMBILY TAB CONTENT -->
-            <div class="fambily-tab-content" id="fambily-tab-fambily" style="display:none;">
-                <div style="display:flex; gap:6px; margin-bottom:8px;">
-                    <input type="text" id="addFambilyInput" placeholder="Request to username..."
-                        style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:6px 8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none; flex:1;">
-                    <button class="notice-inline-btn" onclick="sendFambilyRequest()"
-                        style="background:#22e532; color:#000; font-size:0.75rem; padding:0 10px;">Send</button>
+            <!-- Join Room Card -->
+            <div class="glass-card join-card">
+                <h2>Join Existing Table</h2>
+                <div class="form-group">
+                    <label for="joinCode">4-Letter Room Code</label>
+                    <input type="text" id="joinCode" placeholder="e.g. CZTN" autocomplete="off" maxlength="4" class="uppercase-input" style="text-transform: uppercase;">
                 </div>
-                <div class="drawer-list-container" id="fambilyListContainer" style="max-height:180px; overflow-y:auto;">
-                    <p style="font-size:0.75rem; color:#666; text-align:center; padding:10px;">No Fambily members added
-                        yet.</p>
-                </div>
-            </div>
-
-            <!-- REQUESTS TAB CONTENT -->
-            <div class="fambily-tab-content" id="fambily-tab-requests" style="display:none;">
-                <h5 class="drawer-sub-title"
-                    style="margin: 0 0 6px 0; font-size: 0.75rem; color: #22e532; text-transform: uppercase;">Incoming
-                    Requests</h5>
-                <div class="drawer-list-container" id="incomingReqsContainer"
-                    style="max-height:90px; overflow-y:auto; margin-bottom:10px; border:1px solid rgba(255,255,255,0.04); border-radius:4px;">
-                    <p style="font-size:0.75rem; color:#666; text-align:center; padding:5px;">No incoming requests.</p>
-                </div>
-                <h5 class="drawer-sub-title"
-                    style="margin: 0 0 6px 0; font-size: 0.75rem; color: #22e532; text-transform: uppercase;">Sent
-                    Requests</h5>
-                <div class="drawer-list-container" id="outgoingReqsContainer"
-                    style="max-height:90px; overflow-y:auto; border:1px solid rgba(255,255,255,0.04); border-radius:4px;">
-                    <p style="font-size:0.75rem; color:#666; text-align:center; padding:5px;">No sent requests.</p>
-                </div>
-            </div>
-
-            <!-- BLOCKED TAB CONTENT -->
-            <div class="fambily-tab-content" id="fambily-tab-blocked" style="display:none;">
-                <div id="blockedRevealContainer" style="text-align:center; padding:15px;">
-                    <p style="font-size:0.75rem; color:#aaa; margin-bottom:8px;">Blocked users list is hidden to protect
-                        privacy.</p>
-                    <button class="drawer-action-btn" style="background:#444; font-size:0.75rem;"
-                        onclick="revealBlockedList()">Reveal Blocked List</button>
-                </div>
-                <div id="blockedContentContainer" style="display:none;">
-                    <div class="drawer-list-container" id="blockedListContainer"
-                        style="max-height:180px; overflow-y:auto;">
-                        <p style="font-size:0.75rem; color:#666; text-align:center; padding:10px;">No blocked users.</p>
-                    </div>
-                    <div style="text-align:center; margin-top:8px;">
-                        <button class="drawer-action-btn"
-                            style="background:#222; font-size:0.65rem; border:1px solid #444;"
-                            onclick="hideBlockedList()">Hide List Again</button>
-                    </div>
-                </div>
+                <button id="joinBtn" class="btn primary-btn large-btn">Join Table</button>
             </div>
         </div>
 
-        <div class="chat-split-body">
-            <!-- Tabs Bar for routing DMs and Lounge -->
-            <div class="chat-tabs-bar" id="chatTabsBar">
-                <div class="chat-tab-btn active" id="tab-lounge" onclick="switchChatMode('lounge')">Lounge</div>
-                <!-- Dynamic tabs added here -->
-            </div>
-
-            <div class="chat-main-row">
-                <div class="chat-messages" id="chatBox"></div>
-
-                <!-- Who's Online Panel (Visible only in fullscreen mode) -->
-                <div id="online-users-panel" class="online-users-panel">
-                    <div class="col-title"
-                        style="margin-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:5px;">
-                        <span>🟢 Who's Online</span>
-                    </div>
-                    <div class="online-users-list" id="onlineUsersList"
-                        style="display:flex; flex-direction:column; gap:8px;">
-                        <p style="font-size:0.75rem; color:#666; text-align:center; padding:10px;">No users online.</p>
-                    </div>
+        <!-- Lobby Chat Section -->
+        <div class="glass-card active-rooms-card lobby-chat-card">
+            <h2>Lounge Lobby Chat</h2>
+            <div class="room-chat lobby-chat-wrapper-main">
+                <div id="lobby-chat-messages" class="chat-messages">
+                    <!-- Populated with global messages -->
                 </div>
-
-                <div id="noticeboard-view-panel">
-                    <div class="notice-column-box notice-box-boss">
-                        <div class="notice-column-header"><span style="color:#ff3333">👑 Tella Boss Notices</span></div>
-                        <div class="notice-cards-feed" id="feed-boss"></div>
-                        <div class="notice-input-form-block" id="form-boss">
-                            <div class="notice-row-input">
-                                <input type="text" id="input-boss" placeholder="Write boss directive...">
-                                <button class="notice-inline-btn" onclick="submitNoticeUpdate('boss')">Post</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="notice-column-box notice-box-selectors">
-                        <div class="notice-column-header"><span style="color:#ffdd1a">🎧 Selector Audio Feed</span>
-                        </div>
-                        <div class="notice-cards-feed" id="feed-selectors"></div>
-                        <div class="notice-input-form-block" id="form-selectors">
-                            <div class="notice-row-input">
-                                <input type="text" id="input-selectors" placeholder="Write selector notice...">
-                                <button class="notice-inline-btn"
-                                    onclick="submitNoticeUpdate('selectors')">Post</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="notice-column-box notice-box-fambily">
-                        <div class="notice-column-header"><span style="color:#22e532">💚 Fambily Column</span></div>
-                        <div class="notice-cards-feed" id="feed-fambily"></div>
-                        <div class="notice-input-form-block" id="form-fambily">
-                            <div class="notice-row-input">
-                                <input type="text" id="input-fambily" placeholder="Write group comment...">
-                                <button class="notice-inline-btn" onclick="submitNoticeUpdate('fambily')">Post</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="chat-fs-help-panel">
-                    <div class="col-title">💡 Chat help and emoji codes</div>
-                    <div class="help-cards-wrapper-fs" id="helpCardsContainerFS"
-                        style="display:flex; flex-direction:column; gap:8px;"></div>
-                    <div class="sub-panel-bottom"
-                        style="background:transparent; padding:0; border:none; display:flex; flex-direction:column; gap:8px; margin-top:10px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                            <span style="font-size:0.85rem; color:#22e532; font-weight:bold;">✨ Quick Emojis</span>
-                            <a href="https://tellstream-emojis.pages.dev/" target="_blank" class="emoji-master-link">See All
-                                Codes</a>
-                        </div>
-                        <div class="emoji-grid-list" id="quickEmojiListFS"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="chat-input-area" id="chat-input-panel-container">
-            <div class="left-control-stack">
-                <input type="text" id="usernameInput" placeholder="Nickname" oninput="syncDrawerName()">
-                <button class="send-main-btn" id="sendBtn">Send</button>
-            </div>
-            <div class="lock-toggle-stack">
-                <button class="lock-toggle-btn" id="lockStatusBtn" onclick="toggleSecurityDrawer()"
-                    title="Secure/Verify identity handle">🔒</button>
-                <button class="lock-toggle-btn" id="fambilyDrawerBtn" onclick="toggleFambilyDrawer()"
-                    title="Fambily & Profile Settings"
-                    style="background:rgba(34,229,50,0.1); border:1px solid rgba(34,229,50,0.3); color:#22e532;">💚</button>
-            </div>
-            <textarea id="messageInput" placeholder="Type a message..." maxlength="120"></textarea>
-        </div>
-    </div>
-
-    <div class="flyer-modal-overlay" id="flyerModal" onclick="closeFlyerLightbox()">
-        <div class="modal-content-card" onclick="event.stopPropagation();">
-            <img id="modalTargetImg" src="" alt="Expanded View Asset">
-        </div>
-        <button class="modal-close-btn" onclick="closeFlyerLightbox()">Close (X)</button>
-    </div>
-
-    <!-- Fullscreen Schedule Overlay Modal -->
-    <div class="schedule-modal-overlay" id="schedule-overlay-modal" onclick="closeScheduleGrid()">
-        <div class="schedule-modal-content" onclick="event.stopPropagation();">
-            <div
-                style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 15px; flex-shrink: 0;">
-                <h2
-                    style="color: #22e532; margin: 0; font-size: 1.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
-                    📅 Rest of the Week</h2>
-                <button onclick="closeScheduleGrid()"
-                    style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.1); color: #fff; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s;"
-                    onmouseover="this.style.background='rgba(255,255,255,0.1)'"
-                    onmouseout="this.style.background='rgba(255,255,255,0.06)'">Back to Lounge</button>
-            </div>
-            <div class="schedule-grid-container" id="scheduleGridContainer">
-                <!-- 2x3 Grid populated dynamically by JS -->
-            </div>
-        </div>
-    </div>
-
-    <script src="/src/assets/emojis.js"></script>
-    <!-- User Profile Card Modal -->
-    <div class="profile-card-modal-overlay" id="profileCardModal" onclick="closeProfileCard()"
-        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:100000; background:rgba(0,0,0,0.6); align-items:center; justify-content:center;">
-        <div class="profile-card-card" onclick="event.stopPropagation();"
-            style="background:#18181a; border:1px solid rgba(34,229,50,0.2); width:320px; border-radius:8px; padding:20px; position:relative; box-shadow:0 8px 32px rgba(0,0,0,0.5);">
-            <button onclick="closeProfileCard()"
-                style="position:absolute; top:10px; right:10px; background:none; border:none; color:#888; font-size:1.1rem; cursor:pointer; line-height:1;">×</button>
-            <div style="display:flex; flex-direction:column; align-items:center; gap:10px; text-align:center;">
-                <img id="profileCardAvatar" src=""
-                    style="width:80px; height:80px; border-radius:50%; border:2px solid #22e532; object-fit:cover; background:#222;">
-                <div>
-                    <h3 id="profileCardUsername" style="margin:0; color:#fff; font-size:1.2rem;"></h3>
-                    <span id="profileCardLevel"
-                        style="font-size:0.7rem; padding:2px 6px; border-radius:4px; font-weight:bold; text-transform:uppercase; margin-top:4px; display:inline-block;"></span>
-                </div>
-                <div id="profileCardDetailsContainer"
-                    style="width:100%; border-top:1px solid rgba(255,255,255,0.05); padding-top:10px; margin-top:5px; text-align:left; display:flex; flex-direction:column; gap:6px;">
-                    <div><span style="font-size:0.7rem; color:#666; display:block;">Location</span><span
-                            id="profileCardLocation" style="font-size:0.85rem; color:#ccc;"></span></div>
-                    <div><span style="font-size:0.7rem; color:#666; display:block;">Socials</span><span
-                            id="profileCardSocials" style="font-size:0.85rem; color:#ccc;"></span></div>
-                    <div><span style="font-size:0.7rem; color:#666; display:block;">Bio</span>
-                        <p id="profileCardBio"
-                            style="font-size:0.85rem; color:#ccc; margin:0; white-space:pre-wrap; word-break:break-word;">
-                        </p>
-                    </div>
-                </div>
-                <div id="profileCardActions"
-                    style="width:100%; border-top:1px solid rgba(255,255,255,0.05); padding-top:10px; margin-top:5px; display:flex; gap:6px; justify-content:center;">
-                    <!-- Action buttons dynamically inserted (Add Fambily, Message, Block) -->
+                <div class="chat-input-bar">
+                    <input type="text" id="lobby-chat-input" placeholder="Type message..." maxlength="100">
+                    <button id="send-lobby-chat-btn" class="btn icon-btn">💬</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Fullscreen Game Overlay Container -->
-    <div id="game-overlay-container"
-        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999; background: #0a0a0c;">
-        <iframe id="game-overlay-frame" src=""
-            style="width: 100%; height: 100%; border: none; display: block;"></iframe>
+    <!-- ================= SEATING ROOM SCREEN ================= -->
+    <div id="seating-view" class="view-panel hidden-layout">
+        <header class="lobby-header compact">
+            <button id="leave-room-btn-seating" class="btn text-btn">← Leave Room</button>
+            <h1>Room <span class="accent-text" id="seating-room-code-display">XXXX</span></h1>
+            <div class="room-variant-badge" id="seating-variant-display">Classic Table</div>
+        </header>
+
+        <div class="seating-container">
+            <div class="glass-card seating-layout-card">
+                <h2>Game Players</h2>
+                <p class="seating-hint" id="seating-status-hint">Lobby seating is managed by the game host.</p>
+
+                <div class="seats-grid">
+                    <!-- Seat Red (Host) -->
+                    <div class="seat-card claimed" id="seat-card-red" data-seat="red" style="border-left: 5px solid #ff3333; background: rgba(255, 51, 83, 0.05);">
+                        <div class="seat-header" style="color: #ff3333; font-weight: bold;">RED (Host)</div>
+                        <div class="seat-player-name" id="seat-player-red">Waiting...</div>
+                    </div>
+
+                    <!-- Seat Green -->
+                    <div class="seat-card" id="seat-card-green" data-seat="green" style="border-left: 5px solid #22e532; background: rgba(34, 229, 50, 0.05);">
+                        <div class="seat-header" style="color: #22e532; font-weight: bold;">GREEN</div>
+                        <div class="seat-player-name" id="seat-player-green">Waiting...</div>
+                    </div>
+
+                    <!-- Seat Yellow -->
+                    <div class="seat-card" id="seat-card-yellow" data-seat="yellow" style="border-left: 5px solid #ffdd1a; background: rgba(255, 221, 26, 0.05);">
+                        <div class="seat-header" style="color: #ffdd1a; font-weight: bold;">YELLOW</div>
+                        <div class="seat-player-name" id="seat-player-yellow">Waiting...</div>
+                    </div>
+
+                    <!-- Seat Blue -->
+                    <div class="seat-card" id="seat-card-blue" data-seat="blue" style="border-left: 5px solid #0088ff; background: rgba(0, 136, 255, 0.05);">
+                        <div class="seat-header" style="color: #0088ff; font-weight: bold;">BLUE</div>
+                        <div class="seat-player-name" id="seat-player-blue">Waiting...</div>
+                    </div>
+                </div>
+
+                <div class="spectate-actions">
+                    <button id="start-game-btn" class="btn primary-btn large-btn" disabled>Start Game</button>
+                </div>
+            </div>
+
+            <!-- Lobby Chat/Roster -->
+            <div class="glass-card lobby-roster-card">
+                <h2>Room Roster</h2>
+                <p class="roster-instructions accent-text" id="roster-helper-text" style="display: none;">click name to add or remove to your game</p>
+                <ul id="roster-list" class="roster-list">
+                    <!-- Dynamically filled -->
+                </ul>
+
+                <div class="room-chat">
+                    <div id="room-chat-messages" class="chat-messages">
+                        <!-- Populated with global messages -->
+                    </div>
+                    <div class="chat-input-bar">
+                        <input type="text" id="room-chat-input" placeholder="Type message..." maxlength="100">
+                        <button id="send-chat-btn" class="btn icon-btn">💬</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <script type="module" src="main.js"></script>
+    <!-- ================= GAME TABLE SCREEN ================= -->
+    <div id="gameScreen" class="view-panel hidden-layout" style="width: 100%; height: 100%; position: relative; padding: 0 !important; overflow: hidden !important;">
+        <!-- Absolute Header Overlay for Controls -->
+        <header class="table-top-bar-overlay" style="position: absolute; top: 0; left: 0; width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; box-sizing: border-box; background: rgba(10, 10, 12, 0.85); backdrop-filter: blur(10px); z-index: 1000; border-bottom: 1px solid rgba(255,255,255,0.06); font-family: 'Space Grotesk', sans-serif;">
+            <div class="bar-left" style="display: flex; align-items: center; gap: 15px;">
+                <button id="exitLudoBtn" class="btn secondary-btn" style="padding: 4px 8px; font-size: 0.75rem; background: rgba(255, 51, 83, 0.15); border-color: rgba(255, 51, 83, 0.3); color: #ff3333; font-weight: bold;">← LEAVE</button>
+                <span class="room-code-tag" style="font-size: 0.85rem; font-weight: bold; background: rgba(255,255,255,0.06); padding: 4px 10px; border-radius: 6px;">ROOM: <strong id="roomDisplay" class="accent-text" style="font-size: 0.95rem;">----</strong></span>
+            </div>
 
-    <script>
-        const observer = new MutationObserver(() => {
-            const bodyText = document.body.innerText;
-            const match = bodyText.match(/Welcome back ([a-zA-Z0-9_\s-]+)/i);
-            if (match) {
-                const activeUser = match[1].split(',')[0].trim();
-                window.localStorage.setItem('tellstream_active_user', activeUser);
-                observer.disconnect(); // Stop checking once resolved
+            <div class="bar-right" style="display: flex; align-items: center; gap: 15px;">
+                <!-- Remote Radio Controls -->
+                <div class="remote-music-controls" style="display: inline-flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 6px 16px; border-radius: 8px;">
+                    <span style="font-size: 0.8rem; font-weight: bold; color: #ffdd1a; letter-spacing: 0.5px; font-family: sans-serif;">📻 RADIO:</span>
+                    <button id="remote-play-pause-btn" style="background: transparent; border: none; color: #fff; font-size: 1rem; cursor: pointer; padding: 4px 8px; outline: none; transition: transform 0.1s; display: inline-flex; align-items: center;">⏸️</button>
+                    <input type="range" id="remote-volume-slider" min="0" max="1" step="0.05" value="0.5" style="width: 90px; height: 6px; accent-color: #22e532; cursor: pointer; vertical-align: middle;">
+                </div>
+                <!-- Local options trigger dropdown content -->
+                <div style="position: relative; display: inline-block;">
+                    <button id="optionsBtn" class="btn secondary-btn" style="padding: 6px 12px; font-size: 0.75rem; border-color: rgba(255,255,255,0.15);">⚙️ Options</button>
+                    <div class="dropdownContent" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 5px; background: rgba(20,20,25,0.95); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px; min-width: 140px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); z-index: 1010; flex-direction: column; gap: 8px;">
+                        <label style="font-size: 0.78rem; display: flex; align-items: center; gap: 6px; cursor: pointer; color: #aaa;"><input type="checkbox" id="localSoundToggle" checked> Sound</label>
+                        <label style="font-size: 0.78rem; display: flex; flex-direction: column; gap: 4px; color: #aaa;">
+                            Theme
+                            <select id="localThemeSelect" style="background: #111; color: white; border: 1px solid #333; padding: 2px; border-radius: 4px; font-size: 0.75rem;">
+                                <option value="classic">Classic Table</option>
+                                <option value="futuristic">Futuristic Board</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Ludo Board Wrapper -->
+        <div id="boardWrapper">
+            <div id="board" class="theme-classic">
+                <div class="player-details green" id="details-green">GREEN: Connecting...</div>
+                <div class="player-details yellow" id="details-yellow">
+                    <span>YELLOW: Connecting...</span>
+                </div>
+                <div class="player-details red" id="details-red">RED: Connecting...</div>
+                <div class="player-details blue" id="details-blue">BLUE: Connecting...</div>
+                
+                <div id="yard-controls-container" style="display: contents;"></div>
+            </div>
+        </div>
+
+        <!-- Transparent Chat Overlay on right side -->
+        <aside class="table-sidebar transparent-chat">
+            <div class="sidebar-section-title">LOUNGE CHAT</div>
+            <div class="room-chat table-chat-wrapper">
+                <div id="table-chat-messages" class="chat-messages">
+                    <!-- Populated with global messages -->
+                </div>
+                <div class="chat-input-bar">
+                    <input type="text" id="table-chat-input" placeholder="Type message..." maxlength="100">
+                    <button id="send-table-chat-btn" class="btn icon-btn">💬</button>
+                </div>
+            </div>
+
+            <div class="sidebar-section-title log-section-header">TABLE LOGS</div>
+            <div class="sidebar-logs-wrapper">
+                <div id="table-log-entries" class="log-entries">
+                    <div>Game created. Waiting to start.</div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+</div>
+
+<audio id="localRadioPlayer" src="https://a3.asurahosting.com/listen/tellstream/radio.mp3" preload="none"></audio>
+<script type="module" src="/ludo/game.js"></script>
+<script>
+    const radioChan = new BroadcastChannel('tellstream_radio_control');
+    const playPauseBtn = document.getElementById('remote-play-pause-btn');
+    const volSlider = document.getElementById('remote-volume-slider');
+    const localPlayer = document.getElementById('localRadioPlayer');
+    
+    let isRemote = (window.self !== window.top); // True if inside iframe
+    let currentRadioState = 'paused';
+
+    // Check if there is an active homepage player in another tab
+    if (!isRemote) {
+        radioChan.postMessage({ action: 'ping' });
+        setTimeout(() => {
+            if (currentRadioState === 'paused' && localPlayer.paused) {
+                console.log("No homepage player detected. Switched to local player.");
             }
-        });
-        observer.observe(document.body, { childList: true, subtree: true });
-    </script>
-</body>
+        }, 600);
+    }
 
+    if (playPauseBtn && volSlider) {
+        playPauseBtn.onclick = () => {
+            if (currentRadioState === 'playing') {
+                if (isRemote) {
+                    radioChan.postMessage({ action: 'pause' });
+                } else {
+                    localPlayer.pause();
+                }
+                playPauseBtn.innerText = '▶️';
+                currentRadioState = 'paused';
+            } else {
+                if (isRemote) {
+                    radioChan.postMessage({ action: 'play' });
+                } else {
+                    localPlayer.play().catch(e => console.log("Local play blocked:", e));
+                }
+                playPauseBtn.innerText = '⏸️';
+                currentRadioState = 'playing';
+            }
+        };
+        
+        volSlider.oninput = () => {
+            const vol = parseFloat(volSlider.value);
+            if (isRemote) {
+                radioChan.postMessage({ action: 'volume', value: vol });
+            } else {
+                localPlayer.volume = vol;
+            }
+        };
+    }
+
+    // Listen for channel messages
+    radioChan.onmessage = (event) => {
+        if (event.data.action === 'pong') {
+            isRemote = true; // Homepage confirmed open in another tab
+        }
+        if (event.data.state) {
+            currentRadioState = event.data.state;
+            playPauseBtn.innerText = currentRadioState === 'playing' ? '⏸️' : '▶️';
+        }
+        if (typeof event.data.volume !== 'undefined') {
+            volSlider.value = event.data.volume;
+            if (!isRemote) localPlayer.volume = event.data.volume;
+        }
+    };
+    
+    // Parent window navigation bridge
+    function exitGameToLounge() {
+        window.localStorage.removeItem('tellstream_active_game');
+        if (window.parent && typeof window.parent.closeFullscreenGame === 'function') {
+            window.parent.closeFullscreenGame();
+        } else {
+            window.location.href = "/index.html";
+        }
+    }
+</script>
+</body>
 </html>
