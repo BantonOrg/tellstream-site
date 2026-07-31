@@ -103,11 +103,13 @@ function renderStreamHeader(showName) {
     if (!display) {
         display = document.createElement('p');
         display.id = 'stream-name-display';
+        display.style.fontFamily = "'Orbitron', sans-serif";
         display.style.color = '#ffffff';
-        display.style.fontSize = '1.1rem';
+        display.style.fontSize = '1.25rem';
         display.style.fontWeight = '900'; // Changed from 'bold' to ultra-heavy '900'
-        display.style.webkitTextStroke = '1.8px #000000'; // Thickened black outline edge definition
-        display.style.textShadow = '3px 3px 6px rgba(0, 0, 0, 0.95), -2px -2px 4px rgba(0, 0, 0, 0.8)'; display.style.textTransform = 'uppercase';
+        display.style.webkitTextStroke = '1.2px #000000'; // Thickened black outline edge definition
+        display.style.textShadow = '0 2px 4px #000000, 0 4px 10px rgba(0, 0, 0, 0.95), 0 0 15px rgba(0, 0, 0, 0.9)';
+        display.style.textTransform = 'uppercase';
         display.style.lineHeight = '1.2';
         display.style.maxWidth = '95%';
         display.style.textAlign = 'center';
