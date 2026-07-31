@@ -56,7 +56,20 @@ body {
 }
 
 .cell-middle {
-    background-image: url('header-bg2.jpg');
+    background-image: url('header-bgblnk.jpg');
+    position: relative;
+    justify-content: center;
+}
+
+#headerLogoAnim {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+    pointer-events: none;
 }
 
 .cell-right {
@@ -813,11 +826,13 @@ body.chat-is-fullscreen .chat-fs-help-panel {
     }
     /* ✅ Fixed: Removed display:none and added mobile background adjustments */
     .cell-middle {
-        background-image: url('header-bg2.jpg') !important; /* or 'header-bg2m.jpg' if you have a mobile version */
+        background-image: url('header-bgblnk.jpg') !important;
         background-position: center center !important;
-        background-size: 100% 100% !important;
+        background-size: cover !important;
+        justify-content: center !important;
         width: 100% !important;
         height: 140px !important;
+        position: relative !important;
     }
     .cell-right {
         background-image: url('header-bg3m.jpg') !important;

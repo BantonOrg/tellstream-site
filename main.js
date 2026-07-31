@@ -2818,6 +2818,67 @@ window.switchChatMode = switchChatMode;
 window.closeChatTab = closeChatTab;
 window.togglePasskeyVisibility = togglePasskeyVisibility;
 
+function initLogoAnimation() {
+    const minFrame = 25;
+    const maxFrame = 74;
+    const pathPrefix = "src/assets/logo_anim/1_0100";
+    const pathSuffix = ".png";
+    const imgElement = document.getElementById("headerLogoAnim");
+    if (!imgElement) return;
+
+    // Helper to format frame path
+    function getFramePath(frameNum) {
+        return `${pathPrefix}${frameNum}${pathSuffix}`;
+    }
+
+    // Pick a random starting frame between 40 and 51
+    let currentFrame = Math.floor(Math.random() * (51 - 40 + 1)) + 40;
+    imgElement.src = getFramePath(currentFrame);
+
+    let animationInterval = null;
+
+    function runAnimationSequence() {
+        // Pick a random target stop frame between 40 and 51
+        const targetFrame = Math.floor(Math.random() * (51 - 40 + 1)) + 40;
+        let rotationsCount = 0;
+        
+        // Start animation loop at 30 fps (33.3ms per frame)
+        animationInterval = setInterval(() => {
+            currentFrame++;
+            if (currentFrame > maxFrame) {
+                currentFrame = minFrame;
+                rotationsCount++;
+            }
+            imgElement.src = getFramePath(currentFrame);
+
+            // Stop when we reach the target frame AND have completed 3 full rotations
+            if (rotationsCount === 3 && currentFrame === targetFrame) {
+                clearInterval(animationInterval);
+                // Pause for 3 seconds, then run the sequence again
+                setTimeout(runAnimationSequence, 3000);
+            }
+        }, 33.3);
+    }
+
+    // Preload all frames to memory using Promises, then schedule the first run
+    const loadPromises = [];
+    for (let i = minFrame; i <= maxFrame; i++) {
+        const p = new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve();
+            img.onerror = () => resolve();
+            img.src = getFramePath(i);
+        });
+        loadPromises.push(p);
+    }
+
+    Promise.all(loadPromises).then(() => {
+        console.log("All logo animation frames preloaded successfully.");
+        // Initial pause of 3 seconds on the starting frame starts *after* preloading is complete
+        setTimeout(runAnimationSequence, 3000);
+    });
+}
+
 (async function initSystem() {
     // 1. Core Lounge Operations (Cannot be affected by outside scripts)
     try { await syncProfilesMap(); } catch (e) { }
@@ -2826,6 +2887,7 @@ window.togglePasskeyVisibility = togglePasskeyVisibility;
     try { await syncBannedUsersMap(); } catch (e) { }
     try { await loadMessages(); } catch (e) { }
     try { await loadInitialStreamStatus(); } catch (e) { }
+    try { initLogoAnimation(); } catch (e) { }
 
     renderHelpContent(false);
     try { await renderActiveFlyers(); } catch (e) { }
