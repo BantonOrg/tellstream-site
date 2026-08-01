@@ -1550,6 +1550,12 @@ async function fetchAndRenderWeeklyTimetable() {
         };
 
         masterData.forEach(item => {
+            if (!item.day_of_week || dayOrder[item.day_of_week.toLowerCase()] === undefined) {
+                console.warn("Skipping invalid schedule day:", item.day_of_week);
+                return;
+            }
+            if (item.dj_name === "tellstream") return;
+
             let currentDJ = item.dj_name;
             let noteLabel = "";
 
