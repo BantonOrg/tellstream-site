@@ -49,36 +49,37 @@ let myProfile = null;
 let activePrivateSub = null;
 
 const helpInstructions = [
-    { title: "Setting Nickname", text: "Fill in the Nickname block before typing to claim your handle in the Lounge panel." },
-    { title: "Sending Text Lines", text: "Type your query inside the input field box and tap Send or hit your keyboard Enter button." },
-    { title: "Firing Emojis & Sounds", text: "Tap any active shorthand key code block inside the selection layout panel below to append it to your message. Click [See All Codes] for more." },
-    { title: "⚠️ Chat Moderation Rules", text: "Profanity and abusive language are automatically blocked. Swearing triggers an automated strike track system: 3 strikes results in a 24-hour temporary lockout. A repeat offense after lockout leads to an instant, permanent handle ban. Genuine apologies can restore one lost strike." }
+    { title: "Choose a Temporary Chat Name", text: "Before you start chatting, enter your name in the \"Chat Name\" box at the bottom right of the sidebar. This sets your temporary identity for the duration of your chat session. Close or reload the page, and the name can be claimed by anyone else unless you lock it permanently." },
+    { title: "Securing Your Chat Name (Locking Names)", text: "Click the padlock button or chat name block to open the profile drawer. Enter a secret Passkey, a key reminder hint, and a recovery Email. Once locked, no one else can chat using your chat name without entering your passkey." },
+    { title: "Chatting", text: "Simply type your message in the chat input box and press \"Enter\" on your keyboard (or click the \"Send\" button)." },
+    { title: "Emojis & Sounds", text: "Click any emoji box underneath the chat to quickly add it to your message. Click the [See All Codes] link to open the full library of emojis." },
+    { title: "Swearing & Strike Rules", text: "Swearing and bad language are automatically blocked and tracked:\n- 3 Strikes: You will be locked out of the chat for 24 hours.\n- 4+ Strikes: You will be permanently banned.\n- Apologizing: If you have strikes, type the word \"sorry\" in the chat to remove 1 strike (limited to once per day)." },
+    { title: "Managing Profiles, Fambily & Blocks", text: "Inside your profile drawer, use the tabs to:\n- Profile: Upload a profile picture (max 500KB), add your location/socials, and write a bio. You can set visibility to Public/Fambily-Only, or hide your status (invisible mode).\n- Fambily & Requests: Add friends to your Fambily list to chat privately, and manage incoming/outgoing requests.\n- Blocked: Block or unblock users if they are bothering you." }
 ];
 
 const noticeboardHelpInstructions = [
-    { title: "Noticeboard Rules", text: "Stay respectful. Unauthorized, abusive, or hostile comments will be flagged and removed instantly by Station Admins." },
-    { title: "Authority Levels", text: "The Boss panel is restricted to Station Admins. Selectors manage the central schedule log." },
-    { title: "Adding Updates", text: "Once verified via your secure local passkey profile drawer, choose a column target form to submit notifications directly." },
-    { title: "⚠️ Noticeboard Enforcement", text: "The dynamic global blocklist active in the Lounge chat applies directly to noticeboard columns. Posting restricted keywords increments your profile strikes and can lead to an automated 24-hour column ban or permanent lifetime removal." }
+    { title: "Noticeboard Rules", text: "Keep all posts friendly, helpful, and respectful. Station Admins will immediately delete any abusive or hostile noticeboard posts." },
+    { title: "Posting to the Noticeboard", text: "Open your profile drawer, enter your secret passkey to verify your identity, and select a column (like News or Fambily) to submit your updates." },
+    { title: "Noticeboard Bans", text: "Posting swearing or blocked words on the noticeboard will increase your strikes, leading to temporary or permanent bans, just like in the chat." }
 ];
 
 const djHelpInstructions = [
-    { title: "⚠️ Notice", text: "If you are unsure how to use these controls, ask management for guidance before typing them. It is easy once you understand, but you need to know what you are doing so it stays simple for everyone." },
-    { title: "🎛️ /show live", text: "Example: /show live \nWhat it does: Shows that YOU are now live on air." },
-    { title: "🔄 /show tellstream", text: "Example: /show tellstream \nWhat it does: Shows Tellstream Autopilot as Live again. Only do this if you are last for the day." },
-    { title: "🗓️ /schedule perm [Day] [Start Time] [End Time] [Time Zone]", text: "Example: /schedule perm Friday 2000 2200 BST \nWhat it does: Locks weekly show detail in permanently." },
-    { title: "🚨 /schedule temp [ddmmyy] [Start Time] [End Time] [Time Zone]", text: "Example: /schedule temp 100726 2000 2200 BST \nWhat it does: Adds a one-off temporary change for a specific date." },
-    { title: "❌ /schedule cancel [ddmmyy] [Start Time]", text: "Example: /schedule cancel 100726 2000 \nWhat it does: Cancels a show already added (perm or temp)." },
-    { title: "⚔️ Live Filter Management", text: "Example: /add [word], /del [word], /listwords \nWhat it does: Manage live chat filter words directly in the console." }
+    { title: "⚠️ Important Advice", text: "If you are not sure how to use these commands, please ask management or another admin for help first. It is very simple once you know how, but typing the wrong command can mess up the schedule." },
+    { title: "🎙️ Going On-Air (Live)", text: "Type: /show live\nWhat it does: Updates the banner to show your name and logo live on air." },
+    { title: "🔄 Going Off-Air (Autopilot)", text: "Type: /show tellstream\nWhat it does: Resets the stream banner to autopilot when you finish your broadcast. Only type this if you are the last presenter of the day." },
+    { title: "🚨 One-Off / Temporary Show", text: "Type: /schedule temp [DDMMYY] [24-Hour Start] [24-Hour End] [TimeZone]\nExample: /schedule temp 100726 2000 2200 BST\nWhat it does: Adds a one-time show slot for a specific date." },
+    { title: "⚔️ Word Filter Moderation", text: "Type: /add [word] to block a word.\nType: /del [word] to unblock a word.\nType: /listwords to see currently blocked words." }
 ];
 
 const adminHelpInstructions = [
-    { title: "👑 Station Admin Rules (Level 2)", text: "Station Admins (Level 2) have full administrative control over the chat system, including managing presenter assets, noticeboards, and overriding user bans." },
-    { title: "🖼️ Presenter Cloud Assets", text: "Example: /upload [Name] & /delete [Name]\nWhat it does: Uploads a custom presenter transparent PNG logo, or deletes an existing logo from cloud storage. Restricted to Level 2." },
-    { title: "🔥 Event Flyer Cloud Assets", text: "Example: /uploadflyer [DDMMYY_Name] & /deleteflyer [DDMMYY_Name]\nWhat it does: Uploads an event flyer image or deletes one from cloud storage. Filename MUST start with 6 digits (DDMMYY). Restricted to Level 2." },
-    { title: "👑 Promote / Demote Users", text: "Example: /promote [username] [1 or 2] & /demote [username] [0 or 1]\nWhat it does: Promotes a registered user to Level 1 (DJ Selector) or Level 2 (Station Admin), or demotes a user to Level 1 or Level 0. Restricted to Level 2." },
-    { title: "⚔️ Global filter management", text: "Example: /add [word], /del [word], /listwords\nWhat it does: Add word to filter list, delete word from filter list, or print the active filter words list." },
-    { title: "🚫 Chat Lockout & Ban Overrides", text: "Example: /unban [username]\nWhat it does: Swearing automatically tracks strikes. Strike 3 triggers a 24h lockout, and Strike 4+ triggers a permanent ban. Users can auto-restore 1 strike by typing 'sorry' (once). Use /unban to reset all user strikes and restore chat access." }
+    { title: "👑 Station Admin Rules (Level 2)", text: "Station Admins (Level 2) have full control over the website. They can upload logos, manage event flyers, promote users, edit the filter, and unban players." },
+    { title: "🗓️ Permanent Timetable Slot", text: "Type: /schedule perm [Day] [24-Hour Start] [24-Hour End] [TimeZone]\nExample: /schedule perm Friday 2000 2200 BST\nWhat it does: Sets a repeating weekly show slot in the schedule." },
+    { title: "❌ Cancelling a Scheduled Show", text: "Type: /schedule cancel [DDMMYY] [24-Hour Start]\nExample: /schedule cancel 100726 2000\nWhat it does: Removes a permanent or temporary show from the schedule." },
+    { title: "🖼️ Presenter Logo Management", text: "Type: /upload [Presenter_Name] - Opens a file picker to upload a transparent PNG logo.\nType: /delete [Presenter_Name] - Removes a presenter's logo from storage." },
+    { title: "🔥 Event Flyer Management", text: "Type: /uploadflyer [DDMMYY_Name] - Opens a file picker to upload a flyer image. Note: Filename MUST start with the 6-digit date (DDMMYY).\nType: /deleteflyer [DDMMYY_Name] - Removes a flyer image from storage." },
+    { title: "👑 Promoting & Demoting Users", text: "Type: /promote [username] [Level] - Upgrades a user to Level 1 (DJ) or Level 2 (Admin).\nType: /demote [username] [Level] - Downgrades a user to Level 1 or Level 0 (User)." },
+    { title: "⚔️ Blocklist & Profanity Management", text: "Type: /add [word] - Adds a bad word to the blocked list.\nType: /del [word] - Removes a word from the blocked list.\nType: /listwords - Lists all currently blocked words." },
+    { title: "🚫 Unbanning Users", text: "Type: /unban [username]\nWhat it does: Clears all strikes and restores chat/noticeboard access instantly for locked or banned users." }
 ];
 
 // CELL-LEFT ISOLATED ENGINE (DYNAMIC BOUNDS & AUTOMATED MODE SWITCH)
@@ -1457,13 +1458,20 @@ async function processScheduleConsoleInjections(text, djUser) {
     const passkey = localStorage.getItem('tellstream_key_' + djUser) || "";
 
     if (action === 'perm') {
+        const profile = profilesCache[djUser];
+        const userPowerLevel = parseInt(profile?.power_level || 0);
+        if (userPowerLevel < 2) {
+            alert("Permission denied. Only Station Admins (Level 2) can modify permanent timetable slots.");
+            return;
+        }
         const dayName = args[2];
         const startTime = args[3];
         const endTime = args[4];
         const timeZone = args[5];
+        const targetDJ = args[6] || djUser;
 
         if (!dayName || !startTime || !endTime || !timeZone) {
-            alert("Format missing. Use: /schedule perm [Day] [Start Time] [End Time] [Time Zone]");
+            alert("Format missing. Use: /schedule perm [Day] [Start Time] [End Time] [Time Zone] [optional: Presenter_Name]");
             return;
         }
 
@@ -1474,7 +1482,7 @@ async function processScheduleConsoleInjections(text, djUser) {
             p_start_time: startTime,
             p_end_time: endTime,
             p_time_zone: timeZone.toUpperCase(),
-            p_dj_name: djUser
+            p_dj_name: targetDJ
         });
 
         if (error) console.error("Database master schedule record failure:", error.message);
@@ -1484,9 +1492,10 @@ async function processScheduleConsoleInjections(text, djUser) {
         const startTime = args[3];
         const endTime = args[4];
         const timeZone = args[5];
+        const targetDJ = args[6] || djUser;
 
         if (!dateBlock || !startTime || !endTime || !timeZone || dateBlock.length !== 6) {
-            alert("Format missing. Use a strict 6-digit date: /schedule temp [ddmmyy] [Start Time] [End Time] [Time Zone]");
+            alert("Format missing. Use: /schedule temp [ddmmyy] [Start Time] [End Time] [Time Zone] [optional: Presenter_Name]");
             return;
         }
 
@@ -1497,13 +1506,19 @@ async function processScheduleConsoleInjections(text, djUser) {
             p_start_time: startTime,
             p_end_time: endTime,
             p_time_zone: timeZone.toUpperCase(),
-            p_dj_name: djUser,
+            p_dj_name: targetDJ,
             p_is_cancelled: false
         });
 
         if (error) console.error("Database temporary override record failure:", error.message);
     }
     else if (action === 'cancel') {
+        const profile = profilesCache[djUser];
+        const userPowerLevel = parseInt(profile?.power_level || 0);
+        if (userPowerLevel < 2) {
+            alert("Permission denied. Only Station Admins (Level 2) can cancel scheduled shows.");
+            return;
+        }
         const dateBlock = args[2];
         const startTime = args[3];
 
