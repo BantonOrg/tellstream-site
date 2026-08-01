@@ -89,7 +89,9 @@ body {
     user-select: none;
     text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.95);
     text-align: center;
-    align-self: center;
+    width: 100%;
+    max-width: 320px;
+    box-sizing: border-box;
 }
 
 .header-cell .tagline-wrapper {

@@ -2934,7 +2934,7 @@ function updateWebVersionFooter() {
     const dd = String(now.getDate()).padStart(2, '0');
     const hh = String(now.getHours()).padStart(2, '0');
     const min = String(now.getMinutes()).padStart(2, '0');
-    el.textContent = `(c) 2026 www.tellstream.org WebVer 1.0951.${dd}${mm}${yy}.${hh}${min}`;
+    el.textContent = `© 2026 www.tellstream.org WebVer 1.0951.${dd}${mm}${yy}.${hh}${min}`;
 }
 
 (async function initSystem() {
