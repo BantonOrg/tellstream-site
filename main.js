@@ -2837,32 +2837,75 @@ function initLogoAnimation() {
     let currentFrame = Math.floor(Math.random() * (51 - 40 + 1)) + 40;
     imgElement.src = getFramePath(currentFrame);
 
-    let animationInterval = null;
+    // Keep references in a persistent array to prevent garbage collection of decoded images
+    const preloadedImages = [];
+    
+    // Track animation references to clean up timers/intervals
+    let animationFrameId = null;
+    let timeoutId = null;
 
     function runAnimationSequence() {
         // Pick a random target stop frame between 40 and 51
         const targetFrame = Math.floor(Math.random() * (51 - 40 + 1)) + 40;
-        let rotationsCount = 0;
         
-        // Start animation loop at 30 fps (33.3ms per frame)
-        animationInterval = setInterval(() => {
-            currentFrame++;
-            if (currentFrame > maxFrame) {
-                currentFrame = minFrame;
-                rotationsCount++;
+        // Pre-calculate the exact number of frames to play
+        // We run 3 full rotations (3 * 50 frames) plus the offset frames to targetFrame
+        const totalFramesPerRotation = (maxFrame - minFrame + 1); // 50 frames
+        
+        let stepsToTarget = 0;
+        let tempFrame = currentFrame;
+        while (tempFrame !== targetFrame || stepsToTarget < (3 * totalFramesPerRotation)) {
+            tempFrame++;
+            if (tempFrame > maxFrame) {
+                tempFrame = minFrame;
             }
-            imgElement.src = getFramePath(currentFrame);
+            stepsToTarget++;
+        }
 
-            // Stop when we reach the target frame AND have completed 3 full rotations
-            if (rotationsCount === 3 && currentFrame === targetFrame) {
-                clearInterval(animationInterval);
-                // Pause for 3 seconds, then run the sequence again
-                setTimeout(runAnimationSequence, 3000);
+        const totalSteps = stepsToTarget;
+        let stepsPlayed = 0;
+        let lastFrameTime = performance.now();
+        const frameInterval = 1000 / 30; // ~33.33ms per frame (30 FPS)
+
+        function tick(now) {
+            const elapsed = now - lastFrameTime;
+
+            if (elapsed >= frameInterval) {
+                // Adjust lastFrameTime for potential drift
+                lastFrameTime = now - (elapsed % frameInterval);
+
+                currentFrame++;
+                if (currentFrame > maxFrame) {
+                    currentFrame = minFrame;
+                }
+                
+                // Swap image source (uses the cached/referenced image if available)
+                const cachedImg = preloadedImages[currentFrame - minFrame];
+                imgElement.src = cachedImg ? cachedImg.src : getFramePath(currentFrame);
+                stepsPlayed++;
+
+                if (stepsPlayed >= totalSteps) {
+                    // Stop animation and schedule next run
+                    if (animationFrameId) {
+                        cancelAnimationFrame(animationFrameId);
+                        animationFrameId = null;
+                    }
+                    timeoutId = setTimeout(runAnimationSequence, 3000);
+                    return;
+                }
             }
-        }, 33.3);
+
+            animationFrameId = requestAnimationFrame(tick);
+        }
+
+        // Cancel any existing animation frame just in case
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+        }
+        animationFrameId = requestAnimationFrame(tick);
     }
 
-    // Preload all frames to memory using Promises, then schedule the first run
+    // Preload all frames to memory using Promises, keeping references
     const loadPromises = [];
     for (let i = minFrame; i <= maxFrame; i++) {
         const p = new Promise((resolve) => {
@@ -2870,6 +2913,7 @@ function initLogoAnimation() {
             img.onload = () => resolve();
             img.onerror = () => resolve();
             img.src = getFramePath(i);
+            preloadedImages[i - minFrame] = img; // Hold reference permanently in correct index order
         });
         loadPromises.push(p);
     }
@@ -2877,7 +2921,7 @@ function initLogoAnimation() {
     Promise.all(loadPromises).then(() => {
         console.log("All logo animation frames preloaded successfully.");
         // Initial pause of 3 seconds on the starting frame starts *after* preloading is complete
-        setTimeout(runAnimationSequence, 3000);
+        timeoutId = setTimeout(runAnimationSequence, 3000);
     });
 }
 
