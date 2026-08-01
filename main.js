@@ -30,7 +30,7 @@ const drawerSubmitBtn = document.getElementById('drawerSubmitBtn');
 const reminderHintDisplay = document.getElementById('reminderHintDisplay');
 const lockStatusBtn = document.getElementById('lockStatusBtn');
 
-const imgBaseUrl = "https://tellstream-emojis.pages.dev/";
+const imgBaseUrl = "src/assets/smilies/";
 
 let profilesCache = {};
 let bannedWordsCache = [];
