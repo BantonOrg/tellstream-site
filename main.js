@@ -615,8 +615,7 @@ function toggleNoticeBoardView() {
 
     if (!isNoticeBoardActive) {
         document.body.classList.add('chat-is-fullscreen');
-        streamChat.style.display = 'none';
-        inputContainer.style.display = 'none';
+        document.body.classList.add('noticeboard-active');
         securityDrawer.classList.remove('open');
         noticePanel.style.display = 'flex';
         if (mainTitle) {
@@ -628,15 +627,14 @@ function toggleNoticeBoardView() {
         }
         toggleBtn.innerText = "❌ Exit Noticeboard";
         isNoticeBoardActive = true;
-        if (emojiSectionFS) emojiSectionFS.style.display = 'none';
+        if (emojiSectionFS) emojiSectionFS.style.display = 'block';
         renderHelpContent(true);
         evaluateNoticeBoardForms();
         fetchNoticeBoardRecords();
     } else {
         document.body.classList.remove('chat-is-fullscreen');
+        document.body.classList.remove('noticeboard-active');
         noticePanel.style.display = 'none';
-        streamChat.style.display = 'flex';
-        inputContainer.style.display = 'flex';
         if (mainTitle) {
             mainTitle.style.display = 'none';
         }

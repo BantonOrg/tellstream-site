@@ -287,20 +287,6 @@
             </div>
 
             <div class="chat-main-row">
-                <div class="chat-messages" id="chatBox"></div>
-
-                <!-- Who's Online Panel (Visible only in fullscreen mode) -->
-                <div id="online-users-panel" class="online-users-panel">
-                    <div class="col-title"
-                        style="margin-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:5px;">
-                        <span>🟢 Who's Online</span>
-                    </div>
-                    <div class="online-users-list" id="onlineUsersList"
-                        style="display:flex; flex-direction:column; gap:8px;">
-                        <p style="font-size:0.75rem; color:#666; text-align:center; padding:10px;">No users online.</p>
-                    </div>
-                </div>
-
                 <div id="noticeboard-view-panel">
                     <div class="notice-column-box notice-box-boss">
                         <div class="notice-column-header"><span style="color:#ff3333">👑 Tella Boss Notices</span></div>
@@ -350,23 +336,38 @@
                         </div>
                         <div class="emoji-grid-list" id="quickEmojiListFS"></div>
                     </div>
+
+                    <!-- Who's Online Panel (Moved here under help column) -->
+                    <div id="online-users-panel" class="online-users-panel">
+                        <div class="col-title"
+                            style="margin-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:5px; margin-top:15px;">
+                            <span>🟢 Who's Online</span>
+                        </div>
+                        <div class="online-users-list" id="onlineUsersList"
+                            style="display:flex; flex-direction:column; gap:8px;">
+                            <p style="font-size:0.75rem; color:#666; text-align:center; padding:10px;">No users online.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-feed-container" id="chatFeedContainer">
+                    <div class="chat-messages" id="chatBox"></div>
+                    <div class="chat-input-area" id="chat-input-panel-container">
+                        <div class="left-control-stack">
+                            <input type="text" id="usernameInput" placeholder="Nickname" oninput="syncDrawerName()">
+                            <button class="send-main-btn" id="sendBtn">Send</button>
+                        </div>
+                        <div class="lock-toggle-stack">
+                            <button class="lock-toggle-btn" id="lockStatusBtn" onclick="toggleSecurityDrawer()"
+                                title="Secure/Verify identity handle">🔒</button>
+                            <button class="lock-toggle-btn" id="fambilyDrawerBtn" onclick="toggleFambilyDrawer()"
+                                title="Fambily & Profile Settings"
+                                style="background:rgba(34,229,50,0.1); border:1px solid rgba(34,229,50,0.3); color:#22e532;">💚</button>
+                        </div>
+                        <textarea id="messageInput" placeholder="Type a message..." maxlength="333"></textarea>
+                    </div>
                 </div>
             </div>
-        </div>
-
-        <div class="chat-input-area" id="chat-input-panel-container">
-            <div class="left-control-stack">
-                <input type="text" id="usernameInput" placeholder="Nickname" oninput="syncDrawerName()">
-                <button class="send-main-btn" id="sendBtn">Send</button>
-            </div>
-            <div class="lock-toggle-stack">
-                <button class="lock-toggle-btn" id="lockStatusBtn" onclick="toggleSecurityDrawer()"
-                    title="Secure/Verify identity handle">🔒</button>
-                <button class="lock-toggle-btn" id="fambilyDrawerBtn" onclick="toggleFambilyDrawer()"
-                    title="Fambily & Profile Settings"
-                    style="background:rgba(34,229,50,0.1); border:1px solid rgba(34,229,50,0.3); color:#22e532;">💚</button>
-            </div>
-            <textarea id="messageInput" placeholder="Type a message..." maxlength="333"></textarea>
         </div>
     </div>
 

@@ -360,6 +360,15 @@ body {
     width: 100%;
 }
 
+.chat-feed-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    height: 100%;
+    position: relative;
+}
+
 .chat-messages {
     flex: 1;
     padding: 20px;
@@ -689,7 +698,6 @@ body.chat-is-fullscreen #noticeboard-view-panel {
     flex: 1 !important;
     width: 100% !important;
     height: 100% !important;
-    padding-right: 20px !important; 
 }
 body.chat-is-fullscreen #noticeboard-view-panel[style*="display: flex"] {
     display: flex !important;
@@ -698,22 +706,14 @@ body.chat-is-fullscreen #noticeboard-view-panel[style*="display: flex"] {
 body.chat-is-fullscreen .chat-messages {
     flex: 1 !important;
     width: 100% !important;
-    height: calc(100% - 74px) !important; 
-    padding-bottom: 95px !important; 
-}
-
-body.chat-is-fullscreen .chat-main-row > div:first-child:not([style*="display: none"]) {
-    display: flex !important;
-    flex-direction: column !important;
-    flex: 1 !important;
+    height: auto !important; 
+    padding-bottom: 20px !important; 
 }
 
 body.chat-is-fullscreen .chat-input-area {
-    width: calc(100% - 380px) !important; 
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    z-index: 10;
+    width: 100% !important; 
+    position: static !important;
+    z-index: auto !important;
 }
 
 body.chat-is-fullscreen .chat-fs-help-panel {
@@ -721,6 +721,42 @@ body.chat-is-fullscreen .chat-fs-help-panel {
     width: 380px !important;
     height: 100% !important;
     flex-shrink: 0 !important;
+    order: 2;
+}
+
+body.chat-is-fullscreen .chat-feed-container {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    flex: 1 !important;
+    order: 1;
+}
+
+/* ==========================================================================
+   📋 NOTICEBOARD ACTIVE FULLSCREEN LAYOUT
+   ========================================================================== */
+body.noticeboard-active #noticeboard-view-panel {
+    display: flex !important;
+    flex: 1 !important;
+    order: 1 !important;
+    padding-right: 0 !important;
+}
+
+body.noticeboard-active .chat-fs-help-panel {
+    display: flex !important;
+    width: 380px !important;
+    flex-shrink: 0 !important;
+    order: 2 !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+body.noticeboard-active .chat-feed-container {
+    display: flex !important;
+    width: 380px !important;
+    flex: none !important;
+    flex-shrink: 0 !important;
+    order: 3 !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 /* 🛑 FIXED OVERLAY: Locks layout paths completely into a fixed space stack layer */
@@ -814,6 +850,11 @@ body.chat-is-fullscreen .chat-fs-help-panel {
         position: static !important;
         height: auto !important;
         width: 100% !important;
+    }
+    body.chat-is-fullscreen .chat-feed-container {
+        width: 100% !important;
+        height: auto !important;
+        flex: none !important;
     }
 
     .main-content {
@@ -1322,13 +1363,10 @@ body.chat-is-fullscreen .chat-fs-help-panel {
 body.chat-is-fullscreen .online-users-panel {
     display: flex;
     flex-direction: column;
-    width: 250px;
-    height: 100%;
-    border-left: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(18, 18, 20, 0.98);
-    flex-shrink: 0;
-    overflow-y: auto;
-    padding: 15px;
+    width: 100%;
+    border-left: none;
+    background: transparent;
+    padding: 0;
 }
 .online-user-item {
     display: flex;
