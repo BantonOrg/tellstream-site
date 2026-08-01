@@ -2925,8 +2925,21 @@ function initLogoAnimation() {
     });
 }
 
+function updateWebVersionFooter() {
+    const el = document.getElementById('header-copyright');
+    if (!el) return;
+    const now = new Date();
+    const yy = String(now.getFullYear()).slice(-2);
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const hh = String(now.getHours()).padStart(2, '0');
+    const min = String(now.getMinutes()).padStart(2, '0');
+    el.textContent = `(c) 2026 www.tellstream.org WebVer 1.0951.${dd}${mm}${yy}.${hh}${min}`;
+}
+
 (async function initSystem() {
     // 1. Core Lounge Operations (Cannot be affected by outside scripts)
+    try { updateWebVersionFooter(); } catch (e) { }
     try { await syncProfilesMap(); } catch (e) { }
     try { await verifyCurrentSession(); } catch (e) { }
     try { await syncBannedWordsMap(); } catch (e) { }

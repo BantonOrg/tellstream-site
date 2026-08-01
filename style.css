@@ -80,6 +80,16 @@ body {
     padding-right: 40px;
 }
 
+.header-copyright {
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 500;
+    opacity: 0.8;
+    margin-bottom: 4px;
+    user-select: none;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
 .header-cell .tagline-wrapper {
     display: flex;
     flex-direction: column;
