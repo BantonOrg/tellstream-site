@@ -574,7 +574,14 @@ function closeFlyerLightbox() {
 function toggleChatFullscreen() {
     if (isNoticeBoardActive) toggleNoticeBoardView();
     document.body.classList.toggle('chat-is-fullscreen');
-    fsToggleBtn.innerText = document.body.classList.contains('chat-is-fullscreen') ? "Exit Fullscreen" : "Maximize Chat";
+    const fsToggleBtn = document.getElementById('fsToggleBtn');
+    if (fsToggleBtn) {
+        fsToggleBtn.innerText = document.body.classList.contains('chat-is-fullscreen') ? "Exit Fullscreen" : "Maximize Chat";
+    }
+    const tabMaximize = document.getElementById('tab-maximize');
+    if (tabMaximize) {
+        tabMaximize.innerText = document.body.classList.contains('chat-is-fullscreen') ? "Exit Fullscreen" : "Maximize Chat";
+    }
     anchorChatToBottom();
 }
 
@@ -622,10 +629,13 @@ function toggleNoticeBoardView() {
             mainTitle.innerText = "📋 Noticeboard";
             mainTitle.style.display = 'block';
         }
+        // Mockup: Keep games row visible
         if (gamesRow) {
-            gamesRow.style.display = 'none';
+            gamesRow.style.display = 'flex';
         }
-        toggleBtn.innerText = "❌ Exit Noticeboard";
+        if (toggleBtn) {
+            toggleBtn.innerText = "❌ Exit Noticeboard";
+        }
         isNoticeBoardActive = true;
         if (emojiSectionFS) emojiSectionFS.style.display = 'block';
         renderHelpContent(true);
@@ -641,7 +651,9 @@ function toggleNoticeBoardView() {
         if (gamesRow) {
             gamesRow.style.display = 'flex';
         }
-        toggleBtn.innerText = "📋 Noticeboard";
+        if (toggleBtn) {
+            toggleBtn.innerText = "📋 Noticeboard";
+        }
         isNoticeBoardActive = false;
         if (emojiSectionFS) emojiSectionFS.style.display = 'block';
         renderHelpContent(false);
@@ -2344,6 +2356,9 @@ function closeProfileCard() {
 }
 
 function switchChatMode(mode) {
+    if (mode !== 'noticeboard' && isNoticeBoardActive) {
+        toggleNoticeBoardView();
+    }
     currentChatMode = mode;
     const tabs = document.querySelectorAll('.chat-tab-btn');
     tabs.forEach(tab => {
@@ -2361,6 +2376,7 @@ function switchChatMode(mode) {
         const otherUser = mode.substring(3);
         loadPrivateMessages(otherUser);
     }
+    renderChatTabs();
 }
 
 function openPrivateChatTab(username) {
@@ -2390,7 +2406,16 @@ function renderChatTabs() {
     const tabsBar = document.getElementById('chatTabsBar');
     if (!tabsBar) return;
     
-    tabsBar.innerHTML = `<div class="chat-tab-btn ${currentChatMode === 'lounge' ? 'active' : ''}" id="tab-lounge" onclick="switchChatMode('lounge')">Lounge</div>`;
+    const isLounge = currentChatMode === 'lounge' && !isNoticeBoardActive && !document.body.classList.contains('chat-is-fullscreen');
+    const isNotice = isNoticeBoardActive;
+    const isFS = document.body.classList.contains('chat-is-fullscreen') && !isNoticeBoardActive;
+    const fsText = document.body.classList.contains('chat-is-fullscreen') ? "Exit Fullscreen" : "Maximize Chat";
+    
+    tabsBar.innerHTML = `
+        <div class="chat-tab-btn ${isLounge ? 'active' : ''}" id="tab-lounge" onclick="handleLoungeTab()">Lounge</div>
+        <div class="chat-tab-btn ${isNotice ? 'active' : ''}" id="tab-noticeboard" onclick="handleNoticeboardTab()">Noticeboard</div>
+        <div class="chat-tab-btn ${isFS ? 'active' : ''}" id="tab-maximize" onclick="handleMaximizeTab()">${fsText}</div>
+    `;
     
     activeDMTabs.forEach(username => {
         const isActive = currentChatMode === `dm:${username}`;
@@ -2401,6 +2426,49 @@ function renderChatTabs() {
             </div>
         `;
     });
+}
+
+function handleLoungeTab() {
+    if (isNoticeBoardActive) {
+        toggleNoticeBoardView();
+    }
+    if (document.body.classList.contains('chat-is-fullscreen')) {
+        document.body.classList.remove('chat-is-fullscreen');
+        anchorChatToBottom();
+    }
+    switchChatMode('lounge');
+    renderChatTabs();
+}
+
+function handleNoticeboardTab() {
+    if (!isNoticeBoardActive) {
+        toggleNoticeBoardView();
+    }
+    renderChatTabs();
+}
+
+function handleMaximizeTab() {
+    if (isNoticeBoardActive) {
+        toggleNoticeBoardView();
+    }
+    toggleChatFullscreen();
+    renderChatTabs();
+}
+
+function openPrivacyModal() {
+    const modal = document.getElementById('privacy-overlay');
+    if (modal) modal.classList.add('active');
+}
+
+function closePrivacyModal() {
+    const modal = document.getElementById('privacy-overlay');
+    if (modal) modal.classList.remove('active');
+}
+
+function acceptCookieConsent() {
+    localStorage.setItem('tellstream_cookie_consent', 'true');
+    const banner = document.getElementById('cookie-consent-banner');
+    if (banner) banner.classList.remove('active');
 }
 
 function renderFambilyList() {
@@ -2825,6 +2893,12 @@ window.handleAvatarSelected = handleAvatarSelected;
 window.switchChatMode = switchChatMode;
 window.closeChatTab = closeChatTab;
 window.togglePasskeyVisibility = togglePasskeyVisibility;
+window.openPrivacyModal = openPrivacyModal;
+window.closePrivacyModal = closePrivacyModal;
+window.acceptCookieConsent = acceptCookieConsent;
+window.handleLoungeTab = handleLoungeTab;
+window.handleNoticeboardTab = handleNoticeboardTab;
+window.handleMaximizeTab = handleMaximizeTab;
 
 function initLogoAnimation() {
     const minFrame = 25;
@@ -2934,13 +3008,7 @@ function initLogoAnimation() {
 function updateWebVersionFooter() {
     const el = document.getElementById('header-copyright');
     if (!el) return;
-    const now = new Date();
-    const yy = String(now.getFullYear()).slice(-2);
-    const mm = String(now.getMonth() + 1).padStart(2, '0');
-    const dd = String(now.getDate()).padStart(2, '0');
-    const hh = String(now.getHours()).padStart(2, '0');
-    const min = String(now.getMinutes()).padStart(2, '0');
-    el.textContent = `© 2026 www.tellstream.org WebVer 1.0951.${dd}${mm}${yy}.${hh}${min}`;
+    el.innerHTML = `© 2026 <a href="https://www.tellstream.org" target="_blank" style="color:inherit; text-decoration:none;">www.tellstream.org</a> WebVer 1.0951 | <a href="#" id="privacy-link" onclick="event.preventDefault(); openPrivacyModal();" style="color:#22e532; text-decoration:none; font-weight:bold; cursor:pointer;">Privacy Policy</a>`;
 }
 
 (async function initSystem() {
@@ -2955,6 +3023,16 @@ function updateWebVersionFooter() {
     try { initLogoAnimation(); } catch (e) { }
 
     renderHelpContent(false);
+    try { renderChatTabs(); } catch (e) { }
+
+    // Check Cookie Consent
+    setTimeout(() => {
+        if (!localStorage.getItem('tellstream_cookie_consent')) {
+            const banner = document.getElementById('cookie-consent-banner');
+            if (banner) banner.classList.add('active');
+        }
+    }, 1000);
+
     try { await renderActiveFlyers(); } catch (e) { }
     setTimeout(initQuickEmojiCloud, 500);
 

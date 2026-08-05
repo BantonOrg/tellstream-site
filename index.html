@@ -101,15 +101,49 @@
 
     <div class="chat-sidebar">
         <div class="chat-header">
-            <span id="sidebarPanelTitle" style="display: none;">🔊 Listener Lounge</span>
             <div class="header-games-row" id="headerGamesRow">
-                <button onclick="launchFullscreenGame('dominoes')" class="chat-header-btn">🎲 Dominoes</button>
-                <button onclick="launchFullscreenGame('ludo')" class="chat-header-btn">🎲 Ludo</button>
-            </div>
-            <div class="nav-controls-row">
-                <button class="chat-header-btn" id="toggle-notice-btn" onclick="toggleNoticeBoardView()">📋
-                    Noticeboard</button>
-                <button class="chat-header-btn" id="fsToggleBtn" onclick="toggleChatFullscreen()">Maximize Chat</button>
+                <button onclick="launchFullscreenGame('dominoes')" class="game-header-btn">
+                    <svg class="game-icon" viewBox="0 0 80 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- 3D shadow -->
+                        <rect x="2" y="4" width="76" height="34" rx="6" fill="#bbbbbb" />
+                        <!-- Face -->
+                        <rect x="2" y="2" width="76" height="34" rx="6" fill="#ffffff" />
+                        <!-- Line -->
+                        <line x1="40" y1="2" x2="40" y2="36" stroke="#222" stroke-width="2" />
+                        <!-- Dots -->
+                        <circle cx="21" cy="20" r="3.5" fill="#222" />
+                        <circle cx="61" cy="11" r="3" fill="#222" />
+                        <circle cx="61" cy="27" r="3" fill="#222" />
+                        <circle cx="51" cy="19" r="3" fill="#222" />
+                        <circle cx="11" cy="11" r="3" fill="#222" />
+                        <circle cx="31" cy="29" r="3" fill="#222" />
+                    </svg>
+                    <span class="game-title">Dominoes</span>
+                </button>
+                <button onclick="launchFullscreenGame('ludo')" class="game-header-btn">
+                    <svg class="game-icon" viewBox="0 0 60 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Left Face -->
+                        <path d="M 6 20 L 30 33 L 30 46 L 6 33 Z" fill="#dddddd" />
+                        <!-- Right Face -->
+                        <path d="M 30 33 L 54 20 L 54 33 L 30 46 Z" fill="#bbbbbb" />
+                        <!-- Top Face -->
+                        <path d="M 30 7 L 54 20 L 30 33 L 6 20 Z" fill="#ffffff" />
+                        <!-- Dots -->
+                        <circle cx="30" cy="20" r="2.5" fill="#cc0000" />
+                        <circle cx="18" cy="14" r="2" fill="#222" />
+                        <circle cx="42" cy="26" r="2" fill="#222" />
+                        <circle cx="18" cy="26" r="2" fill="#222" />
+                        <circle cx="42" cy="14" r="2" fill="#222" />
+                        
+                        <circle cx="14" cy="26" r="1.5" fill="#555" />
+                        <circle cx="22" cy="38" r="1.5" fill="#555" />
+                        <circle cx="18" cy="32" r="1.5" fill="#555" />
+                        
+                        <circle cx="38" cy="29" r="1.5" fill="#444" />
+                        <circle cx="46" cy="37" r="1.5" fill="#444" />
+                    </svg>
+                    <span class="game-title">Ludo</span>
+                </button>
             </div>
         </div>
 
@@ -443,11 +477,32 @@
         </div>
     </div>
 
-    <!-- Fullscreen Game Overlay Container -->
-    <div id="game-overlay-container"
-        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999; background: #0a0a0c;">
-        <iframe id="game-overlay-frame" src=""
-            style="width: 100%; height: 100%; border: none; display: block;"></iframe>
+    <!-- Privacy Policy Overlay Modal -->
+    <div class="privacy-overlay" id="privacy-overlay" onclick="closePrivacyModal()">
+        <div class="privacy-modal-card" onclick="event.stopPropagation();">
+            <button class="privacy-close-x" onclick="closePrivacyModal()">×</button>
+            <h2>🛡️ Privacy Policy</h2>
+            <div class="privacy-content">
+                <p><strong>1. Data Minimization & Privacy</strong><br>
+                Tellstream is a private community lounge. We do not track, profile, analyze, or sell your data. No advertising trackers are loaded on this platform.</p>
+                
+                <p><strong>2. Browser Local Storage</strong><br>
+                We use browser local storage purely for functional features: remembering your chat handle, game session tokens, and player volume slider state.</p>
+                
+                <p><strong>3. Chat Visibility & Plaintext Storage</strong><br>
+                Please note that this is a public chat lounge. Messages are transmitted and stored in plaintext in the database so that chat history can load when the page is refreshed. They are visible to database administrators for moderation. Do not type any personal details, passwords, or private information in public chat channels.</p>
+                
+                <p><strong>4. Passkey Hash Security</strong><br>
+                If you choose to lock your handle, your passkey is immediately hashed server-side using secure database procedures. Raw passkeys are never stored in plaintext and cannot be read by anyone.</p>
+            </div>
+            <button class="privacy-close-btn" onclick="closePrivacyModal()">Close Statement</button>
+        </div>
+    </div>
+
+    <!-- Cookie & Local Storage Consent Banner -->
+    <div class="cookie-consent-banner" id="cookie-consent-banner">
+        <p>🍪 We use functional local storage to remember your nickname, volume, and active games. No tracking or ads. <a href="#" onclick="event.preventDefault(); openPrivacyModal();">Read Privacy Policy</a></p>
+        <button class="cookie-accept-btn" onclick="acceptCookieConsent()">Accept</button>
     </div>
 
     <script type="module" src="main.js"></script>
