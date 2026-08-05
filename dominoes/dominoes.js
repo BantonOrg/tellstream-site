@@ -465,20 +465,59 @@ async function leaveRoom() {
             .eq('room_code', exitingRoomCode)
             .single();
             
-        if (data) {
+        if (data && !error) {
             const players = data.players || {};
             
-            players.lobby_roster = players.lobby_roster.filter(u => u !== myUsername);
-            
-            if (mySeat) {
-                players[`player${mySeat}`].name = "Waiting...";
-                players[`player${mySeat}`].hand = [];
+            if (data.game_state === "playing") {
+                if (data.creator === myUsername) {
+                    // Host leaves: end game
+                    await supabase_db.from('domino_rooms').update({ game_state: "finished" }).eq('room_code', exitingRoomCode);
+                } else {
+                    // Non-host leaves: disqualify player immediately
+                    if (mySeat) {
+                        players[`player${mySeat}`].name = "Disqualified";
+                        if (players.lobby_roster) {
+                            players.lobby_roster = players.lobby_roster.filter(u => u !== myUsername);
+                        }
+                        const hand = players[`player${mySeat}`]?.hand || [];
+                        const boneyard = players.boneyard || [];
+                        if (hand.length > 0) {
+                            boneyard.push(...hand);
+                            players[`player${mySeat}`].hand = [];
+                            players.boneyard = boneyard;
+                        }
+                        
+                        const activeSeats = [];
+                        for (let i = 1; i <= 4; i++) {
+                            const name = players[`player${i}`]?.name;
+                            if (name && name !== "Waiting..." && name !== "Not In Use" && name !== "Disqualified") {
+                                activeSeats.push(i);
+                            }
+                        }
+                        
+                        if (activeSeats.length <= 1) {
+                            await supabase_db.from('domino_rooms').update({
+                                players: players,
+                                game_state: 'finished'
+                            }).eq('room_code', exitingRoomCode);
+                        } else {
+                            const nextTurn = getNextTurnSeat(mySeat, players);
+                            await supabase_db.from('domino_rooms').update({
+                                players: players,
+                                active_turn: nextTurn
+                            }).eq('room_code', exitingRoomCode);
+                        }
+                    }
+                }
+            } else {
+                // Pre-game seating lobby state: remove player normally
+                players.lobby_roster = players.lobby_roster.filter(u => u !== myUsername);
+                if (mySeat) {
+                    players[`player${mySeat}`].name = "Waiting...";
+                    players[`player${mySeat}`].hand = [];
+                }
+                await supabase_db.from('domino_rooms').update({ players: players }).eq('room_code', exitingRoomCode);
             }
-            
-            await supabase_db
-                .from('domino_rooms')
-                .update({ players: players })
-                .eq('room_code', exitingRoomCode);
         }
     } catch(err) {
         console.error("Error leaving room:", err);
@@ -1480,7 +1519,7 @@ async function triggerAutoPlay() {
 
 async function disqualifyDominoesPlayer(seatIndex) {
     if (!currentRoomCode) return;
-    const { data } = await supabase_db.from("dom_room").select("*").eq("room_code", currentRoomCode).single();
+    const { data } = await supabase_db.from("domino_rooms").select("*").eq("room_code", currentRoomCode).single();
     if (!data) return;
     
     const playersObj = data.players || {};
@@ -1498,13 +1537,13 @@ async function disqualifyDominoesPlayer(seatIndex) {
         const winnerSeat = activeSeats[0] || 1;
         const winnerName = playersObj[`player${winnerSeat}`]?.name || `Player ${winnerSeat}`;
         
-        await supabase_db.from("dom_room").update({
+        await supabase_db.from("domino_rooms").update({
             players: playersObj,
             game_state: 'finished'
         }).eq("room_code", currentRoomCode);
     } else {
         const nextTurn = getNextTurnSeat(seatIndex, playersObj);
-        await supabase_db.from("dom_room").update({
+        await supabase_db.from("domino_rooms").update({
             players: playersObj,
             active_turn: nextTurn
         }).eq("room_code", currentRoomCode);
