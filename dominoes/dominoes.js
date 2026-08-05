@@ -20,6 +20,11 @@ let selectedTileData = null;
 let inWaitingRoom = false;
 let gameOverCountdownInterval = null;
 
+let turnTimerInterval = null;
+const TURN_TIMEOUT_SECONDS = 30;
+let turnStartLocalTime = null;
+let lastLocalTurnNumber = null;
+
 // DOM ELEMENTS
 const lobbyView = document.getElementById("lobby-view");
 const seatingView = document.getElementById("seating-view");
@@ -520,6 +525,11 @@ function handleRoomUpdate(roomData) {
     if (!currentRoomCode || roomData.room_code !== currentRoomCode) return;
     localState = roomData;
     currentGameState = roomData.game_state;
+    
+    if (lastLocalTurnNumber !== roomData.active_turn || (roomData.board_line && roomData.board_line.length === 0) || !turnStartLocalTime) {
+        lastLocalTurnNumber = roomData.active_turn;
+        turnStartLocalTime = Date.now();
+    }
     
     const roomCode = roomData.room_code;
     if (tableRoomCodeDisplay) tableRoomCodeDisplay.textContent = roomCode;
@@ -1261,6 +1271,21 @@ function renderPlayerHand(players) {
 }
 
 // RENDER OPPONENTS 
+function getDominoesAFKPips(seatIndex, players) {
+    const key = `player${seatIndex}`;
+    const p = players[key];
+    if (!p || p.name === "Waiting..." || p.name === "Not In Use") return "";
+    
+    const lives = (localState?.state?.afk_lives && typeof localState.state.afk_lives[key] !== 'undefined') 
+        ? localState.state.afk_lives[key] 
+        : 1;
+        
+    if (p.name === "Disqualified") {
+        return " ☠️";
+    }
+    return ` ${['', '⚀'][lives] || ''}`;
+}
+
 function renderOpponentsAtTable(players, activeTurn) {
     if (!localState) return;
     
@@ -1302,7 +1327,7 @@ function renderOpponentsAtTable(players, activeTurn) {
                 
                 const nameEl = document.getElementById("my-player-capsule-name");
                 const statusEl = document.getElementById("my-player-capsule-status");
-                if (nameEl) nameEl.textContent = p.name;
+                if (nameEl) nameEl.textContent = p.name + getDominoesAFKPips(i, players);
                 const handCount = p.hand ? p.hand.length : 0;
                 if (statusEl) statusEl.textContent = `Bones: ${handCount}`;
                 
@@ -1334,7 +1359,7 @@ function renderOpponentsAtTable(players, activeTurn) {
                 teamBadgeHtml = `<div class="team-badge ${teamClass}">${teamLabel}</div>`;
             }
             
-            badge.innerHTML = `<span class="player-name">${escapeHtml(p.name)}</span> <span class="player-status">Bones: ${handCount}</span>${teamBadgeHtml}`;
+            badge.innerHTML = `<span class="player-name">${escapeHtml(p.name)}${getDominoesAFKPips(i, players)}</span> <span class="player-status">Bones: ${handCount}</span>${teamBadgeHtml}`;
             
             if (activeTurn === i && currentGameState === 'playing') {
                 badge.classList.add("active-turn-badge");
@@ -1351,6 +1376,140 @@ function renderOpponentsAtTable(players, activeTurn) {
 
 // TURN LOGIC 
 let autoSkipTimeout = null;
+
+function startTurnTimer() {
+    if (turnTimerInterval) {
+        clearInterval(turnTimerInterval);
+        turnTimerInterval = null;
+    }
+    
+    if (currentGameState !== 'playing') return;
+    
+    turnTimerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - (turnStartLocalTime || Date.now())) / 1000);
+        const remaining = Math.max(0, TURN_TIMEOUT_SECONDS - elapsed);
+        
+        const activeTurnSeat = localState.active_turn;
+        const activePlayerName = localState.players[`player${activeTurnSeat}`]?.name || "Player";
+        const isMyTurn = (mySeat === activeTurnSeat);
+        
+        const lives = (localState?.state?.afk_lives && typeof localState.state.afk_lives[`player${activeTurnSeat}`] !== 'undefined') 
+            ? localState.state.afk_lives[`player${activeTurnSeat}`] 
+            : 1;
+        const pips = ` ${['', '⚀'][lives] || ''}`;
+        
+        if (isMyTurn) {
+            turnIndicatorBanner.textContent = `YOUR TURN (${remaining}s)${pips}`;
+        } else {
+            turnIndicatorBanner.textContent = `${activePlayerName.toUpperCase()}'S TURN (${remaining}s)${pips}`;
+        }
+        
+        const activeTurnVal = document.getElementById("table-active-turn-val");
+        if (activeTurnVal) {
+            activeTurnVal.textContent = isMyTurn ? `YOU ! PLAY A TILE ! (${remaining}s)${pips}` : `${activePlayerName.toUpperCase()} (${remaining}s)${pips}`;
+        }
+        
+        if (remaining <= 0 && isMyTurn) {
+            clearInterval(turnTimerInterval);
+            turnTimerInterval = null;
+            triggerAutoPlay();
+        }
+    }, 1000);
+}
+
+async function triggerAutoPlay() {
+    if (localState.active_turn !== mySeat || currentGameState !== 'playing') return;
+    
+    const key = `player${mySeat}`;
+    
+    if (!localState.state) localState.state = {};
+    if (!localState.state.afk_seconds) localState.state.afk_seconds = {};
+    if (!localState.state.afk_seconds[key]) localState.state.afk_seconds[key] = 0;
+    if (!localState.state.afk_lives) localState.state.afk_lives = {};
+    if (typeof localState.state.afk_lives[key] === 'undefined') localState.state.afk_lives[key] = 1;
+    
+    localState.state.afk_seconds[key] += 30;
+    
+    if (localState.state.afk_seconds[key] >= 180) {
+        localState.state.afk_seconds[key] = 0;
+        localState.state.afk_lives[key] -= 1;
+        
+        logTableAction(`⚠️ ${myUsername} lost their AFK Life! Remaining: ${localState.state.afk_lives[key]}/1`, "chat-system");
+        
+        if (localState.state.afk_lives[key] <= 0) {
+            logTableAction(`🚨 ${myUsername} HAS BEEN DISQUALIFIED FOR ABSENCE!`, "chat-system");
+            await disqualifyDominoesPlayer(mySeat);
+            return;
+        }
+    }
+    
+    const boardLine = localState.board_line || [];
+    const myHand = localState.players[key]?.hand || [];
+    
+    const playableTiles = [];
+    myHand.forEach(tile => {
+        let leftValue = boardLine.length === 0 ? null : (boardLine[0].displayTop !== undefined ? boardLine[0].displayTop : boardLine[0].top);
+        let rightValue = boardLine.length === 0 ? null : (boardLine[boardLine.length - 1].displayBottom !== undefined ? boardLine[boardLine.length - 1].displayBottom : boardLine[boardLine.length - 1].bottom);
+        
+        const fitsLeft = boardLine.length === 0 || (tile.top === leftValue || tile.bottom === leftValue);
+        const fitsRight = boardLine.length === 0 || (tile.top === rightValue || tile.bottom === rightValue);
+        
+        if (fitsLeft || fitsRight) {
+            playableTiles.push({ tile: tile, fitsLeft: fitsLeft, fitsRight: fitsRight });
+        }
+    });
+    
+    if (playableTiles.length > 0) {
+        const choice = playableTiles[Math.floor(Math.random() * playableTiles.length)];
+        selectedTileData = choice.tile;
+        
+        let position = 'right';
+        if (boardLine.length === 0) {
+            position = 'center';
+        } else if (choice.fitsLeft && choice.fitsRight) {
+            position = Math.random() < 0.5 ? 'left' : 'right';
+        } else if (choice.fitsLeft) {
+            position = 'left';
+        }
+        
+        await executeMove(position);
+    } else {
+        await passTurn();
+    }
+}
+
+async function disqualifyDominoesPlayer(seatIndex) {
+    if (!currentRoomCode) return;
+    const { data } = await supabase_db.from("dom_room").select("*").eq("room_code", currentRoomCode).single();
+    if (!data) return;
+    
+    const playersObj = data.players || {};
+    playersObj[`player${seatIndex}`].name = "Disqualified";
+    
+    const activeSeats = [];
+    for (let i = 1; i <= 4; i++) {
+        const name = playersObj[`player${i}`]?.name;
+        if (name && name !== "Waiting..." && name !== "Not In Use" && name !== "Disqualified") {
+            activeSeats.push(i);
+        }
+    }
+    
+    if (activeSeats.length <= 1) {
+        const winnerSeat = activeSeats[0] || 1;
+        const winnerName = playersObj[`player${winnerSeat}`]?.name || `Player ${winnerSeat}`;
+        
+        await supabase_db.from("dom_room").update({
+            players: playersObj,
+            game_state: 'finished'
+        }).eq("room_code", currentRoomCode);
+    } else {
+        const nextTurn = getNextTurnSeat(seatIndex, playersObj);
+        await supabase_db.from("dom_room").update({
+            players: playersObj,
+            active_turn: nextTurn
+        }).eq("room_code", currentRoomCode);
+    }
+}
 
 function setTurnState(activeTurn, players, boardLine) {
     if (autoSkipTimeout) {
@@ -1389,15 +1548,20 @@ function setTurnState(activeTurn, players, boardLine) {
     }
     
     if (currentGameState !== 'playing') {
+        if (turnTimerInterval) {
+            clearInterval(turnTimerInterval);
+            turnTimerInterval = null;
+        }
         turnIndicatorBanner.classList.remove("my-turn");
         turnIndicatorBanner.textContent = "Round Finished";
         if (drawBoneyardBtn) drawBoneyardBtn.setAttribute("disabled", "true");
         return;
     }
     
+    startTurnTimer();
+    
     if (isMyTurn) {
         turnIndicatorBanner.classList.add("my-turn");
-        turnIndicatorBanner.textContent = "YOUR TURN";
         
         const myHand = players[`player${mySeat}`]?.hand || [];
         const hasMoves = checkAnyValidMoves(myHand, boardLine);
