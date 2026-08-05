@@ -17,6 +17,8 @@ let hasRolledThisTurn = false;
 let soundOn = false;
 let turnTimerInterval = null;
 const TURN_TIMEOUT_SECONDS = 30;
+let turnStartLocalTime = null;
+let lastLocalTurnNumber = null;
 
 let isProcessing = false;
 let localTokenPositions = null;
@@ -586,6 +588,11 @@ function triggerObserverDiceRollAnimation(color) {
 function handleStateUpdate(roomData) {
   if (!roomCode || roomData.room_code !== roomCode) return;
 
+  if (lastLocalTurnNumber !== roomData.turn || !turnStartLocalTime) {
+      lastLocalTurnNumber = roomData.turn;
+      turnStartLocalTime = Date.now();
+  }
+
   if (roomData.state && roomData.players) {
     const playersObjForAnim = roomData.players || {};
     const joinedColorsForAnim = COLORS.filter(color => playersObjForAnim[color] && playersObjForAnim[color] !== "Waiting..." && playersObjForAnim[color] !== "Not In Use");
@@ -763,7 +770,7 @@ function handleStateUpdate(roomData) {
       showView(gameScreen);
   }
 
-  const joinedColors = COLORS.filter(color => playersObj[color] && playersObj[color] !== "Waiting..." && playersObj[color] !== "Not In Use");
+  const joinedColors = COLORS.filter(color => playersObj[color] && playersObj[color] !== "Waiting..." && playersObj[color] !== "Not In Use" && playersObj[color] !== "Disqualified");
   const activeSeatsCount = joinedColors.length;
   
   currentTurnColor = activeSeatsCount > 0 ? joinedColors[roomData.turn % activeSeatsCount] : "red";
@@ -775,11 +782,22 @@ function handleStateUpdate(roomData) {
     if (!el) return;
     
     const isSeated = playersObj[color] && playersObj[color] !== "Waiting..." && playersObj[color] !== "Not In Use";
-    let statusText = `${color.toUpperCase()}: ${isSeated ? playersObj[color].toUpperCase() : "EMPTY"}`;
-    if (isSeated && color === currentTurnColor) {
-      const elapsed = Math.floor((Date.now() - state.lastTurnTimestamp) / 1000);
+    
+    let pips = "";
+    if (isSeated) {
+      const lives = (state.afk_lives && typeof state.afk_lives[color] !== 'undefined') ? state.afk_lives[color] : 3;
+      if (playersObj[color] === "Disqualified") {
+        pips = " ☠️";
+      } else {
+        pips = ` ${['', '⚀', '⚁', '⚂'][lives] || ''}`;
+      }
+    }
+    
+    let statusText = `${color.toUpperCase()}: ${isSeated ? playersObj[color].toUpperCase() : "EMPTY"}${pips}`;
+    if (isSeated && color === currentTurnColor && playersObj[color] !== "Disqualified") {
+      const elapsed = Math.floor((Date.now() - (turnStartLocalTime || Date.now())) / 1000);
       const remaining = Math.max(0, TURN_TIMEOUT_SECONDS - elapsed);
-      statusText = `${color.toUpperCase()}'S TURN (${remaining}s)`;
+      statusText = `${color.toUpperCase()}'S TURN (${remaining}s)${pips}`;
     }
     
     if (color === "yellow") {
@@ -799,17 +817,22 @@ function handleStateUpdate(roomData) {
 
 function startTurnTimer() {
   clearInterval(turnTimerInterval);
-  if (!state || !state.lastTurnTimestamp) return;
+  if (!state) return;
 
   turnTimerInterval = setInterval(() => {
-    const elapsed = Math.floor((Date.now() - state.lastTurnTimestamp) / 1000);
+    const elapsed = Math.floor((Date.now() - (turnStartLocalTime || Date.now())) / 1000);
     const remaining = Math.max(0, TURN_TIMEOUT_SECONDS - elapsed);
 
     COLORS.forEach(color => {
       if (color === currentTurnColor) {
         const el = document.getElementById(`details-${color}`);
         if (!el) return;
-        const txt = `${color.toUpperCase()}'S TURN (${remaining}s)`;
+        
+        let pips = "";
+        const lives = (state.afk_lives && typeof state.afk_lives[color] !== 'undefined') ? state.afk_lives[color] : 3;
+        pips = ` ${['', '⚀', '⚁', '⚂'][lives] || ''}`;
+        
+        const txt = `${color.toUpperCase()}'S TURN (${remaining}s)${pips}`;
         if (color === "yellow") el.querySelector("span").innerText = txt;
         else el.innerText = txt;
       }
@@ -817,9 +840,81 @@ function startTurnTimer() {
 
     if (remaining <= 0 && playerColor === currentTurnColor) {
       clearInterval(turnTimerInterval);
-      passTurn(false);
+      triggerAutoPlay();
     }
   }, 1000);
+}
+
+async function triggerAutoPlay() {
+  if (playerColor !== currentTurnColor || isProcessing) return;
+  
+  if (!state.afk_seconds) state.afk_seconds = {};
+  if (!state.afk_seconds[playerColor]) state.afk_seconds[playerColor] = 0;
+  if (!state.afk_lives) state.afk_lives = {};
+  if (typeof state.afk_lives[playerColor] === 'undefined') state.afk_lives[playerColor] = 3;
+
+  state.afk_seconds[playerColor] += 30;
+  
+  if (state.afk_seconds[playerColor] >= 180) {
+      state.afk_seconds[playerColor] = 0;
+      state.afk_lives[playerColor] -= 1;
+      
+      logTableAction(`⚠️ ${playerColor.toUpperCase()} lost 1 AFK Life! Remaining: ${state.afk_lives[playerColor]}/3`, "accent-text");
+      
+      if (state.afk_lives[playerColor] <= 0) {
+          logTableAction(`🚨 ${playerColor.toUpperCase()} HAS BEEN DISQUALIFIED FOR ABSENCE!`, "accent-text");
+          await disqualifyPlayer(playerColor);
+          return;
+      }
+  }
+
+  if (!hasRolledThisTurn) {
+    await handleDiceRoll();
+  } else {
+    const validTokenIndices = [];
+    state.tokens[playerColor].forEach((pos, idx) => {
+      if (isValidMove(playerColor, idx, currentRoll)) {
+        validTokenIndices.push(idx);
+      }
+    });
+    
+    if (validTokenIndices.length > 0) {
+      const randomIdx = validTokenIndices[Math.floor(Math.random() * validTokenIndices.length)];
+      await selectTokenToMove(randomIdx);
+    } else {
+      await passTurn(false);
+    }
+  }
+}
+
+async function disqualifyPlayer(color) {
+    const { data } = await supabase.from("lud_room").select("*").eq("room_code", roomCode).single();
+    if (!data) return;
+    
+    const playersObj = data.players || {};
+    playersObj[color] = "Disqualified";
+    
+    // Check if only one player remains active
+    const joinedColors = COLORS.filter(c => playersObj[c] && playersObj[c] !== "Waiting..." && playersObj[c] !== "Not In Use" && playersObj[c] !== "Disqualified");
+    
+    if (joinedColors.length <= 1) {
+        const winnerColor = joinedColors[0] || "red";
+        const winnerName = playersObj[winnerColor] || winnerColor;
+        state.winner = winnerName;
+        
+        await supabase.from("lud_room").update({
+            players: playersObj,
+            game_state: "finished",
+            state: state
+        }).eq("room_code", roomCode);
+    } else {
+        const nextTurn = currentTurnNumber + 1;
+        await supabase.from("lud_room").update({
+            players: playersObj,
+            turn: nextTurn,
+            state: state
+        }).eq("room_code", roomCode);
+    }
 }
 
 async function handleDiceRoll() {
