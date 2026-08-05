@@ -45,7 +45,7 @@
                 <div class="custom-player-container">
                     <span class="player-label">📻 Live Radio</span>
                     <div style="display: flex; align-items: center; gap: 10px;">
-                        <button id="player-play-btn" class="player-btn">⏸️</button>
+                        <button id="player-play-btn" class="player-btn">▶️</button>
                         <input type="range" id="player-volume-slider" min="0" max="1" step="0.05" value="0.5"
                             class="player-slider">
                     </div>
@@ -442,6 +442,12 @@
     </div>
 
     <script src="/src/assets/emojis.js"></script>
+
+    <!-- Game Overlay container -->
+    <div id="game-overlay-container" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:150000; background:#000;">
+        <iframe id="game-overlay-frame" src="" style="width:100%; height:100%; border:none;"></iframe>
+    </div>
+
     <!-- User Profile Card Modal -->
     <div class="profile-card-modal-overlay" id="profileCardModal" onclick="closeProfileCard()"
         style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:100000; background:rgba(0,0,0,0.6); align-items:center; justify-content:center;">

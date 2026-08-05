@@ -1272,6 +1272,18 @@ async function sendMessage() {
                 let showNameInput = "";
                 if (text.trim() === '/show live') {
                     showNameInput = user;
+                } else if (text.startsWith('/show overrun ')) {
+                    const hours = parseInt(text.substring(14).trim());
+                    if (!isNaN(hours) && hours > 0) {
+                        messageInput.value = '';
+                        const expiry = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
+                        await supabase_db.from('stream_status').update({ overrun_until: expiry }).eq('id', 1);
+                        alert(`⏰ Overrun enabled for ${hours} hours. Automation will be paused.`);
+                        return;
+                    } else {
+                        alert("Please specify a valid number of hours. E.g. /show overrun 2");
+                        return;
+                    }
                 } else if (text.startsWith('/show ')) {
                     showNameInput = text.substring(6).trim().substring(0, 50);
                 }
@@ -2459,10 +2471,12 @@ function handleLoungeTab() {
 }
 
 function handleNoticeboardTab() {
-    if (!isNoticeBoardActive) {
-        toggleNoticeBoardView();
+    toggleNoticeBoardView();
+    if (isNoticeBoardActive) {
+        switchChatMode('noticeboard');
+    } else {
+        switchChatMode('lounge');
     }
-    renderChatTabs();
 }
 
 function handleMaximizeTab() {
@@ -2470,7 +2484,11 @@ function handleMaximizeTab() {
         toggleNoticeBoardView();
     }
     toggleChatFullscreen();
-    renderChatTabs();
+    if (document.body.classList.contains('chat-is-fullscreen')) {
+        switchChatMode('maximize');
+    } else {
+        switchChatMode('lounge');
+    }
 }
 
 function openPrivacyModal() {
@@ -3023,6 +3041,83 @@ function initLogoAnimation() {
     });
 }
 
+async function checkScheduledShow() {
+    try {
+        const { data: statusData, error: statusErr } = await supabase_db.from('stream_status').select('*').eq('id', 1).single();
+        if (statusErr || !statusData) return;
+        
+        if (statusData.overrun_until) {
+            const overrunUntil = new Date(statusData.overrun_until);
+            if (new Date() < overrunUntil) {
+                console.log("[Schedule Automation] Overrun is active until", statusData.overrun_until);
+                return;
+            } else {
+                await supabase_db.from('stream_status').update({ overrun_until: null }).eq('id', 1);
+            }
+        }
+        
+        const { data: masterData } = await supabase_db.from('master_schedule').select('*');
+        const { data: tempOverrides } = await supabase_db.from('temporary_overrides').select('*');
+        
+        if (!masterData) return;
+        
+        const nowUK = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/London' }));
+        const currentDayIndex = nowUK.getDay();
+        const ukDateStr = nowUK.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' }).replace(/\//g, '');
+        
+        const dayOrder = { sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6 };
+        let activeDJ = "tellstream";
+        
+        for (let item of masterData) {
+            if (!item.day_of_week || dayOrder[item.day_of_week.toLowerCase()] === undefined) continue;
+            if (item.dj_name === "tellstream") continue;
+            
+            const startHours = parseInt(item.start_time.substring(0, 2), 10);
+            const startMins = parseInt(item.start_time.substring(2, 4), 10);
+            const endHours = parseInt(item.end_time.substring(0, 2), 10);
+            const endMins = parseInt(item.end_time.substring(2, 4), 10);
+            
+            const targetDayIndex = dayOrder[item.day_of_week.toLowerCase()];
+            let dayDiff = targetDayIndex - currentDayIndex;
+            
+            const baseDate = new Date(nowUK);
+            baseDate.setDate(baseDate.getDate() + dayDiff);
+            
+            const ukStart = new Date(baseDate);
+            ukStart.setHours(startHours, startMins, 0, 0);
+            
+            const ukEnd = new Date(baseDate);
+            ukEnd.setHours(endHours, endMins, 0, 0);
+            if (ukEnd < ukStart) {
+                ukEnd.setDate(ukEnd.getDate() + 1);
+            }
+            
+            if (nowUK >= ukStart && nowUK < ukEnd) {
+                activeDJ = item.dj_name;
+                
+                if (tempOverrides) {
+                    const matchOverride = tempOverrides.find(o => o.start_time === item.start_time && o.specific_date === ukDateStr);
+                    if (matchOverride) {
+                        if (matchOverride.is_cancelled) {
+                            activeDJ = "tellstream";
+                        } else {
+                            activeDJ = matchOverride.dj_name;
+                        }
+                    }
+                }
+                break;
+            }
+        }
+        
+        if (statusData.current_show !== activeDJ) {
+            console.log(`[Schedule Automation] Auto-switching show banner from "${statusData.current_show}" to "${activeDJ}"`);
+            await updateDatabaseStreamStatus(activeDJ);
+        }
+    } catch (e) {
+        console.error("Hourly schedule check failed:", e);
+    }
+}
+
 function updateWebVersionFooter() {
     const el = document.getElementById('header-copyright');
     if (!el) return;
@@ -3038,7 +3133,15 @@ function updateWebVersionFooter() {
     try { await syncBannedUsersMap(); } catch (e) { }
     try { await loadMessages(); } catch (e) { }
     try { await loadInitialStreamStatus(); } catch (e) { }
+    try { await checkScheduledShow(); } catch (e) { }
     try { initLogoAnimation(); } catch (e) { }
+    
+    setInterval(() => {
+        const mins = new Date().getMinutes();
+        if (mins === 0) {
+            checkScheduledShow();
+        }
+    }, 60000);
 
     renderHelpContent(false);
     try { renderChatTabs(); } catch (e) { }
