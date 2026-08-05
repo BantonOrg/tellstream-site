@@ -236,8 +236,6 @@ body {
 }
 
 .sub-panel-top, .sub-panel-bottom {
-    flex: 1;
-    overflow-y: auto;
     background: rgba(20, 20, 20, 0.4);
     padding: 14px;
     border-radius: 8px;
@@ -245,6 +243,57 @@ body {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    transition: flex 0.3s ease-in-out, opacity 0.3s ease-in-out, padding 0.3s ease-in-out, margin 0.3s ease-in-out, border-color 0.3s ease-in-out, min-height 0.3s ease-in-out, height 0.3s ease-in-out;
+}
+
+.sub-panel-top {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.sub-panel-bottom {
+    flex: 0 0 42px;
+    min-height: 42px;
+    height: 42px;
+    overflow: hidden;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    cursor: pointer;
+}
+
+.sub-panel-bottom .emoji-grid-list {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+
+/* Expanded state */
+.sub-panel-bottom.expanded {
+    flex: 1;
+    min-height: 0;
+    height: auto;
+    overflow-y: auto;
+    padding-bottom: 14px;
+    cursor: default;
+}
+
+.sub-panel-bottom.expanded .emoji-grid-list {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.sub-panel-top.collapsed {
+    flex: 0 0 0px;
+    min-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    border-color: transparent;
+    opacity: 0;
+    pointer-events: none;
+    overflow: hidden;
 }
 .help-item-card {
     background: rgba(255, 255, 255, 0.03);

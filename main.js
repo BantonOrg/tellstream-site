@@ -3124,6 +3124,32 @@ async function checkScheduledShow() {
     }
 }
 
+function initColumn3Accordion() {
+    const colTitle = document.querySelector('.col-3 .col-title');
+    const topPanel = document.getElementById('helpCardsContainer');
+    const bottomPanel = document.querySelector('.sub-panel-bottom');
+    
+    if (!colTitle || !topPanel || !bottomPanel) return;
+    
+    colTitle.style.cursor = 'pointer';
+    
+    bottomPanel.addEventListener('click', (e) => {
+        if (e.target.classList.contains('emoji-master-link')) return;
+        
+        if (!bottomPanel.classList.contains('expanded')) {
+            bottomPanel.classList.add('expanded');
+            topPanel.classList.add('collapsed');
+        }
+    });
+    
+    colTitle.addEventListener('click', () => {
+        if (bottomPanel.classList.contains('expanded')) {
+            bottomPanel.classList.remove('expanded');
+            topPanel.classList.remove('collapsed');
+        }
+    });
+}
+
 function updateWebVersionFooter() {
     const el = document.getElementById('header-copyright');
     if (!el) return;
@@ -3141,6 +3167,7 @@ function updateWebVersionFooter() {
     try { await loadInitialStreamStatus(); } catch (e) { }
     try { await checkScheduledShow(); } catch (e) { }
     try { initLogoAnimation(); } catch (e) { }
+    try { initColumn3Accordion(); } catch (e) { }
     
     setInterval(() => {
         const mins = new Date().getMinutes();
