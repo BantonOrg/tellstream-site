@@ -490,16 +490,20 @@ async function renderActiveFlyers() {
     let renderedHtml = "";
     for (let file of files) {
         if (file.name === ".emptyFolderPlaceholder") continue;
+        
+        // flyers must start with a 6-digit date prefix code (DDMMYY)
         const datePrefix = file.name.substring(0, 6);
-        if (/^\d{6}$/.test(datePrefix)) {
-            const day = parseInt(datePrefix.substring(0, 2), 10);
-            const month = parseInt(datePrefix.substring(2, 4), 10) - 1;
-            const year = 2000 + parseInt(datePrefix.substring(4, 6), 10);
-            const expirationDate = new Date(year, month, day);
-            if (expirationDate < today) {
-                await supabase_db.storage.from('flyers').remove([file.name]);
-                continue;
-            }
+        if (!/^\d{6}$/.test(datePrefix)) {
+            continue; // Skip non-flyers (like avatars) stored in the same bucket
+        }
+
+        const day = parseInt(datePrefix.substring(0, 2), 10);
+        const month = parseInt(datePrefix.substring(2, 4), 10) - 1;
+        const year = 2000 + parseInt(datePrefix.substring(4, 6), 10);
+        const expirationDate = new Date(year, month, day);
+        if (expirationDate < today) {
+            await supabase_db.storage.from('flyers').remove([file.name]);
+            continue;
         }
         const { data: urlData } = supabase_db.storage.from('flyers').getPublicUrl(file.name);
         const titleClean = file.name.substring(7).replace(/\.[^/.]+$/, '').replace(/_/g, ' ');
@@ -1633,20 +1637,27 @@ async function fetchAndRenderWeeklyTimetable() {
                 </div>
             `;
         } else {
-            timetableContainer.innerHTML = todayShows.map(show => `
-                <div class="fb-post-card" style="border-left: 4px solid #22e532; margin-bottom: 12px; background: rgba(34, 229, 50, 0.03); padding: 14px; border-radius: 4px;">
-                    <div style="font-weight: 900; color: #22e532; text-transform: uppercase; font-size: 0.95rem; letter-spacing: 1px; display: flex; justify-content: space-between;">
-                        <span>📅 Today</span>
-                        <span style="color: #555; font-size: 0.75rem; text-transform: none; font-weight: normal;">📍 Auto-Translated</span>
+            timetableContainer.innerHTML = todayShows.map(show => {
+                const isRegistered = !!profilesCache[show.dj];
+                const djDisplay = isRegistered 
+                    ? `<strong style="color:#22e532; font-weight:800; cursor:pointer;" onclick="openProfileCard('${escapeHTML(show.dj)}')">${escapeHTML(show.dj)}</strong>`
+                    : `<strong style="color:#fff; font-weight:800;">${escapeHTML(show.dj)}</strong>`;
+                
+                return `
+                    <div class="fb-post-card" style="border-left: 4px solid #22e532; margin-bottom: 12px; background: rgba(34, 229, 50, 0.03); padding: 14px; border-radius: 4px;">
+                        <div style="font-weight: 900; color: #22e532; text-transform: uppercase; font-size: 0.95rem; letter-spacing: 1px; display: flex; justify-content: space-between;">
+                            <span>📅 Today</span>
+                            <span style="color: #555; font-size: 0.75rem; text-transform: none; font-weight: normal;">📍 Auto-Translated</span>
+                        </div>
+                        <div style="color: #ffffff; margin-top: 6px; font-size: 1.25rem; font-weight: 900; letter-spacing: 0.5px;">
+                            ⏰ ${show.start} - ${show.end}
+                        </div>
+                        <div style="color: #a0a0a0; font-size: 0.88rem; margin-top: 8px; border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 8px; display: flex; align-items: center;">
+                            🎙️ <span style="margin-left: 6px;">Presenter: ${djDisplay}</span> ${show.badge}
+                        </div>
                     </div>
-                    <div style="color: #ffffff; margin-top: 6px; font-size: 1.25rem; font-weight: 900; letter-spacing: 0.5px;">
-                        ⏰ ${show.start} - ${show.end}
-                    </div>
-                    <div style="color: #a0a0a0; font-size: 0.88rem; margin-top: 8px; border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 8px; display: flex; align-items: center;">
-                        🎙️ <span style="margin-left: 6px;">Presenter: <strong style="color:#fff; font-weight:800;">${show.dj}</strong></span> ${show.badge}
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         // 2. RENDER THE 2x3 REST OF THE WEEK GRID IN THE MODAL
@@ -1665,17 +1676,24 @@ async function fetchAndRenderWeeklyTimetable() {
                 if (dayShows.length === 0) {
                     showsHtml = `<p style="color:#555; text-align:center; font-style:italic; font-size:0.85rem; margin-top:20px;">No shows scheduled.</p>`;
                 } else {
-                    showsHtml = dayShows.map(show => `
-                        <div style="border-left: 3px solid #22e532; background: rgba(34, 229, 50, 0.02); padding: 10px 12px; border-radius: 6px; font-size: 0.85rem; display: flex; flex-direction: column; gap: 4px;">
-                            <div style="color: #ffffff; font-weight: 800; font-size: 0.95rem; display: flex; justify-content: space-between; align-items: center;">
-                                <span>⏰ ${show.start} - ${show.end}</span>
-                                ${show.badge}
+                    showsHtml = dayShows.map(show => {
+                        const isRegistered = !!profilesCache[show.dj];
+                        const djDisplay = isRegistered 
+                            ? `<strong style="color: #22e532; cursor:pointer;" onclick="openProfileCard('${escapeHTML(show.dj)}')">${escapeHTML(show.dj)}</strong>`
+                            : `<strong style="color: #fff;">${escapeHTML(show.dj)}</strong>`;
+                            
+                        return `
+                            <div style="border-left: 3px solid #22e532; background: rgba(34, 229, 50, 0.02); padding: 10px 12px; border-radius: 6px; font-size: 0.85rem; display: flex; flex-direction: column; gap: 4px;">
+                                <div style="color: #ffffff; font-weight: 800; font-size: 0.95rem; display: flex; justify-content: space-between; align-items: center;">
+                                    <span>⏰ ${show.start} - ${show.end}</span>
+                                    ${show.badge}
+                                </div>
+                                <div style="color: #aaa; display: flex; align-items: center; gap: 6px; font-size: 0.8rem; margin-top: 2px;">
+                                    🎙️ <span>Presenter: ${djDisplay}</span>
+                                </div>
                             </div>
-                            <div style="color: #aaa; display: flex; align-items: center; gap: 6px; font-size: 0.8rem; margin-top: 2px;">
-                                🎙️ <span>Presenter: <strong style="color: #fff;">${show.dj}</strong></span>
-                            </div>
-                        </div>
-                    `).join('');
+                        `;
+                    }).join('');
                 }
 
                 const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
