@@ -3125,7 +3125,7 @@ async function checkScheduledShow() {
 }
 
 function initColumn3Accordion() {
-    const colTitle = document.querySelector('.col-3 .col-title');
+    const colTitle = document.querySelector('.col-3:last-child .col-title');
     const topPanel = document.getElementById('helpCardsContainer');
     const bottomPanel = document.querySelector('.sub-panel-bottom');
     
