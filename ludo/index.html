@@ -118,6 +118,10 @@
             <div class="glass-card seating-layout-card">
                 <h2>Game Players</h2>
                 <p class="seating-hint" id="seating-status-hint">Lobby seating is managed by the game host.</p>
+                <p class="roster-instructions accent-text" id="roster-helper-text" style="display: none;">click name to add or remove to your game</p>
+                <ul id="roster-list" class="roster-list">
+                    <!-- Dynamically filled -->
+                </ul>
 
                 <div class="seats-grid">
                     <!-- Seat Red (Host) -->
@@ -152,12 +156,6 @@
 
             <!-- Lobby Chat/Roster -->
             <div class="glass-card lobby-roster-card">
-                <h2>Room Roster</h2>
-                <p class="roster-instructions accent-text" id="roster-helper-text" style="display: none;">click name to add or remove to your game</p>
-                <ul id="roster-list" class="roster-list">
-                    <!-- Dynamically filled -->
-                </ul>
-
                 <div class="room-chat">
                     <div id="room-chat-messages" class="chat-messages">
                         <!-- Populated with global messages -->
