@@ -1650,9 +1650,10 @@ async function fetchAndRenderWeeklyTimetable() {
             `;
         } else {
             timetableContainer.innerHTML = todayShows.map(show => {
-                const isRegistered = !!profilesCache[show.dj];
+                const matchedProfileKey = Object.keys(profilesCache).find(k => k.toLowerCase() === show.dj.toLowerCase());
+                const isRegistered = !!matchedProfileKey;
                 const djDisplay = isRegistered 
-                    ? `<strong style="color:#22e532; font-weight:800; cursor:pointer;" onclick="openProfileCard('${escapeHTML(show.dj)}')">${escapeHTML(show.dj)}</strong>`
+                    ? `<strong style="color:#22e532; font-weight:800; cursor:pointer;" onclick="openProfileCard('${escapeHTML(matchedProfileKey)}')">${escapeHTML(show.dj)}</strong>`
                     : `<strong style="color:#fff; font-weight:800;">${escapeHTML(show.dj)}</strong>`;
                 
                 return `
@@ -1689,9 +1690,10 @@ async function fetchAndRenderWeeklyTimetable() {
                     showsHtml = `<p style="color:#555; text-align:center; font-style:italic; font-size:0.85rem; margin-top:20px;">No shows scheduled.</p>`;
                 } else {
                     showsHtml = dayShows.map(show => {
-                        const isRegistered = !!profilesCache[show.dj];
+                        const matchedProfileKey = Object.keys(profilesCache).find(k => k.toLowerCase() === show.dj.toLowerCase());
+                        const isRegistered = !!matchedProfileKey;
                         const djDisplay = isRegistered 
-                            ? `<strong style="color: #22e532; cursor:pointer;" onclick="openProfileCard('${escapeHTML(show.dj)}')">${escapeHTML(show.dj)}</strong>`
+                            ? `<strong style="color: #22e532; cursor:pointer;" onclick="openProfileCard('${escapeHTML(matchedProfileKey)}')">${escapeHTML(show.dj)}</strong>`
                             : `<strong style="color: #fff;">${escapeHTML(show.dj)}</strong>`;
                             
                         return `
@@ -2210,9 +2212,13 @@ async function unblockUserAndRefresh(otherUser) {
     await removeRelationship(otherUser);
 }
 
-async function openProfileCard(targetUsername) {
+async function openProfileCard(targetUsernameInput) {
     const modal = document.getElementById('profileCardModal');
     if (!modal) return;
+    
+    // Resolve casing case-insensitively using profilesCache
+    const matchedKey = Object.keys(profilesCache).find(k => k.toLowerCase() === targetUsernameInput.toLowerCase());
+    const targetUsername = matchedKey || targetUsernameInput;
     
     const currentUser = usernameInput.value.trim();
     
