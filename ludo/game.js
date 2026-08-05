@@ -414,15 +414,60 @@ async function leaveRoom() {
         const { data } = await supabase.from("lud_room").select("*").eq("room_code", exitingRoomCode).single();
         if (data) {
             const playersObj = data.players || {};
-            if (playersObj.lobby_roster) {
-                playersObj.lobby_roster = playersObj.lobby_roster.filter(u => u !== myUsername);
-            }
-            COLORS.forEach(color => {
-                if (playersObj[color] === myUsername) {
-                    playersObj[color] = "Waiting...";
+            
+            if (data.game_state === "playing") {
+                if (data.creator === myUsername) {
+                    // Host leaves: disband the game
+                    await supabase.from("lud_room").update({
+                        game_state: "finished",
+                        state: { ...state, winner: "Host Disbanded" }
+                    }).eq("room_code", exitingRoomCode);
+                } else {
+                    // Non-host leaves: disqualify player immediately
+                    if (playerColor) {
+                        playersObj[playerColor] = "Disqualified";
+                        if (playersObj.lobby_roster) {
+                            playersObj.lobby_roster = playersObj.lobby_roster.filter(u => u !== myUsername);
+                        }
+                        
+                        if (state && state.tokens && state.tokens[playerColor]) {
+                            state.tokens[playerColor] = [-1, -1, -1, -1];
+                        }
+                        
+                        const joinedColors = COLORS.filter(c => playersObj[c] && playersObj[c] !== "Waiting..." && playersObj[c] !== "Not In Use" && playersObj[c] !== "Disqualified");
+                        
+                        if (joinedColors.length <= 1) {
+                            const winnerColor = joinedColors[0] || "red";
+                            const winnerName = playersObj[winnerColor] || winnerColor;
+                            state.winner = winnerName;
+                            
+                            await supabase.from("lud_room").update({
+                                players: playersObj,
+                                game_state: "finished",
+                                state: state
+                            }).eq("room_code", exitingRoomCode);
+                        } else {
+                            const nextTurn = currentTurnNumber + 1;
+                            await supabase.from("lud_room").update({
+                                players: playersObj,
+                                turn: nextTurn,
+                                state: state
+                            }).eq("room_code", exitingRoomCode);
+                        }
+                    }
                 }
-            });
-            await supabase.from("lud_room").update({ players: playersObj }).eq("room_code", exitingRoomCode);
+            } else {
+                // Pre-game seating lobby state: remove player normally
+                if (playersObj.lobby_roster) {
+                    playersObj.lobby_roster = playersObj.lobby_roster.filter(u => u !== myUsername);
+                }
+                COLORS.forEach(color => {
+                    if (playersObj[color] === myUsername) {
+                        playersObj[color] = "Waiting...";
+                    }
+                });
+                await supabase.from("lud_room").update({ players: playersObj }).eq("room_code", exitingRoomCode);
+            }
         }
     } catch (e) {
         console.error("Failed to leave room:", e);
