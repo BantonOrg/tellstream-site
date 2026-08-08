@@ -91,7 +91,8 @@
                 <div class="sub-panel-bottom">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                         <span style="font-size:0.85rem; color:#22e532; font-weight:bold;">✨ Quick Emojis</span>
-                        <a href="#" onclick="event.preventDefault(); openEmojiModal();" class="emoji-master-link">See All Codes</a>
+                        <a href="#" onclick="event.preventDefault(); openEmojiModal();" class="emoji-master-link">See
+                            All Codes</a>
                     </div>
                     <div class="emoji-grid-list" id="quickEmojiList"></div>
                 </div>
@@ -134,11 +135,11 @@
                         <circle cx="42" cy="26" r="2" fill="#222" />
                         <circle cx="18" cy="26" r="2" fill="#222" />
                         <circle cx="42" cy="14" r="2" fill="#222" />
-                        
+
                         <circle cx="14" cy="26" r="1.5" fill="#555" />
                         <circle cx="22" cy="38" r="1.5" fill="#555" />
                         <circle cx="18" cy="32" r="1.5" fill="#555" />
-                        
+
                         <circle cx="38" cy="29" r="1.5" fill="#444" />
                         <circle cx="46" cy="37" r="1.5" fill="#444" />
                     </svg>
@@ -155,11 +156,14 @@
                 <input type="text" id="regReminderInput" placeholder="Key Reminder Hint">
                 <input type="email" id="regEmailInput" placeholder="Recovery Email">
             </div>
-            <div style="display:flex; align-items:center; gap:6px; margin: 8px 0; font-size:0.75rem; color:#aaa; user-select:none;">
-                <input type="checkbox" id="showPasskeyCheckbox" onclick="togglePasskeyVisibility('regPasskeyInput')" style="accent-color:#22e532; cursor:pointer;">
+            <div
+                style="display:flex; align-items:center; gap:6px; margin: 8px 0; font-size:0.75rem; color:#aaa; user-select:none;">
+                <input type="checkbox" id="showPasskeyCheckbox" onclick="togglePasskeyVisibility('regPasskeyInput')"
+                    style="accent-color:#22e532; cursor:pointer;">
                 <label for="showPasskeyCheckbox" style="cursor:pointer;">Show Passkey text</label>
             </div>
-            <button class="drawer-action-btn" id="drawerSubmitBtn" onclick="handleSecuritySubmit()">Lock Name Globally</button>
+            <button class="drawer-action-btn" id="drawerSubmitBtn" onclick="handleSecuritySubmit()">Lock Name
+                Globally</button>
             <p id="reminderHintDisplay"
                 style="font-size:0.75rem; color:#ffdd1a; margin-top:6px; display:none; text-align:center;"></p>
 
@@ -364,9 +368,11 @@
                         style="display:flex; flex-direction:column; gap:8px;"></div>
                     <div class="sub-panel-bottom"
                         style="background:transparent; padding:0; border:none; display:flex; flex-direction:column; gap:8px; margin-top:10px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                             <span style="font-size:0.85rem; color:#22e532; font-weight:bold;">✨ Quick Emojis</span>
-                            <a href="#" onclick="event.preventDefault(); openEmojiModal();" class="emoji-master-link">See All Codes</a>
+                            <a href="#" onclick="event.preventDefault(); openEmojiModal();"
+                                class="emoji-master-link">See All Codes</a>
                         </div>
                         <div class="emoji-grid-list" id="quickEmojiListFS"></div>
                     </div>
@@ -422,20 +428,25 @@
     <!-- Fullscreen Emoji Overlay Modal -->
     <div class="emoji-modal-overlay" id="emoji-overlay-modal" onclick="closeEmojiModal()">
         <div class="emoji-modal-content" onclick="event.stopPropagation();">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 15px; flex-shrink: 0; gap: 20px;">
-                <h2 style="color: #22e532; margin: 0; font-size: 1.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 15px; flex-shrink: 0; gap: 20px;">
+                <h2
+                    style="color: #22e532; margin: 0; font-size: 1.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
                     ✨ Emoji Codes</h2>
-                <input type="text" id="emojiSearchInput" placeholder="Search emoji codes..." oninput="filterEmojiModal()"
+                <input type="text" id="emojiSearchInput" placeholder="Search emoji codes..."
+                    oninput="filterEmojiModal()"
                     style="background: #252525; border: 1px solid rgba(255, 255, 255, 0.1); padding: 8px 12px; border-radius: 8px; color: #fff; font-size: 0.9rem; outline: none; flex: 1; max-width: 300px; transition: border-color 0.2s;">
                 <button onclick="closeEmojiModal()"
                     style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.1); color: #fff; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s;"
                     onmouseover="this.style.background='rgba(255,255,255,0.1)'"
                     onmouseout="this.style.background='rgba(255,255,255,0.06)'">Back to Lounge</button>
             </div>
-            <div class="emoji-modal-grid-container" id="emojiModalGridContainer" style="flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; padding: 10px 5px; justify-items: center; align-content: start;">
+            <div class="emoji-modal-grid-container" id="emojiModalGridContainer"
+                style="flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; padding: 10px 5px; justify-items: center; align-content: start;">
                 <!-- Populated dynamically by JS -->
             </div>
-            <div id="emojiModalPagination" style="display: flex; justify-content: center; align-items: center; gap: 15px; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 15px; flex-shrink: 0;">
+            <div id="emojiModalPagination"
+                style="display: flex; justify-content: center; align-items: center; gap: 15px; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 15px; flex-shrink: 0;">
                 <!-- Populated dynamically by JS -->
             </div>
         </div>
@@ -444,8 +455,10 @@
     <script src="/src/assets/emojis.js"></script>
 
     <!-- Game Overlay container -->
-    <div id="game-overlay-container" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:150000; background:#000;">
-        <iframe id="game-overlay-frame" src="" style="width:100%; height:100%; border:none; overflow:hidden;" scrolling="no"></iframe>
+    <div id="game-overlay-container"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:150000; background:#000;">
+        <iframe id="game-overlay-frame" src="" style="width:100%; height:100%; border:none; overflow:hidden;"
+            scrolling="no"></iframe>
     </div>
 
     <!-- User Profile Card Modal -->
@@ -490,16 +503,22 @@
             <h2>🛡️ Privacy Policy</h2>
             <div class="privacy-content">
                 <p><strong>1. Data Minimization & Privacy</strong><br>
-                Tellstream is a private community lounge. We do not track, profile, analyze, or sell your data. No advertising trackers are loaded on this platform.</p>
-                
+                    Tellstream is a private community lounge. We do not track, profile, analyze, or sell your data. No
+                    advertising trackers are loaded on this platform.</p>
+
                 <p><strong>2. Browser Local Storage</strong><br>
-                We use browser local storage purely for functional features: remembering your chat handle, game session tokens, and player volume slider state.</p>
-                
+                    We use browser local storage purely for functional features: remembering your chat handle, game
+                    session tokens, and player volume slider state.</p>
+
                 <p><strong>3. Chat Visibility & Plaintext Storage</strong><br>
-                Please note that this is a public chat lounge. Messages are transmitted and stored in plaintext in the database so that chat history can load when the page is refreshed. They are visible to database administrators for moderation. Do not type any personal details, passwords, or private information in public chat channels.</p>
-                
+                    Please note that this is a public chat lounge. Messages are transmitted and stored in plaintext in
+                    the database so that chat history can load when the page is refreshed. They are visible to database
+                    administrators for moderation. Do not type any personal details, passwords, or private information
+                    in public chat channels.</p>
+
                 <p><strong>4. Passkey Hash Security</strong><br>
-                If you choose to lock your handle, your passkey is immediately hashed server-side using secure database procedures. Raw passkeys are never stored in plaintext and cannot be read by anyone.</p>
+                    If you choose to lock your handle, your passkey is immediately hashed server-side using secure
+                    database procedures. Raw passkeys are never stored in plaintext and cannot be read by anyone.</p>
             </div>
             <button class="privacy-close-btn" onclick="closePrivacyModal()">Close Statement</button>
         </div>
@@ -507,7 +526,8 @@
 
     <!-- Cookie & Local Storage Consent Banner -->
     <div class="cookie-consent-banner" id="cookie-consent-banner">
-        <p>🍪 We use functional local storage to remember your nickname, volume, and active games. No tracking or ads. <a href="#" onclick="event.preventDefault(); openPrivacyModal();">Read Privacy Policy</a></p>
+        <p>🍪 We use functional local storage to remember your nickname, volume, and active games. No tracking or ads.
+            <a href="#" onclick="event.preventDefault(); openPrivacyModal();">Read Privacy Policy</a></p>
         <button class="cookie-accept-btn" onclick="acceptCookieConsent()">Accept</button>
     </div>
 

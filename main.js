@@ -82,6 +82,7 @@ const adminHelpInstructions = [
     { title: "🖼️ Presenter Logo Management", text: "Type: /upload [Presenter Name] - Opens a file picker to upload a transparent PNG logo.\nType: /delete [Presenter Name] - Removes a presenter's logo from storage." },
     { title: "🔥 Event Flyer Management", text: "Type: /uploadflyer [DDMMYY] [Name] - Opens a file picker to upload a flyer image. Note: The name MUST start with the 6-digit date (DDMMYY) followed by a space and the flyer name.\nType: /deleteflyer [DDMMYY] [Name] - Removes a flyer image from storage." },
     { title: "👑 User Role Management (Set Level)", text: "Type: /setlevel [username] [Level] - Sets the access level for a registered user. Levels are: 0 (Normal User), 1 (DJ Selector), or 2 (Station Admin)." },
+    { title: "🌟 VIP Status Management", text: "Type: /promote VIP [1/3/6/12/perm] [username] - Grants a user VIP status for a specified duration in months or permanent.\nType: /demote VIP [username] - Removes VIP status from a user." },
     { title: "⚔️ Blocklist & Profanity Management", text: "Type: /add [word] - Adds a bad word to the blocked list.\nType: /del [word] - Removes a word from the blocked list.\nType: /listwords - Lists all currently blocked words." },
     { title: "🚫 Unbanning Users", text: "Type: /unban [username]\nWhat it does: Clears all strikes and restores chat/noticeboard access instantly for locked or banned users." }
 ];
@@ -315,7 +316,7 @@ function appendPrivateWarning(user, text, strikeCount, customMessage = null) {
             }
             if (profile.hover_title) hoverAttribute = `title="${escapeHTML(profile.hover_title)}"`;
         }
-        msgDiv.innerHTML = `<div class="user ${nameClass}" ${hoverAttribute}>${escapeHTML(user)}</div><div>${escapeHTML(maskedText)}</div>`;
+        msgDiv.innerHTML = `<div class="user ${nameClass}" ${hoverAttribute}>${escapeHTML(getDisplayName(user))}</div><div>${escapeHTML(maskedText)}</div>`;
         chatBox.appendChild(msgDiv);
     }
     anchorChatToBottom();
@@ -449,6 +450,100 @@ async function handleSetLevelCommand(text) {
     }
 }
 
+async function handleVipCommand(text) {
+    let targetUsername = "";
+    let isPromote = text.startsWith('/promote ');
+    let newHoverTitle = "Tella Fambily";
+    let newLevel = 0;
+    
+    if (isPromote) {
+        const rawArgs = text.substring(13).trim(); // skips "/promote VIP "
+        const firstSpace = rawArgs.indexOf(' ');
+        if (firstSpace === -1) {
+            alert("Usage: /promote VIP [1/3/6/12/perm] [username]");
+            return;
+        }
+        const durationStr = rawArgs.substring(0, firstSpace).trim();
+        targetUsername = rawArgs.substring(firstSpace + 1).trim();
+        
+        let expiryVal = "";
+        if (durationStr.toLowerCase() === 'perm' || durationStr.toLowerCase() === 'permanent') {
+            expiryVal = 'permanent';
+        } else {
+            const months = parseInt(durationStr);
+            if (isNaN(months) || ![1, 3, 6, 12].includes(months)) {
+                alert("Invalid duration. Use 1, 3, 6, 12 (months) or perm.");
+                return;
+            }
+            const d = new Date();
+            d.setMonth(d.getMonth() + months);
+            expiryVal = d.toISOString();
+        }
+        newHoverTitle = "VIP|" + expiryVal;
+        newLevel = 1;
+    } else {
+        let rawArgs = text.substring(8).trim(); // skips "/demote "
+        if (rawArgs.toUpperCase().startsWith('VIP ')) {
+            rawArgs = rawArgs.substring(4).trim();
+        }
+        targetUsername = rawArgs;
+        newHoverTitle = "Tella Fambily";
+        newLevel = 0;
+    }
+    
+    if (!targetUsername) {
+        alert(isPromote ? "Usage: /promote VIP [1/3/6/12/perm] [username]" : "Usage: /demote VIP [username]");
+        return;
+    }
+    
+    const targetProfile = Object.values(profilesCache).find(p => p.username.toLowerCase() === targetUsername.toLowerCase());
+    if (!targetProfile) {
+        alert(`User "${targetUsername}" does not have a secured profile (not registered).`);
+        return;
+    }
+    
+    const currentLevel = parseInt(targetProfile.power_level || 0);
+    const isVip = isUserVip(targetProfile);
+    
+    if (isPromote) {
+        if (currentLevel !== 0) {
+            alert(`User "${targetProfile.username}" is a Level ${currentLevel} user (DJ or Admin) and is already VIP by default.`);
+            return;
+        }
+        if (isVip) {
+            alert(`User "${targetProfile.username}" is already a VIP.`);
+            return;
+        }
+    } else {
+        if (currentLevel !== 0) {
+            alert(`User "${targetProfile.username}" is a Level ${currentLevel} user (DJ or Admin) and is VIP by default (cannot be demoted).`);
+            return;
+        }
+        if (!isVip) {
+            alert(`User "${targetProfile.username}" is not a VIP.`);
+            return;
+        }
+    }
+    
+    const adminUser = localStorage.getItem('tellstream_saved_username') || "";
+    const adminPasskey = localStorage.getItem('tellstream_key_' + adminUser) || "";
+    
+    try {
+        const { error } = await supabase_db.rpc('secure_promote_demote', {
+            p_admin_username: adminUser,
+            p_admin_passkey: adminPasskey,
+            p_target_username: targetProfile.username,
+            p_target_level: newLevel,
+            p_new_hover_title: newHoverTitle
+        });
+        
+        if (error) throw error;
+        alert(`Success: "${targetProfile.username}" has been ${isPromote ? 'promoted to VIP' : 'demoted from VIP'}.`);
+    } catch (err) {
+        alert("Database Update Failure: " + err.message);
+    }
+}
+
 async function renderSiteNewsFeed() {
     const ticker = document.getElementById('newsTickerContent');
     if (!ticker) return;
@@ -490,7 +585,7 @@ async function renderActiveFlyers() {
     let renderedHtml = "";
     for (let file of files) {
         if (file.name === ".emptyFolderPlaceholder") continue;
-        
+
         // flyers must start with a 6-digit date prefix code (DDMMYY)
         const datePrefix = file.name.substring(0, 6);
         if (!/^\d{6}$/.test(datePrefix)) {
@@ -1172,6 +1267,21 @@ async function syncProfilesMap() {
     profilesCache = {};
     if (data) data.forEach(p => { profilesCache[p.username] = p; });
     syncDrawerName();
+
+    const currentUser = localStorage.getItem('tellstream_saved_username');
+    if (currentUser && profilesCache[currentUser]) {
+        const profile = profilesCache[currentUser];
+        const hover = profile.hover_title;
+        if (hover && hover.toUpperCase().startsWith('VIP|') && !isUserVip(profile)) {
+            try {
+                await supabase_db.from('secured_profiles')
+                    .update({ power_level: 0, hover_title: 'Tella Fambily' })
+                    .eq('username', currentUser);
+            } catch (e) {
+                console.error("Failed to auto-demote expired VIP user:", e);
+            }
+        }
+    }
 }
 
 async function syncBannedWordsMap() {
@@ -1215,7 +1325,7 @@ function appendMessage(data) {
         if (profile.hover_title) hoverAttribute = `title="${escapeHTML(profile.hover_title)}"`;
     }
 
-    msgDiv.innerHTML = `<div class="user ${nameClass}" ${hoverAttribute} style="cursor:pointer;" onclick="openProfileCard('${escapeHTML(data.username)}')">${escapeHTML(data.username)}</div><div>${messageContent}</div>`;
+    msgDiv.innerHTML = `<div class="user ${nameClass}" ${hoverAttribute} style="cursor:pointer;" onclick="openProfileCard('${escapeHTML(data.username)}')">${escapeHTML(getDisplayName(data.username))}</div><div>${messageContent}</div>`;
     chatBox.appendChild(msgDiv);
     anchorChatToBottom();
     while (chatBox.children.length > 50) chatBox.removeChild(chatBox.firstChild);
@@ -1223,6 +1333,32 @@ function appendMessage(data) {
 
 function escapeHTML(str) {
     return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+}
+
+function isUserVip(profile) {
+    if (!profile) return false;
+    const pLevel = parseInt(profile.power_level || 0);
+    if (pLevel >= 1) return true;
+    const hover = profile.hover_title;
+    if (!hover) return false;
+    if (hover === 'VIP' || hover.toUpperCase() === 'VIP') return true;
+    if (hover.toUpperCase().startsWith('VIP|')) {
+        const expiryStr = hover.substring(4);
+        if (expiryStr === 'permanent') return true;
+        const expiryTime = Date.parse(expiryStr);
+        if (!isNaN(expiryTime)) {
+            return Date.now() < expiryTime;
+        }
+    }
+    return false;
+}
+
+function getDisplayName(username) {
+    const profile = profilesCache[username];
+    if (isUserVip(profile)) {
+        return "VIP-" + username;
+    }
+    return username;
 }
 
 async function loadMessages() {
@@ -1293,6 +1429,17 @@ async function sendMessage() {
                     await updateDatabaseStreamStatus(showNameInput);
                     return;
                 }
+            }
+
+            if (text.startsWith('/promote VIP ') || text.startsWith('/demote VIP ') || text.startsWith('/demote ')) {
+                if (userPowerLevel < 2) {
+                    messageInput.value = '';
+                    alert("🔒 Access Denied: Only Station Admins (Level 2) have authorization to change VIP status.");
+                    return;
+                }
+                messageInput.value = '';
+                await handleVipCommand(text);
+                return;
             }
 
             if (text.startsWith('/setlevel ')) {
@@ -1652,10 +1799,10 @@ async function fetchAndRenderWeeklyTimetable() {
             timetableContainer.innerHTML = todayShows.map(show => {
                 const matchedProfileKey = Object.keys(profilesCache).find(k => k.toLowerCase() === show.dj.toLowerCase());
                 const isRegistered = !!matchedProfileKey;
-                const djDisplay = isRegistered 
-                    ? `<strong style="color:#22e532; font-weight:800; cursor:pointer;" onclick="openProfileCard('${escapeHTML(matchedProfileKey)}')">${escapeHTML(show.dj)}</strong>`
+                const djDisplay = isRegistered
+                    ? `<strong style="color:#22e532; font-weight:800; cursor:pointer;" onclick="openProfileCard('${escapeHTML(matchedProfileKey)}')">${escapeHTML(getDisplayName(show.dj))}</strong>`
                     : `<strong style="color:#fff; font-weight:800;">${escapeHTML(show.dj)}</strong>`;
-                
+
                 return `
                     <div class="fb-post-card" style="border-left: 4px solid #22e532; margin-bottom: 12px; background: rgba(34, 229, 50, 0.03); padding: 14px; border-radius: 4px;">
                         <div style="font-weight: 900; color: #22e532; text-transform: uppercase; font-size: 0.95rem; letter-spacing: 1px; display: flex; justify-content: space-between;">
@@ -1692,10 +1839,10 @@ async function fetchAndRenderWeeklyTimetable() {
                     showsHtml = dayShows.map(show => {
                         const matchedProfileKey = Object.keys(profilesCache).find(k => k.toLowerCase() === show.dj.toLowerCase());
                         const isRegistered = !!matchedProfileKey;
-                        const djDisplay = isRegistered 
-                            ? `<strong style="color: #22e532; cursor:pointer;" onclick="openProfileCard('${escapeHTML(matchedProfileKey)}')">${escapeHTML(show.dj)}</strong>`
+                        const djDisplay = isRegistered
+                            ? `<strong style="color: #22e532; cursor:pointer;" onclick="openProfileCard('${escapeHTML(matchedProfileKey)}')">${escapeHTML(getDisplayName(show.dj))}</strong>`
                             : `<strong style="color: #fff;">${escapeHTML(show.dj)}</strong>`;
-                            
+
                         return `
                             <div style="border-left: 3px solid #22e532; background: rgba(34, 229, 50, 0.02); padding: 10px 12px; border-radius: 6px; font-size: 0.85rem; display: flex; flex-direction: column; gap: 4px;">
                                 <div style="color: #ffffff; font-weight: 800; font-size: 0.95rem; display: flex; justify-content: space-between; align-items: center;">
@@ -1784,7 +1931,7 @@ async function onUserVerifiedSuccess(username) {
                 status_invisible: false
             };
         }
-    } catch(e) {
+    } catch (e) {
         console.error("Error loading profile:", e);
     }
 
@@ -1815,7 +1962,7 @@ async function initPresenceTracking(username) {
     if (presenceTracker) {
         presenceTracker.unsubscribe();
     }
-    
+
     presenceTracker = supabase_db.channel('public:presence', {
         config: {
             presence: {
@@ -1856,7 +2003,7 @@ async function loadRelationships(username) {
         const { data, error } = await supabase_db.from('fambily_relations')
             .select('*')
             .or(`sender.eq.${username},receiver.eq.${username}`);
-        
+
         relationshipMap = {};
         if (data && !error) {
             data.forEach(rel => {
@@ -1869,7 +2016,7 @@ async function loadRelationships(username) {
                 };
             });
         }
-    } catch(e) {
+    } catch (e) {
         console.error(e);
     }
 }
@@ -1887,7 +2034,7 @@ async function checkBlockedStatus(user, receiver) {
         if (data && data.status === 'blocked' && data.sender === receiver) {
             return true;
         }
-    } catch(e) {}
+    } catch (e) { }
     return false;
 }
 
@@ -1895,7 +2042,7 @@ function initRealtimePrivateSubscriptions(username) {
     if (activePrivateSub) {
         activePrivateSub.unsubscribe();
     }
-    
+
     activePrivateSub = supabase_db.channel('public:private_channels')
         .on('postgres_changes', { event: '*', pattern: 'public', table: 'fambily_relations' }, async () => {
             await loadRelationships(username);
@@ -1924,15 +2071,15 @@ function toggleFambilyDrawer() {
     const currentName = usernameInput.value.trim();
     const authorizedKey = localStorage.getItem('tellstream_key_' + currentName);
     const isVerified = currentName && authorizedKey && isCurrentUserVerified;
-    
+
     if (!isVerified) {
         alert("🔒 Please secure and verify your handle first to use the Fambily drawer.");
         toggleSecurityDrawer();
         return;
     }
-    
+
     securityDrawer.classList.remove('open');
-    
+
     const drawer = document.getElementById('fambilyDrawer');
     if (drawer.classList.toggle('open')) {
         onUserVerifiedSuccess(currentName);
@@ -1953,7 +2100,7 @@ function switchFambilyTab(tabName) {
             content.style.display = 'none';
         }
     });
-    
+
     if (tabName === 'fambily') {
         renderFambilyList();
     } else if (tabName === 'requests') {
@@ -1977,16 +2124,16 @@ function hideBlockedList() {
 function handleAvatarSelected(event) {
     const file = event.target.files[0];
     if (!file) return;
-    
+
     if (file.size > 500 * 1024) {
         alert("Image file size exceeds 500KB limit.");
         return;
     }
-    
+
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = function (e) {
         const img = new Image();
-        img.onload = function() {
+        img.onload = function () {
             const canvas = document.createElement('canvas');
             canvas.width = 128;
             canvas.height = 128;
@@ -2005,28 +2152,28 @@ function handleAvatarSelected(event) {
 async function saveProfileChanges() {
     const currentUser = usernameInput.value.trim();
     if (!isCurrentUserVerified) return;
-    
+
     const location = document.getElementById('profileLocationInput').value.trim();
     const socials = document.getElementById('profileSocialsInput').value.trim();
     const bio = document.getElementById('profileBioInput').value.trim();
     const visibility = document.getElementById('profileVisibilitySelect').value;
     const invisible = document.getElementById('profileInvisibleCheckbox').checked;
-    
+
     let avatarUrl = myProfile?.avatar_url || '';
     const preview = document.getElementById('myAvatarImg');
-    
+
     if (preview.src.startsWith('data:image/')) {
         try {
             const response = await fetch(preview.src);
             const blob = await response.blob();
             const filename = `avatars_${currentUser}.png`;
-            
+
             const { error: uploadError } = await supabase_db.storage.from('flyers').upload(filename, blob, {
                 cacheControl: '3600',
                 upsert: true
             });
             if (uploadError) throw uploadError;
-            
+
             const { data } = supabase_db.storage.from('flyers').getPublicUrl(filename);
             avatarUrl = data.publicUrl;
         } catch (uploadErr) {
@@ -2034,7 +2181,7 @@ async function saveProfileChanges() {
             return;
         }
     }
-    
+
     try {
         const { error } = await supabase_db.from('secured_profiles')
             .update({
@@ -2046,9 +2193,9 @@ async function saveProfileChanges() {
                 status_invisible: invisible
             })
             .eq('username', currentUser);
-            
+
         if (error) throw error;
-        
+
         myProfile = {
             location,
             socials,
@@ -2057,12 +2204,12 @@ async function saveProfileChanges() {
             avatar_url: avatarUrl,
             status_invisible: invisible
         };
-        
+
         await initPresenceTracking(currentUser);
         alert("Profile saved successfully!");
         const drawer = document.getElementById('fambilyDrawer');
         drawer.classList.remove('open');
-    } catch(err) {
+    } catch (err) {
         alert("Failed to save profile: " + err.message);
     }
 }
@@ -2070,18 +2217,18 @@ async function saveProfileChanges() {
 async function sendFambilyRequest() {
     const inputVal = document.getElementById('addFambilyInput').value.trim();
     if (!inputVal) return;
-    
+
     const currentUser = usernameInput.value.trim();
     if (inputVal === currentUser) {
         alert("You cannot add yourself to Fambily.");
         return;
     }
-    
+
     if (!profilesCache[inputVal]) {
         alert(`User "${inputVal}" is not registered on the site.`);
         return;
     }
-    
+
     const rel = relationshipMap[inputVal];
     if (rel) {
         if (rel.status === 'blocked') {
@@ -2093,7 +2240,7 @@ async function sendFambilyRequest() {
         }
         return;
     }
-    
+
     try {
         const { error } = await supabase_db.from('fambily_relations').insert([{
             sender: currentUser,
@@ -2101,12 +2248,12 @@ async function sendFambilyRequest() {
             status: 'request'
         }]);
         if (error) throw error;
-        
+
         document.getElementById('addFambilyInput').value = "";
         alert(`Fambily request sent to "${inputVal}"!`);
         await loadRelationships(currentUser);
         renderRequestsList();
-    } catch(err) {
+    } catch (err) {
         alert("Failed to send request: " + err.message);
     }
 }
@@ -2120,7 +2267,7 @@ async function sendFambilyRequestTo(target) {
             status: 'request'
         }]);
         await loadRelationships(currentUser);
-    } catch(e) {
+    } catch (e) {
         console.error(e);
     }
 }
@@ -2129,17 +2276,17 @@ async function acceptFambilyRequestFrom(otherUser) {
     const currentUser = usernameInput.value.trim();
     const rel = relationshipMap[otherUser];
     if (!rel) return;
-    
+
     try {
         const { error } = await supabase_db.from('fambily_relations')
             .update({ status: 'fambily' })
             .eq('id', rel.id);
         if (error) throw error;
-        
+
         await loadRelationships(currentUser);
         renderRequestsList();
         renderFambilyList();
-    } catch(err) {
+    } catch (err) {
         alert("Failed to accept request: " + err.message);
     }
 }
@@ -2156,18 +2303,18 @@ async function removeRelationship(otherUser) {
     const currentUser = usernameInput.value.trim();
     const rel = relationshipMap[otherUser];
     if (!rel) return;
-    
+
     try {
         const { error } = await supabase_db.from('fambily_relations')
             .delete()
             .eq('id', rel.id);
         if (error) throw error;
-        
+
         await loadRelationships(currentUser);
         renderRequestsList();
         renderFambilyList();
         renderBlockedList();
-    } catch(err) {
+    } catch (err) {
         alert("Failed to update status: " + err.message);
     }
 }
@@ -2179,7 +2326,7 @@ async function removeRelationshipAndRefresh(otherUser) {
 async function blockUserAndRelationship(otherUser) {
     const currentUser = usernameInput.value.trim();
     const rel = relationshipMap[otherUser];
-    
+
     try {
         if (rel) {
             const { error } = await supabase_db.from('fambily_relations')
@@ -2203,7 +2350,7 @@ async function blockUserAndRelationship(otherUser) {
         renderRequestsList();
         renderFambilyList();
         renderBlockedList();
-    } catch(err) {
+    } catch (err) {
         alert("Failed to block user: " + err.message);
     }
 }
@@ -2215,23 +2362,49 @@ async function unblockUserAndRefresh(otherUser) {
 async function openProfileCard(targetUsernameInput) {
     const modal = document.getElementById('profileCardModal');
     if (!modal) return;
-    
+
     // Resolve casing case-insensitively using profilesCache
     const matchedKey = Object.keys(profilesCache).find(k => k.toLowerCase() === targetUsernameInput.toLowerCase());
     const targetUsername = matchedKey || targetUsernameInput;
-    
+
     const currentUser = usernameInput.value.trim();
-    
+
     // Set loading/default values
-    document.getElementById('profileCardUsername').innerText = targetUsername;
+    document.getElementById('profileCardUsername').innerText = getDisplayName(targetUsername);
     const avatarImg = document.getElementById('profileCardAvatar');
     avatarImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23444'/><text x='50' y='60' font-size='30' font-family='sans-serif' text-anchor='middle' fill='%23fff'>?</text></svg>";
-    
+
     const levelSpan = document.getElementById('profileCardLevel');
     const profile = profilesCache[targetUsername];
+
+    const vipBadge = document.getElementById('profileCardVipBadge');
+    if (vipBadge) {
+        if (isUserVip(profile)) {
+            vipBadge.style.display = 'inline-block';
+            if (profile && profile.hover_title && profile.hover_title.toUpperCase().startsWith('VIP|')) {
+                const expiryStr = profile.hover_title.substring(4);
+                if (expiryStr !== 'permanent') {
+                    const expiryDate = new Date(expiryStr);
+                    vipBadge.title = "Expires: " + expiryDate.toLocaleDateString();
+                } else {
+                    vipBadge.title = "Permanent VIP";
+                }
+            } else {
+                const pLevel = parseInt(profile?.power_level || 0);
+                if (pLevel >= 1) {
+                    vipBadge.title = "VIP by Default";
+                } else {
+                    vipBadge.title = "Permanent VIP";
+                }
+            }
+        } else {
+            vipBadge.style.display = 'none';
+        }
+    }
+
     let levelText = "Registered Member";
     let levelStyle = "background:rgba(34,229,50,0.15); color:#22e532;";
-    
+
     if (profile) {
         const pLevel = parseInt(profile.power_level || 0);
         if (pLevel >= 2) {
@@ -2244,12 +2417,12 @@ async function openProfileCard(targetUsernameInput) {
     }
     levelSpan.innerText = levelText;
     levelSpan.style = levelStyle;
-    
+
     // Clear details first
     document.getElementById('profileCardLocation').innerText = "Hidden";
     document.getElementById('profileCardSocials').innerText = "Hidden";
     document.getElementById('profileCardBio').innerText = "This user hasn't written a bio yet.";
-    
+
     const actionsDiv = document.getElementById('profileCardActions');
     actionsDiv.innerHTML = ""; // Clear actions
 
@@ -2262,14 +2435,14 @@ async function openProfileCard(targetUsernameInput) {
             .select('location, socials, bio, profile_visibility, avatar_url')
             .eq('username', targetUsername)
             .single();
-            
+
         if (data && !error) {
             if (data.avatar_url) avatarImg.src = data.avatar_url;
-            
+
             // Check visibility
             const visibility = data.profile_visibility || 'fambily';
             let allowedToSee = false;
-            
+
             if (visibility === 'everyone' || targetUsername === currentUser) {
                 allowedToSee = true;
             } else if (visibility === 'fambily') {
@@ -2278,7 +2451,7 @@ async function openProfileCard(targetUsernameInput) {
                     allowedToSee = true;
                 }
             }
-            
+
             if (allowedToSee) {
                 document.getElementById('profileCardLocation').innerText = data.location || "Not specified";
                 document.getElementById('profileCardSocials').innerText = data.socials || "Not specified";
@@ -2289,7 +2462,7 @@ async function openProfileCard(targetUsernameInput) {
                 document.getElementById('profileCardBio').innerText = "Fambily Only details.";
             }
         }
-    } catch(e) {
+    } catch (e) {
         console.error(e);
     }
 
@@ -2297,7 +2470,7 @@ async function openProfileCard(targetUsernameInput) {
     if (targetUsername !== currentUser && isCurrentUserVerified) {
         const rel = relationshipMap[targetUsername];
         const isBlocked = rel && rel.status === 'blocked';
-        
+
         if (!isBlocked) {
             const weAreBlocked = await checkBlockedStatus(currentUser, targetUsername);
             if (!weAreBlocked) {
@@ -2311,7 +2484,7 @@ async function openProfileCard(targetUsernameInput) {
                 actionsDiv.appendChild(dmBtn);
             }
         }
-        
+
         // Fambily status button
         if (!rel) {
             const addBtn = document.createElement('button');
@@ -2332,7 +2505,7 @@ async function openProfileCard(targetUsernameInput) {
                     openProfileCard(targetUsername);
                 };
                 actionsDiv.appendChild(acceptBtn);
-                
+
                 const ignoreBtn = document.createElement('button');
                 ignoreBtn.className = "drawer-action-inline-btn btn-red";
                 ignoreBtn.innerText = "Ignore";
@@ -2360,7 +2533,7 @@ async function openProfileCard(targetUsernameInput) {
             };
             actionsDiv.appendChild(removeBtn);
         }
-        
+
         // Block button
         if (rel && rel.status === 'blocked' && rel.sender === currentUser) {
             const unblockBtn = document.createElement('button');
@@ -2404,7 +2577,7 @@ function switchChatMode(mode) {
             tab.classList.remove('active');
         }
     });
-    
+
     if (mode === 'lounge') {
         chatBox.innerHTML = "";
         loadMessages();
@@ -2441,18 +2614,18 @@ function togglePasskeyVisibility(inputId) {
 function renderChatTabs() {
     const tabsBar = document.getElementById('chatTabsBar');
     if (!tabsBar) return;
-    
+
     const isLounge = currentChatMode === 'lounge' && !isNoticeBoardActive && !document.body.classList.contains('chat-is-fullscreen');
     const isNotice = isNoticeBoardActive;
     const isFS = document.body.classList.contains('chat-is-fullscreen') && !isNoticeBoardActive;
     const fsText = document.body.classList.contains('chat-is-fullscreen') ? "Exit Fullscreen" : "Maximize Chat";
-    
+
     tabsBar.innerHTML = `
         <div class="chat-tab-btn ${isLounge ? 'active' : ''}" id="tab-lounge" onclick="handleLoungeTab()">Lounge</div>
         <div class="chat-tab-btn ${isNotice ? 'active' : ''}" id="tab-noticeboard" onclick="handleNoticeboardTab()">Noticeboard</div>
         <div class="chat-tab-btn ${isFS ? 'active' : ''}" id="tab-maximize" onclick="handleMaximizeTab()">${fsText}</div>
     `;
-    
+
     activeDMTabs.forEach(username => {
         const isActive = currentChatMode === `dm:${username}`;
         tabsBar.innerHTML += `
@@ -2516,20 +2689,20 @@ function acceptCookieConsent() {
 function renderFambilyList() {
     const container = document.getElementById('fambilyListContainer');
     if (!container) return;
-    
+
     container.innerHTML = "";
-    
+
     const fambilyKeys = Object.keys(relationshipMap).filter(u => relationshipMap[u].status === 'fambily');
     if (fambilyKeys.length === 0) {
         container.innerHTML = `<p style="font-size:0.75rem; color:#666; text-align:center; padding:10px;">No Fambily members added yet.</p>`;
         return;
     }
-    
+
     fambilyKeys.forEach(user => {
         const isOnline = !!onlineUsers[user];
         const avatarUrl = profilesCache[user]?.avatar_url || '';
         const avatarSrc = avatarUrl || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23444'/><text x='50' y='60' font-size='30' font-family='sans-serif' text-anchor='middle' fill='%23fff'>?</text></svg>";
-        
+
         const profile = profilesCache[user];
         let nameClass = "user-unregistered";
         if (profile) {
@@ -2538,7 +2711,7 @@ function renderFambilyList() {
             else if (pLevel === 1) nameClass = "user-selector";
             else nameClass = "user-registered";
         }
-        
+
         const item = document.createElement('div');
         item.className = "drawer-list-item";
         item.innerHTML = `
@@ -2562,14 +2735,14 @@ function renderRequestsList() {
     const incomingContainer = document.getElementById('incomingReqsContainer');
     const outgoingContainer = document.getElementById('outgoingReqsContainer');
     if (!incomingContainer || !outgoingContainer) return;
-    
+
     incomingContainer.innerHTML = "";
     outgoingContainer.innerHTML = "";
-    
+
     const incoming = [];
     const outgoing = [];
     const currentUser = usernameInput.value.trim();
-    
+
     Object.keys(relationshipMap).forEach(user => {
         const rel = relationshipMap[user];
         if (rel.status === 'request') {
@@ -2577,7 +2750,7 @@ function renderRequestsList() {
             else outgoing.push(user);
         }
     });
-    
+
     if (incoming.length === 0) {
         incomingContainer.innerHTML = `<p style="font-size:0.75rem; color:#666; text-align:center; padding:5px;">No incoming requests.</p>`;
     } else {
@@ -2594,7 +2767,7 @@ function renderRequestsList() {
             incomingContainer.appendChild(item);
         });
     }
-    
+
     if (outgoing.length === 0) {
         outgoingContainer.innerHTML = `<p style="font-size:0.75rem; color:#666; text-align:center; padding:5px;">No sent requests.</p>`;
     } else {
@@ -2615,16 +2788,16 @@ function renderRequestsList() {
 function renderBlockedList() {
     const container = document.getElementById('blockedListContainer');
     if (!container) return;
-    
+
     container.innerHTML = "";
     const currentUser = usernameInput.value.trim();
     const blockedKeys = Object.keys(relationshipMap).filter(u => relationshipMap[u].status === 'blocked' && relationshipMap[u].sender === currentUser);
-    
+
     if (blockedKeys.length === 0) {
         container.innerHTML = `<p style="font-size:0.75rem; color:#666; text-align:center; padding:10px;">No blocked users.</p>`;
         return;
     }
-    
+
     blockedKeys.forEach(user => {
         const item = document.createElement('div');
         item.className = "drawer-list-item";
@@ -2641,29 +2814,29 @@ function renderBlockedList() {
 function renderOnlineUsersList() {
     const container = document.getElementById('onlineUsersList');
     if (!container) return;
-    
+
     container.innerHTML = "";
-    
+
     const users = Object.keys(onlineUsers);
     const currentUser = usernameInput.value.trim();
-    
+
     const visibleUsers = users.filter(user => {
         if (user === currentUser) return false;
         const rel = relationshipMap[user];
         if (rel && rel.status === 'blocked') return false;
         return true;
     });
-    
+
     if (visibleUsers.length === 0) {
         container.innerHTML = `<p style="font-size:0.75rem; color:#666; text-align:center; padding:10px;">No other users online.</p>`;
         return;
     }
-    
+
     visibleUsers.forEach(user => {
         const info = onlineUsers[user];
         const avatarUrl = info.avatar_url || profilesCache[user]?.avatar_url || '';
         const avatarSrc = avatarUrl || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23444'/><text x='50' y='60' font-size='30' font-family='sans-serif' text-anchor='middle' fill='%23fff'>?</text></svg>";
-        
+
         const profile = profilesCache[user];
         let nameClass = "user-unregistered";
         if (profile) {
@@ -2672,7 +2845,7 @@ function renderOnlineUsersList() {
             else if (pLevel === 1) nameClass = "user-selector";
             else nameClass = "user-registered";
         }
-        
+
         const item = document.createElement('div');
         item.className = "online-user-item";
         item.onclick = () => openProfileCard(user);
@@ -2692,10 +2865,10 @@ function renderOnlineUsersList() {
 async function loadPrivateMessages(otherUser) {
     const currentUser = usernameInput.value.trim();
     chatBox.innerHTML = "";
-    
+
     const rel = relationshipMap[otherUser];
     const checkBlocked = await checkBlockedStatus(currentUser, otherUser);
-    
+
     if (checkBlocked) {
         const systemDiv = document.createElement('div');
         systemDiv.className = 'msg-system';
@@ -2707,7 +2880,7 @@ async function loadPrivateMessages(otherUser) {
     if (!rel || rel.status === 'request') {
         const requestDiv = document.createElement('div');
         requestDiv.style = "background:rgba(34,229,50,0.05); border:1px solid rgba(34,229,50,0.2); border-radius:8px; padding:15px; text-align:center; margin:15px; color:#ccc; font-size:0.8rem;";
-        
+
         if (rel && rel.receiver === currentUser) {
             requestDiv.innerHTML = `
                 <p style="margin-bottom:10px;"><b>\${otherUser}</b> sent you a Fambily request to chat privately.</p>
@@ -2732,12 +2905,12 @@ async function loadPrivateMessages(otherUser) {
             .or(`and(sender.eq.\${currentUser},receiver.eq.\${otherUser}),and(sender.eq.\${otherUser},receiver.eq.\${currentUser})`)
             .order('id', { ascending: false })
             .limit(40);
-            
+
         if (data && !error) {
             data.reverse().forEach(appendPrivateMessage);
             anchorChatToBottom();
         }
-    } catch(e) {
+    } catch (e) {
         console.error(e);
     }
 }
@@ -2767,7 +2940,7 @@ function appendPrivateMessage(msg) {
         if (profile.hover_title) hoverAttribute = `title="\${escapeHTML(profile.hover_title)}"`;
     }
 
-    msgDiv.innerHTML = `<div class="user \${nameClass}" \${hoverAttribute} style="cursor:pointer;" onclick="openProfileCard('\${escapeHTML(msg.sender)}')">\${escapeHTML(msg.sender)}</div><div>\${messageContent}</div>`;
+    msgDiv.innerHTML = `<div class="user \${nameClass}" \${hoverAttribute} style="cursor:pointer;" onclick="openProfileCard('\${escapeHTML(msg.sender)}')">\${escapeHTML(getDisplayName(msg.sender))}</div><div>\${messageContent}</div>`;
     chatBox.appendChild(msgDiv);
     anchorChatToBottom();
     while (chatBox.children.length > 50) chatBox.removeChild(chatBox.firstChild);
@@ -2789,13 +2962,13 @@ function openEmojiModal() {
         modal.style.display = 'flex';
         modal.offsetHeight; // force reflow
         modal.classList.add('active');
-        
+
         const searchInput = document.getElementById('emojiSearchInput');
         if (searchInput) {
             searchInput.value = '';
             setTimeout(() => searchInput.focus(), 100);
         }
-        
+
         currentEmojiPage = 1;
         renderEmojiModalGrid('');
     }
@@ -2817,28 +2990,28 @@ function renderEmojiModalGrid(searchTerm = '') {
     const gridContainer = document.getElementById('emojiModalGridContainer');
     const paginationContainer = document.getElementById('emojiModalPagination');
     if (!gridContainer || !window.emojiMapping) return;
-    
+
     const allKeys = Object.keys(window.emojiMapping);
     const normalizedSearch = searchTerm.toLowerCase().trim();
-    
+
     const filteredKeys = allKeys.filter(key => key.toLowerCase().includes(normalizedSearch));
     const totalItems = filteredKeys.length;
-    
+
     if (totalItems === 0) {
         gridContainer.innerHTML = `<div style="grid-column: 1 / -1; color: #666; font-size: 0.95rem; text-align: center; margin-top: 40px; font-weight: 500;">No emojis found matching "${escapeHTML(searchTerm)}"</div>`;
         if (paginationContainer) paginationContainer.innerHTML = '';
         return;
     }
-    
+
     const totalPages = Math.ceil(totalItems / EMOJIS_PER_PAGE);
     // Clamp current page to valid bounds
     if (currentEmojiPage > totalPages) currentEmojiPage = totalPages;
     if (currentEmojiPage < 1) currentEmojiPage = 1;
-    
+
     const startIndex = (currentEmojiPage - 1) * EMOJIS_PER_PAGE;
     const endIndex = Math.min(startIndex + EMOJIS_PER_PAGE, totalItems);
     const pageKeys = filteredKeys.slice(startIndex, endIndex);
-    
+
     const html = pageKeys.map(key => {
         const filename = window.emojiMapping[key];
         return `
@@ -2848,9 +3021,9 @@ function renderEmojiModalGrid(searchTerm = '') {
             </div>
         `;
     }).join('');
-    
+
     gridContainer.innerHTML = html;
-    
+
     // Render pagination controls
     if (paginationContainer) {
         if (totalPages <= 1) {
@@ -2872,7 +3045,7 @@ function changeEmojiPage(direction) {
     const searchInput = document.getElementById('emojiSearchInput');
     const searchTerm = searchInput ? searchInput.value : '';
     renderEmojiModalGrid(searchTerm);
-    
+
     // Scroll modal grid back to top when page changes
     const gridContainer = document.getElementById('emojiModalGridContainer');
     if (gridContainer) gridContainer.scrollTop = 0;
@@ -2961,7 +3134,7 @@ function initLogoAnimation() {
 
     // Keep references in a persistent array to prevent garbage collection of decoded images
     const preloadedImages = [];
-    
+
     // Track animation references to clean up timers/intervals
     let animationFrameId = null;
     let timeoutId = null;
@@ -2969,11 +3142,11 @@ function initLogoAnimation() {
     function runAnimationSequence() {
         // Pick a random target stop frame between 40 and 51
         const targetFrame = Math.floor(Math.random() * (51 - 40 + 1)) + 40;
-        
+
         // Pre-calculate the exact number of frames to play
         // We run 3 full rotations (3 * 50 frames) plus the offset frames to targetFrame
         const totalFramesPerRotation = (maxFrame - minFrame + 1); // 50 frames
-        
+
         let stepsToTarget = 0;
         let tempFrame = currentFrame;
         while (tempFrame !== targetFrame || stepsToTarget < (3 * totalFramesPerRotation)) {
@@ -3000,7 +3173,7 @@ function initLogoAnimation() {
                 if (currentFrame > maxFrame) {
                     currentFrame = minFrame;
                 }
-                
+
                 // Swap image source (uses the cached/referenced image if available)
                 const cachedImg = preloadedImages[currentFrame - minFrame];
                 imgElement.src = cachedImg ? cachedImg.src : getFramePath(currentFrame);
@@ -3051,7 +3224,7 @@ async function checkScheduledShow() {
     try {
         const { data: statusData, error: statusErr } = await supabase_db.from('stream_status').select('*').eq('id', 1).single();
         if (statusErr || !statusData) return;
-        
+
         if (statusData.overrun_until) {
             const overrunUntil = new Date(statusData.overrun_until);
             if (new Date() < overrunUntil) {
@@ -3061,46 +3234,46 @@ async function checkScheduledShow() {
                 await supabase_db.from('stream_status').update({ overrun_until: null }).eq('id', 1);
             }
         }
-        
+
         const { data: masterData } = await supabase_db.from('master_schedule').select('*');
         const { data: tempOverrides } = await supabase_db.from('temporary_overrides').select('*');
-        
+
         if (!masterData) return;
-        
+
         const nowUK = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/London' }));
         const currentDayIndex = nowUK.getDay();
         const ukDateStr = nowUK.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' }).replace(/\//g, '');
-        
+
         const dayOrder = { sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6 };
         let activeDJ = "tellstream";
-        
+
         for (let item of masterData) {
             if (!item.day_of_week || dayOrder[item.day_of_week.toLowerCase()] === undefined) continue;
             if (item.dj_name === "tellstream") continue;
-            
+
             const startHours = parseInt(item.start_time.substring(0, 2), 10);
             const startMins = parseInt(item.start_time.substring(2, 4), 10);
             const endHours = parseInt(item.end_time.substring(0, 2), 10);
             const endMins = parseInt(item.end_time.substring(2, 4), 10);
-            
+
             const targetDayIndex = dayOrder[item.day_of_week.toLowerCase()];
             let dayDiff = targetDayIndex - currentDayIndex;
-            
+
             const baseDate = new Date(nowUK);
             baseDate.setDate(baseDate.getDate() + dayDiff);
-            
+
             const ukStart = new Date(baseDate);
             ukStart.setHours(startHours, startMins, 0, 0);
-            
+
             const ukEnd = new Date(baseDate);
             ukEnd.setHours(endHours, endMins, 0, 0);
             if (ukEnd < ukStart) {
                 ukEnd.setDate(ukEnd.getDate() + 1);
             }
-            
+
             if (nowUK >= ukStart && nowUK < ukEnd) {
                 activeDJ = item.dj_name;
-                
+
                 if (tempOverrides) {
                     const matchOverride = tempOverrides.find(o => o.start_time === item.start_time && o.specific_date === ukDateStr);
                     if (matchOverride) {
@@ -3114,7 +3287,7 @@ async function checkScheduledShow() {
                 break;
             }
         }
-        
+
         if (statusData.current_show !== activeDJ) {
             console.log(`[Schedule Automation] Auto-switching show banner from "${statusData.current_show}" to "${activeDJ}"`);
             await updateDatabaseStreamStatus(activeDJ);
@@ -3128,20 +3301,20 @@ function initColumn3Accordion() {
     const colTitle = document.querySelector('.col-3:last-child .col-title');
     const topPanel = document.getElementById('helpCardsContainer');
     const bottomPanel = document.querySelector('.sub-panel-bottom');
-    
+
     if (!colTitle || !topPanel || !bottomPanel) return;
-    
+
     colTitle.style.cursor = 'pointer';
-    
+
     bottomPanel.addEventListener('click', (e) => {
         if (e.target.classList.contains('emoji-master-link')) return;
-        
+
         if (!bottomPanel.classList.contains('expanded')) {
             bottomPanel.classList.add('expanded');
             topPanel.classList.add('collapsed');
         }
     });
-    
+
     colTitle.addEventListener('click', () => {
         if (bottomPanel.classList.contains('expanded')) {
             bottomPanel.classList.remove('expanded');
@@ -3168,7 +3341,7 @@ function updateWebVersionFooter() {
     try { await checkScheduledShow(); } catch (e) { }
     try { initLogoAnimation(); } catch (e) { }
     try { initColumn3Accordion(); } catch (e) { }
-    
+
     setInterval(() => {
         const mins = new Date().getMinutes();
         if (mins === 0) {
@@ -3325,10 +3498,10 @@ function updateWebVersionFooter() {
             if (player.paused || !isStreamActive()) return;
             const currentSrc = "https://a3.asurahosting.com/listen/tellstream/radio.mp3";
             console.log("[Stream Watchdog] Reloading stream source:", currentSrc);
-            
+
             // Unbind pause listener temporarily to avoid state sync trigger on clear
             player.removeEventListener('pause', stopStallCheck);
-            
+
             player.pause();
             player.removeAttribute('src');
             player.load();
