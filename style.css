@@ -42,10 +42,12 @@ body {
 
 .header-cell {
     flex: 1;
-    height: 140px !important;
+    aspect-ratio: 930 / 434;
+    height: auto !important;
+    position: relative;
     background-position: center center;
     background-repeat: no-repeat;
-    background-size: cover;
+    background-size: 100% 100%;
     display: flex;
     align-items: center;
     box-sizing: border-box;
@@ -69,7 +71,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: fill;
     object-position: center center;
     pointer-events: none;
 }
@@ -950,7 +952,8 @@ body.noticeboard-active .chat-feed-container {
     
     .header-cell {
         width: 100% !important;
-        height: 180px !important; 
+        aspect-ratio: 930 / 434;
+        height: auto !important; 
         justify-content: center !important;
         text-align: center !important;
         padding: 20px !important;
@@ -965,10 +968,9 @@ body.noticeboard-active .chat-feed-container {
     .cell-middle {
         background-image: url('header-bgblnk.jpg') !important;
         background-position: center center !important;
-        background-size: cover !important;
+        background-size: 100% 100% !important;
         justify-content: center !important;
         width: 100% !important;
-        height: 140px !important;
         position: relative !important;
     }
     .cell-right {

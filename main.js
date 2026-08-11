@@ -101,7 +101,11 @@ function renderStreamHeader(showName) {
         logoImg = document.createElement('img');
         logoImg.id = 'stream-logo-display';
         logoImg.style.width = '100%';
-        logoImg.style.height = 'auto'; // Fluid scaling allows image aspect ratio to dictate cell height
+        logoImg.style.height = '100%';
+        logoImg.style.position = 'absolute';
+        logoImg.style.top = '0';
+        logoImg.style.left = '0';
+        logoImg.style.objectFit = 'fill';
         logoImg.style.display = 'none';
         cellLeft.appendChild(logoImg);
     }
@@ -139,10 +143,15 @@ function renderStreamHeader(showName) {
 
             // Strip text absolute constraints; let the natural image flow control the container height
             cellLeft.style.position = 'relative';
-            cellLeft.style.height = 'auto';
+            cellLeft.style.height = '';
 
             logoImg.src = imgCloudUrl;
-            logoImg.style.position = 'relative'; // Removes absolute locking
+            logoImg.style.position = 'absolute';
+            logoImg.style.top = '0';
+            logoImg.style.left = '0';
+            logoImg.style.width = '100%';
+            logoImg.style.height = '100%';
+            logoImg.style.objectFit = 'fill';
             logoImg.style.display = 'block';
 
             // Pin text overlay absolutely over the natural fluid image background
@@ -217,6 +226,11 @@ if (usernameInput) {
 
     let verificationTimeout = null;
     usernameInput.addEventListener('input', () => {
+        const raw = usernameInput.value;
+        const formatted = formatPresenterName(raw);
+        if (raw !== formatted) {
+            usernameInput.value = formatted;
+        }
         localStorage.setItem('tellstream_saved_username', usernameInput.value.trim());
         syncDrawerName();
 
@@ -657,7 +671,7 @@ function renderHelpContent(useNoticeboardGuide = false) {
     helpCardsContainer.innerHTML = html;
     helpCardsContainerFS.innerHTML = html;
     const currentTitle = useNoticeboardGuide ? "📋 Noticeboard Help Guide" : "💡 Chat help and emoji codes";
-    const fsTitleNode = helpCardsContainerFS.previousElementSibling;
+    const fsTitleNode = helpCardsContainerFS.parentElement ? helpCardsContainerFS.parentElement.querySelector('.col-title') : null;
     if (fsTitleNode && fsTitleNode.classList.contains('col-title')) fsTitleNode.innerHTML = currentTitle;
 }
 
@@ -1004,6 +1018,15 @@ function syncDrawerName() {
     }
     if (isNoticeBoardActive) evaluateNoticeBoardForms();
     renderHelpContent(isNoticeBoardActive);
+}
+
+function formatPresenterName(name) {
+    if (!name) return "";
+    // Insert space between lowercase letter or digit and an uppercase letter
+    let formatted = name.replace(/([a-z0-9])([A-Z])/g, '$1 $2');
+    // Normalize spaces
+    formatted = formatted.replace(/\s+/g, ' ');
+    return formatted;
 }
 
 function toggleForgotPasskeyForm(step) {
@@ -1425,6 +1448,7 @@ async function sendMessage() {
                 }
 
                 if (showNameInput) {
+                    showNameInput = formatPresenterName(showNameInput);
                     messageInput.value = '';
                     await updateDatabaseStreamStatus(showNameInput);
                     return;
@@ -1628,7 +1652,7 @@ async function processScheduleConsoleInjections(text, djUser) {
         const startTime = args[3];
         const endTime = args[4];
         const timeZone = args[5];
-        const targetDJ = args[6] || djUser;
+        const targetDJ = formatPresenterName(args[6] || djUser);
 
         if (!dayName || !startTime || !endTime || !timeZone) {
             alert("Format missing. Use: /schedule perm [Day] [Start Time] [End Time] [Time Zone] [optional: Presenter_Name]");
@@ -1652,7 +1676,7 @@ async function processScheduleConsoleInjections(text, djUser) {
         const startTime = args[3];
         const endTime = args[4];
         const timeZone = args[5];
-        const targetDJ = args[6] || djUser;
+        const targetDJ = formatPresenterName(args[6] || djUser);
 
         if (!dateBlock || !startTime || !endTime || !timeZone || dateBlock.length !== 6) {
             alert("Format missing. Use: /schedule temp [ddmmyy] [Start Time] [End Time] [Time Zone] [optional: Presenter_Name]");
@@ -1731,7 +1755,7 @@ async function fetchAndRenderWeeklyTimetable() {
             }
             if (item.dj_name === "tellstream") return;
 
-            let currentDJ = item.dj_name;
+            let currentDJ = formatPresenterName(item.dj_name);
             let noteLabel = "";
 
             if (tempOverrides) {
@@ -1741,7 +1765,7 @@ async function fetchAndRenderWeeklyTimetable() {
                         currentDJ = "tellstream";
                         noteLabel = `<span style="color:#ff3333; font-size:0.7rem; font-weight:bold; background:rgba(255,51,51,0.1); padding:2px 6px; border-radius:3px; margin-left:8px;">[CANCELLED]</span>`;
                     } else {
-                        currentDJ = matchOverride.dj_name;
+                        currentDJ = formatPresenterName(matchOverride.dj_name);
                         noteLabel = `<span style="color:#ffdd1a; font-size:0.7rem; font-weight:bold; background:rgba(255,221,26,0.1); padding:2px 6px; border-radius:3px; margin-left:8px;">[COVER SET]</span>`;
                     }
                 }
@@ -3299,8 +3323,8 @@ async function checkScheduledShow() {
 
 function initColumn3Accordion() {
     const colTitle = document.querySelector('.col-3:last-child .col-title');
-    const topPanel = document.getElementById('helpCardsContainer');
-    const bottomPanel = document.querySelector('.sub-panel-bottom');
+    const topPanel = document.querySelector('.col-3:last-child .sub-panel-top');
+    const bottomPanel = document.querySelector('.col-3:last-child .sub-panel-bottom');
 
     if (!colTitle || !topPanel || !bottomPanel) return;
 
