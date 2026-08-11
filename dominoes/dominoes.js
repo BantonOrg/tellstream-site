@@ -24,6 +24,45 @@ let turnTimerInterval = null;
 const TURN_TIMEOUT_SECONDS = 30;
 let turnStartLocalTime = null;
 let lastLocalTurnNumber = null;
+let isProcessing = false;
+
+function setProcessing(processing) {
+    isProcessing = processing;
+    document.body.style.cursor = processing ? "wait" : "default";
+
+    const handRow = document.getElementById("player-hand-row");
+    if (handRow) {
+        if (processing) {
+            handRow.style.pointerEvents = "none";
+            handRow.style.opacity = "0.6";
+        } else {
+            handRow.style.pointerEvents = "auto";
+            handRow.style.opacity = "1";
+        }
+    }
+    
+    const drawBtn = document.getElementById("draw-boneyard-btn");
+    if (drawBtn) {
+        if (processing) {
+            drawBtn.style.pointerEvents = "none";
+            drawBtn.style.opacity = "0.6";
+        } else {
+            drawBtn.style.pointerEvents = "auto";
+            drawBtn.style.opacity = "";
+        }
+    }
+    
+    const placementOverlay = document.getElementById("play-placement-overlay");
+    if (placementOverlay) {
+        if (processing) {
+            placementOverlay.style.pointerEvents = "none";
+            placementOverlay.style.opacity = "0.6";
+        } else {
+            placementOverlay.style.pointerEvents = "auto";
+            placementOverlay.style.opacity = "1";
+        }
+    }
+}
 
 // DOM ELEMENTS
 const lobbyView = document.getElementById("lobby-view");
@@ -1280,6 +1319,7 @@ function renderPlayerHand(players) {
         const dom = createDominoElement(tile, 'double'); 
         
         dom.addEventListener("click", () => {
+            if (isProcessing) return;
             if (localState.active_turn !== mySeat || currentGameState !== 'playing') return;
             
             if (dom.classList.contains("selected-tile")) {
@@ -1683,7 +1723,10 @@ function checkAnyValidMoves(hand, boardLine) {
 
 // EXECUTE PLAY MOVE
 async function executeMove(position) {
+    if (isProcessing) return;
     if (!localState || !selectedTileData || !mySeat) return;
+    
+    setProcessing(true);
     
     playClackSound();
     playPlacementOverlay.classList.add("hidden-layout");
@@ -1793,6 +1836,8 @@ async function executeMove(position) {
         });
     } catch(err) {
         alert("Failed to submit move: " + err.message);
+    } finally {
+        setProcessing(false);
     }
 }
 
@@ -1806,6 +1851,7 @@ function getNextTurnSeat(currentTurn, players) {
 
 // DRAW TILE FROM BONEYARD
 async function drawTileFromBoneyard() {
+    if (isProcessing) return;
     if (!localState || !mySeat || localState.active_turn !== mySeat) return;
     
     const players = localState.players || {};
@@ -1813,6 +1859,7 @@ async function drawTileFromBoneyard() {
     
     if (boneyard.length === 0) return;
     
+    setProcessing(true);
     playClackSound();
     
     const drawnTile = boneyard.pop();
@@ -1827,13 +1874,17 @@ async function drawTileFromBoneyard() {
         });
     } catch(err) {
         alert("Failed to draw tile: " + err.message);
+    } finally {
+        setProcessing(false);
     }
 }
 
 // PASS TURN
 async function passTurn() {
+    if (isProcessing) return;
     if (!localState || !mySeat || localState.active_turn !== mySeat) return;
     
+    setProcessing(true);
     const players = localState.players || {};
     const boardLine = localState.board_line || [];
     
@@ -1884,6 +1935,8 @@ async function passTurn() {
         }
     } catch(err) {
         alert("Failed to pass turn: " + err.message);
+    } finally {
+        setProcessing(false);
     }
 }
 
@@ -2008,7 +2061,7 @@ function displayGameOverModal(players, boardLine) {
         // Auto-restart countdown if match target score is active and not reached
         if (targetScore > 0 && countdownEl && countdownSecsEl) {
             countdownEl.style.display = "block";
-            let secondsLeft = 5;
+            let secondsLeft = 10;
             countdownSecsEl.textContent = secondsLeft;
             
             gameOverCountdownInterval = setInterval(() => {
