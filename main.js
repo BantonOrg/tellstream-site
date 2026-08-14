@@ -1413,6 +1413,52 @@ async function sendMessage() {
     if (!text) return;
 
     if (text.startsWith('/')) {
+        if (text.startsWith('/status ') || text === '/status' || 
+            text.startsWith('/embed ') || text === '/embed' || 
+            text.startsWith('/upload image') || text === '/upload') {
+            
+            messageInput.value = '';
+            const profile = profilesCache[user];
+            const savedUser = localStorage.getItem('tellstream_saved_username');
+            const isVerified = (user === savedUser && isCurrentUserVerified);
+            
+            if (!profile || !isVerified) {
+                alert("🔒 To unlock your member page and use these commands, you must first secure your nickname in the profile padlock drawer.");
+                return;
+            }
+            
+            if (!isUserVip(profile)) {
+                alert("⭐ Webpages are a Tellstream VIP & Presenter feature. To unlock your own page, contact management or become a VIP!");
+                return;
+            }
+            
+            if (text.startsWith('/status ')) {
+                const msg = text.substring(8).trim();
+                if (msg) {
+                    await handleMemberStatus(user, msg);
+                } else {
+                    alert("Usage: /status [message]");
+                }
+            } else if (text.startsWith('/embed ')) {
+                const url = text.substring(7).trim();
+                if (url) {
+                    await handleMemberEmbed(user, url);
+                } else {
+                    alert("Usage: /embed [media url]");
+                }
+            } else if (text.trim() === '/upload image') {
+                const picker = document.getElementById('memberPhotoFilePicker');
+                if (picker) {
+                    picker.click();
+                } else {
+                    alert("Upload picker unavailable.");
+                }
+            } else {
+                alert("Invalid command usage. Use /status, /embed, or /upload image.");
+            }
+            return;
+        }
+
         const profile = profilesCache[user];
         const userPowerLevel = parseInt(profile?.power_level || 0);
 
@@ -2581,6 +2627,17 @@ async function openProfileCard(targetUsernameInput) {
             actionsDiv.appendChild(blockBtn);
         }
     }
+
+    if (profile) {
+        const webBtn = document.createElement('button');
+        webBtn.className = "drawer-action-inline-btn btn-green";
+        webBtn.innerText = "Webpage";
+        webBtn.onclick = () => {
+            closeProfileCard();
+            window.open(`profile.html?user=${encodeURIComponent(targetUsername)}`, '_blank');
+        };
+        actionsDiv.appendChild(webBtn);
+    }
 }
 
 function closeProfileCard() {
@@ -3574,4 +3631,147 @@ function updateWebVersionFooter() {
     // 2. Auxiliary column scripts load at the ultimate tail of execution
     try { await renderSiteNewsFeed(); } catch (e) { }
     try { await fetchAndRenderWeeklyTimetable(); } catch (e) { }
+
+    const hiddenMemberPhotoInput = document.createElement('input');
+    hiddenMemberPhotoInput.type = 'file';
+    hiddenMemberPhotoInput.id = 'memberPhotoFilePicker';
+    hiddenMemberPhotoInput.accept = 'image/*';
+    hiddenMemberPhotoInput.style.display = 'none';
+    document.body.appendChild(hiddenMemberPhotoInput);
+
+    hiddenMemberPhotoInput.addEventListener('change', async function (e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const currentUser = usernameInput.value.trim();
+        const profile = profilesCache[currentUser];
+        if (!profile || !isUserVip(profile)) {
+            alert("Unauthorized upload action.");
+            return;
+        }
+
+        try {
+            const compressedBlob = await compressImageToJpeg(file, 1024, 0.8);
+            
+            const { data: existingPhotos, error: fetchErr } = await supabase_db
+                .from('member_photos')
+                .select('*')
+                .eq('username', currentUser)
+                .order('created_at', { ascending: true });
+                
+            if (fetchErr) throw fetchErr;
+            
+            if (existingPhotos && existingPhotos.length >= 9) {
+                const oldest = existingPhotos[0];
+                await supabase_db.storage.from('member-photos').remove([oldest.file_name]);
+                await supabase_db.from('member_photos').delete().eq('id', oldest.id);
+            }
+            
+            const timestamp = Date.now();
+            const fileName = `${currentUser}/img_${timestamp}.jpg`;
+            const { error: uploadError } = await supabase_db.storage
+                .from('member-photos')
+                .upload(fileName, compressedBlob, {
+                    contentType: 'image/jpeg',
+                    upsert: true
+                });
+                
+            if (uploadError) throw uploadError;
+            
+            const { data: publicUrlData } = supabase_db.storage
+                .from('member-photos')
+                .getPublicUrl(fileName);
+                
+            const publicUrl = publicUrlData.publicUrl;
+            
+            const { error: dbErr } = await supabase_db.from('member_photos').insert([{
+                username: currentUser,
+                file_name: fileName,
+                public_url: publicUrl
+            }]);
+            
+            if (dbErr) throw dbErr;
+            
+            alert("📸 Photo uploaded successfully to your webpage!");
+        } catch (err) {
+            alert("Upload failed: " + err.message);
+        } finally {
+            hiddenMemberPhotoInput.value = '';
+        }
+    });
 })();
+
+async function handleMemberStatus(username, message) {
+    try {
+        const { error } = await supabase_db.from('member_statuses').insert([{
+            username: username,
+            message: message
+        }]);
+        if (error) throw error;
+        alert("✏️ Status update posted successfully to your webpage!");
+    } catch (err) {
+        alert("Failed to post status: " + err.message);
+    }
+}
+
+async function handleMemberEmbed(username, url) {
+    const isMedia = url.includes('youtube.com') || url.includes('youtu.be') || 
+                    url.includes('mixcloud.com') || url.includes('twitch.tv') || 
+                    url.includes('soundcloud.com') || url.includes('spotify.com');
+                    
+    if (!isMedia) {
+        alert("Unsupported URL! We support YouTube, Mixcloud, Twitch, SoundCloud, and Spotify embeds.");
+        return;
+    }
+    
+    try {
+        const { error } = await supabase_db.from('member_embeds').insert([{
+            username: username,
+            url: url
+        }]);
+        if (error) throw error;
+        alert("🎬 Video embed added successfully to your webpage!");
+    } catch (err) {
+        alert("Failed to add video: " + err.message);
+    }
+}
+
+function compressImageToJpeg(file, maxDim, quality) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                
+                if (width > maxDim || height > maxDim) {
+                    if (width > height) {
+                        height = Math.round((height * maxDim) / width);
+                        width = maxDim;
+                    } else {
+                        width = Math.round((width * maxDim) / height);
+                        height = maxDim;
+                    }
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                canvas.toBlob(blob => {
+                    if (blob) {
+                        resolve(blob);
+                    } else {
+                        reject(new Error("Canvas conversion to blob failed."));
+                    }
+                }, 'image/jpeg', quality);
+            };
+            img.onerror = () => reject(new Error("Failed to load image."));
+            img.src = e.target.result;
+        };
+        reader.onerror = () => reject(new Error("Failed to read file."));
+        reader.readAsDataURL(file);
+    });
+}

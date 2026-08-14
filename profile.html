@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tellstream - Member Webpage</title>
+
+    <meta property="og:title" content="Tellstream - Member Webpage">
+    <meta property="og:description"
+        content="Join the Listener Lounge, check out live event flyers, and stream music on Tellstream.">
+    <meta property="og:image" content="/src/assets/ogmetaLOGO.jpg">
+    <meta property="og:url" content="https://tellstream.banton.org">
+    <meta property="og:type" content="website">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+    
+    <style>
+        /* Standalone adjustments for profile columns layout */
+        .inner-feed-wrapper {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-right: 4px;
+        }
+
+        .media-embed-card {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            aspect-ratio: 16/9;
+        }
+
+        .media-embed-card iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+        }
+
+        .photo-card {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            overflow: hidden;
+            aspect-ratio: 1/1;
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .photo-card:hover {
+            transform: scale(1.03);
+            border-color: rgba(34, 229, 50, 0.4);
+        }
+
+        .photo-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .status-timeline-card {
+            background: rgba(255, 255, 255, 0.02);
+            border-left: 3px solid #22e532;
+            border-radius: 4px;
+            padding: 10px 12px;
+            position: relative;
+        }
+
+        .status-time {
+            font-size: 0.7rem;
+            color: #666;
+            display: block;
+            margin-top: 4px;
+        }
+
+        .delete-btn-overlay {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 51, 83, 0.3);
+            color: #ff3353;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 0.65rem;
+            font-weight: bold;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 10;
+        }
+
+        .media-embed-card:hover .delete-btn-overlay,
+        .photo-card:hover .delete-btn-overlay,
+        .status-timeline-card:hover .delete-btn-overlay {
+            opacity: 1;
+        }
+
+        .delete-btn-overlay:hover {
+            background: #ff3353;
+            color: #000;
+        }
+
+        /* Lightbox CSS */
+        .lightbox-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 200000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .lightbox-content {
+            max-width: 90%;
+            max-height: 85%;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        .lightbox-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="main-content">
+        <div class="header-container">
+            <div class="header-cell cell-left">
+                <div class="tagline-wrapper">
+                    <h1>Great Music</h1>
+                    <p>ALL DAY • EVERY DAY</p>
+                </div>
+            </div>
+
+            <div class="header-cell cell-middle">
+                <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+                    style="width: 150px; height: 140px; display: block; visibility: hidden;" alt="spacer">
+                <img id="headerLogoAnim" src="src/assets/logo_anim/1_010040.png" alt="Tellstream Logo">
+            </div>
+
+            <div class="header-cell cell-right"
+                style="display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 8px;">
+                <audio id="radioPlayer" src="https://a3.asurahosting.com/listen/tellstream/radio.mp3"
+                    preload="auto"></audio>
+
+                <!-- Custom Player Controls -->
+                <div id="header-copyright" class="header-copyright"></div>
+                <div class="custom-player-container">
+                    <span class="player-label">📻 Live Radio</span>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <button id="player-play-btn" class="player-btn">▶️</button>
+                        <input type="range" id="player-volume-slider" min="0" max="1" step="0.05" value="0.5"
+                            class="player-slider">
+                    </div>
+                </div>
+
+                <!-- News Ticker -->
+                <div class="ticker-wrap">
+                    <div class="ticker" id="newsTickerContent">Loading announcements...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Locked visibility notification area (hidden by default) -->
+        <div id="lockedProfileView" style="display: none; text-align: center; padding: 50px 20px; background: rgba(25, 25, 25, 0.88); backdrop-filter: blur(8px); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 20px;">
+            <span style="font-size: 3rem; display: block; margin-bottom: 15px;">🔒</span>
+            <h3 id="lockedProfileMessage" style="color: #fff; font-size: 1.25rem; font-weight: 600; margin: 0;">This profile webpage is restricted.</h3>
+            <p style="color: #666; font-size: 0.85rem; margin-top: 8px;">Please join the owner's Fambily list to gain view authorization.</p>
+            <a href="/" style="display: inline-block; margin-top: 20px; background: #22e532; color: #000; text-decoration: none; font-weight: bold; padding: 8px 20px; border-radius: 6px; font-size: 0.85rem;">Return to Lounge</a>
+        </div>
+
+        <!-- Three Column Profile Grid Content -->
+        <div class="columns-container" id="profileColumnsArea">
+            <!-- COLUMN 1: VIDEOS -->
+            <div class="col-3" id="videos-column">
+                <div class="col-title">🎬 Videos & Audio</div>
+                <div id="videosFeed" class="inner-feed-wrapper">
+                    <p style="font-size: 0.8rem; color: #666; text-align: center; padding: 20px;">No embeds loaded yet.</p>
+                </div>
+            </div>
+
+            <!-- COLUMN 2: PICTURES -->
+            <div class="col-3" id="pictures-column">
+                <div class="col-title">📸 Picture Gallery</div>
+                <div id="picturesFeed" class="inner-feed-wrapper">
+                    <div class="photo-grid" id="photoGrid"></div>
+                    <p id="noPhotosMsg" style="font-size: 0.8rem; color: #666; text-align: center; padding: 20px;">No photos uploaded.</p>
+                </div>
+            </div>
+
+            <!-- COLUMN 3: STATUSES -->
+            <div class="col-3" id="statuses-column">
+                <div class="col-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>✏️ Status Timeline</span>
+                    <a href="/" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #fff; text-decoration: none; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">Back to Lounge</a>
+                </div>
+                
+                <!-- Compact Profile Header Block -->
+                <div id="profileHeaderBlock" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 15px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="position: relative; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <img id="profileAvatar" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23444'/><text x='50' y='60' font-size='30' font-family='sans-serif' text-anchor='middle' fill='%23fff'>?</text></svg>" style="width: 70px; height: 70px; border-radius: 50%; border: 2px solid #22e532; object-fit: cover; background: #222;">
+                            <img id="profileVipBadge" src="/src/assets/vip1.png" style="display: none; position: absolute; left: calc(50% + 25px); top: 50%; transform: translateY(-50%); width: 45px; height: auto; object-fit: contain;" alt="VIP">
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <h2 id="profileUsername" style="margin: 0; color: #fff; font-size: 1.25rem; font-weight: 800; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Loading...</h2>
+                            <span id="profileBadgeLevel" style="font-size: 0.65rem; padding: 2px 5px; border-radius: 4px; font-weight: bold; text-transform: uppercase; display: inline-block; margin-top: 3px; background: rgba(34, 229, 50, 0.15); color: #22e532;">Member</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px; font-size: 0.75rem; color: #aaa;">
+                        <div id="profileLocationWrapper">📍 <span id="profileLocation">Not Specified</span></div>
+                        <div id="profileSocialsWrapper">🔗 <span id="profileSocials">Not Specified</span></div>
+                    </div>
+                    <p id="profileBio" style="margin: 4px 0 0 0; color: #ccc; font-size: 0.8rem; line-height: 1.4; max-width: 100%; white-space: pre-wrap; word-break: break-word;"></p>
+                </div>
+
+                <div id="statusesFeed" class="inner-feed-wrapper">
+                    <p style="font-size: 0.8rem; color: #666; text-align: center; padding: 20px;">No statuses timeline updates.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Sidebar (Replicated for Feed Sync) -->
+    <div class="chat-sidebar">
+        <div class="chat-header">
+            <span style="font-size: 0.85rem; color:#22e532; font-weight: bold;">💬 Live lounge chat</span>
+        </div>
+
+        <div class="security-drawer" id="securityDrawer">
+            <h4 id="drawerTitle">Secure Current Handle</h4>
+            <div class="form-grid">
+                <input type="text" id="regNameInput" placeholder="Name to lock" readonly>
+                <input type="password" id="regPasskeyInput" placeholder="Secret Passkey">
+                <input type="text" id="regReminderInput" placeholder="Key Reminder Hint">
+                <input type="email" id="regEmailInput" placeholder="Recovery Email">
+            </div>
+            <div style="display:flex; align-items:center; gap:6px; margin: 8px 0; font-size:0.75rem; color:#aaa; user-select:none;">
+                <input type="checkbox" id="showPasskeyCheckbox" onclick="togglePasskeyVisibility('regPasskeyInput')"
+                    style="accent-color:#22e532; cursor:pointer;">
+                <label for="showPasskeyCheckbox" style="cursor:pointer;">Show Passkey text</label>
+            </div>
+            <button class="drawer-action-btn" id="drawerSubmitBtn" onclick="handleSecuritySubmit()">Lock Name Globally</button>
+            <p id="reminderHintDisplay" style="font-size:0.75rem; color:#ffdd1a; margin-top:6px; display:none; text-align:center;"></p>
+
+            <div id="forgotPasskeyLink" style="font-size:0.75rem; text-align:center; margin-top:10px; cursor:pointer; color:#22e532; text-decoration:underline; display:none;" onclick="toggleForgotPasskeyForm('request')">Forgot Passkey?</div>
+
+            <div id="forgotPasskeyRequestForm" style="display:none; flex-direction:column; gap:8px; margin-top:10px; border-top:1px solid #2d2d2d; padding-top:10px;">
+                <p style="font-size:0.75rem; color:#aaa; text-align:center;">Enter your recovery email. We will send a 6-digit verification code to reset your passkey:</p>
+                <input type="email" id="resetRecoveryEmailInput" placeholder="Enter recovery email..." style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
+                <div style="display:flex; gap:6px;">
+                    <button class="drawer-action-btn" id="sendCodeBtn" style="background:#22e532; color:#000; flex:1;" onclick="sendResetVerificationCode()">Send Code</button>
+                    <button class="drawer-action-btn" style="background:#444; flex:1;" onclick="toggleForgotPasskeyForm('login')">Cancel</button>
+                </div>
+            </div>
+
+            <div id="forgotPasskeyVerifyForm" style="display:none; flex-direction:column; gap:8px; margin-top:10px; border-top:1px solid #2d2d2d; padding-top:10px;">
+                <p style="font-size:0.75rem; color:#aaa; text-align:center;">Enter the 6-digit code sent to your email and choose a new passkey:</p>
+                <input type="text" id="resetCodeInput" placeholder="6-Digit Verification Code" style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none; text-align:center; letter-spacing:4px; font-weight:bold;">
+                <input type="password" id="resetNewPasskeyInput" placeholder="New Secret Passkey" style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
+                <input type="text" id="resetNewReminderInput" placeholder="New Key Reminder Hint" style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
+                <div style="display:flex; gap:6px;">
+                    <button class="drawer-action-btn" id="confirmResetBtn" style="background:#22e532; flex:1; color:#000;" onclick="verifyAndResetPasskey()">Reset Passkey</button>
+                    <button class="drawer-action-btn" style="background:#444; flex:1;" onclick="toggleForgotPasskeyForm('request')">Back</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fambily & Profile Drawer -->
+        <div class="fambily-drawer" id="fambilyDrawer">
+            <div class="fambily-drawer-tabs">
+                <button class="fambily-tab-btn active" id="fambily-tab-btn-profile" onclick="switchFambilyTab('profile')">Profile</button>
+                <button class="fambily-tab-btn" id="fambily-tab-btn-fambily" onclick="switchFambilyTab('fambily')">Fambily</button>
+                <button class="fambily-tab-btn" id="fambily-tab-btn-requests" onclick="switchFambilyTab('requests')">Requests</button>
+                <button class="fambily-tab-btn" id="fambily-tab-btn-blocked" onclick="switchFambilyTab('blocked')">Blocked</button>
+            </div>
+
+            <!-- PROFILE TAB CONTENT -->
+            <div class="fambily-tab-content" id="fambily-tab-profile">
+                <div class="profile-avatar-row">
+                    <img id="myAvatarImg" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23444'/><text x='50' y='60' font-size='30' font-family='sans-serif' text-anchor='middle' fill='%23fff'>?</text></svg>" class="my-avatar-preview">
+                    <div class="avatar-upload-col">
+                        <label class="drawer-action-btn" style="background:#22e532; color:#000; text-align:center; display:block; cursor:pointer; font-size:0.75rem; padding:6px 12px; border-radius:4px; font-weight:bold;">
+                            Upload Photo
+                            <input type="file" id="avatarFileInput" accept="image/*" style="display:none;" onchange="handleAvatarSelected(event)">
+                        </label>
+                        <span style="font-size:0.65rem; color:#888;">Max 500KB. Cropped to square.</span>
+                    </div>
+                </div>
+                <div class="form-grid" style="margin-top:8px;">
+                    <input type="text" id="profileLocationInput" placeholder="Location (e.g. Earth, Canada)" style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
+                    <input type="text" id="profileSocialsInput" placeholder="Socials (e.g. @instagram)" style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
+                </div>
+                <textarea id="profileBioInput" placeholder="Bio: Say anything you like..." style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none; width:100%; height:45px; resize:none; margin-bottom:8px; font-family:inherit;"></textarea>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <span style="font-size:0.75rem; color:#aaa;">Profile Visibility:</span>
+                    <select id="profileVisibilitySelect" style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:4px 8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none; cursor:pointer;">
+                        <option value="fambily">Fambily only (Default)</option>
+                        <option value="everyone">Everyone</option>
+                        <option value="none">None</option>
+                    </select>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <span style="font-size:0.75rem; color:#aaa;">Go Invisible:</span>
+                    <input type="checkbox" id="profileInvisibleCheckbox" style="accent-color:#22e532; transform:scale(1.2); cursor:pointer;">
+                </div>
+                <button class="drawer-action-btn" style="background:#22e532; color:#000; width:100%;" onclick="saveProfileChanges()">Save Profile</button>
+            </div>
+
+            <!-- FAMBILY TAB CONTENT -->
+            <div class="fambily-tab-content" id="fambily-tab-fambily" style="display:none;">
+                <div style="display:flex; gap:6px; margin-bottom:8px;">
+                    <input type="text" id="addFambilyInput" placeholder="Request to username..." style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:6px 8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none; flex:1;">
+                    <button class="notice-inline-btn" onclick="sendFambilyRequest()" style="background:#22e532; color:#000; font-size:0.75rem; padding:0 10px;">Send</button>
+                </div>
+                <div class="drawer-list-container" id="fambilyListContainer" style="max-height:180px; overflow-y:auto;">
+                    <p style="font-size:0.75rem; color:#666; text-align:center; padding:10px;">No Fambily members added yet.</p>
+                </div>
+            </div>
+
+            <!-- REQUESTS TAB CONTENT -->
+            <div class="fambily-tab-content" id="fambily-tab-requests" style="display:none;">
+                <h5 class="drawer-sub-title" style="margin: 0 0 6px 0; font-size: 0.75rem; color: #22e532; text-transform: uppercase;">Incoming Requests</h5>
+                <div class="drawer-list-container" id="incomingReqsContainer" style="max-height:90px; overflow-y:auto; margin-bottom:10px; border:1px solid rgba(255,255,255,0.04); border-radius:4px;">
+                    <p style="font-size:0.75rem; color:#666; text-align:center; padding:5px;">No incoming requests.</p>
+                </div>
+                <h5 class="drawer-sub-title" style="margin: 0 0 6px 0; font-size: 0.75rem; color: #22e532; text-transform: uppercase;">Sent Requests</h5>
+                <div class="drawer-list-container" id="outgoingReqsContainer" style="max-height:90px; overflow-y:auto; border:1px solid rgba(255,255,255,0.04); border-radius:4px;">
+                    <p style="font-size:0.75rem; color:#666; text-align:center; padding:5px;">No sent requests.</p>
+                </div>
+            </div>
+
+            <!-- BLOCKED TAB CONTENT -->
+            <div class="fambily-tab-content" id="fambily-tab-blocked" style="display:none;">
+                <div id="blockedRevealContainer" style="text-align:center; padding:15px;">
+                    <p style="font-size:0.75rem; color:#aaa; margin-bottom:8px;">Blocked users list is hidden to protect privacy.</p>
+                    <button class="drawer-action-btn" style="background:#444; font-size:0.75rem;" onclick="revealBlockedList()">Reveal Blocked List</button>
+                </div>
+                <div id="blockedContentContainer" style="display:none;">
+                    <div class="drawer-list-container" id="blockedListContainer" style="max-height:180px; overflow-y:auto;">
+                        <p style="font-size:0.75rem; color:#666; text-align:center; padding:10px;">No blocked users.</p>
+                    </div>
+                    <div style="text-align:center; margin-top:8px;">
+                        <button class="drawer-action-btn" style="background:#222; font-size:0.65rem; border:1px solid #444;" onclick="hideBlockedList()">Hide List Again</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-split-body">
+            <div class="chat-tabs-bar" id="chatTabsBar">
+                <div class="chat-tab-btn active" id="tab-lounge" onclick="switchChatMode('lounge')">Lounge</div>
+            </div>
+
+            <div class="chat-main-row">
+                <div class="chat-feed-container" id="chatFeedContainer" style="width: 100%;">
+                    <div class="chat-messages" id="chatBox"></div>
+                    <div class="chat-input-area" id="chat-input-panel-container">
+                        <div class="left-control-stack">
+                            <input type="text" id="usernameInput" placeholder="Nickname" oninput="syncDrawerName()">
+                            <button class="send-main-btn" id="sendBtn">Send</button>
+                        </div>
+                        <div class="lock-toggle-stack">
+                            <button class="lock-toggle-btn" id="lockStatusBtn" onclick="toggleSecurityDrawer()" title="Secure/Verify identity handle">🔒</button>
+                            <button class="lock-toggle-btn" id="fambilyDrawerBtn" onclick="toggleFambilyDrawer()" title="Fambily & Profile Settings" style="background:rgba(34,229,50,0.1); border:1px solid rgba(34,229,50,0.3); color:#22e532;">💚</button>
+                        </div>
+                        <textarea id="messageInput" placeholder="Type a message..." maxlength="333"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lightbox Modal for Photo Gallery -->
+    <div class="lightbox-modal" id="photoLightbox" onclick="closeLightbox()">
+        <button class="lightbox-close" onclick="closeLightbox()">Close (X)</button>
+        <img class="lightbox-content" id="lightboxTargetImg" src="" onclick="event.stopPropagation();" alt="Lightbox Expand View">
+    </div>
+
+    <!-- User Profile Card Modal (Required for clicks on user profiles in chat sidebar) -->
+    <div class="profile-card-modal-overlay" id="profileCardModal" onclick="closeProfileCard()"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:100000; background:rgba(0,0,0,0.6); align-items:center; justify-content:center;">
+        <div class="profile-card-card" onclick="event.stopPropagation();"
+            style="background:#18181a; border:1px solid rgba(34,229,50,0.2); width:320px; border-radius:8px; padding:20px; position:relative; box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+            <button onclick="closeProfileCard()"
+                style="position:absolute; top:10px; right:10px; background:none; border:none; color:#888; font-size:1.1rem; cursor:pointer; line-height:1;">×</button>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:10px; text-align:center;">
+                <div style="position:relative; display:flex; align-items:center; justify-content:center; width:100%;">
+                    <img id="profileCardAvatar" src=""
+                        style="width:80px; height:80px; border-radius:50%; border:2px solid #22e532; object-fit:cover; background:#222;">
+                    <img id="profileCardVipBadge" src="/src/assets/vip1.png"
+                        style="display:none; position:absolute; left:calc(50% + 48px); top:50%; transform:translateY(-50%); width:55px; height:auto; object-fit:contain;" alt="VIP">
+                </div>
+                <div>
+                    <h3 id="profileCardUsername" style="margin:0; color:#fff; font-size:1.2rem;"></h3>
+                    <span id="profileCardLevel"
+                        style="font-size:0.7rem; padding:2px 6px; border-radius:4px; font-weight:bold; text-transform:uppercase; margin-top:4px; display:inline-block;"></span>
+                </div>
+                <div id="profileCardDetailsContainer"
+                    style="width:100%; border-top:1px solid rgba(255,255,255,0.05); padding-top:10px; margin-top:5px; text-align:left; display:flex; flex-direction:column; gap:6px;">
+                    <div><span style="font-size:0.7rem; color:#666; display:block;">Location</span><span
+                            id="profileCardLocation" style="font-size:0.85rem; color:#ccc;"></span></div>
+                    <div><span style="font-size:0.7rem; color:#666; display:block;">Socials</span><span
+                            id="profileCardSocials" style="font-size:0.85rem; color:#ccc;"></span></div>
+                    <div><span style="font-size:0.7rem; color:#666; display:block;">Bio</span>
+                        <p id="profileCardBio"
+                            style="font-size:0.85rem; color:#ccc; margin:0; white-space:pre-wrap; word-break:break-word;">
+                        </p>
+                    </div>
+                </div>
+                <div id="profileCardActions"
+                    style="width:100%; border-top:1px solid rgba(255,255,255,0.05); padding-top:10px; margin-top:5px; display:flex; gap:6px; justify-content:center;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Privacy Statement Overlay Modal -->
+    <div class="privacy-overlay" id="privacy-overlay" onclick="closePrivacyModal()">
+        <div class="privacy-modal-card" onclick="event.stopPropagation();">
+            <button class="privacy-close-x" onclick="closePrivacyModal()">×</button>
+            <h2>🛡️ Privacy Policy</h2>
+            <div class="privacy-content">
+                <p><strong>1. Data Minimization & Privacy</strong><br>
+                    Tellstream is a private community lounge. We do not track, profile, analyze, or sell your data. No
+                    advertising trackers are loaded on this platform.</p>
+
+                <p><strong>2. Browser Local Storage</strong><br>
+                    We use browser local storage purely for functional features: remembering your chat handle, game
+                    session tokens, and player volume slider state.</p>
+
+                <p><strong>3. Chat Visibility & Plaintext Storage</strong><br>
+                    Please note that this is a public chat lounge. Messages are transmitted and stored in plaintext in
+                    the database so that chat history can load when the page is refreshed. They are visible to database
+                    administrators for moderation. Do not type any personal details, passwords, or private information
+                    in public chat channels.</p>
+
+                <p><strong>4. Passkey Hash Security</strong><br>
+                    If you choose to lock your handle, your passkey is immediately hashed server-side using secure
+                    database procedures. Raw passkeys are never stored in plaintext and cannot be read by anyone.</p>
+            </div>
+            <button class="privacy-close-btn" onclick="closePrivacyModal()">Close Statement</button>
+        </div>
+    </div>
+
+    <!-- Cookie Consent Banner -->
+    <div class="cookie-consent-banner" id="cookie-consent-banner">
+        <p>🍪 We use functional local storage to remember your nickname, volume, and active games. No tracking or ads.
+            <a href="#" onclick="event.preventDefault(); openPrivacyModal();">Read Privacy Policy</a></p>
+        <button class="cookie-accept-btn" onclick="acceptCookieConsent()">Accept</button>
+    </div>
+
+    <script src="/src/assets/emojis.js"></script>
+    <script type="module" src="profile.js"></script>
+</body>
+
+</html>
