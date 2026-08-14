@@ -59,9 +59,9 @@ const helpInstructions = [
 ];
 
 const noticeboardHelpInstructions = [
-    { title: "Noticeboard Rules", text: "Keep all posts friendly, helpful, and respectful. Station Admins will immediately delete any abusive or hostile noticeboard posts." },
+    { title: "Noticeboard Rules", text: "Keep all posts friendly, helpful, and respectful. Station Admins will immediately delete any abusive, hostile or violations on noticeboards." },
     { title: "Posting to the Noticeboard (Listeners)", text: "Once verified with your passkey in the profile drawer, you can post updates to the board. As a listener, your posts are restricted to the \"Fambily\" column, so you do not need to specify a target column—it defaults to Fambily automatically." },
-    { title: "Noticeboard Bans", text: "Posting swearing or blocked words on the noticeboard will increase your strikes, leading to temporary or permanent bans, just like in the chat." }
+    { title: "Noticeboard Bans", text: "Posting swearing or blocked words on the noticeboard will increase your strikes, leading to temporary or permanent bans, just like in the chat. Violating etiquette on tellstream risks your account being banned." }
 ];
 
 const djHelpInstructions = [
@@ -750,6 +750,8 @@ function toggleNoticeBoardView() {
             toggleBtn.innerText = "❌ Exit Noticeboard";
         }
         isNoticeBoardActive = true;
+        currentChatMode = 'noticeboard';
+        renderChatTabs();
         if (emojiSectionFS) emojiSectionFS.style.display = 'block';
         renderHelpContent(true);
         evaluateNoticeBoardForms();
@@ -768,6 +770,8 @@ function toggleNoticeBoardView() {
             toggleBtn.innerText = "📋 Noticeboard";
         }
         isNoticeBoardActive = false;
+        currentChatMode = 'lounge';
+        renderChatTabs();
         if (emojiSectionFS) emojiSectionFS.style.display = 'block';
         renderHelpContent(false);
         anchorChatToBottom();
@@ -2696,9 +2700,9 @@ function renderChatTabs() {
     const tabsBar = document.getElementById('chatTabsBar');
     if (!tabsBar) return;
 
-    const isLounge = currentChatMode === 'lounge' && !isNoticeBoardActive && !document.body.classList.contains('chat-is-fullscreen');
-    const isNotice = isNoticeBoardActive;
-    const isFS = document.body.classList.contains('chat-is-fullscreen') && !isNoticeBoardActive;
+    const isLounge = currentChatMode === 'lounge';
+    const isNotice = currentChatMode === 'noticeboard';
+    const isFS = currentChatMode === 'maximize';
     const fsText = document.body.classList.contains('chat-is-fullscreen') ? "Exit Fullscreen" : "Maximize Chat";
 
     tabsBar.innerHTML = `
@@ -2727,16 +2731,10 @@ function handleLoungeTab() {
         anchorChatToBottom();
     }
     switchChatMode('lounge');
-    renderChatTabs();
 }
 
 function handleNoticeboardTab() {
     toggleNoticeBoardView();
-    if (isNoticeBoardActive) {
-        switchChatMode('noticeboard');
-    } else {
-        switchChatMode('lounge');
-    }
 }
 
 function handleMaximizeTab() {

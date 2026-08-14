@@ -833,12 +833,11 @@ body.noticeboard-active .chat-fs-help-panel {
 }
 
 body.noticeboard-active .chat-feed-container {
-    display: flex !important;
-    width: 380px !important;
-    flex: none !important;
-    flex-shrink: 0 !important;
-    order: 3 !important;
-    border-left: 1px solid rgba(255, 255, 255, 0.08);
+    display: none !important;
+}
+
+body.noticeboard-active .chat-fs-help-panel .sub-panel-bottom-fs {
+    display: none !important;
 }
 
 /* 🛑 FIXED OVERLAY: Locks layout paths completely into a fixed space stack layer */
