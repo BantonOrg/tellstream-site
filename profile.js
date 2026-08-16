@@ -200,8 +200,7 @@ async function loadTargetUserProfile() {
         renderProfileHeader(data);
         
         if (isOwner) {
-            const ownerInst = document.getElementById('ownerInstructions');
-            if (ownerInst) ownerInst.style.display = 'block';
+            document.querySelectorAll('.owner-tip').forEach(el => el.style.display = 'block');
         }
         await Promise.all([
             loadMemberVideos(),

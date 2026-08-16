@@ -16,7 +16,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <link rel="stylesheet" href="style.css">
-    
+
     <style>
         /* Standalone adjustments for profile columns layout */
         .inner-feed-wrapper {
@@ -198,24 +198,16 @@
         </div>
 
         <!-- Locked visibility notification area (hidden by default) -->
-        <div id="lockedProfileView" style="display: none; text-align: center; padding: 50px 20px; background: rgba(25, 25, 25, 0.88); backdrop-filter: blur(8px); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 20px;">
+        <div id="lockedProfileView"
+            style="display: none; text-align: center; padding: 50px 20px; background: rgba(25, 25, 25, 0.88); backdrop-filter: blur(8px); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 20px;">
             <span style="font-size: 3rem; display: block; margin-bottom: 15px;">🔒</span>
-            <h3 id="lockedProfileMessage" style="color: #fff; font-size: 1.25rem; font-weight: 600; margin: 0;">This profile webpage is restricted.</h3>
-            <p style="color: #666; font-size: 0.85rem; margin-top: 8px;">Please join the owner's Fambily list to gain view authorization.</p>
-            <a href="/" style="display: inline-block; margin-top: 20px; background: #22e532; color: #000; text-decoration: none; font-weight: bold; padding: 8px 20px; border-radius: 6px; font-size: 0.85rem;">Return to Lounge</a>
-        </div>
-
-        <!-- Webpage Owner Controls & Instructions -->
-        <div id="ownerInstructions" style="display: none; background: rgba(34, 229, 50, 0.08); border: 1px solid rgba(34, 229, 50, 0.25); padding: 18px; border-radius: 8px; margin-bottom: 20px; font-size: 0.85rem; line-height: 1.5; color: #eee; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.45);">
-            <h4 style="margin: 0 0 8px 0; color: #22e532; font-weight: bold; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
-                <span>🛠️</span> Webpage Owner Controls
-            </h4>
-            <p style="margin: 0 0 12px 0;">You are viewing your own profile webpage! To update your webpage content, go to the <strong>Lounge Chat box</strong> (on the right panel or in the main Lounge) and type these commands:</p>
-            <div style="display: flex; flex-direction: column; gap: 8px; padding-left: 10px;">
-                <div>🎬 <strong style="color: #22e532;">Add a Video / Audio player:</strong> Type <code>/embed [url]</code> (Supports YouTube, SoundCloud, Spotify, Mixcloud, and Twitch links).</div>
-                <div>📷 <strong style="color: #22e532;">Upload a Photo:</strong> Type <code>/upload image</code> or <code>/upload</code> to pick an image from your device.</div>
-                <div>✏️ <strong style="color: #22e532;">Post a Status update:</strong> Type <code>/status [your message]</code> to share updates on your timeline.</div>
-            </div>
+            <h3 id="lockedProfileMessage" style="color: #fff; font-size: 1.25rem; font-weight: 600; margin: 0;">This
+                profile webpage is restricted.</h3>
+            <p style="color: #666; font-size: 0.85rem; margin-top: 8px;">Please join the owner's Fambily list to gain
+                view authorization.</p>
+            <a href="/"
+                style="display: inline-block; margin-top: 20px; background: #22e532; color: #000; text-decoration: none; font-weight: bold; padding: 8px 20px; border-radius: 6px; font-size: 0.85rem;">Return
+                to Lounge</a>
         </div>
 
         <!-- Three Column Profile Grid Content -->
@@ -224,8 +216,10 @@
             <div class="col-3" id="videos-column">
                 <div class="col-title">🎬 Videos & Audio</div>
                 <div id="videosFeed" class="inner-feed-wrapper">
-                    <p style="font-size: 0.8rem; color: #666; text-align: center; padding: 20px;">No embeds loaded yet.</p>
+                    <p style="font-size: 0.8rem; color: #666; text-align: center; padding: 20px;">No embeds loaded yet.
+                    </p>
                 </div>
+                <div class="owner-tip" id="embedTip" style="display:none; text-align:center; font-size:0.72rem; color:#777; padding:8px 5px 0 5px; border-top:1px solid rgba(255,255,255,0.05); margin-top:8px;">To add here type: <span style="color:#22e532;">/embed [url]</span></div>
             </div>
 
             <!-- COLUMN 2: PICTURES -->
@@ -233,39 +227,57 @@
                 <div class="col-title">📸 Picture Gallery</div>
                 <div id="picturesFeed" class="inner-feed-wrapper">
                     <div class="photo-grid" id="photoGrid"></div>
-                    <p id="noPhotosMsg" style="font-size: 0.8rem; color: #666; text-align: center; padding: 20px;">No photos uploaded.</p>
+                    <p id="noPhotosMsg" style="font-size: 0.8rem; color: #666; text-align: center; padding: 20px;">No
+                        photos uploaded.</p>
                 </div>
+                <div class="owner-tip" id="photoTip" style="display:none; text-align:center; font-size:0.72rem; color:#777; padding:8px 5px 0 5px; border-top:1px solid rgba(255,255,255,0.05); margin-top:8px;">To add here type: <span style="color:#22e532;">/upload</span></div>
             </div>
 
             <!-- COLUMN 3: STATUSES -->
             <div class="col-3" id="statuses-column">
                 <div class="col-title" style="display: flex; justify-content: space-between; align-items: center;">
                     <span>✏️ Status Timeline</span>
-                    <a href="/" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #fff; text-decoration: none; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">Back to Lounge</a>
+                    <a href="/"
+                        style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #fff; text-decoration: none; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; transition: all 0.2s;"
+                        onmouseover="this.style.background='rgba(255,255,255,0.1)'"
+                        onmouseout="this.style.background='rgba(255,255,255,0.06)'">Back to Lounge</a>
                 </div>
-                
+
                 <!-- Compact Profile Header Block -->
-                <div id="profileHeaderBlock" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 15px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 12px;">
+                <div id="profileHeaderBlock"
+                    style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 15px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 12px;">
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="position: relative; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                            <img id="profileAvatar" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23444'/><text x='50' y='60' font-size='30' font-family='sans-serif' text-anchor='middle' fill='%23fff'>?</text></svg>" style="width: 70px; height: 70px; border-radius: 50%; border: 2px solid #22e532; object-fit: cover; background: #222;">
-                            <img id="profileVipBadge" src="/src/assets/vip1.png" style="display: none; position: absolute; left: calc(50% + 25px); top: 50%; transform: translateY(-50%); width: 45px; height: auto; object-fit: contain;" alt="VIP">
+                        <div
+                            style="position: relative; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <img id="profileAvatar"
+                                src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23444'/><text x='50' y='60' font-size='30' font-family='sans-serif' text-anchor='middle' fill='%23fff'>?</text></svg>"
+                                style="width: 70px; height: 70px; border-radius: 50%; border: 2px solid #22e532; object-fit: cover; background: #222;">
+                            <img id="profileVipBadge" src="/src/assets/vip1.png"
+                                style="display: none; position: absolute; left: calc(50% + 25px); top: 50%; transform: translateY(-50%); width: 45px; height: auto; object-fit: contain;"
+                                alt="VIP">
                         </div>
                         <div style="flex: 1; min-width: 0;">
-                            <h2 id="profileUsername" style="margin: 0; color: #fff; font-size: 1.25rem; font-weight: 800; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Loading...</h2>
-                            <span id="profileBadgeLevel" style="font-size: 0.65rem; padding: 2px 5px; border-radius: 4px; font-weight: bold; text-transform: uppercase; display: inline-block; margin-top: 3px; background: rgba(34, 229, 50, 0.15); color: #22e532;">Member</span>
+                            <h2 id="profileUsername"
+                                style="margin: 0; color: #fff; font-size: 1.25rem; font-weight: 800; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                Loading...</h2>
+                            <span id="profileBadgeLevel"
+                                style="font-size: 0.65rem; padding: 2px 5px; border-radius: 4px; font-weight: bold; text-transform: uppercase; display: inline-block; margin-top: 3px; background: rgba(34, 229, 50, 0.15); color: #22e532;">Member</span>
                         </div>
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 4px; font-size: 0.75rem; color: #aaa;">
                         <div id="profileLocationWrapper">📍 <span id="profileLocation">Not Specified</span></div>
                         <div id="profileSocialsWrapper">🔗 <span id="profileSocials">Not Specified</span></div>
                     </div>
-                    <p id="profileBio" style="margin: 4px 0 0 0; color: #ccc; font-size: 0.8rem; line-height: 1.4; max-width: 100%; white-space: pre-wrap; word-break: break-word;"></p>
+                    <p id="profileBio"
+                        style="margin: 4px 0 0 0; color: #ccc; font-size: 0.8rem; line-height: 1.4; max-width: 100%; white-space: pre-wrap; word-break: break-word;">
+                    </p>
                 </div>
 
                 <div id="statusesFeed" class="inner-feed-wrapper">
-                    <p style="font-size: 0.8rem; color: #666; text-align: center; padding: 20px;">No statuses timeline updates.</p>
+                    <p style="font-size: 0.8rem; color: #666; text-align: center; padding: 20px;">No statuses timeline
+                        updates.</p>
                 </div>
+                <div class="owner-tip" id="statusTip" style="display:none; text-align:center; font-size:0.72rem; color:#777; padding:8px 5px 0 5px; border-top:1px solid rgba(255,255,255,0.05); margin-top:8px;">To add here type: <span style="color:#22e532;">/status [message]</span></div>
             </div>
         </div>
     </div>
@@ -284,33 +296,51 @@
                 <input type="text" id="regReminderInput" placeholder="Key Reminder Hint">
                 <input type="email" id="regEmailInput" placeholder="Recovery Email">
             </div>
-            <div style="display:flex; align-items:center; gap:6px; margin: 8px 0; font-size:0.75rem; color:#aaa; user-select:none;">
+            <div
+                style="display:flex; align-items:center; gap:6px; margin: 8px 0; font-size:0.75rem; color:#aaa; user-select:none;">
                 <input type="checkbox" id="showPasskeyCheckbox" onclick="togglePasskeyVisibility('regPasskeyInput')"
                     style="accent-color:#22e532; cursor:pointer;">
                 <label for="showPasskeyCheckbox" style="cursor:pointer;">Show Passkey text</label>
             </div>
-            <button class="drawer-action-btn" id="drawerSubmitBtn" onclick="handleSecuritySubmit()">Lock Name Globally</button>
-            <p id="reminderHintDisplay" style="font-size:0.75rem; color:#ffdd1a; margin-top:6px; display:none; text-align:center;"></p>
+            <button class="drawer-action-btn" id="drawerSubmitBtn" onclick="handleSecuritySubmit()">Lock Name
+                Globally</button>
+            <p id="reminderHintDisplay"
+                style="font-size:0.75rem; color:#ffdd1a; margin-top:6px; display:none; text-align:center;"></p>
 
-            <div id="forgotPasskeyLink" style="font-size:0.75rem; text-align:center; margin-top:10px; cursor:pointer; color:#22e532; text-decoration:underline; display:none;" onclick="toggleForgotPasskeyForm('request')">Forgot Passkey?</div>
+            <div id="forgotPasskeyLink"
+                style="font-size:0.75rem; text-align:center; margin-top:10px; cursor:pointer; color:#22e532; text-decoration:underline; display:none;"
+                onclick="toggleForgotPasskeyForm('request')">Forgot Passkey?</div>
 
-            <div id="forgotPasskeyRequestForm" style="display:none; flex-direction:column; gap:8px; margin-top:10px; border-top:1px solid #2d2d2d; padding-top:10px;">
-                <p style="font-size:0.75rem; color:#aaa; text-align:center;">Enter your recovery email. We will send a 6-digit verification code to reset your passkey:</p>
-                <input type="email" id="resetRecoveryEmailInput" placeholder="Enter recovery email..." style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
+            <div id="forgotPasskeyRequestForm"
+                style="display:none; flex-direction:column; gap:8px; margin-top:10px; border-top:1px solid #2d2d2d; padding-top:10px;">
+                <p style="font-size:0.75rem; color:#aaa; text-align:center;">Enter your recovery email. We will send a
+                    6-digit verification code to reset your passkey:</p>
+                <input type="email" id="resetRecoveryEmailInput" placeholder="Enter recovery email..."
+                    style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
                 <div style="display:flex; gap:6px;">
-                    <button class="drawer-action-btn" id="sendCodeBtn" style="background:#22e532; color:#000; flex:1;" onclick="sendResetVerificationCode()">Send Code</button>
-                    <button class="drawer-action-btn" style="background:#444; flex:1;" onclick="toggleForgotPasskeyForm('login')">Cancel</button>
+                    <button class="drawer-action-btn" id="sendCodeBtn" style="background:#22e532; color:#000; flex:1;"
+                        onclick="sendResetVerificationCode()">Send Code</button>
+                    <button class="drawer-action-btn" style="background:#444; flex:1;"
+                        onclick="toggleForgotPasskeyForm('login')">Cancel</button>
                 </div>
             </div>
 
-            <div id="forgotPasskeyVerifyForm" style="display:none; flex-direction:column; gap:8px; margin-top:10px; border-top:1px solid #2d2d2d; padding-top:10px;">
-                <p style="font-size:0.75rem; color:#aaa; text-align:center;">Enter the 6-digit code sent to your email and choose a new passkey:</p>
-                <input type="text" id="resetCodeInput" placeholder="6-Digit Verification Code" style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none; text-align:center; letter-spacing:4px; font-weight:bold;">
-                <input type="password" id="resetNewPasskeyInput" placeholder="New Secret Passkey" style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
-                <input type="text" id="resetNewReminderInput" placeholder="New Key Reminder Hint" style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
+            <div id="forgotPasskeyVerifyForm"
+                style="display:none; flex-direction:column; gap:8px; margin-top:10px; border-top:1px solid #2d2d2d; padding-top:10px;">
+                <p style="font-size:0.75rem; color:#aaa; text-align:center;">Enter the 6-digit code sent to your email
+                    and choose a new passkey:</p>
+                <input type="text" id="resetCodeInput" placeholder="6-Digit Verification Code"
+                    style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none; text-align:center; letter-spacing:4px; font-weight:bold;">
+                <input type="password" id="resetNewPasskeyInput" placeholder="New Secret Passkey"
+                    style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
+                <input type="text" id="resetNewReminderInput" placeholder="New Key Reminder Hint"
+                    style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
                 <div style="display:flex; gap:6px;">
-                    <button class="drawer-action-btn" id="confirmResetBtn" style="background:#22e532; flex:1; color:#000;" onclick="verifyAndResetPasskey()">Reset Passkey</button>
-                    <button class="drawer-action-btn" style="background:#444; flex:1;" onclick="toggleForgotPasskeyForm('request')">Back</button>
+                    <button class="drawer-action-btn" id="confirmResetBtn"
+                        style="background:#22e532; flex:1; color:#000;" onclick="verifyAndResetPasskey()">Reset
+                        Passkey</button>
+                    <button class="drawer-action-btn" style="background:#444; flex:1;"
+                        onclick="toggleForgotPasskeyForm('request')">Back</button>
                 </div>
             </div>
         </div>
@@ -318,32 +348,44 @@
         <!-- Fambily & Profile Drawer -->
         <div class="fambily-drawer" id="fambilyDrawer">
             <div class="fambily-drawer-tabs">
-                <button class="fambily-tab-btn active" id="fambily-tab-btn-profile" onclick="switchFambilyTab('profile')">Profile</button>
-                <button class="fambily-tab-btn" id="fambily-tab-btn-fambily" onclick="switchFambilyTab('fambily')">Fambily</button>
-                <button class="fambily-tab-btn" id="fambily-tab-btn-requests" onclick="switchFambilyTab('requests')">Requests</button>
-                <button class="fambily-tab-btn" id="fambily-tab-btn-blocked" onclick="switchFambilyTab('blocked')">Blocked</button>
+                <button class="fambily-tab-btn active" id="fambily-tab-btn-profile"
+                    onclick="switchFambilyTab('profile')">Profile</button>
+                <button class="fambily-tab-btn" id="fambily-tab-btn-fambily"
+                    onclick="switchFambilyTab('fambily')">Fambily</button>
+                <button class="fambily-tab-btn" id="fambily-tab-btn-requests"
+                    onclick="switchFambilyTab('requests')">Requests</button>
+                <button class="fambily-tab-btn" id="fambily-tab-btn-blocked"
+                    onclick="switchFambilyTab('blocked')">Blocked</button>
             </div>
 
             <!-- PROFILE TAB CONTENT -->
             <div class="fambily-tab-content" id="fambily-tab-profile">
                 <div class="profile-avatar-row">
-                    <img id="myAvatarImg" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23444'/><text x='50' y='60' font-size='30' font-family='sans-serif' text-anchor='middle' fill='%23fff'>?</text></svg>" class="my-avatar-preview">
+                    <img id="myAvatarImg"
+                        src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23444'/><text x='50' y='60' font-size='30' font-family='sans-serif' text-anchor='middle' fill='%23fff'>?</text></svg>"
+                        class="my-avatar-preview">
                     <div class="avatar-upload-col">
-                        <label class="drawer-action-btn" style="background:#22e532; color:#000; text-align:center; display:block; cursor:pointer; font-size:0.75rem; padding:6px 12px; border-radius:4px; font-weight:bold;">
+                        <label class="drawer-action-btn"
+                            style="background:#22e532; color:#000; text-align:center; display:block; cursor:pointer; font-size:0.75rem; padding:6px 12px; border-radius:4px; font-weight:bold;">
                             Upload Photo
-                            <input type="file" id="avatarFileInput" accept="image/*" style="display:none;" onchange="handleAvatarSelected(event)">
+                            <input type="file" id="avatarFileInput" accept="image/*" style="display:none;"
+                                onchange="handleAvatarSelected(event)">
                         </label>
                         <span style="font-size:0.65rem; color:#888;">Max 500KB. Cropped to square.</span>
                     </div>
                 </div>
                 <div class="form-grid" style="margin-top:8px;">
-                    <input type="text" id="profileLocationInput" placeholder="Location (e.g. Earth, Canada)" style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
-                    <input type="text" id="profileSocialsInput" placeholder="Socials (e.g. @instagram)" style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
+                    <input type="text" id="profileLocationInput" placeholder="Location (e.g. Earth, Canada)"
+                        style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
+                    <input type="text" id="profileSocialsInput" placeholder="Socials (e.g. @instagram)"
+                        style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
                 </div>
-                <textarea id="profileBioInput" placeholder="Bio: Say anything you like..." style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none; width:100%; height:45px; resize:none; margin-bottom:8px; font-family:inherit;"></textarea>
+                <textarea id="profileBioInput" placeholder="Bio: Say anything you like..."
+                    style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none; width:100%; height:45px; resize:none; margin-bottom:8px; font-family:inherit;"></textarea>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                     <span style="font-size:0.75rem; color:#aaa;">Profile Visibility:</span>
-                    <select id="profileVisibilitySelect" style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:4px 8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none; cursor:pointer;">
+                    <select id="profileVisibilitySelect"
+                        style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:4px 8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none; cursor:pointer;">
                         <option value="fambily">Fambily only (Default)</option>
                         <option value="everyone">Everyone</option>
                         <option value="none">None</option>
@@ -351,30 +393,41 @@
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                     <span style="font-size:0.75rem; color:#aaa;">Go Invisible:</span>
-                    <input type="checkbox" id="profileInvisibleCheckbox" style="accent-color:#22e532; transform:scale(1.2); cursor:pointer;">
+                    <input type="checkbox" id="profileInvisibleCheckbox"
+                        style="accent-color:#22e532; transform:scale(1.2); cursor:pointer;">
                 </div>
-                <button class="drawer-action-btn" style="background:#22e532; color:#000; width:100%;" onclick="saveProfileChanges()">Save Profile</button>
+                <button class="drawer-action-btn" style="background:#22e532; color:#000; width:100%;"
+                    onclick="saveProfileChanges()">Save Profile</button>
             </div>
 
             <!-- FAMBILY TAB CONTENT -->
             <div class="fambily-tab-content" id="fambily-tab-fambily" style="display:none;">
                 <div style="display:flex; gap:6px; margin-bottom:8px;">
-                    <input type="text" id="addFambilyInput" placeholder="Request to username..." style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:6px 8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none; flex:1;">
-                    <button class="notice-inline-btn" onclick="sendFambilyRequest()" style="background:#22e532; color:#000; font-size:0.75rem; padding:0 10px;">Send</button>
+                    <input type="text" id="addFambilyInput" placeholder="Request to username..."
+                        style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:6px 8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none; flex:1;">
+                    <button class="notice-inline-btn" onclick="sendFambilyRequest()"
+                        style="background:#22e532; color:#000; font-size:0.75rem; padding:0 10px;">Send</button>
                 </div>
                 <div class="drawer-list-container" id="fambilyListContainer" style="max-height:180px; overflow-y:auto;">
-                    <p style="font-size:0.75rem; color:#666; text-align:center; padding:10px;">No Fambily members added yet.</p>
+                    <p style="font-size:0.75rem; color:#666; text-align:center; padding:10px;">No Fambily members added
+                        yet.</p>
                 </div>
             </div>
 
             <!-- REQUESTS TAB CONTENT -->
             <div class="fambily-tab-content" id="fambily-tab-requests" style="display:none;">
-                <h5 class="drawer-sub-title" style="margin: 0 0 6px 0; font-size: 0.75rem; color: #22e532; text-transform: uppercase;">Incoming Requests</h5>
-                <div class="drawer-list-container" id="incomingReqsContainer" style="max-height:90px; overflow-y:auto; margin-bottom:10px; border:1px solid rgba(255,255,255,0.04); border-radius:4px;">
+                <h5 class="drawer-sub-title"
+                    style="margin: 0 0 6px 0; font-size: 0.75rem; color: #22e532; text-transform: uppercase;">Incoming
+                    Requests</h5>
+                <div class="drawer-list-container" id="incomingReqsContainer"
+                    style="max-height:90px; overflow-y:auto; margin-bottom:10px; border:1px solid rgba(255,255,255,0.04); border-radius:4px;">
                     <p style="font-size:0.75rem; color:#666; text-align:center; padding:5px;">No incoming requests.</p>
                 </div>
-                <h5 class="drawer-sub-title" style="margin: 0 0 6px 0; font-size: 0.75rem; color: #22e532; text-transform: uppercase;">Sent Requests</h5>
-                <div class="drawer-list-container" id="outgoingReqsContainer" style="max-height:90px; overflow-y:auto; border:1px solid rgba(255,255,255,0.04); border-radius:4px;">
+                <h5 class="drawer-sub-title"
+                    style="margin: 0 0 6px 0; font-size: 0.75rem; color: #22e532; text-transform: uppercase;">Sent
+                    Requests</h5>
+                <div class="drawer-list-container" id="outgoingReqsContainer"
+                    style="max-height:90px; overflow-y:auto; border:1px solid rgba(255,255,255,0.04); border-radius:4px;">
                     <p style="font-size:0.75rem; color:#666; text-align:center; padding:5px;">No sent requests.</p>
                 </div>
             </div>
@@ -382,15 +435,20 @@
             <!-- BLOCKED TAB CONTENT -->
             <div class="fambily-tab-content" id="fambily-tab-blocked" style="display:none;">
                 <div id="blockedRevealContainer" style="text-align:center; padding:15px;">
-                    <p style="font-size:0.75rem; color:#aaa; margin-bottom:8px;">Blocked users list is hidden to protect privacy.</p>
-                    <button class="drawer-action-btn" style="background:#444; font-size:0.75rem;" onclick="revealBlockedList()">Reveal Blocked List</button>
+                    <p style="font-size:0.75rem; color:#aaa; margin-bottom:8px;">Blocked users list is hidden to protect
+                        privacy.</p>
+                    <button class="drawer-action-btn" style="background:#444; font-size:0.75rem;"
+                        onclick="revealBlockedList()">Reveal Blocked List</button>
                 </div>
                 <div id="blockedContentContainer" style="display:none;">
-                    <div class="drawer-list-container" id="blockedListContainer" style="max-height:180px; overflow-y:auto;">
+                    <div class="drawer-list-container" id="blockedListContainer"
+                        style="max-height:180px; overflow-y:auto;">
                         <p style="font-size:0.75rem; color:#666; text-align:center; padding:10px;">No blocked users.</p>
                     </div>
                     <div style="text-align:center; margin-top:8px;">
-                        <button class="drawer-action-btn" style="background:#222; font-size:0.65rem; border:1px solid #444;" onclick="hideBlockedList()">Hide List Again</button>
+                        <button class="drawer-action-btn"
+                            style="background:#222; font-size:0.65rem; border:1px solid #444;"
+                            onclick="hideBlockedList()">Hide List Again</button>
                     </div>
                 </div>
             </div>
@@ -410,8 +468,11 @@
                             <button class="send-main-btn" id="sendBtn">Send</button>
                         </div>
                         <div class="lock-toggle-stack">
-                            <button class="lock-toggle-btn" id="lockStatusBtn" onclick="toggleSecurityDrawer()" title="Secure/Verify identity handle">🔒</button>
-                            <button class="lock-toggle-btn" id="fambilyDrawerBtn" onclick="toggleFambilyDrawer()" title="Fambily & Profile Settings" style="background:rgba(34,229,50,0.1); border:1px solid rgba(34,229,50,0.3); color:#22e532;">💚</button>
+                            <button class="lock-toggle-btn" id="lockStatusBtn" onclick="toggleSecurityDrawer()"
+                                title="Secure/Verify identity handle">🔒</button>
+                            <button class="lock-toggle-btn" id="fambilyDrawerBtn" onclick="toggleFambilyDrawer()"
+                                title="Fambily & Profile Settings"
+                                style="background:rgba(34,229,50,0.1); border:1px solid rgba(34,229,50,0.3); color:#22e532;">💚</button>
                         </div>
                         <textarea id="messageInput" placeholder="Type a message..." maxlength="333"></textarea>
                     </div>
@@ -423,7 +484,8 @@
     <!-- Lightbox Modal for Photo Gallery -->
     <div class="lightbox-modal" id="photoLightbox" onclick="closeLightbox()">
         <button class="lightbox-close" onclick="closeLightbox()">Close (X)</button>
-        <img class="lightbox-content" id="lightboxTargetImg" src="" onclick="event.stopPropagation();" alt="Lightbox Expand View">
+        <img class="lightbox-content" id="lightboxTargetImg" src="" onclick="event.stopPropagation();"
+            alt="Lightbox Expand View">
     </div>
 
     <!-- User Profile Card Modal (Required for clicks on user profiles in chat sidebar) -->
@@ -438,7 +500,8 @@
                     <img id="profileCardAvatar" src=""
                         style="width:80px; height:80px; border-radius:50%; border:2px solid #22e532; object-fit:cover; background:#222;">
                     <img id="profileCardVipBadge" src="/src/assets/vip1.png"
-                        style="display:none; position:absolute; left:calc(50% + 48px); top:50%; transform:translateY(-50%); width:55px; height:auto; object-fit:contain;" alt="VIP">
+                        style="display:none; position:absolute; left:calc(50% + 48px); top:50%; transform:translateY(-50%); width:55px; height:auto; object-fit:contain;"
+                        alt="VIP">
                 </div>
                 <div>
                     <h3 id="profileCardUsername" style="margin:0; color:#fff; font-size:1.2rem;"></h3>
@@ -495,7 +558,8 @@
     <!-- Cookie Consent Banner -->
     <div class="cookie-consent-banner" id="cookie-consent-banner">
         <p>🍪 We use functional local storage to remember your nickname, volume, and active games. No tracking or ads.
-            <a href="#" onclick="event.preventDefault(); openPrivacyModal();">Read Privacy Policy</a></p>
+            <a href="#" onclick="event.preventDefault(); openPrivacyModal();">Read Privacy Policy</a>
+        </p>
         <button class="cookie-accept-btn" onclick="acceptCookieConsent()">Accept</button>
     </div>
 
