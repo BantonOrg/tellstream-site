@@ -87,6 +87,37 @@ const adminHelpInstructions = [
     { title: "🚫 Unbanning Users", text: "Type: /unban [username]\nWhat it does: Clears all strikes and restores chat/noticeboard access instantly for locked or banned users." }
 ];
 
+function findProfileMatch(showName) {
+    if (!showName) return null;
+    const cleanName = showName.trim().toLowerCase();
+    const words = cleanName.split(/\s+/);
+    if (words.length === 0) return null;
+
+    // 1. Try matching the first two words (e.g. "big john" or "dj cruss")
+    if (words.length >= 2) {
+        const firstTwoWords = `${words[0]} ${words[1]}`;
+        const match = Object.values(profilesCache).find(p => 
+            p.username.toLowerCase() === firstTwoWords
+        );
+        if (match) return match;
+    }
+
+    // 2. Fallback: Try matching the first word (e.g. "banton" from "banton live")
+    const firstWord = words[0];
+    const firstWordMatch = Object.values(profilesCache).find(p => 
+        p.username.toLowerCase() === firstWord
+    );
+    if (firstWordMatch) return firstWordMatch;
+
+    // 3. Fallback 2: Try exact match of the entire string
+    const exactMatch = Object.values(profilesCache).find(p => 
+        p.username.toLowerCase() === cleanName
+    );
+    if (exactMatch) return exactMatch;
+
+    return null;
+}
+
 // CELL-LEFT ISOLATED ENGINE (DYNAMIC BOUNDS & AUTOMATED MODE SWITCH)
 function renderStreamHeader(showName) {
     const cellLeft = document.querySelector('.cell-left');
@@ -128,7 +159,20 @@ function renderStreamHeader(showName) {
 
     if (showName) {
         const cleanName = showName.trim();
-        const safeFileName = cleanName.toLowerCase().replace(/\s+/g, '_') + '.png';
+
+        // Update display text immediately to prevent latency/refresh lag
+        if (cleanName.toLowerCase() === 'tellstream') {
+            display.innerText = "TELLSTREAM NON STOP";
+        } else {
+            display.innerText = `${cleanName} - LIVE`;
+        }
+
+        let matchedName = cleanName;
+        const matchedProfile = findProfileMatch(cleanName);
+        if (matchedProfile) {
+            matchedName = matchedProfile.username;
+        }
+        const safeFileName = matchedName.toLowerCase().replace(/\s+/g, '_') + '.png';
 
         const { data } = supabase_db.storage.from('dj-logos').getPublicUrl(safeFileName);
         const imgCloudUrl = data.publicUrl + '?v=' + Date.now();
@@ -191,7 +235,7 @@ function renderStreamHeader(showName) {
             }
 
             if (cleanName.toLowerCase() === 'tellstream') {
-                display.innerText = "TELLSTREAM NONE STOP";
+                display.innerText = "TELLSTREAM NON STOP";
             } else {
                 display.innerText = `${cleanName} - LIVE`;
             }
@@ -1498,9 +1542,22 @@ async function sendMessage() {
                 }
 
                 if (showNameInput) {
-                    showNameInput = formatPresenterName(showNameInput);
-                    messageInput.value = '';
-                    await updateDatabaseStreamStatus(showNameInput);
+                    const lowerInput = showNameInput.toLowerCase();
+                    if (lowerInput === 'tellstream') {
+                        messageInput.value = '';
+                        await updateDatabaseStreamStatus('tellstream');
+                        return;
+                    }
+                    
+                    // Enforce matching using the two-name / single-word helper
+                    const matchedProfile = findProfileMatch(showNameInput);
+                    if (matchedProfile) {
+                        messageInput.value = '';
+                        // Write the full custom show name to the database
+                        await updateDatabaseStreamStatus(showNameInput);
+                        return;
+                    }
+                    // Does nothing if the name cannot be mapped to any registered profile
                     return;
                 }
             }
