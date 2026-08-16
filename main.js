@@ -2970,54 +2970,7 @@ function renderBlockedList() {
 }
 
 function renderOnlineUsersList() {
-    const container = document.getElementById('onlineUsersList');
-    if (!container) return;
-
-    container.innerHTML = "";
-
-    const users = Object.keys(onlineUsers);
-    const currentUser = usernameInput.value.trim();
-
-    const visibleUsers = users.filter(user => {
-        if (user === currentUser) return false;
-        const rel = relationshipMap[user];
-        if (rel && rel.status === 'blocked') return false;
-        return true;
-    });
-
-    if (visibleUsers.length === 0) {
-        container.innerHTML = `<p style="font-size:0.75rem; color:#666; text-align:center; padding:10px;">No other users online.</p>`;
-        return;
-    }
-
-    visibleUsers.forEach(user => {
-        const info = onlineUsers[user];
-        const avatarUrl = info.avatar_url || profilesCache[user]?.avatar_url || '';
-        const avatarSrc = avatarUrl || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23444'/><text x='50' y='60' font-size='30' font-family='sans-serif' text-anchor='middle' fill='%23fff'>?</text></svg>";
-
-        const profile = profilesCache[user];
-        let nameClass = "user-unregistered";
-        if (profile) {
-            const pLevel = parseInt(profile.power_level || 0);
-            if (pLevel >= 2) nameClass = "user-admin";
-            else if (pLevel === 1) nameClass = "user-selector";
-            else nameClass = "user-registered";
-        }
-
-        const item = document.createElement('div');
-        item.className = "online-user-item";
-        item.onclick = () => openProfileCard(user);
-        item.innerHTML = `
-            <div class="drawer-item-left">
-                <div class="online-user-avatar-wrapper">
-                    <img src="\${avatarSrc}" class="online-user-avatar">
-                    <span class="status-badge online"></span>
-                </div>
-                <span class="\${nameClass}">\${user}</span>
-            </div>
-        `;
-        container.appendChild(item);
-    });
+    // Left as a clean stub since the '#onlineUsersList' container was removed from HTML
 }
 
 async function loadPrivateMessages(otherUser) {
@@ -3819,31 +3772,14 @@ function compressImageToJpeg(file, maxDim, quality) {
             const img = new Image();
             img.onload = function() {
                 const canvas = document.createElement('canvas');
-                let width = img.width;
-                let height = img.height;
-                
+                let width = img.width, height = img.height;
                 if (width > maxDim || height > maxDim) {
-                    if (width > height) {
-                        height = Math.round((height * maxDim) / width);
-                        width = maxDim;
-                    } else {
-                        width = Math.round((width * maxDim) / height);
-                        height = maxDim;
-                    }
+                    if (width > height) { height = Math.round((height * maxDim) / width); width = maxDim; }
+                    else { width = Math.round((width * maxDim) / height); height = maxDim; }
                 }
-                
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-                
-                canvas.toBlob(blob => {
-                    if (blob) {
-                        resolve(blob);
-                    } else {
-                        reject(new Error("Canvas conversion to blob failed."));
-                    }
-                }, 'image/jpeg', quality);
+                canvas.width = width; canvas.height = height;
+                canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("Canvas conversion to blob failed.")), 'image/jpeg', quality);
             };
             img.onerror = () => reject(new Error("Failed to load image."));
             img.src = e.target.result;
