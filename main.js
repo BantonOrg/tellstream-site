@@ -87,6 +87,22 @@ const adminHelpInstructions = [
     { title: "🚫 Unbanning Users", text: "Type: /unban [username]\nWhat it does: Clears all strikes and restores chat/noticeboard access instantly for locked or banned users." }
 ];
 
+function getLogoFileName(baseName) {
+    if (!baseName) return "";
+    const clean = baseName.toLowerCase().trim().replace(/\s+/g, '_');
+    const specialMap = {
+        'fari_ras': 'farl_ras',
+        'fada_b': 'father_b',
+        'fire_ras': 'fyah_ras',
+        'wayne_irie': 'wayne_lrie',
+        'sandra_b': 'sandra_bee',
+        'stinger_blinger': 'stinger_binger',
+        'milo_medina': 'milo_medina_int'
+    };
+    const mapped = specialMap[clean] || clean;
+    return mapped + '.png';
+}
+
 function findProfileMatch(showName) {
     if (!showName) return null;
     const cleanName = showName.trim().toLowerCase();
@@ -182,7 +198,7 @@ function renderStreamHeader(showName) {
         }
         const words = matchedName.trim().split(/\s+/);
         const nameToUse = (words.length >= 2) ? `${words[0]} ${words[1]}` : words[0];
-        const safeFileName = nameToUse.toLowerCase().replace(/\s+/g, '_') + '.png';
+        const safeFileName = getLogoFileName(nameToUse);
 
 
         const { data } = supabase_db.storage.from('dj-logos').getPublicUrl(safeFileName);
@@ -1612,7 +1628,7 @@ async function sendMessage() {
                     const deleteNameInput = text.substring(8).trim().substring(0, 50);
                     if (deleteNameInput) {
                         messageInput.value = '';
-                        const targetFileName = deleteNameInput.toLowerCase().replace(/\s+/g, '_') + '.png';
+                        const targetFileName = getLogoFileName(deleteNameInput);
                         try {
                             const { error } = await supabase_db.storage.from('dj-logos').remove([targetFileName]);
                             if (error) throw error;
@@ -3516,7 +3532,7 @@ function updateWebVersionFooter() {
         const file = e.target.files[0];
         if (!file || !pendingLogoTargetName) return;
         try {
-            const uploadFileName = `${pendingLogoTargetName}.png`;
+            const uploadFileName = getLogoFileName(pendingLogoTargetName);
             const { error } = await supabase_db.storage.from('dj-logos').upload(uploadFileName, file, { upsert: true });
             if (error) throw error;
             alert(`✅ Success! Transparent logo saved for: "${pendingLogoTargetName.replace(/_/g, ' ')}"`);
