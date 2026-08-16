@@ -91,25 +91,32 @@ function findProfileMatch(showName) {
     if (!showName) return null;
     const cleanName = showName.trim().toLowerCase();
     const words = cleanName.split(/\s+/);
-    if (words.length === 0) return null;
+    if (words.length === 0 || !words[0]) return null;
 
-    // 1. Try matching the first two words (e.g. "big john" or "dj cruss")
+    // Helper to get first N words
+    function getFirstWords(nameStr, count) {
+        const w = nameStr.trim().toLowerCase().split(/\s+/);
+        if (w.length === 0) return "";
+        return w.slice(0, Math.min(count, w.length)).join(" ");
+    }
+
+    // 1. Try matching by first two words of both names
     if (words.length >= 2) {
-        const firstTwoWords = `${words[0]} ${words[1]}`;
+        const targetTwo = `${words[0]} ${words[1]}`;
         const match = Object.values(profilesCache).find(p => 
-            p.username.toLowerCase() === firstTwoWords
+            getFirstWords(p.username, 2) === targetTwo
         );
         if (match) return match;
     }
 
-    // 2. Fallback: Try matching the first word (e.g. "banton" from "banton live")
-    const firstWord = words[0];
-    const firstWordMatch = Object.values(profilesCache).find(p => 
-        p.username.toLowerCase() === firstWord
+    // 2. Try matching by first word of both names (fallback for single-name DJs)
+    const targetOne = words[0];
+    const matchOne = Object.values(profilesCache).find(p => 
+        getFirstWords(p.username, 1) === targetOne
     );
-    if (firstWordMatch) return firstWordMatch;
+    if (matchOne) return matchOne;
 
-    // 3. Fallback 2: Try exact match of the entire string
+    // 3. Fallback to exact match check
     const exactMatch = Object.values(profilesCache).find(p => 
         p.username.toLowerCase() === cleanName
     );
@@ -117,6 +124,7 @@ function findProfileMatch(showName) {
 
     return null;
 }
+
 
 // CELL-LEFT ISOLATED ENGINE (DYNAMIC BOUNDS & AUTOMATED MODE SWITCH)
 function renderStreamHeader(showName) {
@@ -172,7 +180,10 @@ function renderStreamHeader(showName) {
         if (matchedProfile) {
             matchedName = matchedProfile.username;
         }
-        const safeFileName = matchedName.toLowerCase().replace(/\s+/g, '_') + '.png';
+        const words = matchedName.trim().split(/\s+/);
+        const nameToUse = (words.length >= 2) ? `${words[0]} ${words[1]}` : words[0];
+        const safeFileName = nameToUse.toLowerCase().replace(/\s+/g, '_') + '.png';
+
 
         const { data } = supabase_db.storage.from('dj-logos').getPublicUrl(safeFileName);
         const imgCloudUrl = data.publicUrl + '?v=' + Date.now();
@@ -1549,16 +1560,11 @@ async function sendMessage() {
                         return;
                     }
                     
-                    // Enforce matching using the two-name / single-word helper
-                    const matchedProfile = findProfileMatch(showNameInput);
-                    if (matchedProfile) {
-                        messageInput.value = '';
-                        // Write the full custom show name to the database
-                        await updateDatabaseStreamStatus(showNameInput);
-                        return;
-                    }
-                    // Does nothing if the name cannot be mapped to any registered profile
+                    messageInput.value = '';
+                    // Write the full custom show name to the database
+                    await updateDatabaseStreamStatus(showNameInput);
                     return;
+
                 }
             }
 
