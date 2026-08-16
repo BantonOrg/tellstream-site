@@ -198,6 +198,11 @@ async function loadTargetUserProfile() {
 
         // Render Page Layout
         renderProfileHeader(data);
+        
+        if (isOwner) {
+            const ownerInst = document.getElementById('ownerInstructions');
+            if (ownerInst) ownerInst.style.display = 'block';
+        }
         await Promise.all([
             loadMemberVideos(),
             loadMemberPhotos(),
@@ -640,7 +645,46 @@ async function sendMessage() {
 
     if (text.startsWith('/')) {
         messageInput.value = '';
-        alert("🔒 Webpage command controls are disabled inside the profile sidebar. Please run commands on the main Lounge homepage.");
+        const profile = profilesMap[user];
+        const loggedInUser = localStorage.getItem('tellstream_saved_username');
+        const isVerified = (user === loggedInUser && isCurrentUserVerified);
+        
+        if (!profile || !isVerified) {
+            alert("🔒 To unlock your member page and use these commands, you must first secure your nickname in the profile settings drawer.");
+            return;
+        }
+        
+        if (!isUserVip(profile)) {
+            alert("⭐ Webpages are a Tellstream VIP & Presenter feature. To unlock your own page, contact management or become a VIP!");
+            return;
+        }
+        
+        if (text.startsWith('/status ')) {
+            const msg = text.substring(8).trim();
+            if (msg) {
+                await handleMemberStatus(user, msg);
+                await loadMemberStatuses(); // Reload statuses timeline dynamically!
+            } else {
+                alert("Usage: /status [message]");
+            }
+        } else if (text.startsWith('/embed ')) {
+            const url = text.substring(7).trim();
+            if (url) {
+                await handleMemberEmbed(user, url);
+                await loadMemberVideos(); // Reload videos/audio player dynamically!
+            } else {
+                alert("Usage: /embed [media url]");
+            }
+        } else if (text.trim() === '/upload image' || text.trim() === '/upload') {
+            const picker = document.getElementById('memberPhotoFilePicker');
+            if (picker) {
+                picker.click();
+            } else {
+                alert("Upload picker unavailable.");
+            }
+        } else {
+            alert("Invalid command usage. Use /status, /embed, or /upload.");
+        }
         return;
     }
 
@@ -938,3 +982,149 @@ function escapeHTML(str) {
     if (!str) return '';
     return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
 }
+
+// Webpage Commands & Member Page Customization Controls
+async function handleMemberStatus(username, message) {
+    try {
+        const { error } = await supabase_db.from('member_statuses').insert([{
+            username: username,
+            message: message
+        }]);
+        if (error) throw error;
+        alert("✏️ Status update posted successfully to your webpage!");
+    } catch (err) {
+        alert("Failed to post status: " + err.message);
+    }
+}
+
+async function handleMemberEmbed(username, url) {
+    const isMedia = url.includes('youtube.com') || url.includes('youtu.be') || 
+                    url.includes('mixcloud.com') || url.includes('twitch.tv') || 
+                    url.includes('soundcloud.com') || url.includes('spotify.com');
+                    
+    if (!isMedia) {
+        alert("Unsupported URL! We support YouTube, Mixcloud, Twitch, SoundCloud, and Spotify embeds.");
+        return;
+    }
+    
+    try {
+        const { error } = await supabase_db.from('member_embeds').insert([{
+            username: username,
+            url: url
+        }]);
+        if (error) throw error;
+        alert("🎬 Video embed added successfully to your webpage!");
+    } catch (err) {
+        alert("Failed to add video: " + err.message);
+    }
+}
+
+function compressImageToJpeg(file, maxDim, quality) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                
+                if (width > maxDim || height > maxDim) {
+                    if (width > height) {
+                        height = Math.round((height * maxDim) / width);
+                        width = maxDim;
+                    } else {
+                        width = Math.round((width * maxDim) / height);
+                        height = maxDim;
+                    }
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                canvas.toBlob(blob => {
+                    if (blob) {
+                        resolve(blob);
+                    } else {
+                        reject(new Error("Canvas blob generation failed"));
+                    }
+                }, 'image/jpeg', quality);
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+// Dynamically create the file picker input for profile.js
+(function initMemberPhotoPicker() {
+    const hiddenMemberPhotoInput = document.createElement('input');
+    hiddenMemberPhotoInput.type = 'file';
+    hiddenMemberPhotoInput.id = 'memberPhotoFilePicker';
+    hiddenMemberPhotoInput.accept = 'image/*';
+    hiddenMemberPhotoInput.style.display = 'none';
+    document.body.appendChild(hiddenMemberPhotoInput);
+
+    hiddenMemberPhotoInput.addEventListener('change', async function (e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const currentUser = usernameInput.value.trim();
+        const profile = profilesMap[currentUser];
+        if (!profile || !isUserVip(profile)) {
+            alert("Unauthorized upload action.");
+            return;
+        }
+
+        try {
+            const compressedBlob = await compressImageToJpeg(file, 1024, 0.8);
+            
+            const { data: existingPhotos, error: fetchErr } = await supabase_db
+                .from('member_photos')
+                .select('*')
+                .eq('username', currentUser)
+                .order('created_at', { ascending: true });
+                
+            if (fetchErr) throw fetchErr;
+            
+            if (existingPhotos && existingPhotos.length >= 9) {
+                const oldest = existingPhotos[0];
+                await supabase_db.storage.from('member-photos').remove([oldest.file_name]);
+                await supabase_db.from('member_photos').delete().eq('id', oldest.id);
+            }
+            
+            const timestamp = Date.now();
+            const fileName = `${currentUser}/img_${timestamp}.jpg`;
+            const { error: uploadError } = await supabase_db.storage
+                .from('member-photos')
+                .upload(fileName, compressedBlob, {
+                    contentType: 'image/jpeg',
+                    upsert: true
+                });
+                
+            if (uploadError) throw uploadError;
+            
+            const { data: publicUrlData } = supabase_db.storage
+                .from('member-photos')
+                .getPublicUrl(fileName);
+                
+            const publicUrl = publicUrlData.publicUrl;
+            
+            const { error: dbErr } = await supabase_db.from('member_photos').insert([{
+                username: currentUser,
+                file_name: fileName,
+                public_url: publicUrl
+            }]);
+            
+            if (dbErr) throw dbErr;
+            
+            alert("📸 Photo uploaded successfully to your webpage!");
+            await loadMemberPhotos(); // Reload photos grid dynamically!
+        } catch (err) {
+            alert("Upload failed: " + err.message);
+        } finally {
+            hiddenMemberPhotoInput.value = '';
+        }
+    });
+})();
