@@ -1750,16 +1750,6 @@ async function sendMessage() {
     messageInput.value = '';
     if (currentChatMode.startsWith('dm:')) {
         const receiver = currentChatMode.substring(3);
-        const rel = relationshipMap[receiver];
-        if (rel && rel.status === 'blocked') {
-            alert("You have blocked this user. Unblock them in your Fambily settings to chat.");
-            return;
-        }
-        const checkBlocked = await checkBlockedStatus(user, receiver);
-        if (checkBlocked) {
-            alert("Unable to send message to this user.");
-            return;
-        }
         await supabase_db.from('private_messages').insert([{
             sender: user,
             receiver: receiver,
@@ -2080,7 +2070,7 @@ async function onUserVerifiedSuccess(username) {
             document.getElementById('profileLocationInput').value = data.location || '';
             document.getElementById('profileSocialsInput').value = data.socials || '';
             document.getElementById('profileBioInput').value = data.bio || '';
-            document.getElementById('profileVisibilitySelect').value = data.profile_visibility || 'fambily';
+            document.getElementById('profileVisibilitySelect').value = data.profile_visibility || 'everyone';
             document.getElementById('profileInvisibleCheckbox').checked = !!data.status_invisible;
             if (data.avatar_url) {
                 document.getElementById('myAvatarImg').src = data.avatar_url;
@@ -2092,7 +2082,7 @@ async function onUserVerifiedSuccess(username) {
                 location: '',
                 socials: '',
                 bio: '',
-                profile_visibility: 'fambily',
+                profile_visibility: 'everyone',
                 avatar_url: '',
                 status_invisible: false
             };
@@ -2102,7 +2092,6 @@ async function onUserVerifiedSuccess(username) {
     }
 
     await initPresenceTracking(username);
-    await loadRelationships(username);
     initRealtimePrivateSubscriptions(username);
 }
 
@@ -2164,45 +2153,7 @@ async function initPresenceTracking(username) {
     });
 }
 
-async function loadRelationships(username) {
-    try {
-        const { data, error } = await supabase_db.from('fambily_relations')
-            .select('*')
-            .or(`sender.eq.${username},receiver.eq.${username}`);
 
-        relationshipMap = {};
-        if (data && !error) {
-            data.forEach(rel => {
-                const other = (rel.sender === username) ? rel.receiver : rel.sender;
-                relationshipMap[other] = {
-                    id: rel.id,
-                    status: rel.status,
-                    sender: rel.sender,
-                    receiver: rel.receiver
-                };
-            });
-        }
-    } catch (e) {
-        console.error(e);
-    }
-}
-
-async function checkBlockedStatus(user, receiver) {
-    const rel = relationshipMap[receiver];
-    if (rel && rel.status === 'blocked' && rel.sender === receiver) {
-        return true;
-    }
-    try {
-        const { data } = await supabase_db.from('fambily_relations')
-            .select('status, sender')
-            .or(`and(sender.eq.${user},receiver.eq.${receiver}),and(sender.eq.${receiver},receiver.eq.${user})`)
-            .single();
-        if (data && data.status === 'blocked' && data.sender === receiver) {
-            return true;
-        }
-    } catch (e) { }
-    return false;
-}
 
 function initRealtimePrivateSubscriptions(username) {
     if (activePrivateSub) {
@@ -2210,12 +2161,6 @@ function initRealtimePrivateSubscriptions(username) {
     }
 
     activePrivateSub = supabase_db.channel('public:private_channels')
-        .on('postgres_changes', { event: '*', pattern: 'public', table: 'fambily_relations' }, async () => {
-            await loadRelationships(username);
-            renderFambilyList();
-            renderRequestsList();
-            renderBlockedList();
-        })
         .on('postgres_changes', { event: 'INSERT', pattern: 'public', table: 'private_messages' }, payload => {
             const msg = payload.new;
             if (msg.sender === username || msg.receiver === username) {
@@ -2254,37 +2199,10 @@ function toggleFambilyDrawer() {
 }
 
 function switchFambilyTab(tabName) {
-    const tabs = ['profile', 'fambily', 'requests', 'blocked'];
-    tabs.forEach(t => {
-        const btn = document.getElementById(`fambily-tab-btn-${t}`);
-        const content = document.getElementById(`fambily-tab-${t}`);
-        if (t === tabName) {
-            btn.classList.add('active');
-            content.style.display = 'block';
-        } else {
-            btn.classList.remove('active');
-            content.style.display = 'none';
-        }
-    });
-
-    if (tabName === 'fambily') {
-        renderFambilyList();
-    } else if (tabName === 'requests') {
-        renderRequestsList();
-    } else if (tabName === 'blocked') {
-        hideBlockedList();
+    const content = document.getElementById('fambily-tab-profile');
+    if (content) {
+        content.style.display = 'block';
     }
-}
-
-function revealBlockedList() {
-    document.getElementById('blockedRevealContainer').style.display = 'none';
-    document.getElementById('blockedContentContainer').style.display = 'block';
-    renderBlockedList();
-}
-
-function hideBlockedList() {
-    document.getElementById('blockedRevealContainer').style.display = 'block';
-    document.getElementById('blockedContentContainer').style.display = 'none';
 }
 
 function handleAvatarSelected(event) {
@@ -2380,150 +2298,7 @@ async function saveProfileChanges() {
     }
 }
 
-async function sendFambilyRequest() {
-    const inputVal = document.getElementById('addFambilyInput').value.trim();
-    if (!inputVal) return;
 
-    const currentUser = usernameInput.value.trim();
-    if (inputVal === currentUser) {
-        alert("You cannot add yourself to Fambily.");
-        return;
-    }
-
-    if (!profilesCache[inputVal]) {
-        alert(`User "${inputVal}" is not registered on the site.`);
-        return;
-    }
-
-    const rel = relationshipMap[inputVal];
-    if (rel) {
-        if (rel.status === 'blocked') {
-            alert(`You have blocked "${inputVal}". Unblock them first.`);
-        } else if (rel.status === 'fambily') {
-            alert(`"${inputVal}" is already in your Fambily list.`);
-        } else {
-            alert("Fambily request already pending.");
-        }
-        return;
-    }
-
-    try {
-        const { error } = await supabase_db.from('fambily_relations').insert([{
-            sender: currentUser,
-            receiver: inputVal,
-            status: 'request'
-        }]);
-        if (error) throw error;
-
-        document.getElementById('addFambilyInput').value = "";
-        alert(`Fambily request sent to "${inputVal}"!`);
-        await loadRelationships(currentUser);
-        renderRequestsList();
-    } catch (err) {
-        alert("Failed to send request: " + err.message);
-    }
-}
-
-async function sendFambilyRequestTo(target) {
-    const currentUser = usernameInput.value.trim();
-    try {
-        await supabase_db.from('fambily_relations').insert([{
-            sender: currentUser,
-            receiver: target,
-            status: 'request'
-        }]);
-        await loadRelationships(currentUser);
-    } catch (e) {
-        console.error(e);
-    }
-}
-
-async function acceptFambilyRequestFrom(otherUser) {
-    const currentUser = usernameInput.value.trim();
-    const rel = relationshipMap[otherUser];
-    if (!rel) return;
-
-    try {
-        const { error } = await supabase_db.from('fambily_relations')
-            .update({ status: 'fambily' })
-            .eq('id', rel.id);
-        if (error) throw error;
-
-        await loadRelationships(currentUser);
-        renderRequestsList();
-        renderFambilyList();
-    } catch (err) {
-        alert("Failed to accept request: " + err.message);
-    }
-}
-
-async function ignoreFambilyRequestFrom(otherUser) {
-    await removeRelationship(otherUser);
-}
-
-async function cancelFambilyRequestTo(otherUser) {
-    await removeRelationship(otherUser);
-}
-
-async function removeRelationship(otherUser) {
-    const currentUser = usernameInput.value.trim();
-    const rel = relationshipMap[otherUser];
-    if (!rel) return;
-
-    try {
-        const { error } = await supabase_db.from('fambily_relations')
-            .delete()
-            .eq('id', rel.id);
-        if (error) throw error;
-
-        await loadRelationships(currentUser);
-        renderRequestsList();
-        renderFambilyList();
-        renderBlockedList();
-    } catch (err) {
-        alert("Failed to update status: " + err.message);
-    }
-}
-
-async function removeRelationshipAndRefresh(otherUser) {
-    await removeRelationship(otherUser);
-}
-
-async function blockUserAndRelationship(otherUser) {
-    const currentUser = usernameInput.value.trim();
-    const rel = relationshipMap[otherUser];
-
-    try {
-        if (rel) {
-            const { error } = await supabase_db.from('fambily_relations')
-                .update({
-                    status: 'blocked',
-                    sender: currentUser,
-                    receiver: otherUser
-                })
-                .eq('id', rel.id);
-            if (error) throw error;
-        } else {
-            const { error } = await supabase_db.from('fambily_relations')
-                .insert([{
-                    sender: currentUser,
-                    receiver: otherUser,
-                    status: 'blocked'
-                }]);
-            if (error) throw error;
-        }
-        await loadRelationships(currentUser);
-        renderRequestsList();
-        renderFambilyList();
-        renderBlockedList();
-    } catch (err) {
-        alert("Failed to block user: " + err.message);
-    }
-}
-
-async function unblockUserAndRefresh(otherUser) {
-    await removeRelationship(otherUser);
-}
 
 async function openProfileCard(targetUsernameInput) {
     const modal = document.getElementById('profileCardModal');
@@ -2605,17 +2380,12 @@ async function openProfileCard(targetUsernameInput) {
         if (data && !error) {
             if (data.avatar_url) avatarImg.src = data.avatar_url;
 
-            // Check visibility
-            const visibility = data.profile_visibility || 'fambily';
+            // Check visibility (everyone = Public, everything else = Private)
+            const visibility = data.profile_visibility || 'everyone';
             let allowedToSee = false;
 
             if (visibility === 'everyone' || targetUsername === currentUser) {
                 allowedToSee = true;
-            } else if (visibility === 'fambily') {
-                const rel = relationshipMap[targetUsername];
-                if (rel && rel.status === 'fambily') {
-                    allowedToSee = true;
-                }
             }
 
             if (allowedToSee) {
@@ -2623,105 +2393,25 @@ async function openProfileCard(targetUsernameInput) {
                 document.getElementById('profileCardSocials').innerText = data.socials || "Not specified";
                 document.getElementById('profileCardBio').innerText = data.bio || "No bio written.";
             } else {
-                document.getElementById('profileCardLocation').innerText = "Fambily Only";
-                document.getElementById('profileCardSocials').innerText = "Fambily Only";
-                document.getElementById('profileCardBio').innerText = "Fambily Only details.";
+                document.getElementById('profileCardLocation').innerText = "Private Profile";
+                document.getElementById('profileCardSocials').innerText = "Private Profile";
+                document.getElementById('profileCardBio').innerText = "Private Profile details.";
             }
         }
     } catch (e) {
         console.error(e);
     }
 
-    // Insert actions based on relationship
+    // Insert actions
     if (targetUsername !== currentUser && isCurrentUserVerified) {
-        const rel = relationshipMap[targetUsername];
-        const isBlocked = rel && rel.status === 'blocked';
-
-        if (!isBlocked) {
-            const weAreBlocked = await checkBlockedStatus(currentUser, targetUsername);
-            if (!weAreBlocked) {
-                const dmBtn = document.createElement('button');
-                dmBtn.className = "drawer-action-inline-btn btn-green";
-                dmBtn.innerText = "Message";
-                dmBtn.onclick = () => {
-                    closeProfileCard();
-                    openPrivateChatTab(targetUsername);
-                };
-                actionsDiv.appendChild(dmBtn);
-            }
-        }
-
-        // Fambily status button
-        if (!rel) {
-            const addBtn = document.createElement('button');
-            addBtn.className = "drawer-action-inline-btn btn-green";
-            addBtn.innerText = "Add Fambily";
-            addBtn.onclick = async () => {
-                await sendFambilyRequestTo(targetUsername);
-                openProfileCard(targetUsername);
-            };
-            actionsDiv.appendChild(addBtn);
-        } else if (rel.status === 'request') {
-            if (rel.receiver === currentUser) {
-                const acceptBtn = document.createElement('button');
-                acceptBtn.className = "drawer-action-inline-btn btn-green";
-                acceptBtn.innerText = "Accept Fambily";
-                acceptBtn.onclick = async () => {
-                    await acceptFambilyRequestFrom(targetUsername);
-                    openProfileCard(targetUsername);
-                };
-                actionsDiv.appendChild(acceptBtn);
-
-                const ignoreBtn = document.createElement('button');
-                ignoreBtn.className = "drawer-action-inline-btn btn-red";
-                ignoreBtn.innerText = "Ignore";
-                ignoreBtn.onclick = async () => {
-                    await ignoreFambilyRequestFrom(targetUsername);
-                    openProfileCard(targetUsername);
-                };
-                actionsDiv.appendChild(ignoreBtn);
-            } else {
-                const pendingBtn = document.createElement('button');
-                pendingBtn.className = "drawer-action-inline-btn";
-                pendingBtn.innerText = "Request Pending";
-                pendingBtn.disabled = true;
-                actionsDiv.appendChild(pendingBtn);
-            }
-        } else if (rel.status === 'fambily') {
-            const removeBtn = document.createElement('button');
-            removeBtn.className = "drawer-action-inline-btn btn-red";
-            removeBtn.innerText = "Remove Fambily";
-            removeBtn.onclick = async () => {
-                if (confirm(`Remove ${targetUsername} from your Fambily list?`)) {
-                    await removeRelationship(targetUsername);
-                    openProfileCard(targetUsername);
-                }
-            };
-            actionsDiv.appendChild(removeBtn);
-        }
-
-        // Block button
-        if (rel && rel.status === 'blocked' && rel.sender === currentUser) {
-            const unblockBtn = document.createElement('button');
-            unblockBtn.className = "drawer-action-inline-btn btn-green";
-            unblockBtn.innerText = "Unblock";
-            unblockBtn.onclick = async () => {
-                await removeRelationship(targetUsername);
-                openProfileCard(targetUsername);
-            };
-            actionsDiv.appendChild(unblockBtn);
-        } else {
-            const blockBtn = document.createElement('button');
-            blockBtn.className = "drawer-action-inline-btn btn-red";
-            blockBtn.innerText = "Block";
-            blockBtn.onclick = async () => {
-                if (confirm(`Block ${targetUsername}? They will not be able to send you messages or requests.`)) {
-                    await blockUserAndRelationship(targetUsername);
-                    openProfileCard(targetUsername);
-                }
-            };
-            actionsDiv.appendChild(blockBtn);
-        }
+        const dmBtn = document.createElement('button');
+        dmBtn.className = "drawer-action-inline-btn btn-green";
+        dmBtn.innerText = "Message";
+        dmBtn.onclick = () => {
+            closeProfileCard();
+            openPrivateChatTab(targetUsername);
+        };
+        actionsDiv.appendChild(dmBtn);
     }
 
     if (profile) {
@@ -2857,131 +2547,6 @@ function acceptCookieConsent() {
     if (banner) banner.classList.remove('active');
 }
 
-function renderFambilyList() {
-    const container = document.getElementById('fambilyListContainer');
-    if (!container) return;
-
-    container.innerHTML = "";
-
-    const fambilyKeys = Object.keys(relationshipMap).filter(u => relationshipMap[u].status === 'fambily');
-    if (fambilyKeys.length === 0) {
-        container.innerHTML = `<p style="font-size:0.75rem; color:#666; text-align:center; padding:10px;">No Fambily members added yet.</p>`;
-        return;
-    }
-
-    fambilyKeys.forEach(user => {
-        const isOnline = !!onlineUsers[user];
-        const avatarUrl = profilesCache[user]?.avatar_url || '';
-        const avatarSrc = avatarUrl || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23444'/><text x='50' y='60' font-size='30' font-family='sans-serif' text-anchor='middle' fill='%23fff'>?</text></svg>";
-
-        const profile = profilesCache[user];
-        let nameClass = "user-unregistered";
-        if (profile) {
-            const pLevel = parseInt(profile.power_level || 0);
-            if (pLevel >= 2) nameClass = "user-admin";
-            else if (pLevel === 1) nameClass = "user-selector";
-            else nameClass = "user-registered";
-        }
-
-        const item = document.createElement('div');
-        item.className = "drawer-list-item";
-        item.innerHTML = `
-            <div class="drawer-item-left" style="cursor:pointer;" onclick="openProfileCard('${user}')">
-                <div class="online-user-avatar-wrapper">
-                    <img src="${avatarSrc}" class="drawer-item-avatar">
-                    \${isOnline ? '<span class="status-badge online"></span>' : ''}
-                </div>
-                <span class="\${nameClass}">\${user}</span>
-            </div>
-            <div class="drawer-item-actions">
-                <button class="drawer-action-inline-btn btn-green" onclick="openPrivateChatTab('\${user}')">Message</button>
-                <button class="drawer-action-inline-btn btn-red" onclick="removeRelationshipAndRefresh('\${user}')">Remove</button>
-            </div>
-        `;
-        container.appendChild(item);
-    });
-}
-
-function renderRequestsList() {
-    const incomingContainer = document.getElementById('incomingReqsContainer');
-    const outgoingContainer = document.getElementById('outgoingReqsContainer');
-    if (!incomingContainer || !outgoingContainer) return;
-
-    incomingContainer.innerHTML = "";
-    outgoingContainer.innerHTML = "";
-
-    const incoming = [];
-    const outgoing = [];
-    const currentUser = usernameInput.value.trim();
-
-    Object.keys(relationshipMap).forEach(user => {
-        const rel = relationshipMap[user];
-        if (rel.status === 'request') {
-            if (rel.receiver === currentUser) incoming.push(user);
-            else outgoing.push(user);
-        }
-    });
-
-    if (incoming.length === 0) {
-        incomingContainer.innerHTML = `<p style="font-size:0.75rem; color:#666; text-align:center; padding:5px;">No incoming requests.</p>`;
-    } else {
-        incoming.forEach(user => {
-            const item = document.createElement('div');
-            item.className = "drawer-list-item";
-            item.innerHTML = `
-                <span>\${user}</span>
-                <div class="drawer-item-actions">
-                    <button class="drawer-action-inline-btn btn-green" onclick="acceptFambilyRequestFrom('\${user}')">Accept</button>
-                    <button class="drawer-action-inline-btn btn-red" onclick="ignoreFambilyRequestFrom('\${user}')">Ignore</button>
-                </div>
-            `;
-            incomingContainer.appendChild(item);
-        });
-    }
-
-    if (outgoing.length === 0) {
-        outgoingContainer.innerHTML = `<p style="font-size:0.75rem; color:#666; text-align:center; padding:5px;">No sent requests.</p>`;
-    } else {
-        outgoing.forEach(user => {
-            const item = document.createElement('div');
-            item.className = "drawer-list-item";
-            item.innerHTML = `
-                <span>\${user}</span>
-                <div class="drawer-item-actions">
-                    <button class="drawer-action-inline-btn btn-red" onclick="cancelFambilyRequestTo('\${user}')">Cancel</button>
-                </div>
-            `;
-            outgoingContainer.appendChild(item);
-        });
-    }
-}
-
-function renderBlockedList() {
-    const container = document.getElementById('blockedListContainer');
-    if (!container) return;
-
-    container.innerHTML = "";
-    const currentUser = usernameInput.value.trim();
-    const blockedKeys = Object.keys(relationshipMap).filter(u => relationshipMap[u].status === 'blocked' && relationshipMap[u].sender === currentUser);
-
-    if (blockedKeys.length === 0) {
-        container.innerHTML = `<p style="font-size:0.75rem; color:#666; text-align:center; padding:10px;">No blocked users.</p>`;
-        return;
-    }
-
-    blockedKeys.forEach(user => {
-        const item = document.createElement('div');
-        item.className = "drawer-list-item";
-        item.innerHTML = `
-            <span>\${user}</span>
-            <div class="drawer-item-actions">
-                <button class="drawer-action-inline-btn btn-green" onclick="unblockUserAndRefresh('\${user}')">Unblock</button>
-            </div>
-        `;
-        container.appendChild(item);
-    });
-}
-
 function renderOnlineUsersList() {
     // Left as a clean stub since the '#onlineUsersList' container was removed from HTML
 }
@@ -2990,38 +2555,6 @@ async function loadPrivateMessages(otherUser) {
     const currentUser = usernameInput.value.trim();
     chatBox.innerHTML = "";
 
-    const rel = relationshipMap[otherUser];
-    const checkBlocked = await checkBlockedStatus(currentUser, otherUser);
-
-    if (checkBlocked) {
-        const systemDiv = document.createElement('div');
-        systemDiv.className = 'msg-system';
-        systemDiv.innerText = "⚠️ Unable to load chat history. You have been blocked or have blocked this user.";
-        chatBox.appendChild(systemDiv);
-        return;
-    }
-
-    if (!rel || rel.status === 'request') {
-        const requestDiv = document.createElement('div');
-        requestDiv.style = "background:rgba(34,229,50,0.05); border:1px solid rgba(34,229,50,0.2); border-radius:8px; padding:15px; text-align:center; margin:15px; color:#ccc; font-size:0.8rem;";
-
-        if (rel && rel.receiver === currentUser) {
-            requestDiv.innerHTML = `
-                <p style="margin-bottom:10px;"><b>\${otherUser}</b> sent you a Fambily request to chat privately.</p>
-                <div style="display:flex; gap:6px; justify-content:center;">
-                    <button class="drawer-action-inline-btn btn-green" onclick="acceptFambilyRequestFrom('\${otherUser}')">Accept & Chat</button>
-                    <button class="drawer-action-inline-btn btn-red" onclick="ignoreFambilyRequestFrom('\${otherUser}')">Ignore</button>
-                </div>
-            `;
-        } else {
-            requestDiv.innerHTML = `
-                <p>Waiting for <b>\${otherUser}</b> to accept your Fambily request...</p>
-                <button class="drawer-action-inline-btn btn-red" style="margin-top:6px;" onclick="cancelFambilyRequestTo('\${otherUser}')">Cancel Request</button>
-            `;
-        }
-        chatBox.appendChild(requestDiv);
-        return;
-    }
 
     try {
         const { data, error } = await supabase_db.from('private_messages')
@@ -3218,14 +2751,6 @@ window.syncDrawerName = syncDrawerName;
 window.toggleFambilyDrawer = toggleFambilyDrawer;
 window.switchFambilyTab = switchFambilyTab;
 window.saveProfileChanges = saveProfileChanges;
-window.sendFambilyRequest = sendFambilyRequest;
-window.acceptFambilyRequestFrom = acceptFambilyRequestFrom;
-window.ignoreFambilyRequestFrom = ignoreFambilyRequestFrom;
-window.cancelFambilyRequestTo = cancelFambilyRequestTo;
-window.removeRelationshipAndRefresh = removeRelationshipAndRefresh;
-window.unblockUserAndRefresh = unblockUserAndRefresh;
-window.revealBlockedList = revealBlockedList;
-window.hideBlockedList = hideBlockedList;
 window.openProfileCard = openProfileCard;
 window.closeProfileCard = closeProfileCard;
 window.handleAvatarSelected = handleAvatarSelected;

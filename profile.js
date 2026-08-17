@@ -164,35 +164,17 @@ async function loadTargetUserProfile() {
         document.title = `Tellstream - ${targetUser}'s Webpage`;
 
         // Run Visibility Check
-        const visibility = targetUserProfile.profile_visibility || 'fambily';
+        const visibility = targetUserProfile.profile_visibility || 'everyone';
         const isOwner = (viewerUser && viewerUser.toLowerCase() === targetUser.toLowerCase() && isCurrentUserVerified);
         
         let visibilityPassed = false;
         
-        if (isOwner) {
+        if (isOwner || visibility === 'everyone') {
             visibilityPassed = true;
-        } else if (visibility === 'everyone') {
-            visibilityPassed = true;
-        } else if (visibility === 'fambily') {
-            if (viewerUser) {
-                // Check accepted relationship in DB
-                const { data: relRecord, error: relErr } = await supabase_db
-                    .from('fambily_relations')
-                    .select('*')
-                    .or(`and(sender.eq.${targetUser},receiver.eq.${viewerUser}),and(sender.eq.${viewerUser},receiver.eq.${targetUser})`)
-                    .eq('status', 'fambily');
-                    
-                if (relRecord && relRecord.length > 0 && !relErr) {
-                    visibilityPassed = true;
-                }
-            }
         }
 
         if (!visibilityPassed) {
-            const msg = visibility === 'none' 
-                ? "🔒 This webpage is private." 
-                : `🔒 This webpage is restricted to ${targetUser}'s Fambily members.`;
-            showLockedProfileView(msg, "Please send a Fambily request to gain view access.");
+            showLockedProfileView("🔒 This webpage is private.", "Only the owner can view this profile webpage.");
             return;
         }
 
@@ -894,7 +876,7 @@ window.handleSecuritySubmit = async function() {
 
 window.toggleFambilyDrawer = function() {
     // Redirect fambily actions to homepage to avoid duplicates
-    alert("Fambily details and profile settings are managed on the Lounge Homepage.");
+    alert("Profile settings are managed on the Lounge Homepage.");
 };
 
 window.syncDrawerName = function() {

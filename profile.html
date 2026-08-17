@@ -219,7 +219,9 @@
                     <p style="font-size: 0.8rem; color: #666; text-align: center; padding: 20px;">No embeds loaded yet.
                     </p>
                 </div>
-                <div class="owner-tip" id="embedTip" style="display:none; text-align:center; font-size:0.72rem; color:#777; padding:8px 5px 0 5px; border-top:1px solid rgba(255,255,255,0.05); margin-top:8px;">To add here type: <span style="color:#22e532;">/embed [url]</span></div>
+                <div class="owner-tip" id="embedTip"
+                    style="display:none; text-align:center; font-size:0.72rem; color:#777; padding:8px 5px 0 5px; border-top:1px solid rgba(255,255,255,0.05); margin-top:8px;">
+                    To add here type: <span style="color:#22e532;">/embed [url]</span></div>
             </div>
 
             <!-- COLUMN 2: PICTURES -->
@@ -230,7 +232,9 @@
                     <p id="noPhotosMsg" style="font-size: 0.8rem; color: #666; text-align: center; padding: 20px;">No
                         photos uploaded.</p>
                 </div>
-                <div class="owner-tip" id="photoTip" style="display:none; text-align:center; font-size:0.72rem; color:#777; padding:8px 5px 0 5px; border-top:1px solid rgba(255,255,255,0.05); margin-top:8px;">To add here type: <span style="color:#22e532;">/upload</span></div>
+                <div class="owner-tip" id="photoTip"
+                    style="display:none; text-align:center; font-size:0.72rem; color:#777; padding:8px 5px 0 5px; border-top:1px solid rgba(255,255,255,0.05); margin-top:8px;">
+                    To add here type: <span style="color:#22e532;">/upload</span></div>
             </div>
 
             <!-- COLUMN 3: STATUSES -->
@@ -277,7 +281,9 @@
                     <p style="font-size: 0.8rem; color: #666; text-align: center; padding: 20px;">No statuses timeline
                         updates.</p>
                 </div>
-                <div class="owner-tip" id="statusTip" style="display:none; text-align:center; font-size:0.72rem; color:#777; padding:8px 5px 0 5px; border-top:1px solid rgba(255,255,255,0.05); margin-top:8px;">To add here type: <span style="color:#22e532;">/status [message]</span></div>
+                <div class="owner-tip" id="statusTip"
+                    style="display:none; text-align:center; font-size:0.72rem; color:#777; padding:8px 5px 0 5px; border-top:1px solid rgba(255,255,255,0.05); margin-top:8px;">
+                    To add here type: <span style="color:#22e532;">/status [message]</span></div>
             </div>
         </div>
     </div>
@@ -345,20 +351,11 @@
             </div>
         </div>
 
-        <!-- Fambily & Profile Drawer -->
+        <!-- Profile Settings Drawer -->
         <div class="fambily-drawer" id="fambilyDrawer">
-            <div class="fambily-drawer-tabs">
-                <button class="fambily-tab-btn active" id="fambily-tab-btn-profile"
-                    onclick="switchFambilyTab('profile')">Profile</button>
-                <button class="fambily-tab-btn" id="fambily-tab-btn-fambily"
-                    onclick="switchFambilyTab('fambily')">Fambily</button>
-                <button class="fambily-tab-btn" id="fambily-tab-btn-requests"
-                    onclick="switchFambilyTab('requests')">Requests</button>
-                <button class="fambily-tab-btn" id="fambily-tab-btn-blocked"
-                    onclick="switchFambilyTab('blocked')">Blocked</button>
-            </div>
-
-            <!-- PROFILE TAB CONTENT -->
+            <h4
+                style="margin: 0 0 12px 0; color: #22e532; font-size: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                Profile Settings</h4>
             <div class="fambily-tab-content" id="fambily-tab-profile">
                 <div class="profile-avatar-row">
                     <img id="myAvatarImg"
@@ -386,9 +383,8 @@
                     <span style="font-size:0.75rem; color:#aaa;">Profile Visibility:</span>
                     <select id="profileVisibilitySelect"
                         style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:4px 8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none; cursor:pointer;">
-                        <option value="fambily">Fambily only (Default)</option>
-                        <option value="everyone">Everyone</option>
-                        <option value="none">None</option>
+                        <option value="everyone">Everyone (Public)</option>
+                        <option value="none">Private</option>
                     </select>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
@@ -398,59 +394,6 @@
                 </div>
                 <button class="drawer-action-btn" style="background:#22e532; color:#000; width:100%;"
                     onclick="saveProfileChanges()">Save Profile</button>
-            </div>
-
-            <!-- FAMBILY TAB CONTENT -->
-            <div class="fambily-tab-content" id="fambily-tab-fambily" style="display:none;">
-                <div style="display:flex; gap:6px; margin-bottom:8px;">
-                    <input type="text" id="addFambilyInput" placeholder="Request to username..."
-                        style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:6px 8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none; flex:1;">
-                    <button class="notice-inline-btn" onclick="sendFambilyRequest()"
-                        style="background:#22e532; color:#000; font-size:0.75rem; padding:0 10px;">Send</button>
-                </div>
-                <div class="drawer-list-container" id="fambilyListContainer" style="max-height:180px; overflow-y:auto;">
-                    <p style="font-size:0.75rem; color:#666; text-align:center; padding:10px;">No Fambily members added
-                        yet.</p>
-                </div>
-            </div>
-
-            <!-- REQUESTS TAB CONTENT -->
-            <div class="fambily-tab-content" id="fambily-tab-requests" style="display:none;">
-                <h5 class="drawer-sub-title"
-                    style="margin: 0 0 6px 0; font-size: 0.75rem; color: #22e532; text-transform: uppercase;">Incoming
-                    Requests</h5>
-                <div class="drawer-list-container" id="incomingReqsContainer"
-                    style="max-height:90px; overflow-y:auto; margin-bottom:10px; border:1px solid rgba(255,255,255,0.04); border-radius:4px;">
-                    <p style="font-size:0.75rem; color:#666; text-align:center; padding:5px;">No incoming requests.</p>
-                </div>
-                <h5 class="drawer-sub-title"
-                    style="margin: 0 0 6px 0; font-size: 0.75rem; color: #22e532; text-transform: uppercase;">Sent
-                    Requests</h5>
-                <div class="drawer-list-container" id="outgoingReqsContainer"
-                    style="max-height:90px; overflow-y:auto; border:1px solid rgba(255,255,255,0.04); border-radius:4px;">
-                    <p style="font-size:0.75rem; color:#666; text-align:center; padding:5px;">No sent requests.</p>
-                </div>
-            </div>
-
-            <!-- BLOCKED TAB CONTENT -->
-            <div class="fambily-tab-content" id="fambily-tab-blocked" style="display:none;">
-                <div id="blockedRevealContainer" style="text-align:center; padding:15px;">
-                    <p style="font-size:0.75rem; color:#aaa; margin-bottom:8px;">Blocked users list is hidden to protect
-                        privacy.</p>
-                    <button class="drawer-action-btn" style="background:#444; font-size:0.75rem;"
-                        onclick="revealBlockedList()">Reveal Blocked List</button>
-                </div>
-                <div id="blockedContentContainer" style="display:none;">
-                    <div class="drawer-list-container" id="blockedListContainer"
-                        style="max-height:180px; overflow-y:auto;">
-                        <p style="font-size:0.75rem; color:#666; text-align:center; padding:10px;">No blocked users.</p>
-                    </div>
-                    <div style="text-align:center; margin-top:8px;">
-                        <button class="drawer-action-btn"
-                            style="background:#222; font-size:0.65rem; border:1px solid #444;"
-                            onclick="hideBlockedList()">Hide List Again</button>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -471,7 +414,7 @@
                             <button class="lock-toggle-btn" id="lockStatusBtn" onclick="toggleSecurityDrawer()"
                                 title="Secure/Verify identity handle">🔒</button>
                             <button class="lock-toggle-btn" id="fambilyDrawerBtn" onclick="toggleFambilyDrawer()"
-                                title="Fambily & Profile Settings"
+                                title="Profile Settings"
                                 style="background:rgba(34,229,50,0.1); border:1px solid rgba(34,229,50,0.3); color:#22e532;">💚</button>
                         </div>
                         <textarea id="messageInput" placeholder="Type a message..." maxlength="333"></textarea>
