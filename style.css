@@ -42,6 +42,7 @@ body {
 
 .header-cell {
     flex: 1;
+    min-width: 0;
     aspect-ratio: 930 / 434;
     height: auto !important;
     position: relative;
@@ -79,7 +80,7 @@ body {
 .cell-right {
     background-image: url('header-bg3.jpg');
     justify-content: flex-end;
-    padding-right: 40px;
+    padding-right: 4%;
 }
 
 .header-copyright {
@@ -894,6 +895,37 @@ body.noticeboard-active .chat-fs-help-panel .sub-panel-bottom-fs {
     background: #1cb528;
 }
 
+/* Prevent header content overflow on intermediate desktop screen widths */
+@media (min-width: 1024px) and (max-width: 1200px) {
+    .cell-left {
+        padding-left: 15px !important;
+    }
+    .cell-right {
+        padding-right: 15px !important;
+        gap: 4px !important;
+    }
+    .header-copyright {
+        margin-bottom: 2px !important;
+        font-size: 0.6rem !important;
+    }
+    .custom-player-container {
+        padding: 6px 12px !important;
+        gap: 8px !important;
+    }
+    .player-label {
+        font-size: 0.75rem !important;
+    }
+    .player-btn {
+        font-size: 1.1rem !important;
+    }
+    .ticker-wrap {
+        height: 22px !important;
+    }
+    .ticker {
+        font-size: 0.75rem !important;
+    }
+}
+
 /* ==========================================================================
    📱 MOBILE & NARROW SCREEN STACK OVERRIDES (ACTIVE UNDER 1024PX WIDTH)
    ========================================================================== */
@@ -1177,12 +1209,26 @@ body.noticeboard-active .chat-fs-help-panel .sub-panel-bottom-fs {
     -webkit-backdrop-filter: blur(5px);
 }
 
+.custom-player-container > div {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+    justify-content: flex-end;
+    min-width: 0;
+}
+
 .player-label {
     font-size: 0.85rem;
     font-weight: 900;
     color: #ffdd1a;
     letter-spacing: 1px;
     text-transform: uppercase;
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .player-btn {
@@ -1203,7 +1249,10 @@ body.noticeboard-active .chat-fs-help-panel .sub-panel-bottom-fs {
 }
 
 .player-slider {
-    width: 130px;
+    width: 100%;
+    max-width: 130px;
+    min-width: 50px;
+    flex-shrink: 1;
     height: 8px;
     accent-color: #22e532;
     cursor: pointer;
