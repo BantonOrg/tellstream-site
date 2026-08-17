@@ -783,7 +783,16 @@ function replaceEmojiCodes(text) {
 
 // Security Drawer verification
 async function verifyCurrentSession() {
-    const savedUser = localStorage.getItem('tellstream_saved_username');
+    let savedUser = localStorage.getItem('tellstream_saved_username');
+    if (savedUser) {
+        const cleanName = savedUser.replace(/\s+/g, '').toLowerCase();
+        const matchedKey = Object.keys(profilesMap).find(k => k.replace(/\s+/g, '').toLowerCase() === cleanName);
+        if (matchedKey && matchedKey !== savedUser) {
+            savedUser = matchedKey;
+            localStorage.setItem('tellstream_saved_username', matchedKey);
+            usernameInput.value = matchedKey;
+        }
+    }
     const savedKey = savedUser ? localStorage.getItem('tellstream_key_' + savedUser) : null;
     
     if (savedUser && savedKey) {
@@ -826,36 +835,46 @@ window.handleSecuritySubmit = async function() {
         return;
     }
 
-    if (profilesMap[currentName]) {
+    const cleanName = currentName.replace(/\s+/g, '').toLowerCase();
+    const matchedKey = Object.keys(profilesMap).find(k => k.replace(/\s+/g, '').toLowerCase() === cleanName);
+
+    if (matchedKey) {
+        const resolvedName = matchedKey;
         const { data: isValid, error: rpcErr } = await supabase_db.rpc('verify_user_passkey', {
-            p_username: currentName,
+            p_username: resolvedName,
             p_passkey: passkey
         });
         if (isValid && !rpcErr) {
-            localStorage.setItem('tellstream_key_' + currentName, passkey);
-            localStorage.setItem('tellstream_saved_username', currentName);
+            localStorage.setItem('tellstream_key_' + resolvedName, passkey);
+            localStorage.setItem('tellstream_saved_username', resolvedName);
             isCurrentUserVerified = true;
             alert("Authorized!");
             securityDrawer.classList.remove('open');
             lockStatusBtn.innerText = "🔑";
-            viewerUser = currentName;
+            viewerUser = resolvedName;
             location.reload(); // Reload to refresh visibility & ownership details
         } else {
             alert("Invalid Passkey entry sequence.");
-            if (profilesMap[currentName].key_reminder) {
-                reminderHintDisplay.innerText = "Hint Clue: " + profilesMap[currentName].key_reminder;
+            if (profilesMap[resolvedName].key_reminder) {
+                reminderHintDisplay.innerText = "Hint Clue: " + profilesMap[resolvedName].key_reminder;
                 reminderHintDisplay.style.display = "block";
             }
         }
     } else {
         // Register new profile
+        let assignedLevel = 0;
+        let assignedHover = "Tella Fambily";
+        if (cleanName === "banton") { assignedLevel = 2; assignedHover = "banton.org"; }
+        else if (cleanName === "bigjohn") { assignedLevel = 2; assignedHover = "the boss"; }
+        else if (cleanName === "perfectionist") { assignedLevel = 2; assignedHover = "You done know"; }
+
         const { error } = await supabase_db.from('secured_profiles').insert([{
             username: currentName,
             passkey: passkey,
             key_reminder: reminder,
             email: email,
-            power_level: 0,
-            hover_title: "Tella Fambily"
+            power_level: assignedLevel,
+            hover_title: assignedHover
         }]);
 
         if (error) {

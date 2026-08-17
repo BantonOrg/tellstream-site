@@ -1271,15 +1271,20 @@ async function handleSecuritySubmit() {
         return;
     }
 
-    if (profilesCache[currentName]) {
+    const cleanName = currentName.replace(/\s+/g, '').toLowerCase();
+    const matchedKey = Object.keys(profilesCache).find(k => k.replace(/\s+/g, '').toLowerCase() === cleanName);
+
+    if (matchedKey) {
+        const resolvedName = matchedKey;
         const { data: isValid, error: rpcErr } = await supabase_db.rpc('verify_user_passkey', {
-            p_username: currentName,
+            p_username: resolvedName,
             p_passkey: passkey
         });
         if (isValid && !rpcErr) {
-            localStorage.setItem('tellstream_key_' + currentName, passkey);
-            localStorage.setItem('tellstream_saved_username', currentName);
-            localStorage.setItem('tellstream_active_user', currentName);
+            localStorage.setItem('tellstream_key_' + resolvedName, passkey);
+            localStorage.setItem('tellstream_saved_username', resolvedName);
+            localStorage.setItem('tellstream_active_user', resolvedName);
+            usernameInput.value = resolvedName;
             isCurrentUserVerified = true;
             alert("Identity checked and authorized!");
             securityDrawer.classList.remove('open');
@@ -1288,21 +1293,20 @@ async function handleSecuritySubmit() {
             loadMessages();
             if (isNoticeBoardActive) evaluateNoticeBoardForms();
             renderHelpContent(isNoticeBoardActive);
-            onUserVerifiedSuccess(currentName);
+            onUserVerifiedSuccess(resolvedName);
         } else {
             alert("Invalid Passkey entry sequence.");
-            if (profilesCache[currentName].key_reminder) {
-                reminderHintDisplay.innerText = "Hint Clue: " + profilesCache[currentName].key_reminder;
+            if (profilesCache[resolvedName].key_reminder) {
+                reminderHintDisplay.innerText = "Hint Clue: " + profilesCache[resolvedName].key_reminder;
                 reminderHintDisplay.style.display = "block";
             }
         }
     } else {
         let assignedLevel = 0;
         let assignedHover = "Tella Fambily";
-        if (currentName === "Banton") { assignedLevel = 2; assignedHover = "banton.org"; }
-        else if (currentName === "Big John") { assignedLevel = 2; assignedHover = "the boss"; }
-        else if (currentName === "Perfectionist") { assignedLevel = 2; assignedHover = "You done know"; }
-
+        if (cleanName === "banton") { assignedLevel = 2; assignedHover = "banton.org"; }
+        else if (cleanName === "bigjohn") { assignedLevel = 2; assignedHover = "the boss"; }
+        else if (cleanName === "perfectionist") { assignedLevel = 2; assignedHover = "You done know"; }
 
         const { error } = await supabase_db.from('secured_profiles').insert([{
             username: currentName,
@@ -1332,8 +1336,17 @@ async function handleSecuritySubmit() {
 }
 
 async function verifyCurrentSession() {
-    const currentUser = usernameInput.value.trim();
-    const authorizedKey = localStorage.getItem('tellstream_key_' + currentUser);
+    let currentUser = usernameInput.value.trim();
+    if (currentUser) {
+        const cleanName = currentUser.replace(/\s+/g, '').toLowerCase();
+        const matchedKey = Object.keys(profilesCache).find(k => k.replace(/\s+/g, '').toLowerCase() === cleanName);
+        if (matchedKey && matchedKey !== currentUser) {
+            currentUser = matchedKey;
+            usernameInput.value = matchedKey;
+            localStorage.setItem('tellstream_saved_username', matchedKey);
+        }
+    }
+    const authorizedKey = currentUser ? localStorage.getItem('tellstream_key_' + currentUser) : null;
     if (currentUser && authorizedKey) {
         try {
             const { data, error } = await supabase_db.rpc('verify_user_passkey', {
