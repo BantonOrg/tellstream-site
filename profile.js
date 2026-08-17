@@ -591,14 +591,14 @@ function appendMessage(msg) {
     msgDiv.className = 'chat-msg-row';
     
     const senderProfile = profilesMap[msg.username];
-    let nameClass = 'default-user';
+    let nameClass = 'user-unregistered';
     let hoverAttribute = '';
     
     if (senderProfile) {
         const pLevel = parseInt(senderProfile.power_level || 0);
-        if (pLevel >= 2) nameClass = 'level-admin';
-        else if (pLevel === 1) nameClass = 'level-dj';
-        else if (isUserVip(senderProfile)) nameClass = 'level-vip';
+        if (pLevel >= 2) nameClass = 'user-admin';
+        else if (pLevel === 1) nameClass = 'user-selector';
+        else nameClass = 'user-registered';
         
         if (senderProfile.hover_title) {
             hoverAttribute = `title="${escapeHTML(senderProfile.hover_title)}"`;
