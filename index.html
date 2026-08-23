@@ -265,7 +265,7 @@
                         <div class="notice-cards-feed" id="feed-boss"></div>
                         <div class="notice-input-form-block" id="form-boss">
                             <div class="notice-row-input">
-                                <input type="text" id="input-boss" placeholder="Write boss directive...">
+                                <input type="text" id="input-boss" placeholder="Write boss directive..." maxlength="333">
                                 <button class="notice-inline-btn" onclick="submitNoticeUpdate('boss')">Post</button>
                             </div>
                         </div>
@@ -277,13 +277,25 @@
                         <div class="notice-cards-feed" id="feed-selectors"></div>
                         <div class="notice-input-form-block" id="form-selectors">
                             <div class="notice-row-input">
-                                <input type="text" id="input-selectors" placeholder="Write selector notice...">
+                                <input type="text" id="input-selectors" placeholder="Write selector notice..." maxlength="333">
                                 <button class="notice-inline-btn"
                                     onclick="submitNoticeUpdate('selectors')">Post</button>
                             </div>
                         </div>
                     </div>
 
+                    <div class="notice-column-box notice-box-fambily">
+                        <div class="notice-column-header"><span style="color:#22e532">💚 Listener Reviews</span></div>
+                        <div class="notice-cards-feed" id="feed-fambily"></div>
+                        <div class="notice-input-form-block" id="form-fambily">
+                            <div class="notice-row-input">
+                                <input type="text" id="input-fambily" placeholder="What did you enjoy on Tellstream today?" maxlength="333">
+                                <button class="notice-inline-btn" onclick="submitNoticeUpdate('fambily')">Post</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="notice-footer-warning">YOU MUST BE REGISTERED TO COMMENT</div>
                 </div>
 
                 <div class="chat-fs-help-panel">

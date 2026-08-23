@@ -1,0 +1,144 @@
+================================================================================
+                           TELLSTREAM HELP INSTRUCTIONS
+================================================================================
+
+This document contains simple, plain-English instructions and console commands 
+for Tellstream. They are divided into four sections: General, Registered Member, 
+DJ / Presenter, and Station Admin.
+
+--------------------------------------------------------------------------------
+1. GENERAL INSTRUCTIONS (Lounge Chat & Noticeboard)
+--------------------------------------------------------------------------------
+
+* Choose a Chat Name:
+  Before you start chatting, enter your name in the "Chat Name" box at the bottom 
+  right of the sidebar. This sets a temporary identity for your current session. 
+  If you close or reload the page, the name can be claimed by anyone else unless 
+  you lock it permanently.
+
+* Sending Messages:
+  Simply type your message in the chat input box at the bottom of the screen and 
+  press "Enter" on your keyboard (or click the "Send" button).
+
+* Emojis & Smilies:
+  Click any emoji shortcut below the chat input to insert it into your message. 
+  Click the [See All Codes] link to open the full library of custom smilies.
+
+* Strikes & Lockout Rules:
+  Bad language is blocked automatically and tracked via a strike system:
+  - 3 Strikes: Temporary 24-hour lockout from the chat.
+  - 4+ Strikes: Permanent chat ban.
+  - Apologizing: Type the word "sorry" in the main chat to remove 1 strike 
+    (limited to once per calendar day).
+
+* Noticeboard View Rules:
+  When you open the Noticeboard, the lounge chat is completely hidden. You must 
+  close the Noticeboard using the "Exit Noticeboard" button to return to the 
+  active chat stream.
+
+
+--------------------------------------------------------------------------------
+2. REGISTERED MEMBER INSTRUCTIONS (Level 0+)
+--------------------------------------------------------------------------------
+
+* Locking & Securing Your Username:
+  Click the padlock button next to your chat name to open your profile settings. 
+  Enter a secret Passkey, a key reminder hint, and a recovery Email. Once saved, 
+  no one else can use your username without your passkey.
+
+* Customizing Your Profile Card:
+  In your profile settings, you can upload a profile picture (under 500KB), share 
+  your location or social media links, and write a bio. You can set your 
+  visibility to Public, Private, or Invisible.
+
+* Blocking Chatters:
+  If another chatter is bothering you, open their profile card and click "Block" 
+  to hide their messages from your feed.
+
+* Posting to the Member Feed:
+  Once you have secured your username with a passkey, you can post updates 
+  directly to the green "Registered Members Notices" column on the noticeboard.
+
+
+--------------------------------------------------------------------------------
+3. DJ / PRESENTER INSTRUCTIONS (Level 1+)
+--------------------------------------------------------------------------------
+
+* Important Advice:
+  If you are not sure how to use these commands, please ask management first. 
+  Typing the wrong command can disrupt the station schedule.
+
+* Command Format Guidelines:
+  - Dates: 6-digit format with no spaces or slashes. E.g., July 10th 2026 is 100726.
+  - Times: 4-digit 24-hour format. E.g., 8:00 PM is 2000.
+  - DJ Names: If specifying another presenter, separate it at the end with a space.
+
+* Going On-Air (Live):
+  - Type: /show live
+  - What it does: Updates the broadcast banner to show your name and logo live on air.
+
+* Going Off-Air (Autopilot):
+  - Type: /show tellstream
+  - What it does: Resets the stream banner to autopilot when you finish your broadcast. 
+    Only run this if you are the last presenter of the day.
+
+* Scheduling a One-Off Show:
+  - Type: /schedule temp Date StartTime EndTime TimeZone DJName
+  - Example: /schedule temp 100726 2000 2200 BST Cruss
+  - What it does: Adds a temporary single show slot to the calendar.
+
+* Posting to DJ Noticeboards:
+  DJs/Presenters can post noticeboard updates in 2 columns: "Selectors" and 
+  "Fambily" (Registered Members). Specify which column before submitting.
+
+* Word Filter Moderation:
+  - Type: /add word       - Adds a bad word to the blocked list.
+  - Type: /del word       - Removes a word from the blocked list.
+  - Type: /listwords      - Lists all currently blocked words.
+
+
+--------------------------------------------------------------------------------
+4. STATION ADMIN INSTRUCTIONS (Level 2+)
+--------------------------------------------------------------------------------
+
+* Station Admin Control:
+  Station Admins have full control over the website. They can upload logos, 
+  manage event flyers, promote users, edit the filter, and unban players.
+
+* Adding a Repeating Weekly Slot:
+  - Type: /schedule perm DayOfWeek StartTime EndTime TimeZone DJName
+  - Example: /schedule perm Friday 2000 2200 BST Cruss
+  - What it does: Sets a repeating weekly show slot in the schedule.
+
+* Cancelling a Scheduled Show:
+  - Type: /schedule cancel Date StartTime
+  - Example: /schedule cancel 100726 2000
+  - What it does: Removes a permanent or temporary show from the schedule.
+
+* Posting to the Boss Noticeboard:
+  Station Admins can post updates directly to the red "Boss Notices" column.
+
+* Presenter Logo Management:
+  - Type: /upload PresenterName   - Opens a window to upload a transparent PNG logo.
+  - Type: /delete PresenterName   - Removes a presenter's logo from storage.
+
+* Event Flyer Management:
+  - Type: /uploadflyer Date FlyerName - Opens a window to upload a flyer image. 
+                                        Note: The file name on your computer must 
+                                        begin with the 6-digit date followed by a 
+                                        space, e.g., 100726 SummerBash.jpg
+  - Type: /deleteflyer Date FlyerName - Removes a flyer from storage.
+
+* User Role Management:
+  - Type: /setlevel username LevelNumber - Sets the access level (0 = Listener, 
+                                           1 = DJ, 2 = Admin).
+
+* VIP Status Management:
+  - Type: /promote VIP DurationInMonths username (e.g., /promote VIP 3 username, 
+                                                  or use the word perm for permanent)
+  - Type: /demote VIP username                  - Removes VIP status.
+
+* Unbanning Users:
+  - Type: /unban username
+  - What it does: Clears all strikes and restores chat/noticeboard access 
+    instantly for locked or banned users.

@@ -49,42 +49,40 @@ let myProfile = null;
 let activePrivateSub = null;
 
 const helpInstructions = [
-    { title: "Choose a Temporary Chat Name", text: "Before you start chatting, enter your name in the \"Chat Name\" box at the bottom right of the sidebar. This sets your temporary identity for the duration of your chat session. Close or reload the page, and the name can be claimed by anyone else unless you lock it permanently." },
-    { title: "Securing Your Chat Name (Locking Names)", text: "Click the padlock button or chat name block to open the profile drawer. Enter a secret Passkey, a key reminder hint, and a recovery Email. Once locked, no one else can chat using your chat name without entering your passkey." },
-    { title: "Chatting", text: "Simply type your message in the chat input box and press \"Enter\" on your keyboard (or click the \"Send\" button)." },
-    { title: "Emojis & Sounds", text: "Click any emoji box underneath the chat to quickly add it to your message. Click the [See All Codes] link to open the full library of emojis." },
-    { title: "Swearing & Strike Rules", text: "Swearing and bad language are automatically blocked and tracked:\n- 3 Strikes: You will be locked out of the chat for 24 hours.\n- 4+ Strikes: You will be permanently banned.\n- Apologizing: If you have strikes, type the word \"sorry\" in the chat to remove 1 strike (limited to once per day)." },
-    { title: "Managing Profiles, Fambily & Blocks", text: "Inside your profile drawer, use the tabs to:\n- Profile: Upload a profile picture (max 500KB), add your location/socials, and write a bio. You can set visibility to Public/Fambily-Only, or hide your status (invisible mode).\n- Fambily & Requests: Add friends to your Fambily list to chat privately, and manage incoming/outgoing requests.\n- Blocked: Block or unblock users if they are bothering you." },
-    { title: "Noticeboard View Notice", text: "When you open the Noticeboard, the Lounge Chat panel and chat input field are completely hidden. You cannot chat or view active messages while the Noticeboard is open. You must close the Noticeboard to return to the chat." }
+    { title: "Choose a Chat Name", text: "Before you start chatting, enter your name in the \"Chat Name\" box at the bottom right. This sets a temporary identity for your current session. If you close or reload the page, the name can be claimed by anyone else unless you secure it." },
+    { title: "Securing Your Chat Name", text: "Click the padlock button next to your chat name to open your profile settings. Enter a secret Passkey, a key reminder hint, and a recovery Email. Once secured, no one else can chat using your name without your passkey." },
+    { title: "Chatting & Messages", text: "Simply type your message in the chat input box at the bottom and press the Enter key (or click the Send button)." },
+    { title: "Emojis & Smilies", text: "Click any emoji shortcut below the chat input to insert it into your message. Click the [See All Codes] link to open the full library of custom smilies." },
+    { title: "Strikes & Lockout Rules", text: "Bad language is blocked automatically and tracked via a strike system:\n- 3 Strikes: Temporary 24-hour lockout from the chat.\n- 4+ Strikes: Permanent chat ban.\n- Apologizing: Type the word \"sorry\" in the main chat to remove 1 strike (limited to once per calendar day)." },
+    { title: "Noticeboard View Notice", text: "When you open the Noticeboard, the lounge chat is completely hidden. You must close the Noticeboard using the Exit Noticeboard button to return to the active chat stream." }
 ];
 
 const noticeboardHelpInstructions = [
-    { title: "Noticeboard Rules", text: "Keep all posts friendly, helpful, and respectful. Station Admins will immediately delete any abusive, hostile or violations on noticeboards." },
-    { title: "Posting to the Noticeboard (Listeners)", text: "Once verified with your passkey in the profile drawer, you can post updates to the board. As a listener, your posts are restricted to the \"Fambily\" column, so you do not need to specify a target column—it defaults to Fambily automatically." },
-    { title: "Noticeboard Bans", text: "Posting swearing or blocked words on the noticeboard will increase your strikes, leading to temporary or permanent bans, just like in the chat. Violating etiquette on tellstream risks your account being banned." }
+    { title: "Noticeboard Rules", text: "Keep all posts friendly, helpful, and respectful. Station Admins will immediately delete any abusive, hostile, or inappropriate noticeboard posts." },
+    { title: "Posting to the Noticeboard", text: "Once you have secured your username with a passkey, you can post updates directly to the green \"Registered Members Notices\" column." },
+    { title: "Noticeboard Bans", text: "Posting swearing or blocked words on the noticeboard will increase your strikes, leading to lockout or ban just like in the chat." }
 ];
 
 const djHelpInstructions = [
-    { title: "⚠️ Important Advice", text: "If you are not sure how to use these commands, please ask management or another admin for help first. It is very simple once you know how, but typing the wrong command can mess up the schedule." },
-    { title: "📝 Command Format Guidelines", text: "Dates: Must be numbers only (exactly 6 digits). E.g., 10th July 2026 is 100726.\nTimes: Must be numbers only (exactly 4 digits in 24-hour format). E.g., 8:00 PM is 2000.\nPresenter Names: If specifying a different DJ, separate it at the end with a single space." },
-    { title: "🎙️ Going On-Air (Live)", text: "Type: /show live\nWhat it does: Updates the banner to show your name and logo live on air." },
-    { title: "🔄 Going Off-Air (Autopilot)", text: "Type: /show tellstream\nWhat it does: Resets the stream banner to autopilot when you finish your broadcast. Only type this if you are the last presenter of the day." },
-    { title: "🚨 One-Off / Temporary Show", text: "Type: /schedule temp [DDMMYY] [24-Hour Start] [24-Hour End] [TimeZone] [optional: Presenter Name]\nExample: /schedule temp 100726 2000 2200 BST Cruss\nWhat it does: Adds a one-time show slot for a specific date (defaults to you if name is left blank)." },
-    { title: "📋 Posting to the Noticeboard (DJs)", text: "DJs/Presenters can post noticeboard updates in 2 columns: \"Selectors\" and \"Fambily\". You must specify which of these columns you want your post to appear in when submitting." },
-    { title: "⚔️ Word Filter Moderation", text: "Type: /add [word] to block a word.\nType: /del [word] to unblock a word.\nType: /listwords to see currently blocked words." }
+    { title: "⚠️ Important Advice", text: "If you are not sure how to use these commands, please ask management first. Typing the wrong command can disrupt the station schedule." },
+    { title: "📝 Command Format Guidelines", text: "Dates: 6-digit format with no spaces or slashes. E.g., July 10th 2026 is 100726.\nTimes: 4-digit 24-hour format. E.g., 8:00 PM is 2000.\nDJ Names: If specifying another presenter, separate it at the end with a single space." },
+    { title: "🎙️ Going On-Air (Live)", text: "Type: /show live\nWhat it does: Updates the broadcast banner to show your name and logo live on air." },
+    { title: "🔄 Going Off-Air (Autopilot)", text: "Type: /show tellstream\nWhat it does: Resets the stream banner to autopilot when you finish your broadcast. Only run this if you are the last presenter of the day." },
+    { title: "🚨 One-Off / Temporary Show", text: "Type: /schedule temp Date StartTime EndTime TimeZone DJName\nExample: /schedule temp 100726 2000 2200 BST Cruss\nWhat it does: Adds a temporary single show slot to the calendar." },
+    { title: "📋 Posting to DJ Noticeboards", text: "DJs/Presenters can post noticeboard updates in 2 columns: \"Selectors\" and \"Fambily\" (Registered Members). Specify which column before submitting." },
+    { title: "⚔️ Word Filter Moderation", text: "Type: /add word (adds a bad word to the blocked list)\nType: /del word (removes a word from the blocked list)\nType: /listwords (lists all currently blocked words)" }
 ];
 
 const adminHelpInstructions = [
-    { title: "👑 Station Admin Rules (Level 2)", text: "Station Admins (Level 2) have full control over the website. They can upload logos, manage event flyers, promote users, edit the filter, and unban players." },
-    { title: "🗓️ Permanent Timetable Slot", text: "Type: /schedule perm [Day] [24-Hour Start] [24-Hour End] [TimeZone] [optional: Presenter Name]\nExample: /schedule perm Friday 2000 2200 BST Cruss\nWhat it does: Sets a repeating weekly show slot in the schedule (defaults to you if name is left blank)." },
-    { title: "❌ Cancelling a Scheduled Show", text: "Type: /schedule cancel [DDMMYY] [24-Hour Start]\nExample: /schedule cancel 100726 2000\nWhat it does: Removes a permanent or temporary show from the schedule." },
-    { title: "📋 Posting to the Noticeboard (Admins)", text: "Station Admins can post updates to all 3 columns: \"Boss\", \"Selectors\", and \"Fambily\". You must specify which of these columns your post should appear in before submitting." },
-    { title: "🖼️ Presenter Logo Management", text: "Type: /upload [Presenter Name] - Opens a file picker to upload a transparent PNG logo.\nType: /delete [Presenter Name] - Removes a presenter's logo from storage." },
-    { title: "🔥 Event Flyer Management", text: "Type: /uploadflyer [DDMMYY] [Name] - Opens a file picker to upload a flyer image. Note: The name MUST start with the 6-digit date (DDMMYY) followed by a space and the flyer name.\nType: /deleteflyer [DDMMYY] [Name] - Removes a flyer image from storage." },
-    { title: "👑 User Role Management (Set Level)", text: "Type: /setlevel [username] [Level] - Sets the access level for a registered user. Levels are: 0 (Normal User), 1 (DJ Selector), or 2 (Station Admin)." },
-    { title: "🌟 VIP Status Management", text: "Type: /promote VIP [1/3/6/12/perm] [username] - Grants a user VIP status for a specified duration in months or permanent.\nType: /demote VIP [username] - Removes VIP status from a user." },
-    { title: "⚔️ Blocklist & Profanity Management", text: "Type: /add [word] - Adds a bad word to the blocked list.\nType: /del [word] - Removes a word from the blocked list.\nType: /listwords - Lists all currently blocked words." },
-    { title: "🚫 Unbanning Users", text: "Type: /unban [username]\nWhat it does: Clears all strikes and restores chat/noticeboard access instantly for locked or banned users." }
+    { title: "👑 Station Admin Control (Level 2)", text: "Station Admins have full control over the website. They can upload logos, manage event flyers, promote users, edit the filter, and unban players." },
+    { title: "🗓️ Permanent Timetable Slot", text: "Type: /schedule perm DayOfWeek StartTime EndTime TimeZone DJName\nExample: /schedule perm Friday 2000 2200 BST Cruss\nWhat it does: Sets a repeating weekly show slot in the schedule." },
+    { title: "❌ Cancelling a Scheduled Show", text: "Type: /schedule cancel Date StartTime\nExample: /schedule cancel 100726 2000\nWhat it does: Removes a permanent or temporary show from the schedule." },
+    { title: "📋 Posting to the Boss Noticeboard", text: "Station Admins can post updates directly to the red \"Boss Notices\" column." },
+    { title: "🖼️ Presenter Logo Management", text: "Type: /upload PresenterName - Opens a window to upload a transparent PNG logo.\nType: /delete PresenterName - Removes a presenter's logo from storage." },
+    { title: "🔥 Event Flyer Management", text: "Type: /uploadflyer Date FlyerName - Opens a window to upload a flyer image. Note: The file name on your computer must begin with the 6-digit date followed by a space, e.g., 100726 SummerBash.jpg\nType: /deleteflyer Date FlyerName - Removes a flyer from storage." },
+    { title: "👑 User Role Management", text: "Type: /setlevel username LevelNumber - Sets the access level (0 = Listener, 1 = DJ, 2 = Admin)." },
+    { title: "🌟 VIP Status Management", text: "Type: /promote VIP DurationInMonths username (e.g., /promote VIP 3 username, or use the word perm for permanent)\nType: /demote VIP username - Removes VIP status." },
+    { title: "🚫 Unbanning Users", text: "Type: /unban username\nWhat it does: Clears all strikes and restores chat/noticeboard access instantly for locked or banned users." }
 ];
 
 function getLogoFileName(baseName) {
@@ -990,11 +988,23 @@ function evaluateNoticeBoardForms() {
 }
 
 async function fetchNoticeBoardRecords() {
-    const { data: records, error } = await supabase_db.from('notice_board').select('*').order('created_at', { ascending: false });
+    const { data: records, error } = await supabase_db.from('notice_board').select('*').order('created_at', { ascending: false }).limit(60);
     if (!error && records) {
-        document.getElementById('feed-boss').innerHTML = "";
-        document.getElementById('feed-selectors').innerHTML = "";
-        document.getElementById('feed-fambily').innerHTML = "";
+        document.getElementById('feed-boss').innerHTML = `
+            <div class="notice-card-item" style="border-left: 2px solid #ff3333; background: rgba(255, 51, 51, 0.05);">
+                <strong>📢 Welcome to Boss Notices:</strong> <span>Official directives, show announcements, and site rules from Station Management. Only Admins can post here. See the sidebar guide for help.</span>
+            </div>
+        `;
+        document.getElementById('feed-selectors').innerHTML = `
+            <div class="notice-card-item" style="border-left: 2px solid #ffdd1a; background: rgba(255, 221, 26, 0.05);">
+                <strong>📢 Welcome to Selector Feed:</strong> <span>Live show schedules, presenter updates, and Selector audio notices. Only DJs & Selectors can post here. See the sidebar guide for help.</span>
+            </div>
+        `;
+        document.getElementById('feed-fambily').innerHTML = `
+            <div class="notice-card-item" style="border-left: 2px solid #22e532; background: rgba(34, 229, 50, 0.05);">
+                <strong>📢 Welcome to Listener Reviews:</strong> <span>A space for our registered listeners to share what they enjoyed on Tellstream! Leave a shout-out, guestbook review, or show feedback. All secured members can post here.</span>
+            </div>
+        `;
         records.forEach(item => {
             const columnTarget = document.getElementById(`feed-${item.board_type}`);
             if (columnTarget) {
