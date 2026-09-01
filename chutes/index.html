@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Snakes & Ladders: Badmind & Blessings | TellStream</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="/ludo/style.css">
   <link rel="stylesheet" href="multiplayer.css">
   <script>
     // TellStream access gate: Chutes must be launched from the main Lounge
@@ -29,19 +30,95 @@
 </head>
 <body>
 <div id="mpApp">
-  <section id="lobbyView" class="mp-view">
-    <header class="mp-header"><div><h1>TellStream Lounge <span>Snakes &amp; Ladders</span></h1><p>Badmind &amp; Blessings · real-time multiplayer</p></div><button id="backToLounge" class="mp-btn secondary">← Back to Lounge</button></header>
-    <div class="mp-grid">
-      <div class="mp-card"><h2>Your Identity</h2><label>Display Name</label><input id="mpUsername" readonly></div>
-      <div class="mp-card"><h2>Join Existing Game</h2><label>4-Letter Room Code</label><input id="mpRoomCode" maxlength="4" placeholder="e.g. CZTN"><button id="mpJoin" class="mp-btn">Join Game</button></div>
-      <div class="mp-card"><h2>Host a New Game</h2><label>Players count</label><select id="mpMaxPlayers"><option value="2">2 Players</option><option value="3">3 Players</option><option value="4" selected>4 Players</option></select><button id="mpCreate" class="mp-btn">Create Room</button></div>
+  <section id="lobbyView" class="view-panel">
+    <header class="lobby-header">
+      <div class="logo-area" style="display:flex;justify-content:space-between;align-items:center;width:100%;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="logo-emoji">🎲</span>
+          <h1>TellStream Lounge <span class="accent-text">Snakes &amp; Ladders</span></h1>
+        </div>
+        <button id="backToLounge" class="btn secondary-btn" style="padding:6px 12px;font-size:.75rem;border-color:rgba(255,255,255,.15);">← Back to Lounge</button>
+      </div>
+      <p class="subtitle">Badmind &amp; Blessings · real-time multiplayer</p>
+    </header>
+
+    <div class="lobby-grid">
+      <div class="lobby-left-column" style="display:flex;flex-direction:column;gap:24px;">
+        <div class="glass-card profile-card" style="margin:0;flex:1;display:flex;flex-direction:column;justify-content:center;">
+          <h2>Your Identity</h2>
+          <div class="form-group" style="margin-bottom:0;">
+            <label for="mpUsername">Display Name</label>
+            <input id="mpUsername" type="text" readonly>
+            <p class="helper-text" style="margin-bottom:0;">This name will be displayed at the game table.</p>
+          </div>
+        </div>
+        <div class="glass-card join-card" style="margin:0;flex:1;display:flex;flex-direction:column;justify-content:center;">
+          <h2>Join Existing Game</h2>
+          <div class="form-group">
+            <label for="mpRoomCode">4-Letter Room Code</label>
+            <input id="mpRoomCode" type="text" maxlength="4" placeholder="e.g. CZTN" autocomplete="off" class="uppercase-input">
+          </div>
+          <button id="mpJoin" class="btn primary-btn large-btn">Join Game</button>
+        </div>
+      </div>
+
+      <div class="glass-card create-card" style="margin:0;display:flex;flex-direction:column;justify-content:space-between;">
+        <h2>Host a New Game</h2>
+        <div class="form-group">
+          <label for="mpMaxPlayers">Players count</label>
+          <select id="mpMaxPlayers" class="custom-select">
+            <option value="2" selected>2 Players</option>
+            <option value="3">3 Players</option>
+            <option value="4">4 Players</option>
+          </select>
+        </div>
+        <div class="chutes-host-spacer">
+          <div class="chutes-game-name">Badmind &amp; Blessings</div>
+          <p>Every board is generated fresh when the host starts the game.</p>
+        </div>
+        <button id="mpCreate" class="btn primary-btn large-btn">Create Room</button>
+      </div>
+
+      <div class="glass-card active-rooms-card lobby-chat-card" style="margin:0;display:flex;flex-direction:column;min-height:0;height:100%;">
+        <h2>Lounge Lobby Chat</h2>
+        <div class="room-chat lobby-chat-wrapper-main" style="flex:1;display:flex;flex-direction:column;min-height:0;justify-content:space-between;">
+          <div id="lobby-chat-messages" class="chat-messages" style="flex:1;overflow-y:auto;"></div>
+          <div class="chat-input-bar" style="margin-top:10px;">
+            <input type="text" id="lobby-chat-input" placeholder="Type message..." maxlength="333">
+            <button id="send-lobby-chat-btn" class="btn icon-btn">💬</button>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
-  <section id="seatingView" class="mp-view hidden-layout">
-    <header class="mp-header"><button id="mpLeave" class="mp-btn secondary">← Leave Room</button><h1>Room <span id="mpRoomDisplay">XXXX</span></h1><div>Badmind &amp; Blessings</div></header>
-    <div class="mp-seating">
-      <div class="mp-card"><h2>Game Players</h2><p id="mpSeatHint">Lobby seating is managed by the game host.</p><ul id="mpRoster"></ul><div id="mpSeats" class="mp-seats"></div><button id="mpStart" class="mp-btn" disabled>Start Game</button></div>
-      <div class="mp-card"><h2>Spectators</h2><p>Players in the room who have not been seated can watch the game.</p><div id="mpSpectatorList">None</div></div>
+
+  <section id="seatingView" class="view-panel hidden-layout">
+    <header class="lobby-header compact">
+      <button id="mpLeave" class="btn text-btn">← Leave Room</button>
+      <h1>Room <span class="accent-text" id="mpRoomDisplay">XXXX</span></h1>
+      <div class="room-variant-badge">Badmind &amp; Blessings</div>
+    </header>
+    <div class="seating-container">
+      <div class="glass-card seating-layout-card">
+        <h2>Game Players</h2>
+        <p class="seating-hint" id="mpSeatHint">Lobby seating is managed by the game host.</p>
+        <p class="roster-instructions accent-text" id="mpRosterHelper" style="display:none;">click name to add or remove to your game</p>
+        <ul id="mpRoster" class="roster-list"></ul>
+        <div id="mpSeats" class="seats-grid"></div>
+        <div class="spectate-actions">
+          <div class="chutes-spectators"><strong>Spectators:</strong> <span id="mpSpectatorList">None</span></div>
+          <button id="mpStart" class="btn primary-btn large-btn" disabled>Start Game</button>
+        </div>
+      </div>
+      <div class="glass-card lobby-roster-card">
+        <div class="room-chat">
+          <div id="room-chat-messages" class="chat-messages"></div>
+          <div class="chat-input-bar">
+            <input type="text" id="room-chat-input" placeholder="Type message..." maxlength="333">
+            <button id="send-room-chat-btn" class="btn icon-btn">💬</button>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 </div>

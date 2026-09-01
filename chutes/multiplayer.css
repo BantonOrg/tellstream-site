@@ -1,6 +1,39 @@
-:root{--mp-accent:#d5a34b;--mp-card:rgba(16,18,17,.88);--mp-border:rgba(255,255,255,.14)}
-.hidden-layout{display:none!important}#mpApp{position:fixed;inset:0;z-index:500;background:linear-gradient(rgba(5,8,7,.76),rgba(5,8,7,.9)),url('imgs/BG_.jpg') center/cover;color:#eee;font-family:Arial,sans-serif;overflow:auto}.mp-view{min-height:100%;padding:30px;box-sizing:border-box}.mp-header{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:24px}.mp-header h1{margin:0;font-size:2rem}.mp-header span{color:var(--mp-accent)}.mp-header p{opacity:.7}.mp-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px}.mp-card{background:var(--mp-card);border:1px solid var(--mp-border);border-radius:16px;padding:24px;box-shadow:0 8px 32px #0006;backdrop-filter:blur(14px)}.mp-card h2{margin-top:0}.mp-card label{display:block;margin:14px 0 7px;opacity:.75}.mp-card input,.mp-card select{width:100%;box-sizing:border-box;padding:13px;border-radius:8px;border:1px solid var(--mp-border);background:#090b0a;color:#fff;font-size:1rem}.mp-btn{margin-top:18px;padding:11px 18px;border:0;border-radius:8px;background:var(--mp-accent);color:#17110a;font-weight:800;cursor:pointer;text-transform:uppercase}.mp-btn:disabled{opacity:.35;cursor:not-allowed}.mp-btn.secondary{margin:0;background:transparent;color:#eee;border:1px solid var(--mp-border)}.mp-seating{display:grid;grid-template-columns:2fr 1fr;gap:24px}.mp-seats{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0}.mp-seat{padding:18px;border:1px dashed var(--mp-border);border-radius:12px;text-align:center}.mp-seat.claimed{border-style:solid;border-color:var(--mp-accent)}#mpRoster{list-style:none;padding:0}#mpRoster li{padding:10px;border-bottom:1px solid var(--mp-border)}#mpRoster li.host-clickable{cursor:pointer}.mp-badge{float:right;color:var(--mp-accent)}@media(max-width:900px){.mp-grid,.mp-seating{grid-template-columns:1fr}}
+/* Chutes uses the same TellStream lobby shell as Ludo/Dominoes. This file only
+   supplies Chutes-specific background/fallbacks and in-game player badges. */
+.hidden-layout{display:none!important}
+#mpApp{position:fixed;inset:0;z-index:500;overflow:auto;background:linear-gradient(rgba(5,8,7,.72),rgba(5,8,7,.88)),url('imgs/BG_.jpg') center/cover;color:#eee}
+#mpApp .accent-text{color:#39ff14}
+#mpApp .uppercase-input{text-transform:uppercase}
+#mpApp .chutes-host-spacer{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;opacity:.82;padding:20px}
+#mpApp .chutes-game-name{font-size:1.25rem;font-weight:700;margin-bottom:8px}
+#mpApp .chutes-host-spacer p{max-width:300px;line-height:1.45}
+#mpApp .chutes-spectators{opacity:.8;margin-right:auto}
 
+/* Fallback layout if the shared stylesheet is unavailable while working locally. */
+#mpApp .view-panel{min-height:100%;padding:30px;box-sizing:border-box}
+#mpApp .lobby-header{margin-bottom:24px}
+#mpApp .lobby-header h1{margin:0}
+#mpApp .subtitle{opacity:.7}
+#mpApp .lobby-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px;align-items:stretch}
+#mpApp .glass-card{background:rgba(16,18,17,.88);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:24px;box-shadow:0 8px 32px #0006;backdrop-filter:blur(14px)}
+#mpApp .form-group label{display:block;margin:14px 0 7px;opacity:.75}
+#mpApp input,#mpApp select{width:100%;box-sizing:border-box;padding:13px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:#090b0a;color:#fff;font-size:1rem}
+#mpApp .btn{cursor:pointer}
+#mpApp .primary-btn{background:#39ff14;color:#071007;font-weight:800}
+#mpApp .seating-container{display:grid;grid-template-columns:2fr 1fr;gap:24px}
+#mpApp .seats-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0}
+#mpApp .seat-card{padding:18px;border:1px dashed rgba(255,255,255,.18);border-radius:12px;text-align:center}
+#mpApp .seat-card.claimed{border-style:solid;border-color:#39ff14}
+#mpApp .roster-list{list-style:none;padding:0}
+#mpApp .roster-list li{padding:10px;border-bottom:1px solid rgba(255,255,255,.12)}
+#mpApp .roster-list li.host-clickable{cursor:pointer}
+#mpApp .mp-badge{float:right;color:#39ff14}
+#mpApp .room-chat{height:100%;display:flex;flex-direction:column;min-height:0}
+#mpApp .chat-messages{min-height:220px;flex:1;overflow-y:auto}
+#mpApp .chat-input-bar{display:flex;gap:8px}
+#mpApp .chat-input-bar input{flex:1}
+#mpApp .chat-input-bar .btn{width:auto}
+@media(max-width:900px){#mpApp .lobby-grid,#mpApp .seating-container{grid-template-columns:1fr}}
 
 /* Compact in-game player identity badges on the bottom grassy verge. */
 #playerStatusBar{position:absolute;left:50%;bottom:.8%;transform:translateX(-50%);z-index:79;width:68%;height:9.8%;display:flex;align-items:flex-end;justify-content:center;gap:1.5%;pointer-events:none}
