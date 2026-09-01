@@ -936,15 +936,24 @@ setTimeout(() => {
 
 function launchFullscreenGame(gameName) {
     const activeGame = localStorage.getItem('tellstream_active_game');
+    const gameDisplayNames = { ludo: 'Ludo', dominoes: 'Dominoes', chutes: 'Chutes' };
+    
     if (activeGame && activeGame !== gameName) {
-        alert(`🔒 You are currently in an active ${activeGame === 'ludo' ? 'Ludo' : 'Dominoes'} game. Please exit the ${activeGame === 'ludo' ? 'Ludo' : 'Dominoes'} table first before switching!`);
+        const activeName = gameDisplayNames[activeGame] || activeGame;
+        alert(`🔒 You are currently in an active ${activeName} game. Please exit the ${activeName} table first before switching!`);
         return;
     }
 
     const overlay = document.getElementById('game-overlay-container');
     const frame = document.getElementById('game-overlay-frame');
     if (overlay && frame) {
-        frame.src = gameName === 'dominoes' ? '/dominoes/' : '/ludo/';
+        if (gameName === 'dominoes') {
+            frame.src = '/dominoes/';
+        } else if (gameName === 'ludo') {
+            frame.src = '/ludo/';
+        } else if (gameName === 'chutes') {
+            frame.src = '/chutes/';
+        }
         overlay.style.display = 'block';
     }
 }
