@@ -1,1 +1,70 @@
-
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Snakes & Ladders: Badmind & Blessings | TellStream</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="multiplayer.css">
+  <script>
+    // TellStream access gate: Chutes must be launched from the main Lounge
+    // and only by a registered/logged-in TellStream user.
+    (function () {
+      const savedUser = localStorage.getItem('tellstream_active_user');
+      const savedKey = savedUser ? localStorage.getItem('tellstream_key_' + savedUser) : null;
+      const activeGame = localStorage.getItem('tellstream_active_game');
+      let launchedFromLounge = false;
+      try {
+        launchedFromLounge = window.top !== window.self &&
+          window.frameElement && window.frameElement.id === 'game-overlay-frame';
+      } catch (_) {
+        launchedFromLounge = false;
+      }
+      if (!launchedFromLounge || !savedUser || !savedKey || (activeGame && activeGame !== 'chutes')) {
+        window.top.location.replace('/index.html');
+      }
+    })();
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div id="mpApp">
+  <section id="lobbyView" class="mp-view">
+    <header class="mp-header"><div><h1>TellStream Lounge <span>Snakes &amp; Ladders</span></h1><p>Badmind &amp; Blessings · real-time multiplayer</p></div><button id="backToLounge" class="mp-btn secondary">← Back to Lounge</button></header>
+    <div class="mp-grid">
+      <div class="mp-card"><h2>Your Identity</h2><label>Display Name</label><input id="mpUsername" readonly></div>
+      <div class="mp-card"><h2>Join Existing Game</h2><label>4-Letter Room Code</label><input id="mpRoomCode" maxlength="4" placeholder="e.g. CZTN"><button id="mpJoin" class="mp-btn">Join Game</button></div>
+      <div class="mp-card"><h2>Host a New Game</h2><label>Players count</label><select id="mpMaxPlayers"><option value="2">2 Players</option><option value="3">3 Players</option><option value="4" selected>4 Players</option></select><button id="mpCreate" class="mp-btn">Create Room</button></div>
+    </div>
+  </section>
+  <section id="seatingView" class="mp-view hidden-layout">
+    <header class="mp-header"><button id="mpLeave" class="mp-btn secondary">← Leave Room</button><h1>Room <span id="mpRoomDisplay">XXXX</span></h1><div>Badmind &amp; Blessings</div></header>
+    <div class="mp-seating">
+      <div class="mp-card"><h2>Game Players</h2><p id="mpSeatHint">Lobby seating is managed by the game host.</p><ul id="mpRoster"></ul><div id="mpSeats" class="mp-seats"></div><button id="mpStart" class="mp-btn" disabled>Start Game</button></div>
+      <div class="mp-card"><h2>Spectators</h2><p>Players in the room who have not been seated can watch the game.</p><div id="mpSpectatorList">None</div></div>
+    </div>
+  </section>
+</div>
+<div id="gameBackdrop" aria-hidden="true"></div>
+<main id="game" class="hidden-layout">
+  <div id="boardScene" aria-label="Snakes and Ladders board">
+    <div id="boardWorld">
+      <img id="boardImage" src="imgs/snakes_ladders_board_3600.jpg" alt="">
+      <div id="pitDiagLayer" class="layer"></div>
+      <div id="pitPieceLayer" class="layer"></div>
+      <div id="pitExitLayer" class="layer"></div>
+      <div id="treeLayer" class="layer"></div>
+      <div id="pieceLayer" class="layer"></div>
+    </div>
+    <div id="dieLayer" class="screen-layer"></div>
+    <div id="messageLayer" class="screen-layer"></div>
+    <div id="playerStatusBar" aria-label="Players"></div>
+    <button id="rollButton" type="button" disabled>ROLL</button>
+    <button id="restartButton" type="button" hidden>RESTART GAME</button>
+  </div>
+</main>
+<div id="startOverlay" aria-hidden="true"></div>
+<script src="game.js"></script>
+<script src="multiplayer.js"></script>
+</body>
+</html>
