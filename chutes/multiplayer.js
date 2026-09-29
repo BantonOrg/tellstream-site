@@ -1,11 +1,11 @@
 'use strict';
 const MP_URL='https://vegwferwmyuunwvfqpsf.supabase.co';
-const MP_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZ3dmZXJ3bXl1dW53dmZxcHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODU5NDQsImV4cCI6MjA5Nzk2MTk0NH0.7F3HUEY59BGE5phlD9AukhZzRa3Ied_ZT43j8YZeIy8';
+const MP_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInJlZiI6InZlZ3dmZXJ3bXl1dW53dmZxcHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODU5NDQsImV4cCI6MjA5Nzk2MTk0NH0.7F3HUEY59BGE5phlD9AukhZzRa3Ied_ZT43j8YZeIy8';
 const mpDB=supabase.createClient(MP_URL,MP_KEY);
 const mpUser=localStorage.getItem('tellstream_active_user');
 const ACTIVE_GAME_KEY='tellstream_active_game';
 const ACTIVE_ROOM_KEY='tellstream_active_room';
-let mpRoom=null,mpSeat=null,mpState=null,mpChannel=null,mpGameLaunched=false,mpLastRoundStartAt=null,mpChatChannel=null;
+let mpRoom=null,mpSeat=null,mpState=null,mpChannel=null,mpGameLaunched=false,mpLastRoundStartAt=null,mpChatChannel=null,mpCountdownRunning=false;
 const $=id=>document.getElementById(id);
 function mpShow(id){['lobbyView','seatingView'].forEach(x=>$(x).classList.toggle('hidden-layout',x!==id));$('mpApp').classList.remove('hidden-layout');$('game').classList.add('hidden-layout')}
 function mpCode(){const c='ABCDEFGHIJKLMNOPQRSTUVWXYZ';return Array.from({length:4},()=>c[Math.floor(Math.random()*26)]).join('')}
@@ -19,7 +19,7 @@ async function mpSendChat(input){if(!input)return;const message=input.value.trim
 async function mpCreate(){const code=mpCode(),max=+$('mpMaxPlayers').value;const ps={lobby_roster:[mpUser],creator:mpUser,settings:{max_players:max}};for(let i=1;i<=4;i++)ps['player'+i]={seat:i,name:i===1?mpUser:(i<=max?'Waiting...':'Not In Use'),square:1,finished:false,finish_place:null};const {error}=await mpDB.from('chutes_room').insert([{room_code:code,game_state:'waiting',active_turn:1,players:ps,connected_spectators:[],board_layout:{},finish_order:[],last_action:{}}]);if(error)return alert('Error creating room: '+error.message);mpSeat=1;mpEnter(code)}
 async function mpJoin(){const code=$('mpRoomCode').value.trim().toUpperCase();if(code.length!==4)return alert('Please enter a valid 4-letter room code.');const {data,error}=await mpDB.from('chutes_room').select('*').eq('room_code',code).single();if(error||!data)return alert('Room not found!');const ps=data.players||{};ps.lobby_roster=ps.lobby_roster||[];if(!ps.lobby_roster.includes(mpUser))ps.lobby_roster.push(mpUser);await mpDB.from('chutes_room').update({players:ps}).eq('room_code',code);mpEnter(code)}
 function mpEnter(code){mpRoom=code;mpRememberRoom(code);$('mpRoomDisplay').textContent=code;mpSubscribe();mpFetch();mpShow('seatingView')}
-async function mpTryResume(){const activeGame=localStorage.getItem(ACTIVE_GAME_KEY),code=(localStorage.getItem(ACTIVE_ROOM_KEY)||'').trim().toUpperCase();if(activeGame!=='chutes'||code.length!==4)return false;const {data,error}=await mpDB.from('chutes_room').select('*').eq('room_code',code).single();if(error||!data){mpClearRememberedRoom();localStorage.removeItem(ACTIVE_GAME_KEY);return false}const ps=data.players||{};let known=(ps.lobby_roster||[]).includes(mpUser)||ps.creator===mpUser;for(let i=1;i<=4;i++)if(ps['player'+i]?.name===mpUser)known=true;if(!known){mpClearRememberedRoom();localStorage.removeItem(ACTIVE_GAME_KEY);return false}mpRoom=code;$('mpRoomDisplay').textContent=code;mpSubscribe();mpHandle(data);return true}
+async function mpTryResume(){const activeGame=localStorage.getItem(ACTIVE_GAME_KEY),code=(localStorage.getItem(ACTIVE_ROOM_KEY)||'').trim().toUpperCase();if(activeGame!=='chutes'||code.length!==4)return false;const {data,error}=await mpDB.from('chutes_room').select('*').eq('room_code',code).single();if(error||!data){mpClearRememberedRoom();localStorage.removeItem(ACTIVE_GAME_KEY);return false}const ps=data.players||{};let known=(ps.lobby_roster||[]).includes(mpUser)||ps.creator===mpUser;for(let i=1;i<=4;i++)if(ps['player'+i]?.name===mpUser)known=true;if(!known){mpClearRememberedRoom();localStorage.removeItem(ACTIVE_GAME_KEY);return false}mpRoom=code;$('mpRoomDisplay').textContent=code;if(data.game_state==='playing'||data.game_state==='finished'){mpGameLaunched=true;const action=data.last_action||{};if(action.type==='start'||action.type==='restart')mpLastRoundStartAt=action.at||null}mpSubscribe();mpHandle(data);return true}
 async function mpFetch(){if(!mpRoom)return;const {data}=await mpDB.from('chutes_room').select('*').eq('room_code',mpRoom).single();if(data)mpHandle(data)}
 function mpSubscribe(){if(mpChannel)mpDB.removeChannel(mpChannel);mpChannel=mpDB.channel('chutes:'+mpRoom).on('postgres_changes',{event:'*',schema:'public',table:'chutes_room',filter:`room_code=eq.${mpRoom}`},p=>p.new&&mpHandle(p.new)).subscribe(status=>{if(status==='SUBSCRIBED')mpFetch()})}
 async function mpUpdate(fields){if(!mpRoom)return;const {error}=await mpDB.from('chutes_room').update(fields).eq('room_code',mpRoom);if(error)console.error(error)}
@@ -42,7 +42,7 @@ function mpLaunchGame(row){
  renderPieces();updateCamera(null,true);mpRenderPlayerStatus(row);
  const b=$('rollButton'),restart=$('restartButton');
  if(row.game_state==='finished'){
-  gameStarted=false;b.disabled=true;b.textContent='GAME OVER';restart.hidden=false;mpGameLaunched=true;return;
+  gameStarted=false;b.disabled=true;b.textContent='GAME OVER';restart.hidden=false;mpGameLaunched=true;mpCountdownRunning=false;return;
  }
  restart.hidden=true;b.disabled=true;b.textContent=mpSeat===row.active_turn?'ROLL':(mpSeat?'WAIT':'SPECTATING');
  const roundAction=row.last_action||{};
@@ -50,8 +50,12 @@ function mpLaunchGame(row){
  const needsCountdown=!mpGameLaunched||(roundStart&&roundStart!==mpLastRoundStartAt);
  if(roundStart)mpLastRoundStartAt=roundStart;
  if(needsCountdown){
-  mpGameLaunched=true;gameStarted=false;startCountdown().then(()=>mpApplyTurn(mpState||row));
- }else{gameStarted=true;mpApplyTurn(row)}
+  mpGameLaunched=true;gameStarted=false;
+  if(!mpCountdownRunning){
+   mpCountdownRunning=true;
+   startCountdown().then(()=>{mpCountdownRunning=false;mpApplyTurn(mpState||row)}).catch(err=>{mpCountdownRunning=false;console.error('Chutes start countdown failed:',err)});
+  }
+ }else if(!mpCountdownRunning){gameStarted=true;mpApplyTurn(row)}
 }
 function mpRenderPlayerStatus(row){
  const bar=$('playerStatusBar');if(!bar)return;
@@ -86,7 +90,7 @@ async function mpRestart(){
  const at=Date.now();
  await mpUpdate({game_state:'playing',active_turn:active[0],players:ps,board_layout:generateBoard(),finish_order:[],last_action:{type:'restart',seat:mpSeat,at}});
 }
-async function mpLeave(){if(mpChannel){mpDB.removeChannel(mpChannel);mpChannel=null}if(mpRoom&&mpState){const ps=structuredClone(mpState.players||{});ps.lobby_roster=(ps.lobby_roster||[]).filter(n=>n!==mpUser);if(mpSeat&&ps['player'+mpSeat])ps['player'+mpSeat].name='Waiting...';if(ps.creator===mpUser){await mpDB.from('chutes_room').delete().eq('room_code',mpRoom)}else await mpUpdate({players:ps})}localStorage.removeItem(ACTIVE_GAME_KEY);mpClearRememberedRoom();mpRoom=null;mpSeat=null;mpState=null;mpGameLaunched=false;mpLastRoundStartAt=null;mpShow('lobbyView')}
+async function mpLeave(){if(mpChannel){mpDB.removeChannel(mpChannel);mpChannel=null}if(mpRoom&&mpState){const ps=structuredClone(mpState.players||{});ps.lobby_roster=(ps.lobby_roster||[]).filter(n=>n!==mpUser);if(mpSeat&&ps['player'+mpSeat])ps['player'+mpSeat].name='Waiting...';if(ps.creator===mpUser){await mpDB.from('chutes_room').delete().eq('room_code',mpRoom)}else await mpUpdate({players:ps})}localStorage.removeItem(ACTIVE_GAME_KEY);mpClearRememberedRoom();mpRoom=null;mpSeat=null;mpState=null;mpGameLaunched=false;mpLastRoundStartAt=null;mpCountdownRunning=false;mpShow('lobbyView')}
 function mpBack(){localStorage.removeItem(ACTIVE_GAME_KEY);mpClearRememberedRoom();window.top.location.href='/index.html'}
 window.CHUTES_MP={get active(){return !!mpRoom},get seat(){return mpSeat},get state(){return mpState},update:mpUpdate,restart:mpRestart};
 window.addEventListener('DOMContentLoaded',async()=>{$('mpUsername').value=mpUser;$('mpCreate').onclick=mpCreate;$('mpJoin').onclick=mpJoin;$('mpStart').onclick=mpStart;$('mpLeave').onclick=mpLeave;$('backToLounge').onclick=mpBack;const lobbyInput=$('lobby-chat-input'),roomInput=$('room-chat-input');$('send-lobby-chat-btn').onclick=()=>mpSendChat(lobbyInput);$('send-room-chat-btn').onclick=()=>mpSendChat(roomInput);lobbyInput.onkeydown=e=>{if(e.key==='Enter')mpSendChat(lobbyInput)};roomInput.onkeydown=e=>{if(e.key==='Enter')mpSendChat(roomInput)};await mpLoadChat();mpSubscribeChat();if(!await mpTryResume())mpShow('lobbyView')});
