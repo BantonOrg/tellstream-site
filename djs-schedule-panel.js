@@ -9,42 +9,25 @@ function installDjsSchedulePanel() {
 
     column.dataset.djsSchedulePanelReady = '1';
     columnTitle.innerHTML = '<span>🎧 DJs & Schedule</span>';
+    columnTitle.style.cursor = 'pointer';
 
+    // Mirror column 3: dominant top panel + collapsed bottom accordion panel.
     const presentersPanel = document.createElement('div');
     presentersPanel.id = 'djs-presenters-panel';
-    presentersPanel.style.cssText = [
-        'flex:1 1 56%',
-        'min-height:0',
-        'overflow-y:auto',
-        'background:rgba(20,20,20,0.4)',
-        'padding:10px',
-        'border-radius:8px',
-        'border:1px solid rgba(255,255,255,0.03)'
-    ].join(';');
+    presentersPanel.className = 'sub-panel-top';
 
     const presentersImage = document.createElement('img');
     presentersImage.src = '/src/assets/tellstream-presenters.webp?v=20260929';
     presentersImage.alt = 'Meet the Tellstream DJs';
-    presentersImage.style.cssText = 'display:block;width:100%;height:auto;border-radius:6px;';
+    presentersImage.style.cssText = 'display:block;width:100%;height:100%;object-fit:contain;border-radius:6px;';
     presentersPanel.appendChild(presentersImage);
 
     const schedulePanel = document.createElement('div');
     schedulePanel.id = 'djs-schedule-list-panel';
-    schedulePanel.style.cssText = [
-        'flex:1 1 44%',
-        'min-height:0',
-        'overflow:hidden',
-        'background:rgba(20,20,20,0.4)',
-        'padding:10px 14px 14px',
-        'border-radius:8px',
-        'border:1px solid rgba(255,255,255,0.03)',
-        'display:flex',
-        'flex-direction:column',
-        'gap:8px'
-    ].join(';');
+    schedulePanel.className = 'sub-panel-bottom';
 
     const scheduleHeader = document.createElement('div');
-    scheduleHeader.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:8px;flex-shrink:0;';
+    scheduleHeader.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;flex-shrink:0;';
 
     const scheduleLabel = document.createElement('span');
     scheduleLabel.textContent = "📅 Today's Schedule";
@@ -64,6 +47,23 @@ function installDjsSchedulePanel() {
 
     column.appendChild(presentersPanel);
     column.appendChild(schedulePanel);
+
+    // Same interaction as initColumn3Accordion():
+    // click bottom panel -> expand it and collapse top panel;
+    // click column title -> restore top panel and collapse bottom panel.
+    schedulePanel.addEventListener('click', () => {
+        if (!schedulePanel.classList.contains('expanded')) {
+            schedulePanel.classList.add('expanded');
+            presentersPanel.classList.add('collapsed');
+        }
+    });
+
+    columnTitle.addEventListener('click', () => {
+        if (schedulePanel.classList.contains('expanded')) {
+            schedulePanel.classList.remove('expanded');
+            presentersPanel.classList.remove('collapsed');
+        }
+    });
 }
 
 installDjsSchedulePanel();
