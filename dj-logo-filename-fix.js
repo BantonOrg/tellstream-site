@@ -11,8 +11,8 @@ const DJ_LOGO_FILES = Object.freeze({
     'dj_denco': 'dj_denco.png',
     'denco': 'dj_denco.png',
     'fari_ras': 'fari_ras.png',
-    'fada_b': 'father_b.png',
-    'father_b': 'father_b.png',
+    'fada_b': 'fada_b.png',
+    'father_b': 'fada_b.png',
     'fire_ras': 'fyah_ras.png',
     'fyah_ras': 'fyah_ras.png',
     'jacko_melody': 'jacko_melody.png',
@@ -27,6 +27,7 @@ const DJ_LOGO_FILES = Object.freeze({
 
 const DJ_LOGO_PATH_FIXES = Object.freeze({
     'farl_ras.png': 'fari_ras.png',
+    'father_b.png': 'fada_b.png',
     'stinger_binger.png': 'stinger_blinger.png'
 });
 
