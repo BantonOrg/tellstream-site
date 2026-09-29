@@ -134,3 +134,14 @@ generateBoard=function generateBoard(){
  }
  throw new Error('Could not generate a complete legal board.');
 };
+
+// When reconnecting to a waiting room, the original handler refreshed the roster
+// but did not switch the visible panel back to seating. Keep its state logic intact
+// and only restore the correct view after it runs.
+if(typeof mpHandle==='function'){
+ const cmspOriginalMpHandle=mpHandle;
+ mpHandle=function(row){
+  cmspOriginalMpHandle(row);
+  if(row&&row.game_state==='waiting'&&mpRoom){mpShow('seatingView')}
+ };
+}
