@@ -16,7 +16,7 @@ function installDjsSchedulePanel() {
     presentersPanel.className = 'sub-panel-top';
 
     const presentersImage = document.createElement('img');
-    presentersImage.src = '/src/assets/tellstream-presenters.png?v=20260930';
+    presentersImage.src = '/src/assets/tellstreampresenters.jpg?v=20260930b';
     presentersImage.alt = 'Meet the Tellstream DJs';
     presentersImage.style.cssText = 'display:block;width:100%;height:100%;object-fit:contain;border-radius:6px;';
     presentersPanel.appendChild(presentersImage);
