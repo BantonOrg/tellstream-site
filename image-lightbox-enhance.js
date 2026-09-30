@@ -1,7 +1,6 @@
 function setupImageLightboxEnhancements() {
     const flyerModal = document.getElementById('flyerModal');
     const modalTargetImg = document.getElementById('modalTargetImg');
-    const presentersImage = document.querySelector('#djs-presenters-panel img');
 
     if (!flyerModal || !modalTargetImg) return;
 
@@ -11,14 +10,18 @@ function setupImageLightboxEnhancements() {
         flyerModal.classList.remove('active');
     });
 
-    if (presentersImage) {
+    // Delegate the DJ image click so it still works even though that image
+    // is created dynamically by djs-schedule-panel.js.
+    document.addEventListener('click', (event) => {
+        const presentersImage = event.target.closest('#djs-presenters-panel img');
+        if (!presentersImage) return;
+
+        event.preventDefault();
+        event.stopPropagation();
         presentersImage.style.cursor = 'zoom-in';
-        presentersImage.addEventListener('click', (event) => {
-            event.stopPropagation();
-            modalTargetImg.src = presentersImage.currentSrc || presentersImage.src;
-            flyerModal.classList.add('active');
-        });
-    }
+        modalTargetImg.src = presentersImage.currentSrc || presentersImage.src;
+        flyerModal.classList.add('active');
+    }, true);
 }
 
 setupImageLightboxEnhancements();
