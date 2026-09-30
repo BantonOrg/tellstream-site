@@ -11,13 +11,12 @@ function installDjsSchedulePanel() {
     columnTitle.innerHTML = '<span>🎧 DJs & Schedule</span>';
     columnTitle.style.cursor = 'pointer';
 
-    // Mirror column 3: dominant top panel + collapsed bottom accordion panel.
     const presentersPanel = document.createElement('div');
     presentersPanel.id = 'djs-presenters-panel';
     presentersPanel.className = 'sub-panel-top';
 
     const presentersImage = document.createElement('img');
-    presentersImage.src = '/src/assets/tellstream-presenters.webp?v=20260929';
+    presentersImage.src = '/src/assets/tellstream-presenters.png?v=20260930';
     presentersImage.alt = 'Meet the Tellstream DJs';
     presentersImage.style.cssText = 'display:block;width:100%;height:100%;object-fit:contain;border-radius:6px;';
     presentersPanel.appendChild(presentersImage);
@@ -48,9 +47,6 @@ function installDjsSchedulePanel() {
     column.appendChild(presentersPanel);
     column.appendChild(schedulePanel);
 
-    // Same interaction as initColumn3Accordion():
-    // click bottom panel -> expand it and collapse top panel;
-    // click column title -> restore top panel and collapse bottom panel.
     schedulePanel.addEventListener('click', () => {
         if (!schedulePanel.classList.contains('expanded')) {
             schedulePanel.classList.add('expanded');
