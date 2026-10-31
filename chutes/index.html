@@ -8,19 +8,21 @@
   <link rel="stylesheet" href="/ludo/style.css">
   <link rel="stylesheet" href="multiplayer.css">
   <script>
-    // Security gate: match the TellStream game-entry method used by Ludo and Dominoes.
+    // TellStream access gate: Chutes must be launched from the main Lounge
+    // and only by a registered/logged-in TellStream user.
     (function () {
       const savedUser = localStorage.getItem('tellstream_active_user');
       const savedKey = savedUser ? localStorage.getItem('tellstream_key_' + savedUser) : null;
-      if (!savedUser || !savedKey) {
-        alert('🔒 Access Denied: Please register and log in on the main Tellstream Lounge page first!');
-        window.top.location.href = '/index.html';
-        return;
-      }
       const activeGame = localStorage.getItem('tellstream_active_game');
-      if (activeGame && activeGame !== 'chutes') {
-        alert('🔒 Access Denied: You are currently active in another game. Please leave that game first!');
-        window.top.location.href = '/index.html';
+      let launchedFromLounge = false;
+      try {
+        launchedFromLounge = window.top !== window.self &&
+          window.frameElement && window.frameElement.id === 'game-overlay-frame';
+      } catch (_) {
+        launchedFromLounge = false;
+      }
+      if (!launchedFromLounge || !savedUser || !savedKey || (activeGame && activeGame !== 'chutes')) {
+        window.top.location.replace('/index.html');
       }
     })();
   </script>
@@ -140,7 +142,6 @@
 </main>
 <div id="startOverlay" aria-hidden="true"></div>
 <script src="game.js"></script>
-<script src="multiplayer.js"></script>
-<script src="fixes.js"></script>
+<script src="multiplayer.js?v=20261031-1"></script>
 </body>
 </html>
