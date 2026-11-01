@@ -29,6 +29,7 @@ let boardDesign=null;
 const players=ASSETS.pieces.map((asset,index)=>({asset,index,square:1,hidden:false,finished:false,finishPlace:null}));
 let currentPlayer=0,rolling=false,gameStarted=false;
 let finishCount=0;
+let turnStartSquare=1;
 const CAMERA={minZoom:1,maxZoom:2,padding:260,leadMs:500};
 
 function pct(v,axis=3600){return v/axis*100}
@@ -328,8 +329,9 @@ async function rollTurn(){
  if(players[currentPlayer].finished)currentPlayer=nextActivePlayer(currentPlayer);
  rolling=true;const b=document.getElementById('rollButton');b.disabled=true;
  const result=1+Math.floor(Math.random()*6);
- await throwDie(result);await sleep(180);
  const p=players[currentPlayer];
+ turnStartSquare=p.square;
+ await throwDie(result);await sleep(180);
  if(p.square+result<=100){
   // Frame the complete dice destination before anything moves, then lock the camera
   // for the entire movement + any chained tree/diagonal/pit action.
@@ -393,7 +395,7 @@ async function syncMultiplayerTurn(roll, movedPlayer, keepTurn=false){
  const state=window.CHUTES_MP.state, ps=structuredClone(state.players||{});
  players.forEach((p,i)=>{if(ps['player'+(i+1)]){ps['player'+(i+1)].square=p.square;ps['player'+(i+1)].finished=p.finished;ps['player'+(i+1)].finish_place=p.finishPlace}});
  const nextSeat=keepTurn?window.CHUTES_MP.seat:(currentPlayer+1);
- await window.CHUTES_MP.update({players:ps,active_turn:nextSeat,finish_order:players.filter(p=>p.finished).sort((a,b)=>a.finishPlace-b.finishPlace).map(p=>p.index+1),last_action:{type:'roll',seat:window.CHUTES_MP.seat,roll,final_square:movedPlayer.square,at:Date.now()}});
+ await window.CHUTES_MP.update({players:ps,active_turn:nextSeat,finish_order:players.filter(p=>p.finished).sort((a,b)=>a.finishPlace-b.finishPlace).map(p=>p.index+1),last_action:{type:'roll',seat:window.CHUTES_MP.seat,roll,from_square:turnStartSquare,final_square:movedPlayer.square,at:Date.now()}});
 }
 
 async function syncMultiplayerGameOver(roll,movedPlayer){
@@ -403,7 +405,7 @@ async function syncMultiplayerGameOver(roll,movedPlayer){
  await window.CHUTES_MP.update({
   game_state:'finished',active_turn:0,players:ps,
   finish_order:players.filter(p=>!p.hidden&&p.finished).sort((a,b)=>a.finishPlace-b.finishPlace).map(p=>p.index+1),
-  last_action:{type:'game_over',seat:window.CHUTES_MP.seat,roll,final_square:movedPlayer.square,at:Date.now()}
+  last_action:{type:'game_over',seat:window.CHUTES_MP.seat,roll,from_square:turnStartSquare,final_square:movedPlayer.square,at:Date.now()}
  });
 }
 
