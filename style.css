@@ -857,7 +857,10 @@ body.noticeboard-active .chat-fs-help-panel .sub-panel-bottom-fs {
     justify-content: center;
     opacity: 0;
     transition: opacity 0.25s ease;
-    gap: 15px;
+    gap: 10px;
+    overflow: auto;
+    padding: 24px;
+    box-sizing: border-box;
 }
 .flyer-modal-overlay.active {
     display: flex;
@@ -865,11 +868,12 @@ body.noticeboard-active .chat-fs-help-panel .sub-panel-bottom-fs {
 }
 .modal-content-card {
     position: relative;
-    max-width: 85%;
-    max-height: 80vh;
+    max-width: 90vw;
+    max-height: 88vh;
     display: flex;
     justify-content: center;
     align-items: center;
+    overflow: auto;
 }
 .modal-content-card img {
     max-width: 100%;
@@ -878,21 +882,20 @@ body.noticeboard-active .chat-fs-help-panel .sub-panel-bottom-fs {
     box-shadow: 0 10px 40px rgba(0,0,0,0.8);
     border: 1px solid rgba(255, 255, 255, 0.1);
     object-fit: contain;
+    cursor: zoom-in;
+    transition: width 0.2s ease, max-width 0.2s ease;
 }
-.modal-close-btn {
-    background: #22e532;
-    color: black;
-    border: none;
-    padding: 8px 24px;
-    border-radius: 6px;
-    font-weight: bold;
-    cursor: pointer;
-    font-size: 0.95rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    transition: background 0.2s;
+.modal-content-card img.zoomed {
+    width: 150vw;
+    max-width: none;
+    max-height: none;
+    cursor: zoom-out;
 }
-.modal-close-btn:hover {
-    background: #1cb528;
+.image-view-hint {
+    margin: 0;
+    color: rgba(255,255,255,0.72);
+    font-size: 0.78rem;
+    text-align: center;
 }
 
 /* Prevent header content overflow on intermediate desktop screen widths */
