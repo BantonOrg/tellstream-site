@@ -157,9 +157,6 @@ function renderStreamHeader(showName) {
     if (!logoImg) {
         logoImg = document.createElement('img');
         logoImg.id = 'stream-logo-display';
-        logoImg.style.cursor = 'zoom-in';
-        logoImg.title = 'Click to enlarge';
-        logoImg.addEventListener('click', () => { if (logoImg.src) launchFlyerLightbox(logoImg.src); });
         logoImg.style.width = '100%';
         logoImg.style.height = '100%';
         logoImg.style.position = 'absolute';
@@ -752,9 +749,8 @@ function renderHelpContent(useNoticeboardGuide = false) {
 }
 
 function launchFlyerLightbox(imgSrc) {
-    if (!imgSrc || !modalTargetImg || !flyerModal) return;
-    modalTargetImg.classList.remove('zoomed');
     modalTargetImg.src = imgSrc;
+    modalTargetImg.classList.remove('zoomed');
     flyerModal.classList.add('active');
 }
 function toggleFlyerImageZoom() {
@@ -762,24 +758,10 @@ function toggleFlyerImageZoom() {
     modalTargetImg.classList.toggle('zoomed');
 }
 function closeFlyerLightbox() {
-    if (!flyerModal || !modalTargetImg) return;
     flyerModal.classList.remove('active');
     modalTargetImg.classList.remove('zoomed');
     modalTargetImg.src = "";
 }
-
-// Schedule cards are currently text-only, but this also supports any DJ/schedule image added there later.
-[timetableContainer, document.getElementById('scheduleGridContainer')].forEach(container => {
-    if (!container) return;
-    container.addEventListener('click', event => {
-        const image = event.target.closest('img');
-        if (image) launchFlyerLightbox(image.currentSrc || image.src);
-    });
-});
-
-document.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && flyerModal?.classList.contains('active')) closeFlyerLightbox();
-});
 
 function toggleChatFullscreen() {
     if (isNoticeBoardActive) toggleNoticeBoardView();
@@ -2361,9 +2343,6 @@ async function openProfileCard(targetUsernameInput) {
     document.getElementById('profileCardUsername').innerText = getDisplayName(targetUsername);
     const avatarImg = document.getElementById('profileCardAvatar');
     avatarImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23444'/><text x='50' y='60' font-size='30' font-family='sans-serif' text-anchor='middle' fill='%23fff'>?</text></svg>";
-    avatarImg.style.cursor = 'zoom-in';
-    avatarImg.title = 'Click to enlarge';
-    avatarImg.onclick = () => { if (avatarImg.src && !avatarImg.src.startsWith('data:image/svg+xml')) launchFlyerLightbox(avatarImg.src); };
 
     const levelSpan = document.getElementById('profileCardLevel');
     const profile = profilesCache[targetUsername];

@@ -347,9 +347,9 @@
 
     <div class="flyer-modal-overlay" id="flyerModal" onclick="closeFlyerLightbox()">
         <div class="modal-content-card" onclick="event.stopPropagation();">
-            <img id="modalTargetImg" src="" alt="Expanded View Asset" onclick="event.stopPropagation(); toggleFlyerImageZoom();" title="Click to enlarge or reduce">
+            <img id="modalTargetImg" src="" alt="Expanded View Asset" onclick="event.stopPropagation(); toggleFlyerImageZoom();">
         </div>
-        <p class="image-view-hint">Click the image to enlarge or reduce it · Click outside or press Esc to close</p>
+        <button class="modal-close-btn" onclick="closeFlyerLightbox()">Close (X)</button>
     </div>
 
     <!-- Fullscreen Schedule Overlay Modal -->
