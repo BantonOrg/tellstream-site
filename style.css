@@ -858,9 +858,6 @@ body.noticeboard-active .chat-fs-help-panel .sub-panel-bottom-fs {
     opacity: 0;
     transition: opacity 0.25s ease;
     gap: 15px;
-    overflow: auto;
-    padding: 16px;
-    box-sizing: border-box;
 }
 .flyer-modal-overlay.active {
     display: flex;
@@ -881,15 +878,6 @@ body.noticeboard-active .chat-fs-help-panel .sub-panel-bottom-fs {
     box-shadow: 0 10px 40px rgba(0,0,0,0.8);
     border: 1px solid rgba(255, 255, 255, 0.1);
     object-fit: contain;
-}
-.modal-content-card img { cursor: zoom-in; }
-.modal-content-card img.zoomed {
-    max-width: none;
-    max-height: none;
-    width: auto;
-    height: auto;
-    object-fit: initial;
-    cursor: zoom-out;
 }
 .modal-close-btn {
     background: #22e532;

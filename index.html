@@ -86,7 +86,7 @@
 
             <div class="col-3">
                 <div class="col-title">
-                    <span>💡 Chat Emoji and Help</span>
+                    <span>💡 Chat help & Emojis</span>
                 </div>
                 <!-- Emojis list in sub-panel-top (visible by default) -->
                 <div class="sub-panel-top" id="emojiPanelContainer">
@@ -150,7 +150,7 @@
                         <!-- Ladder representation -->
                         <path d="M 15 5 L 15 45 M 35 5 L 35 45 M 15 13 L 35 13 M 15 21 L 35 21 M 15 29 L 35 29 M 15 37 L 35 37" stroke="currentColor" stroke-width="4" stroke-linecap="round" />
                     </svg>
-                    <span class="game-title">Chutes</span>
+                    <span class="game-title">Snakes</span>
                 </button>
             </div>
         </div>
@@ -159,31 +159,31 @@
             <h4 id="drawerTitle">Secure Current Handle</h4>
             <div class="form-grid">
                 <input type="text" id="regNameInput" placeholder="Name to lock" readonly>
-                <input type="password" id="regPasskeyInput" placeholder="Password">
-                <input type="text" id="regReminderInput" placeholder="Password Reminder Hint">
+                <input type="password" id="regPasskeyInput" placeholder="Secret Passkey">
+                <input type="text" id="regReminderInput" placeholder="Key Reminder Hint">
                 <input type="email" id="regEmailInput" placeholder="Recovery Email">
             </div>
             <div
                 style="display:flex; align-items:center; gap:6px; margin: 8px 0; font-size:0.75rem; color:#aaa; user-select:none;">
                 <input type="checkbox" id="showPasskeyCheckbox" onclick="togglePasskeyVisibility('regPasskeyInput')"
                     style="accent-color:#22e532; cursor:pointer;">
-                <label for="showPasskeyCheckbox" style="cursor:pointer;">Show Password</label>
+                <label for="showPasskeyCheckbox" style="cursor:pointer;">Show Passkey text</label>
             </div>
             <button class="drawer-action-btn" id="drawerSubmitBtn" onclick="handleSecuritySubmit()">Lock Name
                 Globally</button>
             <p id="reminderHintDisplay"
                 style="font-size:0.75rem; color:#ffdd1a; margin-top:6px; display:none; text-align:center;"></p>
 
-            <!-- Forgot Password Step 1: Link to enter reset flow -->
+            <!-- Forgot Passkey Step 1: Link to enter reset flow -->
             <div id="forgotPasskeyLink"
                 style="font-size:0.75rem; text-align:center; margin-top:10px; cursor:pointer; color:#22e532; text-decoration:underline; display:none;"
-                onclick="toggleForgotPasskeyForm('request')">Forgot Password?</div>
+                onclick="toggleForgotPasskeyForm('request')">Forgot Passkey?</div>
 
-            <!-- Forgot Password Step 2: Request Verification Code -->
+            <!-- Forgot Passkey Step 2: Request Verification Code -->
             <div id="forgotPasskeyRequestForm"
                 style="display:none; flex-direction:column; gap:8px; margin-top:10px; border-top:1px solid #2d2d2d; padding-top:10px;">
                 <p style="font-size:0.75rem; color:#aaa; text-align:center;">Enter your recovery email. We will send a
-                    6-digit verification code to reset your password:</p>
+                    6-digit verification code to reset your passkey:</p>
                 <input type="email" id="resetRecoveryEmailInput" placeholder="Enter recovery email..."
                     style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
                 <div style="display:flex; gap:6px;">
@@ -194,21 +194,21 @@
                 </div>
             </div>
 
-            <!-- Forgot Password Step 3: Verify Code & Reset Passkey -->
+            <!-- Forgot Passkey Step 3: Verify Code & Reset Passkey -->
             <div id="forgotPasskeyVerifyForm"
                 style="display:none; flex-direction:column; gap:8px; margin-top:10px; border-top:1px solid #2d2d2d; padding-top:10px;">
                 <p style="font-size:0.75rem; color:#aaa; text-align:center;">Enter the 6-digit code sent to your email
-                    and choose a new password:</p>
+                    and choose a new passkey:</p>
                 <input type="text" id="resetCodeInput" placeholder="6-Digit Verification Code"
                     style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none; text-align:center; letter-spacing:4px; font-weight:bold;">
-                <input type="password" id="resetNewPasskeyInput" placeholder="New Password"
+                <input type="password" id="resetNewPasskeyInput" placeholder="New Secret Passkey"
                     style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
-                <input type="text" id="resetNewReminderInput" placeholder="New Password Reminder Hint"
+                <input type="text" id="resetNewReminderInput" placeholder="New Key Reminder Hint"
                     style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
                 <div style="display:flex; gap:6px;">
                     <button class="drawer-action-btn" id="confirmResetBtn"
                         style="background:#22e532; flex:1; color:#000;" onclick="verifyAndResetPasskey()">Reset
-                        Password</button>
+                        Passkey</button>
                     <button class="drawer-action-btn" style="background:#444; flex:1;"
                         onclick="toggleForgotPasskeyForm('request')">Back</button>
                 </div>
@@ -307,7 +307,7 @@
                 </div>
 
                 <div class="chat-fs-help-panel">
-                    <div class="col-title">💡 Chat Emoji and Help</div>
+                    <div class="col-title">💡 Chat help and emoji codes</div>
                     <!-- Quick Emojis Section (First) -->
                     <div class="sub-panel-bottom-fs"
                         style="background:transparent; padding:0; border:none; display:flex; flex-direction:column; gap:8px; margin-bottom:10px;">
@@ -347,7 +347,7 @@
 
     <div class="flyer-modal-overlay" id="flyerModal" onclick="closeFlyerLightbox()">
         <div class="modal-content-card" onclick="event.stopPropagation();">
-            <img id="modalTargetImg" src="" alt="Expanded View Asset" onclick="event.stopPropagation(); toggleFlyerImageZoom();">
+            <img id="modalTargetImg" src="" alt="Expanded View Asset">
         </div>
         <button class="modal-close-btn" onclick="closeFlyerLightbox()">Close (X)</button>
     </div>
@@ -466,9 +466,9 @@
                     administrators for moderation. Do not type any personal details, passwords, or private information
                     in public chat channels.</p>
 
-                <p><strong>4. Password Security</strong><br>
-                    If you choose to lock your handle, your password is immediately hashed server-side using secure
-                    database procedures. Your original password is not stored in readable form.</p>
+                <p><strong>4. Passkey Hash Security</strong><br>
+                    If you choose to lock your handle, your passkey is immediately hashed server-side using secure
+                    database procedures. Raw passkeys are never stored in plaintext and cannot be read by anyone.</p>
             </div>
             <button class="privacy-close-btn" onclick="closePrivacyModal()">Close Statement</button>
         </div>
