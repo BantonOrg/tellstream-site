@@ -3,7 +3,7 @@ const MP_URL='https://vegwferwmyuunwvfqpsf.supabase.co';
 const MP_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZ3dmZXJ3bXl1dW53dmZxcHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODU5NDQsImV4cCI6MjA5Nzk2MTk0NH0.7F3HUEY59BGE5phlD9AukhZzRa3Ied_ZT43j8YZeIy8';
 const mpDB=supabase.createClient(MP_URL,MP_KEY);
 const mpUser=localStorage.getItem('tellstream_active_user');
-let mpRoom=null,mpSeat=null,mpState=null,mpChannel=null,mpGameLaunched=false,mpLastRoundStartAt=null,mpLastActionAt=0,mpRemoteAnimating=false;
+let mpRoom=null,mpSeat=null,mpState=null,mpChannel=null,mpGameLaunched=false,mpLastRoundStartAt=null;
 const $=id=>document.getElementById(id);
 function mpShow(id){['lobbyView','seatingView'].forEach(x=>$(x).classList.toggle('hidden-layout',x!==id));$('mpApp').classList.remove('hidden-layout');$('game').classList.add('hidden-layout')}
 function mpCode(){const c='ABCDEFGHIJKLMNOPQRSTUVWXYZ';return Array.from({length:4},()=>c[Math.floor(Math.random()*26)]).join('')}
@@ -14,50 +14,15 @@ async function mpFetch(){if(!mpRoom)return;const {data}=await mpDB.from('chutes_
 function mpSubscribe(){if(mpChannel)mpDB.removeChannel(mpChannel);mpChannel=mpDB.channel('chutes:'+mpRoom).on('postgres_changes',{event:'*',schema:'public',table:'chutes_room',filter:`room_code=eq.${mpRoom}`},p=>p.new&&mpHandle(p.new)).subscribe()}
 async function mpUpdate(fields){if(!mpRoom)return;const {error}=await mpDB.from('chutes_room').update(fields).eq('room_code',mpRoom);if(error)console.error(error)}
 function mpHandle(row){
- const previous=mpState;mpState=row;const ps=row.players||{};mpSeat=null;
+ mpState=row;const ps=row.players||{};mpSeat=null;
  for(let i=1;i<=4;i++)if(ps['player'+i]?.name===mpUser)mpSeat=i;
  if(row.game_state==='waiting'){mpRenderSeating();return}
- if((row.game_state==='playing'||row.game_state==='finished')&&mpGameLaunched&&previous){
-  const action=row.last_action||{};
-  if(action.type==='roll'&&action.at&&action.at!==mpLastActionAt){
-   mpLastActionAt=action.at;
-   mpApplyTurn(row);
-   if(action.seat!==mpSeat)mpReplayOpponentTurn(row,action);
-   else mpApplySharedPositions(row);
-   return;
-  }
-  if(row.game_state==='finished'){mpApplySharedPositions(row);mpApplyTurn(row);return}
- }
  if(row.game_state==='playing'||row.game_state==='finished')mpLaunchGame(row);
-}
-async function mpApplySharedPositions(row){
- const ps=row.players||{};
- players.forEach((p,i)=>{const rp=ps['player'+(i+1)];if(rp){p.square=rp.square||1;p.finished=!!rp.finished;p.finishPlace=rp.finish_place||null}});
- finishCount=Math.max(0,...players.filter(p=>!p.hidden).map(p=>Number(p.finishPlace)||0));
- renderPieces();updateCamera();mpRenderPlayerStatus(row);
-}
-async function mpReplayOpponentTurn(row,action){
- if(mpRemoteAnimating)return;
- const seat=Number(action.seat),player=players[seat-1];if(!player||player.hidden)return;
- mpRemoteAnimating=true;gameStarted=false;
- const b=$('rollButton');b.disabled=true;
- try{
-  await throwDie(Number(action.roll)||1);await sleep(180);
-  const from=Number(action.from_square)||player.square,to=Number(action.final_square)||player.square;
-  player.square=from;renderPieces();
-  await beginActionCamera(new Map([[player.index,Math.max(from,to)]]));
-  if(to>=from)await moveTo(player,to);else await slideDirect(player,to,850);
-  endActionCamera();
-  const rp=row.players?.['player'+seat];if(rp){player.square=rp.square||to;player.finished=!!rp.finished;player.finishPlace=rp.finish_place||null}
-  renderPieces();updateCamera();mpRenderPlayerStatus(row);
- }catch(err){console.error('Opponent turn replay failed',err);await mpApplySharedPositions(row)}
- finally{mpRemoteAnimating=false;gameStarted=true;mpApplyTurn(mpState||row)}
 }
 function mpRenderSeating(){const ps=mpState.players||{},max=ps.settings?.max_players||4,isHost=ps.creator===mpUser,roster=ps.lobby_roster||[];$('mpRoster').replaceChildren();roster.forEach(name=>{const li=document.createElement('li');let seat=null;for(let i=1;i<=4;i++)if(ps['player'+i]?.name===name)seat=i;li.textContent=name;if(seat){const b=document.createElement('span');b.className='mp-badge';b.textContent='Seat '+seat;li.appendChild(b)}if(isHost&&name!==ps.creator){li.classList.add('host-clickable');li.onclick=()=>mpToggleSeat(name)}$('mpRoster').appendChild(li)});$('mpSeats').replaceChildren();for(let i=1;i<=max;i++){const d=document.createElement('div'),name=ps['player'+i]?.name||'Waiting...';d.className='seat-card'+(name!=='Waiting...'?' claimed':'');d.innerHTML=`<div class="seat-header">Seat ${i}${i===1?' (Host)':''}</div><div class="seat-player-name">${name}</div>`;$('mpSeats').appendChild(d)}const seated=Array.from({length:max},(_,i)=>ps['player'+(i+1)]?.name).filter(n=>n&&n!=='Waiting...'&&n!=='Not In Use');$('mpStart').disabled=!(isHost&&seated.length>=2);$('mpSeatHint').textContent=isHost?'Lobby seating is managed by the game host.':'Lobby seating is managed by the game host.';if($('mpRosterHelper'))$('mpRosterHelper').style.display=isHost?'block':'none';const specs=roster.filter(n=>!seated.includes(n));$('mpSpectatorList').textContent=specs.length?specs.join(', '):'None'}
 async function mpToggleSeat(name){const ps=structuredClone(mpState.players),max=ps.settings?.max_players||4;let found=null;for(let i=2;i<=max;i++)if(ps['player'+i]?.name===name)found=i;if(found)ps['player'+found].name='Waiting...';else{let empty=null;for(let i=2;i<=max;i++)if(ps['player'+i]?.name==='Waiting...'){empty=i;break}if(!empty)return alert('All player seats are full.');ps['player'+empty].name=name}await mpUpdate({players:ps})}
 async function mpStart(){if(mpState?.players?.creator!==mpUser)return;const ps=structuredClone(mpState.players),max=ps.settings?.max_players||4;const active=[];for(let i=1;i<=max;i++)if(ps['player'+i]?.name&&ps['player'+i].name!=='Waiting...')active.push(i);if(active.length<2)return;const design=generateBoard();active.forEach(i=>{ps['player'+i].square=1;ps['player'+i].finished=false;ps['player'+i].finish_place=null});await mpUpdate({game_state:'playing',active_turn:active[0],players:ps,board_layout:design,finish_order:[],last_action:{type:'start',at:Date.now()}})}
 function mpLaunchGame(row){
- mpLastActionAt=Number(row.last_action?.at)||0;
  $('mpApp').classList.add('hidden-layout');$('game').classList.remove('hidden-layout');
  boardDesign=row.board_layout&&row.board_layout.trees?row.board_layout:generateBoard();renderDesign();
  const ps=row.players||{},max=ps.settings?.max_players||4;
@@ -111,7 +76,7 @@ async function mpRestart(){
  const at=Date.now();
  await mpUpdate({game_state:'playing',active_turn:active[0],players:ps,board_layout:generateBoard(),finish_order:[],last_action:{type:'restart',seat:mpSeat,at}});
 }
-async function mpLeave(){if(mpChannel){mpDB.removeChannel(mpChannel);mpChannel=null}if(mpRoom&&mpState){const ps=structuredClone(mpState.players||{});ps.lobby_roster=(ps.lobby_roster||[]).filter(n=>n!==mpUser);if(mpSeat&&ps['player'+mpSeat])ps['player'+mpSeat].name='Waiting...';if(ps.creator===mpUser){await mpDB.from('chutes_room').delete().eq('room_code',mpRoom)}else await mpUpdate({players:ps})}localStorage.removeItem('tellstream_active_game');mpRoom=null;mpSeat=null;mpState=null;mpGameLaunched=false;mpLastRoundStartAt=null;mpLastActionAt=0;mpShow('lobbyView')}
+async function mpLeave(){if(mpChannel){mpDB.removeChannel(mpChannel);mpChannel=null}if(mpRoom&&mpState){const ps=structuredClone(mpState.players||{});ps.lobby_roster=(ps.lobby_roster||[]).filter(n=>n!==mpUser);if(mpSeat&&ps['player'+mpSeat])ps['player'+mpSeat].name='Waiting...';if(ps.creator===mpUser){await mpDB.from('chutes_room').delete().eq('room_code',mpRoom)}else await mpUpdate({players:ps})}localStorage.removeItem('tellstream_active_game');mpRoom=null;mpSeat=null;mpState=null;mpGameLaunched=false;mpLastRoundStartAt=null;mpShow('lobbyView')}
 function mpBack(){localStorage.removeItem('tellstream_active_game');window.top.location.href='/index.html'}
-window.CHUTES_MP={get active(){return !!mpRoom},get seat(){return mpSeat},get state(){return mpState},update:mpUpdate,restart:mpRestart,leave:mpLeave};
-window.addEventListener('DOMContentLoaded',()=>{$('mpUsername').value=mpUser;$('mpCreate').onclick=mpCreate;$('mpJoin').onclick=mpJoin;$('mpStart').onclick=mpStart;$('mpLeave').onclick=mpLeave;$('backToLounge').onclick=mpBack;if($('leaveGameButton'))$('leaveGameButton').onclick=async()=>{if(!confirm('Leave this game and return to the TellStream Lounge?'))return;await mpLeave();mpBack()};mpShow('lobbyView')});
+window.CHUTES_MP={get active(){return !!mpRoom},get seat(){return mpSeat},get state(){return mpState},update:mpUpdate,restart:mpRestart};
+window.addEventListener('DOMContentLoaded',()=>{$('mpUsername').value=mpUser;$('mpCreate').onclick=mpCreate;$('mpJoin').onclick=mpJoin;$('mpStart').onclick=mpStart;$('mpLeave').onclick=mpLeave;$('backToLounge').onclick=mpBack;mpShow('lobbyView')});
