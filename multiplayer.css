@@ -1,0 +1,47 @@
+/* Chutes uses the same TellStream lobby shell as Ludo/Dominoes. This file only
+   supplies Chutes-specific background/fallbacks and in-game player badges. */
+.hidden-layout{display:none!important}
+#mpApp{position:fixed;inset:0;z-index:500;overflow:auto;background:linear-gradient(rgba(5,8,7,.72),rgba(5,8,7,.88)),url('imgs/BG_.jpg') center/cover;color:#eee}
+#mpApp .accent-text{color:#39ff14}
+#mpApp .uppercase-input{text-transform:uppercase}
+#mpApp .chutes-host-spacer{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;opacity:.82;padding:20px}
+#mpApp .chutes-game-name{font-size:1.25rem;font-weight:700;margin-bottom:8px}
+#mpApp .chutes-host-spacer p{max-width:300px;line-height:1.45}
+#mpApp .chutes-spectators{opacity:.8;margin-right:auto}
+
+/* Fallback layout if the shared stylesheet is unavailable while working locally. */
+#mpApp .view-panel{min-height:100%;padding:30px;box-sizing:border-box}
+#mpApp .lobby-header{margin-bottom:24px}
+#mpApp .lobby-header h1{margin:0}
+#mpApp .subtitle{opacity:.7}
+#mpApp .lobby-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px;align-items:stretch}
+#mpApp .glass-card{background:rgba(16,18,17,.88);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:24px;box-shadow:0 8px 32px #0006;backdrop-filter:blur(14px)}
+#mpApp .form-group label{display:block;margin:14px 0 7px;opacity:.75}
+#mpApp input,#mpApp select{width:100%;box-sizing:border-box;padding:13px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:#090b0a;color:#fff;font-size:1rem}
+#mpApp .btn{cursor:pointer}
+#mpApp .primary-btn{background:#39ff14;color:#071007;font-weight:800}
+#mpApp .seating-container{display:grid;grid-template-columns:2fr 1fr;gap:24px}
+#mpApp .seats-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0}
+#mpApp .seat-card{padding:18px;border:1px dashed rgba(255,255,255,.18);border-radius:12px;text-align:center}
+#mpApp .seat-card.claimed{border-style:solid;border-color:#39ff14}
+#mpApp .roster-list{list-style:none;padding:0}
+#mpApp .roster-list li{padding:10px;border-bottom:1px solid rgba(255,255,255,.12)}
+#mpApp .roster-list li.host-clickable{cursor:pointer}
+#mpApp .mp-badge{float:right;color:#39ff14}
+#mpApp .room-chat{height:100%;display:flex;flex-direction:column;min-height:0}
+#mpApp .chat-messages{min-height:220px;flex:1;overflow-y:auto}
+#mpApp .chat-input-bar{display:flex;gap:8px}
+#mpApp .chat-input-bar input{flex:1}
+#mpApp .chat-input-bar .btn{width:auto}
+@media(max-width:900px){#mpApp .lobby-grid,#mpApp .seating-container{grid-template-columns:1fr}}
+
+/* Compact in-game player identity badges on the bottom grassy verge. */
+#playerStatusBar{position:absolute;left:50%;bottom:.8%;transform:translateX(-50%);z-index:79;width:68%;height:9.8%;display:flex;align-items:flex-end;justify-content:center;gap:1.5%;pointer-events:none}
+.player-status{--piece-glow:rgba(255,255,255,.8);position:relative;flex:0 1 22%;min-width:0;height:70%;border:1px solid rgba(255,255,255,.34);border-radius:13px;background:rgba(12,14,12,.82);box-shadow:0 3px 10px rgba(0,0,0,.55);overflow:visible;transition:box-shadow .2s ease,border-color .2s ease,transform .2s ease}
+.player-status-piece-mask{position:absolute;left:7%;bottom:0;width:31%;height:138%;overflow:hidden;pointer-events:none}
+.player-status-piece{position:absolute;left:50%;top:2%;width:auto;height:190%;transform:translateX(-50%);filter:drop-shadow(2px 4px 3px rgba(0,0,0,.58))}
+.player-status-name{position:absolute;left:38%;right:5%;top:50%;transform:translateY(-50%);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;color:#eee;font:700 clamp(10px,1.05vw,19px)/1 Arial,sans-serif;text-shadow:0 2px 3px #000}
+.player-status.active{border-color:var(--piece-glow);box-shadow:0 0 8px var(--piece-glow),0 0 17px var(--piece-glow),0 3px 10px rgba(0,0,0,.62);transform:translateY(-2px)}
+.player-status.active .player-status-name{color:#fff;text-shadow:0 0 5px var(--piece-glow),0 0 11px var(--piece-glow),0 2px 3px #000}
+.player-status.finished{opacity:.58}
+@media(max-width:700px){#playerStatusBar{width:72%;gap:1%}.player-status{border-radius:9px}.player-status-name{font-size:9px}}
