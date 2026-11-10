@@ -4,6 +4,7 @@ const MP_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 const mpDB=supabase.createClient(MP_URL,MP_KEY);
 const mpUser=localStorage.getItem('tellstream_active_user');
 let mpRoom=null,mpSeat=null,mpState=null,mpChannel=null,mpGameLaunched=false,mpLastRoundStartAt=null;
+let mpAnimationChain=Promise.resolve(),mpPendingRemote=0,mpPendingSync=false,mpCountdownActive=false;
 const $=id=>document.getElementById(id);
 function mpShow(id){['lobbyView','seatingView'].forEach(x=>$(x).classList.toggle('hidden-layout',x!==id));$('mpApp').classList.remove('hidden-layout');$('game').classList.add('hidden-layout')}
 function mpCode(){const c='ABCDEFGHIJKLMNOPQRSTUVWXYZ';return Array.from({length:4},()=>c[Math.floor(Math.random()*26)]).join('')}
@@ -11,7 +12,49 @@ async function mpCreate(){const code=mpCode(),max=+$('mpMaxPlayers').value;const
 async function mpJoin(){const code=$('mpRoomCode').value.trim().toUpperCase();if(code.length!==4)return alert('Please enter a valid 4-letter room code.');const {data,error}=await mpDB.from('chutes_room').select('*').eq('room_code',code).single();if(error||!data)return alert('Room not found!');const ps=data.players||{};ps.lobby_roster=ps.lobby_roster||[];if(!ps.lobby_roster.includes(mpUser))ps.lobby_roster.push(mpUser);await mpDB.from('chutes_room').update({players:ps}).eq('room_code',code);mpEnter(code)}
 function mpEnter(code){mpRoom=code;localStorage.setItem('tellstream_active_game','chutes');$('mpRoomDisplay').textContent=code;mpSubscribe();mpFetch();mpShow('seatingView')}
 async function mpFetch(){if(!mpRoom)return;const {data}=await mpDB.from('chutes_room').select('*').eq('room_code',mpRoom).single();if(data)mpHandle(data)}
-function mpSubscribe(){if(mpChannel)mpDB.removeChannel(mpChannel);mpChannel=mpDB.channel('chutes:'+mpRoom).on('postgres_changes',{event:'*',schema:'public',table:'chutes_room',filter:`room_code=eq.${mpRoom}`},p=>p.new&&mpHandle(p.new)).subscribe()}
+function mpSubscribe(){
+ if(mpChannel)mpDB.removeChannel(mpChannel);
+ mpChannel=mpDB.channel('chutes:'+mpRoom)
+  .on('postgres_changes',{event:'*',schema:'public',table:'chutes_room',filter:`room_code=eq.${mpRoom}`},p=>p.new&&mpHandle(p.new))
+  .on('broadcast',{event:'piece_animation'},p=>mpReceiveAnimation(p.payload))
+  .subscribe();
+}
+async function mpBroadcastAnimation(action){
+ if(!mpChannel||!mpRoom||mpState?.game_state!=='playing')return;
+ try{
+  const result=await mpChannel.send({type:'broadcast',event:'piece_animation',payload:action});
+  if(result!=='ok')console.warn('Snakes & Ladders animation broadcast:',result);
+ }catch(error){console.warn('Snakes & Ladders animation broadcast failed:',error)}
+}
+function mpReceiveAnimation(action){
+ if(!action||!mpRoom||!mpGameLaunched||mpState?.game_state!=='playing')return;
+ const seat=Number(action.seat),player=players[seat-1];
+ if(!Number.isInteger(seat)||seat<1||seat>4||seat===mpSeat||!player)return;
+ const occupant=mpState.players?.['player'+seat]?.name;
+ if(!occupant||occupant==='Waiting...'||occupant==='Not In Use')return;
+ if(!['roll','move','pit','direct','finish','extra'].includes(action.type))return;
+ mpPendingRemote++;
+ mpAnimationChain=mpAnimationChain.then(async()=>{
+  if(!mpRoom)return;
+  if(action.type==='roll'&&Number.isInteger(action.roll)&&action.roll>=1&&action.roll<=6)await throwDie(action.roll);
+  if(action.type==='move'&&Number.isInteger(action.target)&&action.target>=1&&action.target<=100){
+   await beginActionCamera(new Map([[player.index,action.target]]));
+   await moveTo(player,action.target);
+   endActionCamera();
+  }
+  if(action.type==='pit'&&Number.isInteger(action.square)&&Number.isInteger(action.exitSquare)){
+   await pitAnimation(player,action.square,action.exitSquare,false);
+  }
+  if(action.type==='direct'&&Number.isInteger(action.target)&&action.target>=1&&action.target<=100){
+   await assetMoveTo(player,action.target);
+  }
+  if(action.type==='finish')await finishPlayer(player,true);
+  if(action.type==='extra')await showPlaqueMessage('Well done ! Have another go !');
+ }).catch(error=>console.error('Snakes & Ladders opponent animation failed:',error)).finally(()=>{
+  mpPendingRemote--;
+  if(!mpPendingRemote&&mpPendingSync&&mpState){mpPendingSync=false;mpLaunchGame(mpState)}
+ });
+}
 async function mpUpdate(fields){if(!mpRoom)return;const {error}=await mpDB.from('chutes_room').update(fields).eq('room_code',mpRoom);if(error)console.error(error)}
 function mpHandle(row){
  mpState=row;const ps=row.players||{};mpSeat=null;
@@ -24,24 +67,26 @@ async function mpToggleSeat(name){const ps=structuredClone(mpState.players),max=
 async function mpStart(){if(mpState?.players?.creator!==mpUser)return;const ps=structuredClone(mpState.players),max=ps.settings?.max_players||4;const active=[];for(let i=1;i<=max;i++)if(ps['player'+i]?.name&&ps['player'+i].name!=='Waiting...')active.push(i);if(active.length<2)return;const design=generateBoard();active.forEach(i=>{ps['player'+i].square=1;ps['player'+i].finished=false;ps['player'+i].finish_place=null});await mpUpdate({game_state:'playing',active_turn:active[0],players:ps,board_layout:design,finish_order:[],last_action:{type:'start',at:Date.now()}})}
 function mpLaunchGame(row){
  $('mpApp').classList.add('hidden-layout');$('game').classList.remove('hidden-layout');
+ const roundAction=row.last_action||{};
+ const roundStart=(roundAction.type==='start'||roundAction.type==='restart')?roundAction.at:null;
+ const needsCountdown=!mpGameLaunched||(roundStart&&roundStart!==mpLastRoundStartAt);
+ if(mpPendingRemote&&!needsCountdown){mpPendingSync=true;return}
  boardDesign=row.board_layout&&row.board_layout.trees?row.board_layout:generateBoard();renderDesign();
  const ps=row.players||{},max=ps.settings?.max_players||4;
  players.forEach((p,i)=>{const rp=ps['player'+(i+1)];p.hidden=i>=max||!rp||rp.name==='Waiting...'||rp.name==='Not In Use';p.square=rp?.square||1;p.finished=!!rp?.finished;p.finishPlace=rp?.finish_place||null});
  finishCount=Math.max(0,...players.filter(p=>!p.hidden).map(p=>Number(p.finishPlace)||0));
  currentPlayer=Math.max(0,(row.active_turn||1)-1);
  renderPieces();updateCamera(null,true);mpRenderPlayerStatus(row);
- const b=$('rollButton'),restart=$('restartButton');
+ const b=$('rollButton'),restart=$('restartButton'),leave=$('leaveFinishedButton');
  if(row.game_state==='finished'){
-  gameStarted=false;b.disabled=true;b.textContent='GAME OVER';restart.hidden=false;mpGameLaunched=true;return;
+  gameStarted=false;b.disabled=true;b.textContent='GAME OVER';restart.hidden=false;leave.hidden=false;mpGameLaunched=true;return;
  }
- restart.hidden=true;b.disabled=true;b.textContent=mpSeat===row.active_turn?'ROLL':(mpSeat?'WAIT':'SPECTATING');
- const roundAction=row.last_action||{};
- const roundStart=(roundAction.type==='start'||roundAction.type==='restart')?roundAction.at:null;
- const needsCountdown=!mpGameLaunched||(roundStart&&roundStart!==mpLastRoundStartAt);
+ restart.hidden=true;leave.hidden=true;b.disabled=true;b.textContent=mpSeat===row.active_turn?'ROLL':(mpSeat?'WAIT':'SPECTATING');
  if(roundStart)mpLastRoundStartAt=roundStart;
  if(needsCountdown){
-  mpGameLaunched=true;gameStarted=false;startCountdown().then(()=>mpApplyTurn(mpState||row));
- }else{gameStarted=true;mpApplyTurn(row)}
+  mpGameLaunched=true;mpCountdownActive=true;gameStarted=false;
+  startCountdown().then(()=>{mpCountdownActive=false;mpApplyTurn(mpState||row)});
+ }else if(!mpCountdownActive){gameStarted=true;mpApplyTurn(row)}
 }
 function mpRenderPlayerStatus(row){
  const bar=$('playerStatusBar');if(!bar)return;
@@ -59,9 +104,10 @@ function mpRenderPlayerStatus(row){
  }
 }
 function mpApplyTurn(row){
- mpRenderPlayerStatus(row);const b=$('rollButton'),restart=$('restartButton');
- if(row.game_state==='finished'){b.disabled=true;b.textContent='GAME OVER';restart.hidden=false;return}
- restart.hidden=true;b.disabled=!mpSeat||mpSeat!==row.active_turn||players[mpSeat-1]?.finished;
+ if(mpPendingRemote){mpPendingSync=true;return}
+ mpRenderPlayerStatus(row);const b=$('rollButton'),restart=$('restartButton'),leave=$('leaveFinishedButton');
+ if(row.game_state==='finished'){b.disabled=true;b.textContent='GAME OVER';restart.hidden=false;leave.hidden=false;return}
+ restart.hidden=true;leave.hidden=true;b.disabled=!mpSeat||mpSeat!==row.active_turn||players[mpSeat-1]?.finished;
  b.textContent=mpSeat===row.active_turn?'ROLL':(mpSeat?'WAIT':'SPECTATING');
 }
 async function mpRestart(){
@@ -78,5 +124,6 @@ async function mpRestart(){
 }
 async function mpLeave(){if(mpChannel){mpDB.removeChannel(mpChannel);mpChannel=null}if(mpRoom&&mpState){const ps=structuredClone(mpState.players||{});ps.lobby_roster=(ps.lobby_roster||[]).filter(n=>n!==mpUser);if(mpSeat&&ps['player'+mpSeat])ps['player'+mpSeat].name='Waiting...';if(ps.creator===mpUser){await mpDB.from('chutes_room').delete().eq('room_code',mpRoom)}else await mpUpdate({players:ps})}localStorage.removeItem('tellstream_active_game');mpRoom=null;mpSeat=null;mpState=null;mpGameLaunched=false;mpLastRoundStartAt=null;mpShow('lobbyView')}
 function mpBack(){localStorage.removeItem('tellstream_active_game');window.top.location.href='/index.html'}
-window.CHUTES_MP={get active(){return !!mpRoom},get seat(){return mpSeat},get state(){return mpState},update:mpUpdate,restart:mpRestart};
-window.addEventListener('DOMContentLoaded',()=>{$('mpUsername').value=mpUser;$('mpCreate').onclick=mpCreate;$('mpJoin').onclick=mpJoin;$('mpStart').onclick=mpStart;$('mpLeave').onclick=mpLeave;$('backToLounge').onclick=mpBack;mpShow('lobbyView')});
+function mpLeaveFinished(){if(mpState?.game_state==='finished')mpBack()}
+window.CHUTES_MP={get active(){return !!mpRoom},get seat(){return mpSeat},get state(){return mpState},update:mpUpdate,restart:mpRestart,broadcastAnimation:mpBroadcastAnimation};
+window.addEventListener('DOMContentLoaded',()=>{$('mpUsername').value=mpUser;$('mpCreate').onclick=mpCreate;$('mpJoin').onclick=mpJoin;$('mpStart').onclick=mpStart;$('mpLeave').onclick=mpLeave;$('backToLounge').onclick=mpBack;$('leaveFinishedButton').onclick=mpLeaveFinished;mpShow('lobbyView')});

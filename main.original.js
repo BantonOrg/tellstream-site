@@ -15,6 +15,7 @@ const quickEmojiList = document.getElementById('quickEmojiList');
 const quickEmojiListFS = document.getElementById('quickEmojiListFS');
 const fbFeedContainer = document.getElementById('fbFeedContainer');
 const helpCardsContainer = document.getElementById('helpCardsContainer');
+const helpCardsContent = document.getElementById('helpCardsContent');
 const helpCardsContainerFS = document.getElementById('helpCardsContainerFS');
 const fsToggleBtn = document.getElementById('fsToggleBtn');
 const flyerModal = document.getElementById('flyerModal');
@@ -49,15 +50,18 @@ let myProfile = null;
 let activePrivateSub = null;
 
 const helpInstructions = [
-    { title: "Choose a Chat Name", text: "Before you start chatting, enter your name in the \"Chat Name\" box at the bottom right. This sets a temporary identity for your current session. If you close or reload the page, the name can be claimed by anyone else unless you secure it." },
-    { title: "Securing Your Chat Name", text: "Click the padlock button next to your chat name to open your profile settings. Enter a secret Passkey, a key reminder hint, and a recovery Email. Once secured, no one else can chat using your name without your passkey." },
+    { title: "Choose a Chat Name", text: "Enter a name in the Nickname box beside the chat input. You can start chatting with a temporary name, but someone else can claim it unless you register it." },
+    { title: "Register Your Chat Name", text: "Click the padlock beside your nickname. Enter a private passkey, a reminder hint and a recovery email, then choose Lock Name Globally. This secures your chat name so others cannot use it." },
+    { title: "Sign In", text: "Enter your registered nickname, click the padlock, enter your passkey and choose Log In. Your registered name is also needed to post on the Noticeboard." },
+    { title: "Forgotten Passkey", text: "Enter your registered nickname, open the padlock panel and choose Forgot Passkey? Enter the recovery email you registered with and request a code. Check your email, then enter the code and a new passkey to regain access." },
     { title: "Chatting & Messages", text: "Simply type your message in the chat input box at the bottom and press the Enter key (or click the Send button)." },
-    { title: "Emojis & Smilies", text: "Click any emoji shortcut below the chat input to insert it into your message. Click the [See All Codes] link to open the full library of custom smilies." },
+    { title: "Emojis & Smilies", text: "Click a Quick Emoji to insert its code into your message, or select See All Codes to browse the full library. You can also type a code such as :love: in your message. Send it normally and the code displays as an image when recognised." },
     { title: "Strikes & Lockout Rules", text: "Bad language is blocked automatically and tracked via a strike system:\n- 3 Strikes: Temporary 24-hour lockout from the chat.\n- 4+ Strikes: Permanent chat ban.\n- Apologizing: Type the word \"sorry\" in the main chat to remove 1 strike (limited to once per calendar day)." },
     { title: "Noticeboard View Notice", text: "When you open the Noticeboard, the lounge chat is completely hidden. You must close the Noticeboard using the Exit Noticeboard button to return to the active chat stream." }
 ];
 
 const noticeboardHelpInstructions = [
+    { title: "Registered Chat Name Required", text: "To post a notice, first register your chat nickname with a passkey and sign in using that name. Unregistered visitors can read notices but cannot post them." },
     { title: "Noticeboard Rules", text: "Keep all posts friendly, helpful, and respectful. Station Admins will immediately delete any abusive, hostile, or inappropriate noticeboard posts." },
     { title: "Posting to the Noticeboard", text: "Once you have secured your username with a passkey, you can post updates directly to the green \"Registered Members Notices\" column." },
     { title: "Noticeboard Bans", text: "Posting swearing or blocked words on the noticeboard will increase your strikes, leading to lockout or ban just like in the chat." }
@@ -737,9 +741,9 @@ function renderHelpContent(useNoticeboardGuide = false) {
         html = adminHtml + html;
     }
 
-    helpCardsContainer.innerHTML = html;
+    helpCardsContent.innerHTML = html;
     helpCardsContainerFS.innerHTML = html;
-    const currentTitle = useNoticeboardGuide ? "📋 Noticeboard Help Guide" : "💡 Chat help and emoji codes";
+    const currentTitle = useNoticeboardGuide ? "📋 Noticeboard Help Guide" : "💡 Chat Help";
     const fsTitleNode = helpCardsContainerFS.parentElement ? helpCardsContainerFS.parentElement.querySelector('.col-title') : null;
     if (fsTitleNode && fsTitleNode.classList.contains('col-title')) fsTitleNode.innerHTML = currentTitle;
 }
@@ -2969,24 +2973,38 @@ function initColumn3Accordion() {
     const colTitle = document.querySelector('.col-3:last-child .col-title');
     const topPanel = document.querySelector('.col-3:last-child .sub-panel-top');
     const bottomPanel = document.querySelector('.col-3:last-child .sub-panel-bottom');
+    const toggleHeader = document.getElementById('helpToggleHeader');
+    const toggleText = document.getElementById('helpToggleText');
 
     if (!colTitle || !topPanel || !bottomPanel) return;
 
     colTitle.style.cursor = 'pointer';
 
-    bottomPanel.addEventListener('click', (e) => {
-        if (e.target.classList.contains('emoji-master-link')) return;
+    function setHelpExpanded(expanded) {
+        bottomPanel.classList.toggle('expanded', expanded);
+        topPanel.classList.toggle('collapsed', expanded);
+        if (toggleHeader) toggleHeader.setAttribute('aria-expanded', String(expanded));
+        if (toggleText) toggleText.textContent = expanded ? '💡 Chat Help ▴ (close)' : '💡 Chat Help ▾ (click or tap)';
+    }
 
-        if (!bottomPanel.classList.contains('expanded')) {
-            bottomPanel.classList.add('expanded');
-            topPanel.classList.add('collapsed');
+    bottomPanel.addEventListener('click', (e) => {
+        if (e.target.closest('a,button')) return;
+        if (e.target.closest('#helpToggleHeader')) {
+            setHelpExpanded(!bottomPanel.classList.contains('expanded'));
+        } else if (!bottomPanel.classList.contains('expanded')) {
+            setHelpExpanded(true);
+        }
+    });
+    if (toggleHeader) toggleHeader.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setHelpExpanded(!bottomPanel.classList.contains('expanded'));
         }
     });
 
     colTitle.addEventListener('click', () => {
         if (bottomPanel.classList.contains('expanded')) {
-            bottomPanel.classList.remove('expanded');
-            topPanel.classList.remove('collapsed');
+            setHelpExpanded(false);
         }
     });
 }

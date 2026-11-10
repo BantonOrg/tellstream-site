@@ -15,7 +15,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=20261110-1">
 <link rel="icon" type="image/png" sizes="180x180" href="/ico.png">
 </head>
 
@@ -86,7 +86,7 @@
 
             <div class="col-3">
                 <div class="col-title">
-                    <span>💡 Chat help & Emojis</span>
+                    <span>💡 Chat Help</span>
                 </div>
                 <!-- Emojis list in sub-panel-top (visible by default) -->
                 <div class="sub-panel-top" id="emojiPanelContainer">
@@ -99,9 +99,10 @@
                 </div>
                 <!-- Chat help in sub-panel-bottom (collapsible) -->
                 <div class="sub-panel-bottom" id="helpCardsContainer">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                        <span style="font-size:0.85rem; color:#22e532; font-weight:bold;">💡 Chat help</span>
+                    <div id="helpToggleHeader" role="button" tabindex="0" aria-expanded="false" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <span id="helpToggleText" style="font-size:0.85rem; color:#22e532; font-weight:bold;">💡 Chat Help ▾ (click or tap)</span>
                     </div>
+                    <div id="helpCardsContent" class="help-cards-content"></div>
                 </div>
             </div>
         </div>
@@ -303,11 +304,11 @@
                         </div>
                     </div>
 
-                    <div id="notice-footer-warning">YOU MUST BE REGISTERED TO COMMENT</div>
+                    <div id="notice-footer-warning">REGISTER AND SIGN IN TO YOUR CHAT NAME TO POST NOTICES</div>
                 </div>
 
                 <div class="chat-fs-help-panel">
-                    <div class="col-title">💡 Chat help and emoji codes</div>
+                    <div class="col-title">💡 Chat Help</div>
                     <!-- Quick Emojis Section (First) -->
                     <div class="sub-panel-bottom-fs"
                         style="background:transparent; padding:0; border:none; display:flex; flex-direction:column; gap:8px; margin-bottom:10px;">
@@ -349,7 +350,6 @@
         <div class="modal-content-card" onclick="event.stopPropagation();">
             <img id="modalTargetImg" src="" alt="Expanded View Asset">
         </div>
-        <button class="modal-close-btn" onclick="closeFlyerLightbox()">Close (X)</button>
     </div>
 
     <!-- Fullscreen Schedule Overlay Modal -->
@@ -481,7 +481,7 @@
         <button class="cookie-accept-btn" onclick="acceptCookieConsent()">Accept</button>
     </div>
 
-    <script type="module" src="main.js"></script>
+    <script type="module" src="main.js?v=20261110-1"></script>
 
     <script>
         const observer = new MutationObserver(() => {

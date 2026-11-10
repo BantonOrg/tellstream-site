@@ -207,8 +207,9 @@ async function throwDie(finalFace){
   if(t<1)requestAnimationFrame(frame);else{img.src=ASSETS.dice[finalFace-1].src;img.style.transform=`translate(-50%,-50%) rotate(${Math.round(turns)*360}deg) scale(1)`;resolve()}
  }requestAnimationFrame(frame)})
 }
-async function pitAnimation(player,pitSquare){
+async function pitAnimation(player,pitSquare,exitSquare=null,resolveLanding=true){
  const low=document.getElementById('pitPieceLayer'),exitLayer=document.getElementById('pitExitLayer');
+ const dest=exitSquare??pitExitSquare(pitSquare);
  const current=playerElement(player);
  const startRect=pieceRectAtSquare(player,pitSquare,slotForPlayerOnSquare(player,pitSquare));
  player.hidden=true;renderPieces();low.replaceChildren();exitLayer.replaceChildren();
@@ -229,7 +230,7 @@ async function pitAnimation(player,pitSquare){
  low.replaceChildren();
 
  // Pick the random exit. The turn camera was framed and locked before this action began.
- const dest=pitExitSquare(pitSquare);player.square=dest;
+ player.square=dest;
 
  const ea=ASSETS.pitExit,er=rectForAsset(ea,CAL.pitExit,squareCenter(dest));
  makeImg(exitLayer,ea,er);
@@ -254,16 +255,24 @@ async function pitAnimation(player,pitSquare){
 
  low.replaceChildren();exitLayer.replaceChildren();
  player.hidden=false;renderPieces();
- await handleLanding(player);
+ if(resolveLanding)await handleLanding(player);
 }
 async function handleLanding(player){
  let guard=0;
  while(guard++<6){
   const pit=boardDesign.pits.find(x=>x.square===player.square);
-  if(pit){await pitAnimation(player,pit.square);return}
+   if(pit){
+    const exitSquare=pitExitSquare(pit.square);
+    await window.CHUTES_MP?.broadcastAnimation?.({type:'pit',seat:window.CHUTES_MP.seat,square:pit.square,exitSquare});
+    await pitAnimation(player,pit.square,exitSquare);
+    return;
+   }
 
   const tree=boardDesign.trees.find(x=>x.square===player.square);
-  if(tree){await assetMoveTo(player,tree.target);continue}
+   if(tree){
+    await window.CHUTES_MP?.broadcastAnimation?.({type:'direct',seat:window.CHUTES_MP.seat,target:tree.target});
+    await assetMoveTo(player,tree.target);continue;
+   }
 
   // Diagonals are bidirectional. Both visible ends are action squares.
   // Arriving at one end sends the piece directly to the opposite end.
@@ -272,6 +281,7 @@ async function handleLanding(player){
   const diag=boardDesign.diags.find(x=>x.square===player.square||x.target===player.square);
   if(diag){
    const destination=player.square===diag.square?diag.target:diag.square;
+    await window.CHUTES_MP?.broadcastAnimation?.({type:'direct',seat:window.CHUTES_MP.seat,target:destination});
    await assetMoveTo(player,destination);
    return;
   }
@@ -299,8 +309,9 @@ function updateRestartOption(){
  if(!b)return;
  b.hidden=remainingPlayers().length>1;
 }
-async function finishPlayer(player){
+async function finishPlayer(player,remote=false){
  if(player.finished)return;
+ if(!remote)await window.CHUTES_MP?.broadcastAnimation?.({type:'finish',seat:window.CHUTES_MP.seat});
  player.finished=true;player.finishPlace=++finishCount;
  renderPieces();updateCamera();
  const message=player.finishPlace===1?`PLAYER ${player.index+1} WINS`:`PLAYER ${player.index+1} FINISHES ${ordinal(player.finishPlace)}`;
@@ -328,9 +339,11 @@ async function rollTurn(){
  if(players[currentPlayer].finished)currentPlayer=nextActivePlayer(currentPlayer);
  rolling=true;const b=document.getElementById('rollButton');b.disabled=true;
  const result=1+Math.floor(Math.random()*6);
+ await window.CHUTES_MP?.broadcastAnimation?.({type:'roll',seat:window.CHUTES_MP.seat,roll:result});
  await throwDie(result);await sleep(180);
  const p=players[currentPlayer];
  if(p.square+result<=100){
+   await window.CHUTES_MP?.broadcastAnimation?.({type:'move',seat:window.CHUTES_MP.seat,target:p.square+result});
   // Frame the complete dice destination before anything moves, then lock the camera
   // for the entire movement + any chained tree/diagonal/pit action.
   await beginActionCamera(new Map([[p.index,p.square+result]]));
@@ -354,6 +367,7 @@ async function rollTurn(){
   b.disabled=false;rolling=false;return;
  }
  if(result===6){
+   await window.CHUTES_MP?.broadcastAnimation?.({type:'extra',seat:window.CHUTES_MP.seat});
   await showPlaqueMessage('Well done ! Have another go !');
   await syncMultiplayerTurn(result,p,true);
   b.disabled=false;rolling=false;return;

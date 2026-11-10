@@ -1,0 +1,17 @@
+#leaveFinishedButton {
+  position: absolute;
+  right: 3.5%;
+  bottom: 3.5%;
+  z-index: 81;
+  min-width: 14%;
+  min-height: 5%;
+  padding: 6px 12px;
+  border: 2px solid rgba(91, 55, 30, .86);
+  border-radius: 10px;
+  background: rgba(238, 218, 176, .94);
+  color: #5b371e;
+  font: 700 clamp(14px, 1.25vw, 23px)/1 'Decrepit', serif;
+  cursor: pointer;
+  pointer-events: auto;
+}
+#leaveFinishedButton[hidden] { display: none; }
