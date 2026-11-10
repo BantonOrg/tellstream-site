@@ -856,7 +856,7 @@ body.noticeboard-active .chat-fs-help-panel .sub-panel-bottom-fs {
     height: 100% !important;
     background: #000;
     backdrop-filter: none;
-    z-index: 9999 !important;
+    z-index: 210000 !important;
     display: none;
     flex-direction: column;
     align-items: center;
