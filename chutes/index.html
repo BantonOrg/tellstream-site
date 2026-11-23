@@ -7,6 +7,8 @@
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="/ludo/style.css">
   <link rel="stylesheet" href="multiplayer.css">
+  <link rel="stylesheet" href="ui-scale.css?v=20261123-1">
+  <link rel="stylesheet" href="finish-exit.css">
   <script>
     // TellStream access gate: Chutes must be launched from the main Lounge
     // and only by a registered/logged-in TellStream user.
@@ -39,13 +41,13 @@
         </div>
         <button id="backToLounge" class="btn secondary-btn" style="padding:6px 12px;font-size:.75rem;border-color:rgba(255,255,255,.15);">← Back to Lounge</button>
       </div>
-      <p class="subtitle">Real Time Multiplayer</p>
+      <p class="subtitle">Online Multiplayer</p>
     </header>
 
     <div class="lobby-grid">
       <div class="lobby-left-column" style="display:flex;flex-direction:column;gap:24px;">
         <div class="glass-card profile-card" style="margin:0;flex:1;display:flex;flex-direction:column;justify-content:center;">
-          <h2>Your Identity</h2>
+          <h2>Your Player Name</h2>
           <div class="form-group" style="margin-bottom:0;">
             <label for="mpUsername">Display Name</label>
             <input id="mpUsername" type="text" readonly>
@@ -65,7 +67,7 @@
       <div class="glass-card create-card" style="margin:0;display:flex;flex-direction:column;justify-content:space-between;">
         <h2>Host a New Game</h2>
         <div class="form-group">
-          <label for="mpMaxPlayers">Players count</label>
+          <label for="mpMaxPlayers">Number of Players</label>
           <select id="mpMaxPlayers" class="custom-select">
             <option value="2" selected>2 Players</option>
             <option value="3">3 Players</option>
@@ -80,7 +82,7 @@
       </div>
 
       <div class="glass-card active-rooms-card lobby-chat-card" style="margin:0;display:flex;flex-direction:column;min-height:0;height:100%;">
-        <h2>Lounge Lobby Chat</h2>
+        <h2>Lobby Chat</h2>
         <div class="room-chat lobby-chat-wrapper-main" style="flex:1;display:flex;flex-direction:column;min-height:0;justify-content:space-between;">
           <div id="lobby-chat-messages" class="chat-messages" style="flex:1;overflow-y:auto;"></div>
           <div class="chat-input-bar" style="margin-top:10px;">
@@ -102,7 +104,7 @@
       <div class="glass-card seating-layout-card">
         <h2>Game Players</h2>
         <p class="seating-hint" id="mpSeatHint">Lobby seating is managed by the game host.</p>
-        <p class="roster-instructions accent-text" id="mpRosterHelper" style="display:none;">click name to add or remove to your game</p>
+        <p class="roster-instructions accent-text" id="mpRosterHelper" style="display:none;">Click a name to add or remove that player</p>
         <ul id="mpRoster" class="roster-list"></ul>
         <div id="mpSeats" class="seats-grid"></div>
         <div class="spectate-actions">
@@ -138,10 +140,11 @@
     <div id="playerStatusBar" aria-label="Players"></div>
     <button id="rollButton" type="button" disabled>ROLL</button>
     <button id="restartButton" type="button" hidden>RESTART GAME</button>
+    <button id="leaveFinishedButton" type="button" hidden>LEAVE GAME</button>
   </div>
 </main>
 <div id="startOverlay" aria-hidden="true"></div>
-<script src="game.js"></script>
-<script src="multiplayer.js?v=20261031-1"></script>
+<script src="game.js?v=20261123-1"></script>
+<script src="multiplayer.js?v=20261123-1"></script>
 </body>
 </html>
