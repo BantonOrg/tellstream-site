@@ -17,11 +17,12 @@ function installDjsSchedulePanel() {
     // Preview is cropped by its panel, not scrolled; tap opens the full scrollable viewer.
     presentersPanel.style.overflow = 'hidden';
 
-    const presentersImage = document.createElement('img');
-    presentersImage.src = '/src/assets/tellstreampresenters.jpg?v=20260930b';
-    presentersImage.alt = 'Meet the Tellstream DJs';
-    presentersImage.style.cssText = 'display:block;width:100%;height:auto;max-width:none;border-radius:6px;cursor:pointer;';
-    presentersPanel.appendChild(presentersImage);
+    // The current DJ showcase mounts here after the Supabase client is ready.
+    // Names come from weekly schedule slots and pictures from dj-logos.
+    const loading = document.createElement('div');
+    loading.className = 'dj-showcase-preview-loading';
+    loading.textContent = 'Loading current DJs…';
+    presentersPanel.appendChild(loading);
 
     const schedulePanel = document.createElement('div');
     schedulePanel.id = 'djs-schedule-list-panel';
