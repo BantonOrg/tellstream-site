@@ -48,7 +48,15 @@ function setupImageLightboxEnhancements() {
         closeViewer();
     });
 
-    // DJ presenter pictures now open in the dedicated schedule-driven showcase.
+    // Keep the original flyer independently clickable, in the existing full-width viewer.
+    document.addEventListener('click', event => {
+        const presentersImage = event.target.closest('#djs-presenters-panel img');
+        if (!presentersImage) return;
+        event.preventDefault();
+        event.stopPropagation();
+        modalTargetImg.src = presentersImage.currentSrc || presentersImage.src;
+        flyerModal.classList.add('active');
+    }, true);
 
     const observer = new MutationObserver(() => {
         if (flyerModal.classList.contains('active')) {
