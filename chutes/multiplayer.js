@@ -102,7 +102,30 @@ function mpRenderPlayerStatus(row){
   const name=document.createElement('div');name.className='player-status-name';name.textContent=rp.name;
   card.append(mask,name);bar.appendChild(card);
  }
+ requestAnimationFrame(mpFitPlayerStatusNames);
 }
+// Default labels are twice as large. Fit unusually long names without ellipses.
+function mpFitPlayerStatusNames(){
+ const bar=$('playerStatusBar');if(!bar)return;
+ const isNarrow=window.innerWidth<=700;
+ const base=isNarrow?Math.min(30,Math.max(18,window.innerWidth*.054)):Math.min(38,Math.max(20,window.innerWidth*.021));
+ const measure=document.createElement('canvas').getContext('2d');
+ bar.querySelectorAll('.player-status-name').forEach(label=>{
+  label.style.fontSize=base+'px';
+  label.style.whiteSpace='nowrap';
+  label.style.overflowWrap='normal';
+  const width=label.clientWidth-3;
+  if(width<=0)return;
+  let size=base;
+  while(size>10){measure.font=`700 ${size}px Arial`;if(measure.measureText(label.textContent).width<=width)break;size--}
+  label.style.fontSize=size+'px';
+  measure.font=`700 ${size}px Arial`;
+  if(measure.measureText(label.textContent).width>width){
+   label.style.whiteSpace='normal';label.style.overflowWrap='anywhere';
+  }
+ });
+}
+window.addEventListener('resize',()=>requestAnimationFrame(mpFitPlayerStatusNames));
 function mpApplyTurn(row){
  if(mpPendingRemote){mpPendingSync=true;return}
  mpRenderPlayerStatus(row);const b=$('rollButton'),restart=$('restartButton'),leave=$('leaveFinishedButton');
