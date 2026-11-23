@@ -14,7 +14,7 @@ DJ / Presenter, and Station Admin.
   Before you start chatting, enter your name in the "Chat Name" box at the bottom 
   right of the sidebar. This sets a temporary identity for your current session. 
   If you close or reload the page, the name can be claimed by anyone else unless 
-  you lock it permanently.
+  you register it.
 
 * Sending Messages:
   Simply type your message in the chat input box at the bottom of the screen and 
@@ -41,10 +41,10 @@ DJ / Presenter, and Station Admin.
 2. REGISTERED MEMBER INSTRUCTIONS (Level 0+)
 --------------------------------------------------------------------------------
 
-* Locking & Securing Your Username:
+* Registering Your Chat Name:
   Click the padlock button next to your chat name to open your profile settings. 
-  Enter a secret Passkey, a key reminder hint, and a recovery Email. Once saved, 
-  no one else can use your username without your passkey.
+  Enter a password, a password hint, and a recovery email. Once registered,
+  no one else can use your chat name without the password.
 
 * Customizing Your Profile Card:
   In your profile settings, you can upload a profile picture (under 500KB), share 
@@ -56,8 +56,8 @@ DJ / Presenter, and Station Admin.
   to hide their messages from your feed.
 
 * Posting to the Member Feed:
-  Once you have secured your username with a passkey, you can post updates 
-  directly to the green "Registered Members Notices" column on the noticeboard.
+  Once you have registered your chat name with a password and signed in, you can post updates 
+  directly to the green "Listener Reviews" column on the noticeboard.
 
 
 --------------------------------------------------------------------------------
