@@ -1216,7 +1216,9 @@ async function sendResetVerificationCode() {
             });
         }
 
-        alert("Verification code sent to your email!");
+        if (EMAILJS_SERVICE_ID !== "service_xxxxxx" && EMAILJS_PUBLIC_KEY !== "your_public_key") {
+            alert("Password reset email sent. Please check your inbox and your spam/junk folder for the verification code.");
+        }
         toggleForgotPasskeyForm('verify');
     } catch (err) {
         alert("Could not send verification code: " + err.message);
