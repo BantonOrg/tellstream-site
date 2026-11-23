@@ -1926,3 +1926,56 @@ body.chat-is-fullscreen .online-users-panel {
         width: 100%;
     }
 }
+
+
+/* Fullscreen CHAT is a separate view from the fullscreen NOTICEBOARD.
+   Keep only the message stream, chat composer and a way to exit. This block
+   follows responsive rules so a narrow desktop/mobile viewport cannot
+   reintroduce the Noticeboard or other panels. */
+body.chat-is-fullscreen:not(.noticeboard-active) .chat-header,
+body.chat-is-fullscreen:not(.noticeboard-active) #headerGamesRow,
+body.chat-is-fullscreen:not(.noticeboard-active) #noticeboard-view-panel,
+body.chat-is-fullscreen:not(.noticeboard-active) .chat-fs-help-panel {
+    display: none !important;
+}
+body.chat-is-fullscreen:not(.noticeboard-active) .chat-tabs-bar > :not(#tab-maximize) {
+    display: none !important;
+}
+body.chat-is-fullscreen:not(.noticeboard-active) .chat-tabs-bar {
+    display: flex !important;
+    justify-content: flex-end;
+    flex: 0 0 auto;
+}
+body.chat-is-fullscreen:not(.noticeboard-active) .chat-sidebar {
+    width: 100% !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+}
+body.chat-is-fullscreen:not(.noticeboard-active) .chat-split-body,
+body.chat-is-fullscreen:not(.noticeboard-active) .chat-main-row {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: auto !important;
+    overflow: hidden !important;
+}
+body.chat-is-fullscreen:not(.noticeboard-active) .chat-feed-container {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    height: 100% !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+}
+body.chat-is-fullscreen:not(.noticeboard-active) #chatBox {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+}
+body.chat-is-fullscreen:not(.noticeboard-active) #chat-input-panel-container {
+    display: flex !important;
+    flex: 0 0 auto !important;
+    width: 100% !important;
+}
