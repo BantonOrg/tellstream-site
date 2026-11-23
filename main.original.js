@@ -50,10 +50,10 @@ let myProfile = null;
 let activePrivateSub = null;
 
 const helpInstructions = [
-    { title: "Choose a Chat Name", text: "Enter a name in the Nickname box beside the chat input. You can start chatting with a temporary name, but someone else can claim it unless you register it." },
-    { title: "Register Your Chat Name", text: "Click the padlock beside your nickname. Enter a private passkey, a reminder hint and a recovery email, then choose Lock Name Globally. This secures your chat name so others cannot use it." },
-    { title: "Sign In", text: "Enter your registered nickname, click the padlock, enter your passkey and choose Log In. Your registered name is also needed to post on the Noticeboard." },
-    { title: "Forgotten Passkey", text: "Enter your registered nickname, open the padlock panel and choose Forgot Passkey? Enter the recovery email you registered with and request a code. Check your email, then enter the code and a new passkey to regain access." },
+    { title: "Choose a Chat Name", text: "Enter a name in the Chat Name box beside the chat input. You can start chatting with a temporary name, but someone else can claim it unless you register it." },
+    { title: "Register Your Chat Name", text: "Click the padlock beside your chat name. Enter a password, a reminder hint and a recovery email, then choose Register Chat Name. This secures your chat name so others cannot use it." },
+    { title: "Sign In", text: "Enter your registered chat name, click the padlock, enter your password and choose Log In. Your registered name is also needed to post on the Noticeboard." },
+    { title: "Forgotten Password", text: "Enter your registered chat name, open the padlock panel and choose Forgot Password? Enter the recovery email you registered with and request a code. Check your email, then enter the code and a new password to regain access." },
     { title: "Chatting & Messages", text: "Simply type your message in the chat input box at the bottom and press the Enter key (or click the Send button)." },
     { title: "Emojis & Smilies", text: "Click a Quick Emoji to insert its code into your message, or select See All Codes to browse the full library. You can also type a code such as :love: in your message. Send it normally and the code displays as an image when recognised." },
     { title: "Strikes & Lockout Rules", text: "Bad language is blocked automatically and tracked via a strike system:\n- 3 Strikes: Temporary 24-hour lockout from the chat.\n- 4+ Strikes: Permanent chat ban.\n- Apologizing: Type the word \"sorry\" in the main chat to remove 1 strike (limited to once per calendar day)." },
@@ -61,9 +61,9 @@ const helpInstructions = [
 ];
 
 const noticeboardHelpInstructions = [
-    { title: "Registered Chat Name Required", text: "To post a notice, first register your chat nickname with a passkey and sign in using that name. Unregistered visitors can read notices but cannot post them." },
+    { title: "Registered Chat Name Required", text: "To post a notice, first register your chat nickname with a password and sign in using that name. Unregistered visitors can read notices but cannot post them." },
     { title: "Noticeboard Rules", text: "Keep all posts friendly, helpful, and respectful. Station Admins will immediately delete any abusive, hostile, or inappropriate noticeboard posts." },
-    { title: "Posting to the Noticeboard", text: "Once you have secured your username with a passkey, you can post updates directly to the green \"Registered Members Notices\" column." },
+    { title: "Posting to the Noticeboard", text: "Once you have secured your username with a password, you can post updates directly to the green \"Listener Reviews\" column." },
     { title: "Noticeboard Bans", text: "Posting swearing or blocked words on the noticeboard will increase your strikes, leading to lockout or ban just like in the chat." }
 ];
 
@@ -374,7 +374,7 @@ function appendPrivateWarning(user, text, strikeCount, customMessage = null) {
         if (strikeCount === 3) {
             warningMsg = "🛑 AUTOMATED BAN ACTION: You have used banned keywords 3 times. You are now locked out for 24 hours.";
         } else if (strikeCount > 3) {
-            warningMsg = "🚫 PERMANENT LIFETIME LOCKOUT: Repeat offense detected. Your handle access is permanently revoked.";
+            warningMsg = "🚫 Permanently banned: Repeated violations.";
         }
     }
 
@@ -665,7 +665,7 @@ async function renderActiveFlyers() {
 
     const { data: files, error } = await supabase_db.storage.from('flyers').list('', { limit: 100 });
     if (error || !files || files.length === 0) {
-        flyerContainer.innerHTML = `<p style="color:#666; text-align:center; padding-top:20px;">No current event flyers listed.</p>`;
+        flyerContainer.innerHTML = `<p style="color:#666; text-align:center; padding-top:20px;">No event flyers available.</p>`;
         return;
     }
 
@@ -696,7 +696,7 @@ async function renderActiveFlyers() {
             </div>
         `;
     }
-    flyerContainer.innerHTML = renderedHtml || `<p style="color:#666; text-align:center; padding-top:20px;">No current event flyers listed.</p>`;
+    flyerContainer.innerHTML = renderedHtml || `<p style="color:#666; text-align:center; padding-top:20px;">No event flyers available.</p>`;
 }
 
 function toggleAccordion(target) {
@@ -1095,11 +1095,11 @@ function syncDrawerName() {
 
     if (profilesCache[currentName]) {
         lockStatusBtn.innerText = "🔒";
-        drawerTitle.innerText = "Name is Secured: Log In";
+        drawerTitle.innerText = "Registered Chat Name — Sign In";
         regReminderInput.style.display = "none";
         regEmailInput.style.display = "none";
 
-        // Only show "Forgot Passkey?" link if the user is NOT already logged in on this browser
+        // Only show "Forgot Password?" link if the user is NOT already logged in on this browser
         const loggedInUser = localStorage.getItem('tellstream_saved_username');
         const isSelfLoggedIn = currentName === loggedInUser && isCurrentUserVerified;
         if (!isSelfLoggedIn && forgotLink) {
@@ -1109,10 +1109,10 @@ function syncDrawerName() {
         drawerSubmitBtn.innerText = "Log In";
     } else {
         lockStatusBtn.innerText = "🔓";
-        drawerTitle.innerText = "Secure Current Handle";
+        drawerTitle.innerText = "Register Your Chat Name";
         regReminderInput.style.display = "block";
         regEmailInput.style.display = "block";
-        drawerSubmitBtn.innerText = "Lock Name Globally";
+        drawerSubmitBtn.innerText = "Register Chat Name";
     }
     if (isNoticeBoardActive) evaluateNoticeBoardForms();
     renderHelpContent(isNoticeBoardActive);
@@ -1234,7 +1234,7 @@ async function verifyAndResetPasskey() {
     const confirmBtn = document.getElementById('confirmResetBtn');
 
     if (!enteredCode || !newPasskey) {
-        alert("Please enter the verification code and your new passkey.");
+        alert("Please enter the verification code and your new password.");
         return;
     }
 
@@ -1254,12 +1254,12 @@ async function verifyAndResetPasskey() {
             throw new Error("Invalid or expired verification code.");
         }
 
-        // Save new passkey locally to log in the user
+        // Save new password locally to log in the user
         localStorage.setItem('tellstream_key_' + currentName, newPasskey);
         localStorage.setItem('tellstream_saved_username', currentName);
         localStorage.setItem('tellstream_active_user', currentName);
 
-        alert("Passkey successfully reset! You are now logged in.");
+        alert("Password successfully reset! You are now logged in.");
 
         // Clean up inputs and close drawer
         document.getElementById('resetCodeInput').value = "";
@@ -1272,7 +1272,7 @@ async function verifyAndResetPasskey() {
         alert("Reset failed: " + err.message);
     } finally {
         confirmBtn.disabled = false;
-        confirmBtn.innerText = "Reset Passkey";
+        confirmBtn.innerText = "Reset Password";
     }
 }
 
@@ -1290,7 +1290,7 @@ async function handleSecuritySubmit() {
     const email = regEmailInput.value.trim();
 
     if (!currentName || !passkey) {
-        alert("Please fill in both Name and a Passkey string.");
+        alert("Please enter your Chat Name and Password.");
         return;
     }
 
@@ -1318,7 +1318,7 @@ async function handleSecuritySubmit() {
             renderHelpContent(isNoticeBoardActive);
             onUserVerifiedSuccess(resolvedName);
         } else {
-            alert("Invalid Passkey entry sequence.");
+            alert("Incorrect Password.");
             if (profilesCache[resolvedName].key_reminder) {
                 reminderHintDisplay.innerText = "Hint Clue: " + profilesCache[resolvedName].key_reminder;
                 reminderHintDisplay.style.display = "block";
@@ -1534,7 +1534,7 @@ async function sendMessage() {
             const isVerified = (user === savedUser && isCurrentUserVerified);
             
             if (!profile || !isVerified) {
-                alert("🔒 To unlock your member page and use these commands, you must first secure your nickname in the profile padlock drawer.");
+                alert("🔒 To unlock your member page and use these commands, you must first secure your chat name in the profile padlock drawer.");
                 return;
             }
             
@@ -1971,7 +1971,7 @@ async function fetchAndRenderWeeklyTimetable() {
         if (todayShows.length === 0) {
             timetableContainer.innerHTML = `
                 <div class="fb-post-card" style="border-left: 4px solid #555; background: rgba(255, 255, 255, 0.02); padding: 14px; border-radius: 4px; text-align: center;">
-                    <p style="color:#666; font-style:italic; margin:0;">No transmissions scheduled for today.</p>
+                    <p style="color:#666; font-style:italic; margin:0;">No shows scheduled for today.</p>
                 </div>
             `;
         } else {
@@ -1986,7 +1986,7 @@ async function fetchAndRenderWeeklyTimetable() {
                     <div class="fb-post-card" style="border-left: 4px solid #22e532; margin-bottom: 12px; background: rgba(34, 229, 50, 0.03); padding: 14px; border-radius: 4px;">
                         <div style="font-weight: 900; color: #22e532; text-transform: uppercase; font-size: 0.95rem; letter-spacing: 1px; display: flex; justify-content: space-between;">
                             <span>📅 Today</span>
-                            <span style="color: #555; font-size: 0.75rem; text-transform: none; font-weight: normal;">📍 Auto-Translated</span>
+                            <span style="color: #555; font-size: 0.75rem; text-transform: none; font-weight: normal;">📍 Your local time</span>
                         </div>
                         <div style="color: #ffffff; margin-top: 6px; font-size: 1.25rem; font-weight: 900; letter-spacing: 0.5px;">
                             ⏰ ${show.start} - ${show.end}
