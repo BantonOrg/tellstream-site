@@ -36,7 +36,7 @@
                 </div>
                 <button onclick="exitGameToLounge()" class="btn secondary-btn" style="padding: 6px 12px; font-size: 0.75rem; border-color: rgba(255,255,255,0.15);">← Back to Lounge</button>
             </div>
-            <p class="subtitle">Real-time table top multiplayer connectivity</p>
+            <p class="subtitle">Online Multiplayer</p>
         </header>
 
         <div class="lobby-grid">
@@ -44,7 +44,7 @@
             <div class="lobby-left-column" style="display: flex; flex-direction: column; gap: 24px;">
                 <!-- User Profile Card -->
                 <div class="glass-card profile-card" style="margin: 0; flex: 1; display: flex; flex-direction: column; justify-content: center;">
-                    <h2>Your Identity</h2>
+                    <h2>Your Player Name</h2>
                     <div class="form-group" style="margin-bottom: 0;">
                         <label for="username-input">Display Name</label>
                         <input type="text" id="username-input" placeholder="Enter username..." maxlength="15">
@@ -67,7 +67,7 @@
             <div class="glass-card create-card" style="margin: 0; display: flex; flex-direction: column; justify-content: space-between;">
                 <h2>Host a New Table</h2>
                 <div class="form-group">
-                    <label for="max-players-select">Players count</label>
+                    <label for="max-players-select">Number of Players</label>
                     <select id="max-players-select" class="custom-select">
                         <option value="2">2 Players</option>
                         <option value="3">3 Players</option>
@@ -92,7 +92,7 @@
 
             <!-- Right Column: Lobby Chat Section -->
             <div class="glass-card active-rooms-card lobby-chat-card" style="margin: 0; display: flex; flex-direction: column; min-height: 0; height: 100%;">
-                <h2>Lounge Lobby Chat</h2>
+                <h2>Lobby Chat</h2>
                 <div class="room-chat lobby-chat-wrapper-main" style="flex: 1; display: flex; flex-direction: column; min-height: 0; justify-content: space-between;">
                     <div id="lobby-chat-messages" class="chat-messages" style="flex: 1; overflow-y: auto;">
                         <!-- Populated with global messages -->
@@ -118,7 +118,7 @@
             <div class="glass-card seating-layout-card">
                 <h2>Game Players</h2>
                 <p class="seating-hint" id="seating-status-hint">Lobby seating is managed by the game host.</p>
-                <p class="roster-instructions accent-text" id="roster-helper-text" style="display: none;">click name to add or remove to your game</p>
+                <p class="roster-instructions accent-text" id="roster-helper-text" style="display: none;">Click a name to add or remove that player</p>
                 <ul id="roster-list" class="roster-list">
                     <!-- Dynamically filled -->
                 </ul>
