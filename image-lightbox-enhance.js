@@ -48,15 +48,7 @@ function setupImageLightboxEnhancements() {
         closeViewer();
     });
 
-    // Presenters image is created dynamically; route it through the same viewer.
-    document.addEventListener('click', event => {
-        const presentersImage = event.target.closest('#djs-presenters-panel img');
-        if (!presentersImage) return;
-        event.preventDefault();
-        event.stopPropagation();
-        modalTargetImg.src = presentersImage.currentSrc || presentersImage.src;
-        flyerModal.classList.add('active');
-    }, true);
+    // DJ presenter pictures now open in the dedicated schedule-driven showcase.
 
     const observer = new MutationObserver(() => {
         if (flyerModal.classList.contains('active')) {
