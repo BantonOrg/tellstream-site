@@ -122,11 +122,20 @@ export function initDjsShowcase({ client, storageOrigin, resolveLogoFilename }) 
             for (const row of response.data || []) {
                 if (!days.has(String(row.day_of_week || '').trim().toLowerCase())) continue;
                 if (!String(row.start_time || '').trim()) continue;
-                const name = String(row.dj_name || '').trim()
+
+                // A schedule entry may include a programme title. Only its
+                // first two words identify the DJ and their existing image.
+                const words = String(row.dj_name || '').trim()
                     .replace(/_/g, ' ').replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-                    .replace(/\s+/g, ' ');
-                if (!name || /^tellstream(?:\s+non\s+stop)?$/i.test(name)) continue;
-                const key = name.toLocaleLowerCase('en-GB').replace(/\s+/g, '');
+                    .split(/\s+/).filter(Boolean);
+                const name = words.slice(0, 2).join(' ');
+                if (!name || /^tellstream(?:\s+non)?$/i.test(name)) continue;
+
+                // Delete repeated DJ entries from the gallery, don't combine
+                // or display multiple cards for the same on-air image.
+                // Filename aliases (e.g. Cruss / DJ Cruss) resolve to one DJ.
+                const filename = resolveLogoFilename(name);
+                const key = (filename || name).toLocaleLowerCase('en-GB');
                 if (!names.has(key)) names.set(key, name);
             }
             presenters = Array.from(names.values())
