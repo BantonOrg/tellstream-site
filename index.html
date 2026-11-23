@@ -15,7 +15,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=20261123-chatonly-1">
+    <link rel="stylesheet" href="style.css?v=20261123-password-audit1">
 <link rel="icon" type="image/png" sizes="180x180" href="/ico.png">
 </head>
 
@@ -170,8 +170,7 @@
                     style="accent-color:#22e532; cursor:pointer;">
                 <label for="showPasskeyCheckbox" style="cursor:pointer;">Show Password</label>
             </div>
-            <button class="drawer-action-btn" id="drawerSubmitBtn" onclick="handleSecuritySubmit()">Lock Name
-                Globally</button>
+            <button class="drawer-action-btn" id="drawerSubmitBtn" onclick="handleSecuritySubmit()">Register Chat Name</button>
             <p id="reminderHintDisplay"
                 style="font-size:0.75rem; color:#ffdd1a; margin-top:6px; display:none; text-align:center;"></p>
 
@@ -208,8 +207,7 @@
                     style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
                 <div style="display:flex; gap:6px;">
                     <button class="drawer-action-btn" id="confirmResetBtn"
-                        style="background:#22e532; flex:1; color:#000;" onclick="verifyAndResetPasskey()">Reset
-                        Passkey</button>
+                        style="background:#22e532; flex:1; color:#000;" onclick="verifyAndResetPasskey()">Reset Password</button>
                     <button class="drawer-action-btn" style="background:#444; flex:1;"
                         onclick="toggleForgotPasskeyForm('request')">Back</button>
                 </div>
@@ -480,7 +478,7 @@
         <button class="cookie-accept-btn" onclick="acceptCookieConsent()">Accept</button>
     </div>
 
-    <script type="module" src="main.js?v=20261123-chatonly-1"></script>
+    <script type="module" src="main.js?v=20261123-password-audit1"></script>
 
     <script>
         const observer = new MutationObserver(() => {
