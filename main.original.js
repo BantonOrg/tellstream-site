@@ -1,5 +1,5 @@
 import { initDjsShowcase } from './dj-showcase.js?v=20261123-1';
-import { resolveDjShowcaseLogoFile } from './dj-logo-filename-fix.js?v=20260929';
+import { resolveDjShowcaseLogoFile } from './dj-logo-filename-fix.js?v=20261123-showcase1';
 
 const SUPABASE_URL = "https://vegwferwmyuunwvfqpsf.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZ3dmZXJ3bXl1dW53dmZxcHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODU5NDQsImV4cCI6MjA5Nzk2MTk0NH0.7F3HUEY59BGE5phlD9AukhZzRa3Ied_ZT43j8YZeIy8";
