@@ -41,6 +41,14 @@ function normalizeFirstTwoDjWords(name) {
         .join('_');
 }
 
+// Use the same filename mapping as the existing on-air DJ logo rotation.
+// Return only a filename: callers making a DJ gallery must resolve their own
+// public URLs, because getPublicUrl is intentionally patched for the live DJ.
+export function resolveDjShowcaseLogoFile(name) {
+    const key = normalizeFirstTwoDjWords(name);
+    return DJ_LOGO_FILES[key] || (key ? key + '.png' : '');
+}
+
 function fixKnownDjLogoPath(path) {
     const raw = String(path || '');
     const slash = raw.lastIndexOf('/');
