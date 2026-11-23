@@ -1,30 +1,13 @@
 // TellStream DJ showcase: scheduled presenters and existing on-air images only.
 // No hard-coded roster, generated portraits, or dependency on the poster asset.
 export function initDjsShowcase({ client, storageOrigin, resolveLogoFilename }) {
-    const panel = document.getElementById('djs-presenters-panel');
-    if (!panel || panel.dataset.djShowcaseReady === '1') return;
+    const button = document.getElementById('djShowcaseOpenButton');
+    if (!button || button.dataset.djShowcaseReady === '1') return;
     if (!client || typeof resolveLogoFilename !== 'function') return;
 
-    panel.dataset.djShowcaseReady = '1';
+    button.dataset.djShowcaseReady = '1';
     const days = new Set(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']);
     const origin = String(storageOrigin || '').replace(/\/$/, '');
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'dj-showcase-preview';
-    button.setAttribute('aria-haspopup', 'dialog');
-    button.setAttribute('aria-label', 'Meet the current TellStream DJs');
-
-    const previewTitle = document.createElement('span');
-    previewTitle.className = 'dj-showcase-preview-title';
-    previewTitle.textContent = '🎧 MEET THE DJs';
-    const previewGrid = document.createElement('span');
-    previewGrid.className = 'dj-showcase-preview-grid';
-    const previewFooter = document.createElement('span');
-    previewFooter.className = 'dj-showcase-preview-footer';
-    previewFooter.textContent = 'Loading current presenters…';
-    button.append(previewTitle, previewGrid, previewFooter);
-    panel.replaceChildren(button);
-
     const overlay = document.createElement('div');
     overlay.id = 'djShowcaseOverlay';
     overlay.className = 'dj-showcase-overlay';
@@ -99,22 +82,13 @@ export function initDjsShowcase({ client, storageOrigin, resolveLogoFilename }) 
         return frame;
     }
     function render(revision) {
-        previewGrid.replaceChildren();
         grid.replaceChildren();
 
         if (!presenters.length) {
-            previewFooter.textContent = 'No regularly scheduled DJs found';
             status.textContent = 'There are currently no regular DJ slots listed.';
             return;
         }
         const count = presenters.length;
-        for (const name of presenters.slice(0, 9)) {
-            const tile = document.createElement('span');
-            tile.className = 'dj-showcase-mini';
-            tile.append(makePicture(name, true, revision));
-            previewGrid.append(tile);
-        }
-        previewFooter.textContent = count + ' scheduled DJ' + (count === 1 ? '' : 's') + ' · View everyone';
         status.textContent = count + ' current presenter' + (count === 1 ? '' : 's') + ' · Weekly schedule';
 
         for (const name of presenters) {
@@ -136,7 +110,6 @@ export function initDjsShowcase({ client, storageOrigin, resolveLogoFilename }) 
     async function refreshRoster() {
         const request = ++generation;
         if (!hasLoaded) {
-            previewFooter.textContent = 'Loading current presenters…';
             status.textContent = 'Reading regular DJ slots…';
         }
         try {
@@ -164,7 +137,6 @@ export function initDjsShowcase({ client, storageOrigin, resolveLogoFilename }) 
             if (request !== generation) return;
             console.warn('[TellStream DJ showcase] Schedule unavailable:', error);
             if (!hasLoaded) {
-                previewFooter.textContent = 'DJ lineup temporarily unavailable';
                 status.textContent = 'Unable to load the current schedule. Please try again.';
             }
         }
