@@ -631,7 +631,7 @@ async function sendMessage() {
         const isVerified = (user === loggedInUser && isCurrentUserVerified);
         
         if (!profile || !isVerified) {
-            alert("🔒 To unlock your member page and use these commands, you must first secure your nickname in the profile settings drawer.");
+            alert("🔒 To unlock your member page and use these commands, you must first register your chat name in the profile settings drawer.");
             return;
         }
         
@@ -673,7 +673,7 @@ async function sendMessage() {
         const loggedInUser = localStorage.getItem('tellstream_saved_username');
         const isVerified = (user === loggedInUser && isCurrentUserVerified);
         if (!isVerified) {
-            alert("This handle name has been secured! Please unlock the identity box.");
+            alert("This chat name is registered. Please sign in.");
             toggleSecurityDrawer();
             return;
         }
@@ -806,6 +806,11 @@ window.toggleSecurityDrawer = function() {
     }
 };
 
+window.togglePasskeyVisibility = function(inputId) {
+    const field = document.getElementById(inputId);
+    if (field) field.type = field.type === 'password' ? 'text' : 'password';
+};
+
 window.handleSecuritySubmit = async function() {
     const currentName = regNameInput.value.trim();
     const passkey = regPasskeyInput.value.trim();
@@ -813,7 +818,7 @@ window.handleSecuritySubmit = async function() {
     const email = regEmailInput.value.trim();
 
     if (!currentName || !passkey) {
-        alert("Please fill in both Name and a Passkey string.");
+        alert("Please enter your Chat Name and Password.");
         return;
     }
 
@@ -836,9 +841,9 @@ window.handleSecuritySubmit = async function() {
             viewerUser = resolvedName;
             location.reload(); // Reload to refresh visibility & ownership details
         } else {
-            alert("Invalid Passkey entry sequence.");
+            alert("Incorrect Password.");
             if (profilesMap[resolvedName].key_reminder) {
-                reminderHintDisplay.innerText = "Hint Clue: " + profilesMap[resolvedName].key_reminder;
+                reminderHintDisplay.innerText = "Password Hint: " + profilesMap[resolvedName].key_reminder;
                 reminderHintDisplay.style.display = "block";
             }
         }
@@ -860,7 +865,7 @@ window.handleSecuritySubmit = async function() {
         }]);
 
         if (error) {
-            alert("Could not claim this name block.");
+            alert("Could not register your chat name.");
         } else {
             localStorage.setItem('tellstream_key_' + currentName, passkey);
             localStorage.setItem('tellstream_saved_username', currentName);
