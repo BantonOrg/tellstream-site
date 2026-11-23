@@ -2508,7 +2508,7 @@ function renderChatTabs() {
     const isLounge = currentChatMode === 'lounge';
     const isNotice = currentChatMode === 'noticeboard';
     const isFS = currentChatMode === 'maximize';
-    const fsText = document.body.classList.contains('chat-is-fullscreen') ? "Exit Fullscreen" : "Maximize Chat";
+    const fsText = document.body.classList.contains('chat-is-fullscreen') && !isNoticeBoardActive ? "Exit Fullscreen" : "Maximize Chat";
 
     tabsBar.innerHTML = `
         <div class="chat-tab-btn ${isLounge ? 'active' : ''}" id="tab-lounge" onclick="handleLoungeTab()">Lounge</div>
