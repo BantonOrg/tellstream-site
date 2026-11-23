@@ -61,7 +61,7 @@ const helpInstructions = [
 ];
 
 const noticeboardHelpInstructions = [
-    { title: "Registered Chat Name Required", text: "To post a notice, first register your chat nickname with a password and sign in using that name. Unregistered visitors can read notices but cannot post them." },
+    { title: "Registered Chat Name Required", text: "To post a notice, first register your chat name with a password and sign in using that name. Unregistered visitors can read notices but cannot post them." },
     { title: "Noticeboard Rules", text: "Keep all posts friendly, helpful, and respectful. Station Admins will immediately delete any abusive, hostile, or inappropriate noticeboard posts." },
     { title: "Posting to the Noticeboard", text: "Once you have secured your username with a password, you can post updates directly to the green \"Listener Reviews\" column." },
     { title: "Noticeboard Bans", text: "Posting swearing or blocked words on the noticeboard will increase your strikes, leading to lockout or ban just like in the chat." }
@@ -1320,7 +1320,7 @@ async function handleSecuritySubmit() {
         } else {
             alert("Incorrect Password.");
             if (profilesCache[resolvedName].key_reminder) {
-                reminderHintDisplay.innerText = "Hint Clue: " + profilesCache[resolvedName].key_reminder;
+                reminderHintDisplay.innerText = "Password Hint: " + profilesCache[resolvedName].key_reminder;
                 reminderHintDisplay.style.display = "block";
             }
         }
@@ -1341,7 +1341,7 @@ async function handleSecuritySubmit() {
         }]);
 
         if (error) {
-            alert("Could not claim this name block profile target.");
+            alert("Could not register your chat name.");
         } else {
             localStorage.setItem('tellstream_key_' + currentName, passkey);
             localStorage.setItem('tellstream_saved_username', currentName);
@@ -1752,7 +1752,7 @@ async function sendMessage() {
         const loggedInUser = localStorage.getItem('tellstream_saved_username');
         const isVerified = user === loggedInUser && isCurrentUserVerified;
         if (!isVerified) {
-            alert("This handle name has been secured! Please unlock the identity box.");
+            alert("This chat name is registered. Please sign in.");
             toggleSecurityDrawer();
             return;
         }
