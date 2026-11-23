@@ -11,29 +11,25 @@ function installDjsSchedulePanel() {
     columnTitle.innerHTML = '<span>🎧 DJs & Schedule</span>';
     columnTitle.style.cursor = 'pointer';
 
-    // The live DJ gallery has a separate control; clicking the flyer still opens the flyer.
-    const showcaseButton = document.createElement('button');
-    showcaseButton.id = 'djShowcaseOpenButton';
-    showcaseButton.type = 'button';
-    showcaseButton.className = 'dj-showcase-open-button';
-    showcaseButton.textContent = 'Meet DJs';
-    showcaseButton.setAttribute('aria-haspopup', 'dialog');
-    showcaseButton.setAttribute('aria-label', 'Meet current TellStream DJs');
-    showcaseButton.addEventListener('click', event => event.stopPropagation());
-    columnTitle.appendChild(showcaseButton);
-
     const presentersPanel = document.createElement('div');
     presentersPanel.id = 'djs-presenters-panel';
     presentersPanel.className = 'sub-panel-top';
     // Preview is cropped by its panel, not scrolled; tap opens the full scrollable viewer.
     presentersPanel.style.overflow = 'hidden';
 
-    // Preserve the original presenter flyer as its own clickable image.
+    // The existing flyer is the gallery trigger. Do not alter its image.
+    const flyerButton = document.createElement('button');
+    flyerButton.id = 'djShowcaseOpenButton';
+    flyerButton.type = 'button';
+    flyerButton.className = 'dj-showcase-flyer-trigger';
+    flyerButton.setAttribute('aria-haspopup', 'dialog');
+    flyerButton.setAttribute('aria-label', 'Meet the Tellstream DJs');
     const presentersImage = document.createElement('img');
     presentersImage.src = '/src/assets/tellstreampresenters.jpg?v=20260930b';
     presentersImage.alt = 'Meet the Tellstream DJs';
     presentersImage.style.cssText = 'display:block;width:100%;height:auto;max-width:none;border-radius:6px;cursor:pointer;';
-    presentersPanel.appendChild(presentersImage);
+    flyerButton.appendChild(presentersImage);
+    presentersPanel.appendChild(flyerButton);
 
     const schedulePanel = document.createElement('div');
     schedulePanel.id = 'djs-schedule-list-panel';
