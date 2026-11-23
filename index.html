@@ -157,18 +157,18 @@
         </div>
 
         <div class="security-drawer" id="securityDrawer">
-            <h4 id="drawerTitle">Secure Current Handle</h4>
+            <h4 id="drawerTitle">Register Your Chat Name</h4>
             <div class="form-grid">
-                <input type="text" id="regNameInput" placeholder="Name to lock" readonly>
-                <input type="password" id="regPasskeyInput" placeholder="Secret Passkey">
-                <input type="text" id="regReminderInput" placeholder="Key Reminder Hint">
+                <input type="text" id="regNameInput" placeholder="Chat Name" readonly>
+                <input type="password" id="regPasskeyInput" placeholder="Password">
+                <input type="text" id="regReminderInput" placeholder="Password Hint">
                 <input type="email" id="regEmailInput" placeholder="Recovery Email">
             </div>
             <div
                 style="display:flex; align-items:center; gap:6px; margin: 8px 0; font-size:0.75rem; color:#aaa; user-select:none;">
                 <input type="checkbox" id="showPasskeyCheckbox" onclick="togglePasskeyVisibility('regPasskeyInput')"
                     style="accent-color:#22e532; cursor:pointer;">
-                <label for="showPasskeyCheckbox" style="cursor:pointer;">Show Passkey text</label>
+                <label for="showPasskeyCheckbox" style="cursor:pointer;">Show Password</label>
             </div>
             <button class="drawer-action-btn" id="drawerSubmitBtn" onclick="handleSecuritySubmit()">Lock Name
                 Globally</button>
@@ -178,13 +178,13 @@
             <!-- Forgot Passkey Step 1: Link to enter reset flow -->
             <div id="forgotPasskeyLink"
                 style="font-size:0.75rem; text-align:center; margin-top:10px; cursor:pointer; color:#22e532; text-decoration:underline; display:none;"
-                onclick="toggleForgotPasskeyForm('request')">Forgot Passkey?</div>
+                onclick="toggleForgotPasskeyForm('request')">Forgot Password?</div>
 
             <!-- Forgot Passkey Step 2: Request Verification Code -->
             <div id="forgotPasskeyRequestForm"
                 style="display:none; flex-direction:column; gap:8px; margin-top:10px; border-top:1px solid #2d2d2d; padding-top:10px;">
                 <p style="font-size:0.75rem; color:#aaa; text-align:center;">Enter your recovery email. We will send a
-                    6-digit verification code to reset your passkey:</p>
+                    6-digit verification code to reset your password:</p>
                 <input type="email" id="resetRecoveryEmailInput" placeholder="Enter recovery email..."
                     style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
                 <div style="display:flex; gap:6px;">
@@ -199,12 +199,12 @@
             <div id="forgotPasskeyVerifyForm"
                 style="display:none; flex-direction:column; gap:8px; margin-top:10px; border-top:1px solid #2d2d2d; padding-top:10px;">
                 <p style="font-size:0.75rem; color:#aaa; text-align:center;">Enter the 6-digit code sent to your email
-                    and choose a new passkey:</p>
+                    and choose a new password:</p>
                 <input type="text" id="resetCodeInput" placeholder="6-Digit Verification Code"
                     style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none; text-align:center; letter-spacing:4px; font-weight:bold;">
-                <input type="password" id="resetNewPasskeyInput" placeholder="New Secret Passkey"
+                <input type="password" id="resetNewPasskeyInput" placeholder="New Password"
                     style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
-                <input type="text" id="resetNewReminderInput" placeholder="New Key Reminder Hint"
+                <input type="text" id="resetNewReminderInput" placeholder="New Password Hint"
                     style="background:#252525; border:1px solid rgba(255,255,255,0.08); padding:8px; border-radius:4px; color:#fff; font-size:0.8rem; outline:none;">
                 <div style="display:flex; gap:6px;">
                     <button class="drawer-action-btn" id="confirmResetBtn"
@@ -251,7 +251,7 @@
                     </select>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <span style="font-size:0.75rem; color:#aaa;">Go Invisible:</span>
+                    <span style="font-size:0.75rem; color:#aaa;">Appear Offline:</span>
                     <input type="checkbox" id="profileInvisibleCheckbox"
                         style="accent-color:#22e532; transform:scale(1.2); cursor:pointer;">
                 </div>
@@ -329,12 +329,12 @@
                     <div class="chat-messages" id="chatBox"></div>
                     <div class="chat-input-area" id="chat-input-panel-container">
                         <div class="left-control-stack">
-                            <input type="text" id="usernameInput" placeholder="Nickname" oninput="syncDrawerName()">
+                            <input type="text" id="usernameInput" placeholder="Chat Name" oninput="syncDrawerName()">
                             <button class="send-main-btn" id="sendBtn">Send</button>
                         </div>
                         <div class="lock-toggle-stack">
                             <button class="lock-toggle-btn" id="lockStatusBtn" onclick="toggleSecurityDrawer()"
-                                title="Secure/Verify identity handle">🔒</button>
+                                title="Register or sign in to your chat name">🔒</button>
                             <button class="lock-toggle-btn" id="fambilyDrawerBtn" onclick="toggleFambilyDrawer()"
                                 title="Profile Settings"
                                 style="background:rgba(34,229,50,0.1); border:1px solid rgba(34,229,50,0.3); color:#22e532;">💚</button>
@@ -457,7 +457,7 @@
                     advertising trackers are loaded on this platform.</p>
 
                 <p><strong>2. Browser Local Storage</strong><br>
-                    We use browser local storage purely for functional features: remembering your chat handle, game
+                    We use browser local storage purely for functional features: remembering your chat name, game
                     session tokens, and player volume slider state.</p>
 
                 <p><strong>3. Chat Visibility & Plaintext Storage</strong><br>
@@ -466,9 +466,9 @@
                     administrators for moderation. Do not type any personal details, passwords, or private information
                     in public chat channels.</p>
 
-                <p><strong>4. Passkey Hash Security</strong><br>
-                    If you choose to lock your handle, your passkey is immediately hashed server-side using secure
-                    database procedures. Raw passkeys are never stored in plaintext and cannot be read by anyone.</p>
+                <p><strong>4. Password Security</strong><br>
+                    Your password is verified with server-side procedures. The website also stores your password locally in this browser to remember your sign-in. This is not recommended on shared devices. Server-side
+                    database procedures must control access to account data.</p>
             </div>
             <button class="privacy-close-btn" onclick="closePrivacyModal()">Close Statement</button>
         </div>
@@ -476,7 +476,7 @@
 
     <!-- Cookie & Local Storage Consent Banner -->
     <div class="cookie-consent-banner" id="cookie-consent-banner">
-        <p>🍪 We use functional local storage to remember your nickname, volume, and active games. No tracking or ads.
+        <p>🍪 We use functional local storage to remember your chat name, volume, and active games. No tracking or ads.
             <a href="#" onclick="event.preventDefault(); openPrivacyModal();">Read Privacy Policy</a></p>
         <button class="cookie-accept-btn" onclick="acceptCookieConsent()">Accept</button>
     </div>
