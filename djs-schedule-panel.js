@@ -14,11 +14,13 @@ function installDjsSchedulePanel() {
     const presentersPanel = document.createElement('div');
     presentersPanel.id = 'djs-presenters-panel';
     presentersPanel.className = 'sub-panel-top';
+    // Show the top of the full-width image; use fullscreen viewer to scroll the whole flyer.
+    presentersPanel.style.overflow = 'hidden';
 
     const presentersImage = document.createElement('img');
     presentersImage.src = '/src/assets/tellstreampresenters.jpg?v=20260930b';
     presentersImage.alt = 'Meet the Tellstream DJs';
-    presentersImage.style.cssText = 'display:block;width:100%;height:100%;object-fit:contain;border-radius:6px;';
+    presentersImage.style.cssText = 'display:block;width:100%;height:auto;max-width:none;border-radius:6px;cursor:pointer;';
     presentersPanel.appendChild(presentersImage);
 
     const schedulePanel = document.createElement('div');
