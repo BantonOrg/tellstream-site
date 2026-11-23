@@ -1,0 +1,56 @@
+/* Snakes & Ladders readability adjustments — no change to game rules. */
+
+/* Wider nameplates. With two players these are more than twice the previous
+   individual tag width; with four they share the available space. */
+#playerStatusBar {
+    width: 74%;
+    height: 11.5%;
+    gap: 1%;
+}
+.player-status {
+    flex: 1 1 0;
+    max-width: 46%;
+    height: 76%;
+    min-width: 0;
+}
+.player-status-piece-mask {
+    left: 3%;
+    width: 21%;
+    height: 138%;
+}
+.player-status-name {
+    left: 26%;
+    right: 2%;
+    overflow: hidden;
+    text-overflow: clip;
+    white-space: nowrap;
+    font: 700 clamp(20px, 2.1vw, 38px)/1.04 Arial, sans-serif;
+    overflow-wrap: normal;
+}
+
+/* The extra-turn plaque (rolled six) grows with its text so the lettering
+   has sufficient room. Other win/finish plaques remain unchanged. */
+.plaque-message.plaque-extra {
+    width: 76%;
+}
+.plaque-text.plaque-extra-text {
+    width: 36.5%;
+    font: 700 clamp(20px, 2.4vw, 42px)/1.04 'Decrepit', serif;
+}
+
+@media (max-width: 700px) {
+    #playerStatusBar {
+        height: 13%;
+        gap: .8%;
+    }
+    .player-status {
+        height: 86%;
+        border-radius: 9px;
+    }
+    .player-status-name {
+        font: 700 clamp(18px, 5.4vw, 30px)/1.02 Arial, sans-serif;
+    }
+    .plaque-text.plaque-extra-text {
+        font-size: clamp(20px, 5.6vw, 32px);
+    }
+}
