@@ -22,7 +22,7 @@ const CAL={
  pitExit:{scale:1.30,anchorX:50,anchorY:50,dx:0,dy:0},
  diag:{scale:1.30,anchorX:0,anchorY:100,dx:-100.7131102578,dy:0},
  tree:{scale:2.0,anchorX:40.45,anchorY:94.45,dx:-23.6972024136,dy:-43.4448710916},
- piece:{scale:.40},die:{width:235}
+ piece:{scale:.40},die:{width:470}
 };
 
 let boardDesign=null;
@@ -291,7 +291,10 @@ async function handleLanding(player){
 async function showPlaqueMessage(message,duration=1350){
  const l=document.getElementById('messageLayer');l.replaceChildren();
  const img=document.createElement('img');img.className='plaque-message';img.src=ASSETS.plaque.src;img.alt='';l.appendChild(img);
- const text=document.createElement('div');text.className='plaque-text';text.textContent=message;l.appendChild(text);
+ const text=document.createElement('div');text.className='plaque-text';text.textContent=message;
+ const extraTurn=message.includes('Have another go');
+ if(extraTurn){img.classList.add('plaque-extra');text.classList.add('plaque-extra-text')}
+ l.appendChild(text);
  await sleep(duration);
  l.replaceChildren();
 }
