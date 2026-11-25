@@ -1,13 +1,12 @@
 // TellStream DJ showcase: scheduled presenters and existing on-air images only.
 // No hard-coded roster, generated portraits, or dependency on the poster asset.
-export function initDjsShowcase({ client, storageOrigin, resolveLogoFilename }) {
+export function initDjsShowcase({ client, resolveLogoFilename }) {
     const button = document.getElementById('djShowcaseOpenButton');
     if (!button || button.dataset.djShowcaseReady === '1') return;
     if (!client || typeof resolveLogoFilename !== 'function') return;
 
     button.dataset.djShowcaseReady = '1';
     const days = new Set(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']);
-    const origin = String(storageOrigin || '').replace(/\/$/, '');
     const overlay = document.createElement('div');
     overlay.id = 'djShowcaseOverlay';
     overlay.className = 'dj-showcase-overlay';
@@ -67,11 +66,9 @@ export function initDjsShowcase({ client, storageOrigin, resolveLogoFilename }) 
         const filename = resolveLogoFilename(name);
         if (filename) {
             const image = document.createElement('img');
-            // Do NOT call storage.getPublicUrl here: TellStream's on-air
-            // compatibility shim redirects it to the currently playing DJ.
-            // Build the standard public bucket URL with this DJ's own filename.
-            image.src = origin + '/storage/v1/object/public/dj-logos/' +
-                encodeURIComponent(filename) + '?v=' + revision;
+            // Cloudflare Pages serves the original, unmodified DJ PNG.
+            // Missing pictures fall back to the DJ's initials.
+            image.src = '/src/assets/djs/' + encodeURIComponent(filename);
             image.alt = small ? '' : name + ' — original TellStream presenter image';
             image.loading = small ? 'eager' : 'lazy';
             image.decoding = 'async';
