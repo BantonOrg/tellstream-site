@@ -645,30 +645,25 @@ async function renderActiveFlyers() {
     today.setDate(today.getDate() - 1);
     today.setHours(0, 0, 0, 0);
 
-    // Copied historical images are served from Cloudflare Pages.
-    // Preserve newly uploaded Supabase flyers until there is a secure
-    // replacement for the live admin upload/delete workflow.
-    let hosted = [];
-    try {
-        hosted = await window.TellStreamHostedMedia.listHosted('flyers');
-    } catch (error) {
-        console.warn('Hosted flyer list unavailable:', error);
-    }
+    // Hosted archive + current R2 pictures. R2 deletion markers hide old
+    // static copies so an archived flyer cannot reappear after deletion.
+    let archived = [];
+    try { archived = await window.TellStreamHostedMedia.listHosted('flyers'); }
+    catch (error) { console.warn('Archived flyer list unavailable:', error); }
+    let live = { files: [], deleted: [] };
+    try { live = await window.TellStreamR2Media.flyers(); }
+    catch (error) { console.warn('Live R2 flyer list unavailable:', error); }
+    const deleted = new Set(live.deleted || []);
     const candidates = new Map();
-    for (const name of hosted) {
+    for (const name of archived) {
+        if (deleted.has(name)) continue;
         candidates.set(name, {
-            name,
-            src: window.TellStreamHostedMedia.hostedUrl('flyers', name),
-            hosted: true
+            name, src: window.TellStreamHostedMedia.hostedUrl('flyers', name)
         });
     }
-
-    const { data: remote, error } = await supabase_db.storage.from('flyers').list('', { limit: 100 });
-    if (error) console.warn('Supabase flyer list unavailable, showing hosted copies:', error);
-    for (const file of remote || []) {
-        if (!file.name || file.name === '.emptyFolderPlaceholder' || candidates.has(file.name)) continue;
-        const { data } = supabase_db.storage.from('flyers').getPublicUrl(file.name);
-        candidates.set(file.name, { name: file.name, src: data.publicUrl, hosted: false });
+    for (const item of live.files || []) {
+        if (!item.name || deleted.has(item.name)) continue;
+        candidates.set(item.name, { name: item.name, src: item.url });
     }
 
     flyerContainer.replaceChildren();
@@ -682,14 +677,7 @@ async function renderActiveFlyers() {
         const month = parseInt(datePrefix.substring(2, 4), 10) - 1;
         const year = 2000 + parseInt(datePrefix.substring(4, 6), 10);
         const expiry = new Date(year, month, day);
-        if (Number.isNaN(expiry.getTime()) || expiry < today) {
-            // Hosted originals are preserved; expired flyers disappear from
-            // display. The old remote-expiry cleanup is still supported.
-            if (!file.hosted) {
-                await supabase_db.storage.from('flyers').remove([file.name]);
-            }
-            continue;
-        }
+        if (Number.isNaN(expiry.getTime()) || expiry < today) continue;
         const title = file.name.substring(7)
             .replace(/\.[^/.]+$/, '').replace(/_/g, ' ');
         const card = document.createElement('div');
