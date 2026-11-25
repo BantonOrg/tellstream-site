@@ -1,9 +1,9 @@
-# TellStream event flyers and legacy profile avatars
+# Legacy hosted flyer and avatar archive
 
-Original public images were copied byte-for-byte from the former Supabase `flyers` bucket.
+These four original files were copied from the now-deleted Supabase `flyers` bucket and preserved byte-for-byte. The static website serves these historical copies.
 
-**Event flyers** belong in this folder. Use a six-digit `DDMMYY` prefix, such as `010127_welcome_to_tellstream.jpg`. GitHub's **Add file → Upload files** and file deletion are the management tools. Changes on `main` trigger a workflow that rebuilds `manifest.json` and Cloudflare Pages then republishes the site. Only dated files are shown as event flyers; user avatar files are deliberately excluded.
+**Current admin flyer uploads and deletions use authenticated Cloudflare R2** through `/api/media`, not GitHub or Supabase Storage. R2 flyers are listed alongside still-hosted archive pictures. R2 deletion markers hide archived flyers in the event listings, but the corresponding GitHub file remains accessible by its old URL until it is removed from the repository.
 
-For existing `avatars_*.png` profile images, the site resolves their previously stored Supabase URLs to the hosted copy when present. New profile-avatar uploads currently still use Supabase until a secure live-upload replacement is deployed. They fall back to their original URL and are **not automatically copied** here.
+Historical avatar images here are retained as display fallbacks. New avatar changes go to R2.
 
-Do not remove originals from Supabase until all relevant image displays and write paths have been verified.
+Keep manifest data and source removal in sync if retiring this archive.
