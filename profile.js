@@ -251,6 +251,8 @@ function renderProfileHeader(profile) {
     // Avatar
     if (profile.avatar_url) {
         document.getElementById('profileAvatar').src = profile.avatar_url;
+        window.TellStreamHostedMedia.resolveUrl('flyers', profile.avatar_url)
+            .then(url => { document.getElementById('profileAvatar').src = url; });
     }
 
     // VIP Badge
@@ -339,11 +341,20 @@ async function loadMemberPhotos() {
 
         const isOwner = (viewerUser && viewerUser.toLowerCase() === targetUser.toLowerCase() && isCurrentUserVerified);
 
-        data.forEach(item => {
+        const photoUrls = await Promise.all(data.map(item =>
+            window.TellStreamHostedMedia.resolveFile(
+                'member-photos', item.file_name, item.public_url
+            )
+        ));
+        data.forEach((item, index) => {
+            const photoUrl = photoUrls[index];
             const card = document.createElement('div');
             card.className = "photo-card";
-            card.innerHTML = `<img src="${item.public_url}" alt="User Photo">`;
-            card.onclick = () => openLightbox(item.public_url);
+            const picture = document.createElement('img');
+            picture.src = photoUrl;
+            picture.alt = 'User Photo';
+            card.appendChild(picture);
+            card.onclick = () => openLightbox(photoUrl);
 
             if (isOwner) {
                 const delBtn = document.createElement('button');
@@ -930,7 +941,11 @@ window.openProfileCard = async function(targetUsernameInput) {
             levelText = "DJ / Selector";
             levelStyle = "background:rgba(255,221,26,0.15); color:#ffdd1a;";
         }
-        if (profile.avatar_url) avatarImg.src = profile.avatar_url;
+        if (profile.avatar_url) {
+            avatarImg.src = profile.avatar_url;
+            window.TellStreamHostedMedia.resolveUrl('flyers', profile.avatar_url)
+                .then(url => { avatarImg.src = url; });
+        }
     }
     
     levelSpan.innerText = levelText;
