@@ -114,12 +114,16 @@ function findProfileMatch(showName) {
         if (match) return match;
     }
 
-    // 2. Try matching by first word of both names (fallback for single-name DJs)
-    const targetOne = words[0];
-    const matchOne = Object.values(profilesCache).find(p => 
-        getFirstWords(p.username, 1) === targetOne
-    );
-    if (matchOne) return matchOne;
+    // 2. Only use a first-word profile match for an actual one-word DJ.
+    // For a two-word schedule entry, such a match can override the correct
+    // DJ image filename (e.g. Squidly Bashment becoming Squidly).
+    if (words.length === 1) {
+        const targetOne = words[0];
+        const matchOne = Object.values(profilesCache).find(p =>
+            getFirstWords(p.username, 1) === targetOne
+        );
+        if (matchOne) return matchOne;
+    }
 
     // 3. Fallback to exact match check
     const exactMatch = Object.values(profilesCache).find(p => 
