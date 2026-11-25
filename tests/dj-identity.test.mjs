@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { resolveScheduledDjLabel, resolveDjShowcaseLogoFile } from '../dj-logo-filename-fix.js';
+import { resolveScheduledDjLabel, resolveDjShowcaseLogoFile, isRetiredPresenter } from '../dj-logo-filename-fix.js';
 import { getScheduledPresenterNames } from '../dj-showcase.js';
 
 test('Known incomplete historic rows resolve to the real two-word identities', () => {
@@ -16,8 +16,7 @@ test('Real labels resolve to their existing image filenames', () => {
     for (const [name, expected] of [
         ['Milo Medina', 'milo_medina_int.png'],
         ['Squidly Bashment', 'squidly_bashment.png'],
-        ['Selector Frost', 'selector_frost.png'],
-        ['DJ Choice', 'dj_choice.png']
+        ['Selector Frost', 'selector_frost.png']
     ]) {
         assert.equal(resolveDjShowcaseLogoFile(name), expected);
     }
@@ -36,7 +35,7 @@ test('Milo and Milo Medina produce ONE gallery card, including other known old s
         { dj_name: 'Bad Entry', day_of_week: 'noday', start_time: '1000' }
     ];
     const names = getScheduledPresenterNames(rows, resolveDjShowcaseLogoFile);
-    assert.deepEqual(names, ['DJ Choice', 'Milo Medina', 'Selector Frost', 'Squidly Bashment']);
+    assert.deepEqual(names, ['Milo Medina', 'Selector Frost', 'Squidly Bashment']);
     assert.equal(names.filter(n => n.startsWith('Milo')).length, 1);
 });
 
@@ -48,5 +47,20 @@ test('Show titles beyond word two do not become separate presenter cards', () =>
         { dj_name: 'DJ Choice Rhythm Hour', day_of_week: 'friday', start_time: '1100' }
     ];
     assert.deepEqual(getScheduledPresenterNames(rows, resolveDjShowcaseLogoFile),
-        ['DJ Choice', 'Squidly Bashment']);
+        ['Squidly Bashment']);
+});
+
+
+test('Retired DJ stays absent from all first-two-word schedule identities', () => {
+    for (const name of ['DJ Choice', 'DJ Choice Rhythm Hour', 'dj_choice', 'DjChoice Live']) {
+        assert.equal(isRetiredPresenter(name), true, name);
+    }
+    for (const name of ['DJ Cruss', 'Squidly Bashment', 'Selector Frost', 'Choice DJ', 'DJ']) {
+        assert.equal(isRetiredPresenter(name), false, name);
+    }
+    assert.deepEqual(getScheduledPresenterNames([
+        { dj_name: 'DJ Choice Reggae Hour', day_of_week: 'monday', start_time: '1300' },
+        { dj_name: 'dj_choice', day_of_week: 'tuesday', start_time: '1400' },
+        { dj_name: 'Selector Frost', day_of_week: 'monday', start_time: '1800' }
+    ], resolveDjShowcaseLogoFile), ['Selector Frost']);
 });

@@ -50,6 +50,16 @@ const LEGACY_INCOMPLETE_DJ_NAMES = Object.freeze({
     'selector': 'Selector Frost'
 });
 
+// Explicitly retired from the station roster. Compare only the first two
+// DJ name words so longer show titles and older underscore/camel names agree.
+export function isRetiredPresenter(value) {
+    const words = String(value || '').trim()
+        .replace(/_/g, ' ')
+        .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+        .toLowerCase().split(/\s+/).filter(Boolean);
+    return words.length >= 2 && words[0] === 'dj' && words[1] === 'choice';
+}
+
 export function resolveScheduledDjLabel(value) {
     const original = String(value || '').trim();
     if (!original || original.split(/\s+/).length !== 1) return original;

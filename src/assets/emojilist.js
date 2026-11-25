@@ -85,7 +85,7 @@ window.emojiMapping = {
     "comprends-pas": "comprends-pas.gif", "currygoat": "currygoat.jpg", "dancing": "dancing.gif", "dc": "dc.gif",
     "dc1": "dc1.gif", "decap": "decap.gif", "decap_nt": "decap_nt.gif", "dee_jd": "dee_jd.gif",
     "dellyranx_nt": "dellyranx_nt.gif", "diable": "diable.gif", "djbiggy1": "djbiggy1.gif", "djbiggy_nt": "djbiggy_nt.gif",
-    "djcasual_nt": "djcasual_nt.gif", "djchoice_nt": "djchoice_nt.gif", "djfendi_nt": "djfendi_nt.gif", "djfxc1": "djfxc1.gif",
+    "djcasual_nt": "djcasual_nt.gif", "djfendi_nt": "djfendi_nt.gif", "djfxc1": "djfxc1.gif",
     "djmadame": "djmadame.gif", "djmadame_nt": "djmadame_nt.gif", "djr": "djr.gif", "dj_cruss_gif": "Dj_Cruss.gif",
     "dominicaflag": "DominicaFlag.gif", "dominican_flag3": "dominican_flag3.gif", "donate123": "donate123.gif", "dontdrinkanddrive": "dontdrinkanddrive.gif",
     "dpf": "DPF.gif", "dwchat": "dwchat.gif", "enerve2": "enerve2.gif", "equalrights": "equalrights.jpg",

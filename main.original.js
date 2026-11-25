@@ -1,5 +1,5 @@
-import { initDjsShowcase } from './dj-showcase.js?v=20261125-djidentity1';
-import { resolveDjShowcaseLogoFile, resolveScheduledDjLabel } from './dj-logo-filename-fix.js?v=20261125-djidentity1';
+import { initDjsShowcase } from './dj-showcase.js?v=20261125-djremoval1';
+import { resolveDjShowcaseLogoFile, resolveScheduledDjLabel, isRetiredPresenter } from './dj-logo-filename-fix.js?v=20261125-djremoval1';
 
 const SUPABASE_URL = "https://vegwferwmyuunwvfqpsf.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZ3dmZXJ3bXl1dW53dmZxcHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODU5NDQsImV4cCI6MjA5Nzk2MTk0NH0.7F3HUEY59BGE5phlD9AukhZzRa3Ied_ZT43j8YZeIy8";
@@ -177,7 +177,8 @@ async function renderStreamHeader(showName) {
     }
 
     if (showName) {
-        const cleanName = resolveScheduledDjLabel(showName.trim());
+        const requestedName = resolveScheduledDjLabel(showName.trim());
+        const cleanName = isRetiredPresenter(requestedName) ? 'tellstream' : requestedName;
 
         // Update display text immediately to prevent latency/refresh lag
         if (cleanName.toLowerCase() === 'tellstream') {
@@ -269,7 +270,7 @@ async function renderStreamHeader(showName) {
 
 async function updateDatabaseStreamStatus(showName) {
     try {
-        await supabase_db.from('stream_status').upsert([{ id: 1, current_show: showName }]);
+        await supabase_db.from('stream_status').upsert([{ id: 1, current_show: isRetiredPresenter(showName) ? 'tellstream' : showName }]);
     } catch (err) {
         console.error("Database stream status write execution failed:", err);
     }
@@ -1619,6 +1620,11 @@ async function sendMessage() {
                 }
 
                 if (showNameInput) {
+                    if (isRetiredPresenter(showNameInput)) {
+                        messageInput.value = '';
+                        alert('This presenter is no longer on the TellStream DJ roster.');
+                        return;
+                    }
                     const lowerInput = showNameInput.toLowerCase();
                     if (lowerInput === 'tellstream') {
                         messageInput.value = '';
@@ -1669,6 +1675,10 @@ async function sendMessage() {
                     // Same first-two-word mapping used by the on-air image and gallery.
                     if (targetName.trim().split(/\s+/).filter(Boolean).length < 2) {
                         alert('Enter the first TWO words of the DJ name, e.g. Selector Frost or Squidly Bashment.');
+                        return;
+                    }
+                    if (uploading && isRetiredPresenter(targetName)) {
+                        alert('This presenter is no longer on the TellStream DJ roster.');
                         return;
                     }
                     const filename = resolveDjShowcaseLogoFile(targetName);
@@ -1813,6 +1823,10 @@ async function processScheduleConsoleInjections(text, djUser) {
         // Preserve the complete show label; identify its DJ by the first
         // TWO words only (all later words are ignored for image matching).
         const targetDJ = formatPresenterName(args.slice(6).join(' ') || djUser);
+        if (isRetiredPresenter(targetDJ)) {
+            alert('This presenter is no longer on the TellStream DJ roster.');
+            return;
+        }
         if (targetDJ.trim().split(/\s+/).length < 2) {
             alert("The show must begin with TWO DJ name words, e.g. Selector Frost or Squidly Bashment.");
             return;
@@ -1848,6 +1862,10 @@ async function processScheduleConsoleInjections(text, djUser) {
         // Preserve the complete show label; identify its DJ by the first
         // TWO words only (all later words are ignored for image matching).
         const targetDJ = formatPresenterName(args.slice(6).join(' ') || djUser);
+        if (isRetiredPresenter(targetDJ)) {
+            alert('This presenter is no longer on the TellStream DJ roster.');
+            return;
+        }
         if (targetDJ.trim().split(/\s+/).length < 2) {
             alert("The show must begin with TWO DJ name words, e.g. Selector Frost or Squidly Bashment.");
             return;
@@ -1934,7 +1952,7 @@ async function fetchAndRenderWeeklyTimetable() {
                 console.warn("Skipping invalid schedule day:", item.day_of_week);
                 return;
             }
-            if (item.dj_name === "tellstream") return;
+            if (item.dj_name === "tellstream" || isRetiredPresenter(item.dj_name)) return;
 
             let currentDJ = resolveScheduledDjLabel(formatPresenterName(item.dj_name));
             let noteLabel = "";
@@ -1951,6 +1969,8 @@ async function fetchAndRenderWeeklyTimetable() {
                     }
                 }
             }
+
+            if (isRetiredPresenter(currentDJ)) return; // Exclude retired temporary covers as well.
 
             // Break raw database values ('2000') into numbers
             const startHours = parseInt(item.start_time.substring(0, 2), 10);
@@ -2939,7 +2959,7 @@ async function checkScheduledShow() {
 
         for (let item of masterData) {
             if (!item.day_of_week || dayOrder[item.day_of_week.toLowerCase()] === undefined) continue;
-            if (item.dj_name === "tellstream") continue;
+            if (item.dj_name === "tellstream" || isRetiredPresenter(item.dj_name)) continue;
 
             const startHours = parseInt(item.start_time.substring(0, 2), 10);
             const startMins = parseInt(item.start_time.substring(2, 4), 10);
@@ -2970,7 +2990,7 @@ async function checkScheduledShow() {
                         if (matchOverride.is_cancelled) {
                             activeDJ = "tellstream";
                         } else {
-                            activeDJ = matchOverride.dj_name;
+                            activeDJ = isRetiredPresenter(matchOverride.dj_name) ? 'tellstream' : matchOverride.dj_name;
                         }
                     }
                 }

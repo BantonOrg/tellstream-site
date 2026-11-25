@@ -1,4 +1,4 @@
-import { resolveScheduledDjLabel } from './dj-logo-filename-fix.js?v=20261125-djidentity1';
+import { resolveScheduledDjLabel, isRetiredPresenter } from './dj-logo-filename-fix.js?v=20261125-djremoval1';
 
 // TellStream DJ showcase: scheduled presenters and existing on-air images only.
 // No hard-coded roster, generated portraits, or dependency on the poster asset.
@@ -11,7 +11,9 @@ export function getScheduledPresenterNames(rows, resolveLogoFilename) {
 
         const raw = String(row.dj_name || '').trim()
             .replace(/_/g, ' ').replace(/([a-z0-9])([A-Z])/g, '$1 $2');
-        const words = resolveScheduledDjLabel(raw).split(/\s+/).filter(Boolean);
+        const resolved = resolveScheduledDjLabel(raw);
+        if (isRetiredPresenter(resolved)) continue;
+        const words = resolved.split(/\s+/).filter(Boolean);
         // Never create a single-name DJ. Only documented legacy records are repaired.
         if (words.length < 2) continue;
         const name = words.slice(0, 2).join(' ');
