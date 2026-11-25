@@ -42,6 +42,11 @@
         <button id="backToLounge" class="btn secondary-btn" style="padding:6px 12px;font-size:.75rem;border-color:rgba(255,255,255,.15);">← Back to Lounge</button>
       </div>
       <p class="subtitle">Online Multiplayer</p>
+      <div class="chutes-radio-remote" role="group" aria-label="TellStream radio controls">
+  <span class="chutes-radio-label">📻 RADIO</span>
+  <button type="button" class="chutes-radio-toggle" aria-label="Play TellStream radio" title="Play TellStream radio">▶️</button>
+  <input type="range" class="chutes-radio-volume" min="0" max="1" step="0.05" value="0.5" aria-label="TellStream radio volume">
+</div>
     </header>
 
     <div class="lobby-grid">
@@ -99,6 +104,11 @@
       <button id="mpLeave" class="btn text-btn">← Leave Room</button>
       <h1>Room <span class="accent-text" id="mpRoomDisplay">XXXX</span></h1>
       <div class="room-variant-badge">Snakes &amp; Ladders</div>
+      <div class="chutes-radio-remote" role="group" aria-label="TellStream radio controls">
+  <span class="chutes-radio-label">📻 RADIO</span>
+  <button type="button" class="chutes-radio-toggle" aria-label="Play TellStream radio" title="Play TellStream radio">▶️</button>
+  <input type="range" class="chutes-radio-volume" min="0" max="1" step="0.05" value="0.5" aria-label="TellStream radio volume">
+</div>
     </header>
     <div class="seating-container">
       <div class="glass-card seating-layout-card">
@@ -126,6 +136,11 @@
 </div>
 <div id="gameBackdrop" aria-hidden="true"></div>
 <main id="game" class="hidden-layout">
+  <div class="chutes-radio-remote" role="group" aria-label="TellStream radio controls">
+  <span class="chutes-radio-label">📻 RADIO</span>
+  <button type="button" class="chutes-radio-toggle" aria-label="Play TellStream radio" title="Play TellStream radio">▶️</button>
+  <input type="range" class="chutes-radio-volume" min="0" max="1" step="0.05" value="0.5" aria-label="TellStream radio volume">
+</div>
   <div id="boardScene" aria-label="Snakes and Ladders board">
     <div id="boardWorld">
       <img id="boardImage" src="imgs/snakes_ladders_board_3600.jpg" alt="">
@@ -146,5 +161,6 @@
 <div id="startOverlay" aria-hidden="true"></div>
 <script src="game.js?v=20261123-1"></script>
 <script src="multiplayer.js?v=20261123-1"></script>
+<script src="radio-remote.js?v=20261125-radio1"></script>
 </body>
 </html>
