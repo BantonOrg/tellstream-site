@@ -1,0 +1,33 @@
+name: Update hosted flyer and member-photo manifests
+on:
+  push:
+    branches:
+      - feature/hosted-flyers-member-photos-20261125
+    paths:
+      - .github/workflows/update-hosted-media-manifests.yml
+      - src/assets/flyers/**
+      - src/assets/member-photos/**
+permissions:
+  contents: write
+jobs:
+  update-manifests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/hosted-flyers-member-photos-20261125
+          persist-credentials: true
+      - name: Rebuild hosted-media manifests
+        run: python3 scripts/rebuild_hosted_media_manifests.py
+      - name: Commit manifest changes if needed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/assets/flyers/manifest.json src/assets/member-photos/manifest.json
+          if ! git diff --staged --quiet; then
+            git commit -m "Refresh hosted flyer and member-photo manifests"
+            git push origin HEAD:feature/hosted-flyers-member-photos-20261125
+          else
+            echo "Manifests already current"
+          fi
