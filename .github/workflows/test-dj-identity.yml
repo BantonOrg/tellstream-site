@@ -1,0 +1,25 @@
+name: Verify two-word DJ gallery identities
+on:
+  push:
+    branches: [fix/dj-legacy-two-word-identity-20261125]
+    paths:
+      - dj-logo-filename-fix.js
+      - dj-showcase.js
+      - tests/dj-identity.test.mjs
+      - .github/workflows/test-dj-identity.yml
+  pull_request:
+    paths:
+      - dj-logo-filename-fix.js
+      - dj-showcase.js
+      - tests/dj-identity.test.mjs
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/dj-identity.test.mjs
