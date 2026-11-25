@@ -40,11 +40,11 @@
 .player-status{--piece-glow:rgba(255,255,255,.8);position:relative;flex:0 1 22%;min-width:0;height:70%;border:1px solid rgba(255,255,255,.34);border-radius:13px;background:rgba(12,14,12,.82);box-shadow:0 3px 10px rgba(0,0,0,.55);overflow:visible;transition:box-shadow .2s ease,border-color .2s ease,transform .2s ease}
 .player-status-piece-mask{position:absolute;left:7%;bottom:0;width:31%;height:138%;overflow:hidden;pointer-events:none}
 .player-status-piece{position:absolute;left:50%;top:2%;width:auto;height:190%;transform:translateX(-50%);filter:drop-shadow(2px 4px 3px rgba(0,0,0,.58))}
-.player-status-name{position:absolute;left:38%;right:5%;top:50%;transform:translateY(-50%);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;color:#eee;font:700 clamp(10px,1.05vw,19px)/1 Arial,sans-serif;text-shadow:0 2px 3px #000}
+.player-status-name{position:absolute;left:38%;right:5%;top:50%;transform:translateY(-50%);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;color:#eee;font:700 clamp(7.5px,0.7875vw,14.25px)/1 Arial,sans-serif;text-shadow:0 2px 3px #000}
 .player-status.active{border-color:var(--piece-glow);box-shadow:0 0 8px var(--piece-glow),0 0 17px var(--piece-glow),0 3px 10px rgba(0,0,0,.62);transform:translateY(-2px)}
 .player-status.active .player-status-name{color:#fff;text-shadow:0 0 5px var(--piece-glow),0 0 11px var(--piece-glow),0 2px 3px #000}
 .player-status.finished{opacity:.58}
-@media(max-width:700px){#playerStatusBar{width:72%;gap:1%}.player-status{border-radius:9px}.player-status-name{font-size:9px}}
+@media(max-width:700px){#playerStatusBar{width:72%;gap:1%}.player-status{border-radius:9px}.player-status-name{font-size:6.75px}}
 
 /* Remote for the existing TellStream lounge audio, available in every Chutes screen. */
 .chutes-radio-remote{
