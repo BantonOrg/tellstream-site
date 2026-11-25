@@ -1,0 +1,32 @@
+name: Archive original public flyers and member photos to site assets
+on:
+  push:
+    branches:
+      - feature/hosted-flyers-member-photos-20261125
+    paths:
+      - .github/workflows/one-time-media-archive.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  archive-assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/hosted-flyers-member-photos-20261125
+          persist-credentials: true
+      - name: Copy and validate original public images
+        run: python3 scripts/migrate_public_media.py
+      - name: Commit copied images and manifests to migration branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- src/assets/flyers/ src/assets/member-photos/
+          if git diff --staged --quiet; then
+            echo "No images to archive"
+          else
+            git commit -m "Archive existing original flyers and member photos in site assets"
+            git push origin HEAD:feature/hosted-flyers-member-photos-20261125
+          fi
