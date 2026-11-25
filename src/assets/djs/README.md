@@ -1,19 +1,16 @@
-# TellStream DJ images
+# TellStream DJ photographs — original hosted archive and R2 updates
 
-The PNG files in this folder are the **original presenter images**, copied byte-for-byte from the former Supabase `dj-logos` bucket.
+The 18 PNGs in this folder are the unmodified original presenter photographs, copied from the former Supabase DJ logo bucket. They remain on Cloudflare Pages as **fallbacks**.
 
-Both the on-air DJ image and the **Meet the DJs** pop-up load portraits from this location on Cloudflare Pages: `/src/assets/djs/<filename>.png`.
+**New DJ photographs, replacements and admin removals are now managed by Cloudflare R2.** Station Admins use the TellStream chat:
 
-## Add or replace a DJ image
+- `/upload Squidly Bashment` — opens a PNG picker. TellStream uploads the image securely under `djs/squidly_bashment.png` in R2.
+- `/delete Squidly Bashment` — removes the R2 image and hides any older image of the same filename from the on-air rotation and gallery.
 
-In the GitHub repository, open `src/assets/djs`, choose **Add file → Upload files**, upload the original transparent PNG under its matching filename, and commit. Cloudflare Pages then publishes the hosted file.
+No source-code, GitHub upload or website redeployment is needed for these commands after the R2 media API is deployed. The server verifies the admin's existing chat password and access level before writing to R2.
 
-The DJ gallery lists DJs from `master_schedule` using the **first two words** of their scheduled names and skips repeated filename identities. The filename mapping is in `dj-logo-filename-fix.js`. For a name without an existing alias, two lowercase words joined by an underscore form its filename (e.g. `New DJ` → `new_dj.png`).
+The gallery still obtains its roster from `master_schedule`: the **first two words** of each show/DJ define the portrait filename, through `dj-logo-filename-fix.js`. Repeated DJs are omitted. The DJ image lookup uses an R2 copy if present; otherwise it uses the original PNG in this folder. Missing portraits show initials in the gallery, not a borrowed face.
 
-If an image has not yet been uploaded, Meet the DJs shows initials rather than borrowing or altering somebody else's photograph. The on-air banner falls back to its text presentation.
+**Archived-image caveat:** A R2 deletion marker hides an older static image from the website interface, but the original PNG stays directly accessible at its old static GitHub/Cloudflare URL until explicitly removed from this folder.
 
-## Missing images at migration
-
-`dj_choice.png` and `milo.png` were not available at the time of migration and were not fabricated. The separately existing `milo_medina_int.png` was copied unchanged; do not assume the missing `milo.png` is the same presenter.
-
-**Do not delete the old Supabase originals until the deployed hosted images are verified.**
+These files are originals; no alterations or AI recreations should be made.
