@@ -1,0 +1,25 @@
+name: Verify TellStream R2 media API
+on:
+  push:
+    branches:
+      - feature/secure-r2-media-api-20261125
+    paths:
+      - .github/workflows/test-r2-media.yml
+      - functions/api/media/**
+      - tests/r2-media.test.mjs
+  pull_request:
+    paths:
+      - functions/api/media/**
+      - tests/r2-media.test.mjs
+
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/r2-media.test.mjs
