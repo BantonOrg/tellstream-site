@@ -1802,9 +1802,8 @@ async function processScheduleConsoleInjections(text, djUser) {
         const startTime = args[3];
         const endTime = args[4];
         const timeZone = args[5];
-        // Keep the entire supplied DJ name, not only the first word.
-        // The gallery and images still use the first TWO words as identity.
-        const targetDJ = formatPresenterName(args.slice(6).join(' ') || djUser);
+        // Exactly the first TWO name words, matching the on-air DJ image and gallery.
+        const targetDJ = formatPresenterName(args.slice(6, 8).join(' ') || djUser);
 
         if (!dayName || !startTime || !endTime || !timeZone) {
             alert("Format missing. Use: /schedule perm [Day] [Start Time] [End Time] [Time Zone] [optional: Presenter_Name]");
@@ -1833,9 +1832,8 @@ async function processScheduleConsoleInjections(text, djUser) {
         const startTime = args[3];
         const endTime = args[4];
         const timeZone = args[5];
-        // Keep the entire supplied DJ name, not only the first word.
-        // The gallery and images still use the first TWO words as identity.
-        const targetDJ = formatPresenterName(args.slice(6).join(' ') || djUser);
+        // Exactly the first TWO name words, matching the on-air DJ image and gallery.
+        const targetDJ = formatPresenterName(args.slice(6, 8).join(' ') || djUser);
 
         if (!dateBlock || !startTime || !endTime || !timeZone || dateBlock.length !== 6) {
             alert("Format missing. Use: /schedule temp [ddmmyy] [Start Time] [End Time] [Time Zone] [optional: Presenter_Name]");
