@@ -1810,12 +1810,11 @@ async function processScheduleConsoleInjections(text, djUser) {
         const startTime = args[3];
         const endTime = args[4];
         const timeZone = args[5];
-        // Exactly the first TWO name words, matching the on-air DJ image and gallery.
-        const targetDJ = formatPresenterName(args.slice(6, 8).join(' ') || djUser);
-        // Strict station naming rule: every DJ identity is TWO words.
-        // A one-word schedule value cannot match the on-air/gallery image.
-        if (targetDJ.trim().split(/\s+/).length !== 2) {
-            alert("A DJ must have two name words, e.g. Selector Frost or Squidly Bashment.");
+        // Preserve the complete show label; identify its DJ by the first
+        // TWO words only (all later words are ignored for image matching).
+        const targetDJ = formatPresenterName(args.slice(6).join(' ') || djUser);
+        if (targetDJ.trim().split(/\s+/).length < 2) {
+            alert("The show must begin with TWO DJ name words, e.g. Selector Frost or Squidly Bashment.");
             return;
         }
 
@@ -1846,12 +1845,11 @@ async function processScheduleConsoleInjections(text, djUser) {
         const startTime = args[3];
         const endTime = args[4];
         const timeZone = args[5];
-        // Exactly the first TWO name words, matching the on-air DJ image and gallery.
-        const targetDJ = formatPresenterName(args.slice(6, 8).join(' ') || djUser);
-        // Strict station naming rule: every DJ identity is TWO words.
-        // A one-word schedule value cannot match the on-air/gallery image.
-        if (targetDJ.trim().split(/\s+/).length !== 2) {
-            alert("A DJ must have two name words, e.g. Selector Frost or Squidly Bashment.");
+        // Preserve the complete show label; identify its DJ by the first
+        // TWO words only (all later words are ignored for image matching).
+        const targetDJ = formatPresenterName(args.slice(6).join(' ') || djUser);
+        if (targetDJ.trim().split(/\s+/).length < 2) {
+            alert("The show must begin with TWO DJ name words, e.g. Selector Frost or Squidly Bashment.");
             return;
         }
 
