@@ -646,40 +646,71 @@ async function renderActiveFlyers() {
     today.setDate(today.getDate() - 1);
     today.setHours(0, 0, 0, 0);
 
-    const { data: files, error } = await supabase_db.storage.from('flyers').list('', { limit: 100 });
-    if (error || !files || files.length === 0) {
-        flyerContainer.innerHTML = `<p style="color:#666; text-align:center; padding-top:20px;">No event flyers available.</p>`;
-        return;
+    // Copied historical images are served from Cloudflare Pages.
+    // Preserve newly uploaded Supabase flyers until there is a secure
+    // replacement for the live admin upload/delete workflow.
+    let hosted = [];
+    try {
+        hosted = await window.TellStreamHostedMedia.listHosted('flyers');
+    } catch (error) {
+        console.warn('Hosted flyer list unavailable:', error);
+    }
+    const candidates = new Map();
+    for (const name of hosted) {
+        candidates.set(name, {
+            name,
+            src: window.TellStreamHostedMedia.hostedUrl('flyers', name),
+            hosted: true
+        });
     }
 
-    let renderedHtml = "";
-    for (let file of files) {
-        if (file.name === ".emptyFolderPlaceholder") continue;
+    const { data: remote, error } = await supabase_db.storage.from('flyers').list('', { limit: 100 });
+    if (error) console.warn('Supabase flyer list unavailable, showing hosted copies:', error);
+    for (const file of remote || []) {
+        if (!file.name || file.name === '.emptyFolderPlaceholder' || candidates.has(file.name)) continue;
+        const { data } = supabase_db.storage.from('flyers').getPublicUrl(file.name);
+        candidates.set(file.name, { name: file.name, src: data.publicUrl, hosted: false });
+    }
 
-        // flyers must start with a 6-digit date prefix code (DDMMYY)
+    flyerContainer.replaceChildren();
+    for (const file of candidates.values()) {
+        // Event flyers use a six-digit DDMMYY prefix. Avatar uploads to the
+        // same original bucket must never be shown in Event Flyers.
         const datePrefix = file.name.substring(0, 6);
-        if (!/^\d{6}$/.test(datePrefix)) {
-            continue; // Skip non-flyers (like avatars) stored in the same bucket
-        }
+        if (!/^\d{6}$/.test(datePrefix)) continue;
 
         const day = parseInt(datePrefix.substring(0, 2), 10);
         const month = parseInt(datePrefix.substring(2, 4), 10) - 1;
         const year = 2000 + parseInt(datePrefix.substring(4, 6), 10);
-        const expirationDate = new Date(year, month, day);
-        if (expirationDate < today) {
-            await supabase_db.storage.from('flyers').remove([file.name]);
+        const expiry = new Date(year, month, day);
+        if (Number.isNaN(expiry.getTime()) || expiry < today) {
+            // Hosted originals are preserved; expired flyers disappear from
+            // display. The old remote-expiry cleanup is still supported.
+            if (!file.hosted) {
+                await supabase_db.storage.from('flyers').remove([file.name]);
+            }
             continue;
         }
-        const { data: urlData } = supabase_db.storage.from('flyers').getPublicUrl(file.name);
-        const titleClean = file.name.substring(7).replace(/\.[^/.]+$/, '').replace(/_/g, ' ');
-        renderedHtml += `
-            <div class="flyer-item" onclick="launchFlyerLightbox('${urlData.publicUrl}')">
-                <img src="${urlData.publicUrl}" alt="${titleClean}">
-                <h4 style="text-transform: capitalize;">${titleClean}</h4>
-            </div>
-        `;
+        const title = file.name.substring(7)
+            .replace(/\.[^/.]+$/, '').replace(/_/g, ' ');
+        const card = document.createElement('div');
+        card.className = 'flyer-item';
+        card.addEventListener('click', () => launchFlyerLightbox(file.src));
+        const image = document.createElement('img');
+        image.src = file.src;
+        image.alt = title;
+        const label = document.createElement('h4');
+        label.style.textTransform = 'capitalize';
+        label.textContent = title;
+        card.append(image, label);
+        flyerContainer.appendChild(card);
     }
-    flyerContainer.innerHTML = renderedHtml || `<p style="color:#666; text-align:center; padding-top:20px;">No event flyers available.</p>`;
+    if (!flyerContainer.children.length) {
+        const message = document.createElement('p');
+        message.style.cssText = 'color:#666;text-align:center;padding-top:20px;';
+        message.textContent = 'No event flyers available.';
+        flyerContainer.appendChild(message);
+    }
 }
 
 function toggleAccordion(target) {
@@ -2068,7 +2099,7 @@ async function onUserVerifiedSuccess(username) {
             document.getElementById('profileVisibilitySelect').value = data.profile_visibility || 'everyone';
             document.getElementById('profileInvisibleCheckbox').checked = !!data.status_invisible;
             if (data.avatar_url) {
-                document.getElementById('myAvatarImg').src = data.avatar_url;
+                document.getElementById('myAvatarImg').src = await window.TellStreamHostedMedia.resolveUrl('flyers', data.avatar_url);
             } else {
                 document.getElementById('myAvatarImg').src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23444'/><text x='50' y='60' font-size='30' font-family='sans-serif' text-anchor='middle' fill='%23fff'>?</text></svg>";
             }
@@ -2373,7 +2404,7 @@ async function openProfileCard(targetUsernameInput) {
             .single();
 
         if (data && !error) {
-            if (data.avatar_url) avatarImg.src = data.avatar_url;
+            if (data.avatar_url) avatarImg.src = await window.TellStreamHostedMedia.resolveUrl('flyers', data.avatar_url);
 
             // Check visibility (everyone = Public, everything else = Private)
             const visibility = data.profile_visibility || 'everyone';
