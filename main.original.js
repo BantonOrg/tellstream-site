@@ -7,6 +7,7 @@ const supabase_db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let isCurrentUserVerified = false;
 let pendingR2FlyerName = '';
+let pendingR2DjFilename = '';
 
 const chatBox = document.getElementById('chatBox');
 const usernameInput = document.getElementById('usernameInput');
@@ -84,7 +85,7 @@ const adminHelpInstructions = [
     { title: "🗓️ Permanent Timetable Slot", text: "Type: /schedule perm DayOfWeek StartTime EndTime TimeZone DJName\nExample: /schedule perm Friday 2000 2200 BST Cruss\nWhat it does: Sets a repeating weekly show slot in the schedule." },
     { title: "❌ Cancelling a Scheduled Show", text: "Type: /schedule cancel Date StartTime\nExample: /schedule cancel 100726 2000\nWhat it does: Removes a permanent or temporary show from the schedule." },
     { title: "📋 Posting to the Boss Noticeboard", text: "Station Admins can post updates directly to the red \"Boss Notices\" column." },
-    { title: "🖼️ Presenter Logo Management", text: "DJ photographs live in the website's src/assets/djs/ folder. Type: /upload PresenterName or /delete PresenterName to see the correct filename and GitHub upload/delete instructions. Only station admins can manage the files. Photos publish with the next Cloudflare deployment." },
+    { title: "🖼️ Presenter Logo Management", text: "Type /upload DJ Name to choose a PNG photograph and upload it securely to Cloudflare R2. Type /delete DJ Name to remove the image from the on-air rotation and Meet the DJs. The first two name words determine its image filename. Station Admin only. Original hosted PNGs remain available as fallbacks until removed." },
     { title: "🔥 Event Flyer Management", text: "Type /uploadflyer DDMMYY_name to choose and upload a JPG, PNG or WebP picture securely to TellStream R2. Type /deleteflyer DDMMYY_name to remove the flyer from the listings. Only verified Station Admins can perform these actions." },
     { title: "👑 User Role Management", text: "Type: /setlevel username LevelNumber - Sets the access level (0 = Listener, 1 = DJ, 2 = Admin)." },
     { title: "🌟 VIP Status Management", text: "Type: /promote VIP DurationInMonths username (e.g., /promote VIP 3 username, or use the word perm for permanent)\nType: /demote VIP username - Removes VIP status." },
@@ -1657,19 +1658,30 @@ async function sendMessage() {
                     alert("🔒 Access Denied: Only Station Admins (Level 2) can manage DJ images.");
                     return;
                 }
-
                 const uploading = text.startsWith('/upload ');
                 const targetName = text.substring(8).trim().substring(0, 50);
                 if (targetName) {
                     messageInput.value = '';
+                    // Same first-two-word mapping used by the on-air image and gallery.
                     const filename = resolveDjShowcaseLogoFile(targetName);
-                    const folder = 'https://github.com/BantonOrg/tellstream-site/tree/main/src/assets/djs';
-                    alert((uploading ? 'To ADD or REPLACE the DJ image:' : 'To REMOVE the DJ image:') +
-                        '\n1. Open ' + folder +
-                        (uploading ? '\n2. Select Add file → Upload files.' : '\n2. Select the file and delete it.') +
-                        '\n3. Filename: ' + filename +
-                        '\n4. Commit the change. Cloudflare will publish it.' +
-                        '\nDJ images are now hosted with TellStream, not Supabase.');
+                    if (!/^[a-z0-9_]{1,90}\.png$/.test(filename)) {
+                        alert('Invalid DJ name. Use the first two words of the DJ name.');
+                        return;
+                    }
+                    if (uploading) {
+                        pendingR2DjFilename = filename;
+                        const picker = document.getElementById('r2DjFilePicker');
+                        if (picker) picker.click();
+                        else alert('DJ image picker unavailable.');
+                    } else {
+                        if (!confirm('Remove the DJ image for ' + targetName + '?')) return;
+                        try {
+                            await window.TellStreamR2Media.remove('dj', { filename });
+                            window.TellStreamR2Media.invalidateDjs();
+                            await loadInitialStreamStatus();
+                            alert('DJ image removed from on-air rotation and Meet the DJs.');
+                        } catch (error) { alert('DJ image deletion failed: ' + error.message); }
+                    }
                     return;
                 }
             }
@@ -3032,6 +3044,31 @@ function updateWebVersionFooter() {
     try { await renderActiveFlyers(); } catch (e) { }
     setTimeout(initQuickEmojiCloud, 500);
 
+
+    const r2DjFilePicker = document.createElement('input');
+    r2DjFilePicker.type = 'file';
+    r2DjFilePicker.id = 'r2DjFilePicker';
+    r2DjFilePicker.accept = 'image/png';
+    r2DjFilePicker.hidden = true;
+    document.body.appendChild(r2DjFilePicker);
+    r2DjFilePicker.addEventListener('change', async event => {
+        const file = event.target.files[0];
+        if (!file || !pendingR2DjFilename) return;
+        try {
+            const uploaded = await window.TellStreamR2Media.upload('dj', file, {
+                filename: pendingR2DjFilename
+            });
+            window.TellStreamR2Media.invalidateDjs();
+            await loadInitialStreamStatus();
+            alert('DJ photograph uploaded: ' + uploaded.file_name +
+                '. It now appears automatically when this DJ is on air or in the schedule.');
+        } catch (error) {
+            alert('DJ photograph upload failed: ' + error.message);
+        } finally {
+            pendingR2DjFilename = '';
+            r2DjFilePicker.value = '';
+        }
+    });
 
     const r2FlyerFilePicker = document.createElement('input');
     r2FlyerFilePicker.type = 'file';
