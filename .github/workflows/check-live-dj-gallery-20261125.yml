@@ -1,0 +1,36 @@
+name: Check public TellStream DJ photo API
+on:
+  push:
+    branches:
+      - fix/full-dj-schedule-names-20261125
+    paths:
+      - .github/workflows/check-live-dj-gallery-20261125.yml
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Read public DJ image catalogue without write credentials
+        run: |
+          python3 - <<'PY'
+          import json, urllib.request, urllib.error
+          base = "https://tellstream.banton.org"
+          for route in ("/api/media?kind=djs", "/api/media/file?key=djs%2Fsquidly_bashment.png"):
+              req = urllib.request.Request(base + route, headers={"User-Agent":"TellStreamPublicDJTest/1.0"})
+              try:
+                  with urllib.request.urlopen(req, timeout=15) as response:
+                      data = response.read(512000)
+                      print("ROUTE", route, "STATUS", response.status,
+                            "TYPE", response.headers.get("content-type"), "BYTES", len(data))
+                      if route.endswith("kind=djs"):
+                          j = json.loads(data)
+                          print("DJ COUNT", len(j.get("files", [])))
+                          print("SQUIDLY LISTED", any(x.get("name") == "squidly_bashment.png" for x in j.get("files", [])))
+                          print("SQUIDLY DELETED", "squidly_bashment.png" in j.get("deleted", []))
+              except urllib.error.HTTPError as exc:
+                  print("ROUTE", route, "STATUS", exc.code, "ERROR", exc.read(220).decode("utf-8","replace"))
+              except Exception as exc:
+                  print("ROUTE", route, "EXCEPTION", type(exc).__name__, str(exc)[:200])
+          PY
