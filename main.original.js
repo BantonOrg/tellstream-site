@@ -1,4 +1,4 @@
-import { initDjsShowcase } from './dj-showcase.js?v=20261125-hosted1';
+import { initDjsShowcase } from './dj-showcase.js?v=20261125-r2dj1';
 import { resolveDjShowcaseLogoFile } from './dj-logo-filename-fix.js?v=20261125-hosted1';
 
 const SUPABASE_URL = "https://vegwferwmyuunwvfqpsf.supabase.co";
