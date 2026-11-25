@@ -442,13 +442,9 @@ async function deleteVideo(id, element) {
 async function deletePhoto(id, fileName, element) {
     if (!confirm("Are you sure you want to delete this photo from your gallery?")) return;
     try {
-        // Remove from Storage
-        const { error: storageErr } = await supabase_db.storage.from('member-photos').remove([fileName]);
-        if (storageErr) console.warn("Storage deletion warning:", storageErr.message);
-
-        // Remove from DB
-        const { error: dbErr } = await supabase_db.from('member_photos').delete().eq('id', id);
-        if (dbErr) throw dbErr;
+        // R2 endpoint re-verifies this account and checks ownership
+        // before deleting the object and its member_photos record.
+        await window.TellStreamR2Media.remove('member-photo', { file_name: fileName });
 
         element.remove();
         alert("Photo deleted successfully.");
@@ -1099,46 +1095,8 @@ function compressImageToJpeg(file, maxDim, quality) {
 
         try {
             const compressedBlob = await compressImageToJpeg(file, 1024, 0.8);
-            
-            const { data: existingPhotos, error: fetchErr } = await supabase_db
-                .from('member_photos')
-                .select('*')
-                .eq('username', currentUser)
-                .order('created_at', { ascending: true });
-                
-            if (fetchErr) throw fetchErr;
-            
-            if (existingPhotos && existingPhotos.length >= 9) {
-                const oldest = existingPhotos[0];
-                await supabase_db.storage.from('member-photos').remove([oldest.file_name]);
-                await supabase_db.from('member_photos').delete().eq('id', oldest.id);
-            }
-            
-            const timestamp = Date.now();
-            const fileName = `${currentUser}/img_${timestamp}.jpg`;
-            const { error: uploadError } = await supabase_db.storage
-                .from('member-photos')
-                .upload(fileName, compressedBlob, {
-                    contentType: 'image/jpeg',
-                    upsert: true
-                });
-                
-            if (uploadError) throw uploadError;
-            
-            const { data: publicUrlData } = supabase_db.storage
-                .from('member-photos')
-                .getPublicUrl(fileName);
-                
-            const publicUrl = publicUrlData.publicUrl;
-            
-            const { error: dbErr } = await supabase_db.from('member_photos').insert([{
-                username: currentUser,
-                file_name: fileName,
-                public_url: publicUrl
-            }]);
-            
-            if (dbErr) throw dbErr;
-            
+            await window.TellStreamR2Media.upload('member-photo', compressedBlob);
+
             alert("📸 Photo uploaded successfully to your webpage!");
             await loadMemberPhotos(); // Reload photos grid dynamically!
         } catch (err) {

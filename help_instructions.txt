@@ -119,19 +119,20 @@ DJ / Presenter, and Station Admin.
   Station Admins can post updates directly to the red "Boss Notices" column.
 
 * Presenter Logo Management:
-  - Type: /upload PresenterName   - Shows the correct local PNG filename and GitHub upload instructions.
-  - Type: /delete PresenterName   - Shows the filename and GitHub deletion instructions.
-  - Images are hosted in src/assets/djs/ (Cloudflare Pages), not Supabase.
-  - Upload PNG files through GitHub: Add file > Upload files, then commit.
-  - The image filename corresponds to the DJ's first two name words; existing aliases use the mapped filename.
+  - Type: /upload Firstname Surname - Opens a PNG image picker and uploads to Cloudflare R2.
+  - Example: /upload Squidly Bashment
+  - Type: /delete Firstname Surname - Hides and removes a DJ's image from R2.
+  - Only verified Station Admins (Level 2) may upload or delete DJ photographs.
+  - Images use the first two words and existing name mappings.
+  - Original hosted PNGs in src/assets/djs/ are kept as fallback images.
 
 * Event Flyer Management:
-  - Flyers are hosted in src/assets/flyers/ on the website (Cloudflare Pages).
-  - Type: /uploadflyer Date FlyerName - Shows filename and GitHub upload instructions.
-  - Type: /deleteflyer Date FlyerName - Shows how to delete the hosted flyer.
-  - Flyer filenames begin with a 6-digit DDMMYY date, e.g. 100726_summer_bash.jpg.
-  - Committing files in GitHub automatically refreshes the event flyer list.
-  - Existing member avatars/photos may still use Supabase for live user uploads.
+  - Type: /uploadflyer DDMMYY_name - Opens a file picker and uploads PNG/JPEG/WebP to R2.
+  - Type: /deleteflyer DDMMYY_name - Removes a flyer from the event list via R2.
+  - For example: /uploadflyer 010127_summer_bash
+  - Only verified Station Admins can upload or delete flyers.
+  - New member avatar and photo uploads also use the secure R2 media API.
+  - Original archived GitHub images remain until separately cleaned up.
 
 * User Role Management:
   - Type: /setlevel username LevelNumber - Sets the access level (0 = Listener, 

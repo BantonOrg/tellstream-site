@@ -66,15 +66,21 @@ export function initDjsShowcase({ client, resolveLogoFilename }) {
         const filename = resolveLogoFilename(name);
         if (filename) {
             const image = document.createElement('img');
-            // Cloudflare Pages serves the original, unmodified DJ PNG.
-            // Missing pictures fall back to the DJ's initials.
-            image.src = '/src/assets/djs/' + encodeURIComponent(filename);
-            image.alt = small ? '' : name + ' — original TellStream presenter image';
+            // R2 may override the original, unmodified image on site hosting.
+            // Do not show a different DJ's picture if an image is absent.
+            image.alt = small ? '' : name + ' — TellStream presenter image';
             image.loading = small ? 'eager' : 'lazy';
             image.decoding = 'async';
             image.addEventListener('load', () => { placeholder.hidden = true; });
             image.addEventListener('error', () => { image.remove(); });
             frame.append(image);
+            window.TellStreamR2Media.djImage(filename).then(url => {
+                if (url) image.src = url;
+                else image.remove();
+            }).catch(error => {
+                console.warn('[DJ gallery] Picture lookup failed:', error);
+                image.remove();
+            });
         }
         return frame;
     }

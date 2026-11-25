@@ -1,9 +1,7 @@
-# TellStream member photo gallery: archived originals
+# Legacy member photo archive — requires cleanup
 
-Original existing public photos were copied byte-for-byte from the public Supabase `member-photos` bucket, preserving member subfolders.
+This directory contains a preserved public original photo previously stored in Supabase. New authenticated VIP/DJ uploads and deletions use Cloudflare R2, while the existing `member_photos` table remains the gallery index.
 
-The profile gallery uses `member_photos` database records to decide which images are visible. For archived file paths in `manifest.json`, the browser displays the Cloudflare-hosted copy; for new or unarchived photos it displays the original Supabase URL.
+**Privacy limitation:** A member can delete their photo from the gallery, but that does not erase the older archived copy from GitHub/Cloudflare static hosting. To honour deletion requests, migrate archived pictures into R2, confirm they are accessible from R2, then remove the old source files and references from GitHub.
 
-**Important:** Visitor uploads, the nine-photo rotation, and delete operations still use the existing Supabase Storage and database workflow. A static GitHub/Cloudflare Pages folder cannot accept authenticated member uploads or immediately delete a user photo. Deleting a photo record from the website currently does **not** delete its archived GitHub copy. The site administrator must account for those archived originals and preserve deletion rights. Do not treat this as a completed dynamic-storage migration; a secure writable Cloudflare service with delete support is required before Supabase can be retired.
-
-Do not delete original Supabase files as part of this staged migration.
+Do not mistake deletion from the member database for removal of the public image bytes. The required archival cleanup is tracked in `R2_MEDIA_SETUP.md`.

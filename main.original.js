@@ -1,4 +1,4 @@
-import { initDjsShowcase } from './dj-showcase.js?v=20261125-hosted1';
+import { initDjsShowcase } from './dj-showcase.js?v=20261125-r2dj1';
 import { resolveDjShowcaseLogoFile } from './dj-logo-filename-fix.js?v=20261125-hosted1';
 
 const SUPABASE_URL = "https://vegwferwmyuunwvfqpsf.supabase.co";
@@ -6,6 +6,8 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const supabase_db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let isCurrentUserVerified = false;
+let pendingR2FlyerName = '';
+let pendingR2DjFilename = '';
 
 const chatBox = document.getElementById('chatBox');
 const usernameInput = document.getElementById('usernameInput');
@@ -83,8 +85,8 @@ const adminHelpInstructions = [
     { title: "🗓️ Permanent Timetable Slot", text: "Type: /schedule perm DayOfWeek StartTime EndTime TimeZone DJName\nExample: /schedule perm Friday 2000 2200 BST Cruss\nWhat it does: Sets a repeating weekly show slot in the schedule." },
     { title: "❌ Cancelling a Scheduled Show", text: "Type: /schedule cancel Date StartTime\nExample: /schedule cancel 100726 2000\nWhat it does: Removes a permanent or temporary show from the schedule." },
     { title: "📋 Posting to the Boss Noticeboard", text: "Station Admins can post updates directly to the red \"Boss Notices\" column." },
-    { title: "🖼️ Presenter Logo Management", text: "DJ photographs live in the website's src/assets/djs/ folder. Type: /upload PresenterName or /delete PresenterName to see the correct filename and GitHub upload/delete instructions. Only station admins can manage the files. Photos publish with the next Cloudflare deployment." },
-    { title: "🔥 Event Flyer Management", text: "Event flyers are hosted in src/assets/flyers/. Type: /uploadflyer Date FlyerName or /deleteflyer Date FlyerName to get GitHub instructions. Filename must begin DDMMYY. Commit your change; the hosted flyer list updates automatically." },
+    { title: "🖼️ Presenter Logo Management", text: "Type /upload DJ Name to choose a PNG photograph and upload it securely to Cloudflare R2. Type /delete DJ Name to remove the image from the on-air rotation and Meet the DJs. The first two name words determine its image filename. Station Admin only. Original hosted PNGs remain available as fallbacks until removed." },
+    { title: "🔥 Event Flyer Management", text: "Type /uploadflyer DDMMYY_name to choose and upload a JPG, PNG or WebP picture securely to TellStream R2. Type /deleteflyer DDMMYY_name to remove the flyer from the listings. Only verified Station Admins can perform these actions." },
     { title: "👑 User Role Management", text: "Type: /setlevel username LevelNumber - Sets the access level (0 = Listener, 1 = DJ, 2 = Admin)." },
     { title: "🌟 VIP Status Management", text: "Type: /promote VIP DurationInMonths username (e.g., /promote VIP 3 username, or use the word perm for permanent)\nType: /demote VIP username - Removes VIP status." },
     { title: "🚫 Unbanning Users", text: "Type: /unban username\nWhat it does: Clears all strikes and restores chat/noticeboard access instantly for locked or banned users." }
@@ -130,7 +132,9 @@ function findProfileMatch(showName) {
 
 
 // CELL-LEFT ISOLATED ENGINE (DYNAMIC BOUNDS & AUTOMATED MODE SWITCH)
-function renderStreamHeader(showName) {
+let djHeaderImageRevision = 0;
+async function renderStreamHeader(showName) {
+    const revision = ++djHeaderImageRevision;
     const cellLeft = document.querySelector('.cell-left');
     const wrapper = document.querySelector('.cell-left .tagline-wrapper');
     if (!cellLeft) return;
@@ -186,7 +190,9 @@ function renderStreamHeader(showName) {
         const words = matchedName.trim().split(/\s+/);
         const nameToUse = (words.length >= 2) ? `${words[0]} ${words[1]}` : words[0];
         const safeFileName = resolveDjShowcaseLogoFile(nameToUse);
-        const imgHostedUrl = '/src/assets/djs/' + encodeURIComponent(safeFileName);
+        // R2 replacements take precedence; hosted original PNGs remain as backup.
+        const imgHostedUrl = await window.TellStreamR2Media.djImage(safeFileName);
+        if (revision !== djHeaderImageRevision) return; // A different DJ is on air now.
 
         const imageProbe = new Image();
 
@@ -252,7 +258,8 @@ function renderStreamHeader(showName) {
             }
         };
 
-        imageProbe.src = imgHostedUrl; // Set source last to avoid race conditions
+        if (imgHostedUrl) imageProbe.src = imgHostedUrl; // Set source last to avoid race conditions
+        else imageProbe.onerror(); // A deleted DJ image falls back to the normal text banner.
     }
 }
 
@@ -645,30 +652,25 @@ async function renderActiveFlyers() {
     today.setDate(today.getDate() - 1);
     today.setHours(0, 0, 0, 0);
 
-    // Copied historical images are served from Cloudflare Pages.
-    // Preserve newly uploaded Supabase flyers until there is a secure
-    // replacement for the live admin upload/delete workflow.
-    let hosted = [];
-    try {
-        hosted = await window.TellStreamHostedMedia.listHosted('flyers');
-    } catch (error) {
-        console.warn('Hosted flyer list unavailable:', error);
-    }
+    // Hosted archive + current R2 pictures. R2 deletion markers hide old
+    // static copies so an archived flyer cannot reappear after deletion.
+    let archived = [];
+    try { archived = await window.TellStreamHostedMedia.listHosted('flyers'); }
+    catch (error) { console.warn('Archived flyer list unavailable:', error); }
+    let live = { files: [], deleted: [] };
+    try { live = await window.TellStreamR2Media.flyers(); }
+    catch (error) { console.warn('Live R2 flyer list unavailable:', error); }
+    const deleted = new Set(live.deleted || []);
     const candidates = new Map();
-    for (const name of hosted) {
+    for (const name of archived) {
+        if (deleted.has(name)) continue;
         candidates.set(name, {
-            name,
-            src: window.TellStreamHostedMedia.hostedUrl('flyers', name),
-            hosted: true
+            name, src: window.TellStreamHostedMedia.hostedUrl('flyers', name)
         });
     }
-
-    const { data: remote, error } = await supabase_db.storage.from('flyers').list('', { limit: 100 });
-    if (error) console.warn('Supabase flyer list unavailable, showing hosted copies:', error);
-    for (const file of remote || []) {
-        if (!file.name || file.name === '.emptyFolderPlaceholder' || candidates.has(file.name)) continue;
-        const { data } = supabase_db.storage.from('flyers').getPublicUrl(file.name);
-        candidates.set(file.name, { name: file.name, src: data.publicUrl, hosted: false });
+    for (const item of live.files || []) {
+        if (!item.name || deleted.has(item.name)) continue;
+        candidates.set(item.name, { name: item.name, src: item.url });
     }
 
     flyerContainer.replaceChildren();
@@ -682,14 +684,7 @@ async function renderActiveFlyers() {
         const month = parseInt(datePrefix.substring(2, 4), 10) - 1;
         const year = 2000 + parseInt(datePrefix.substring(4, 6), 10);
         const expiry = new Date(year, month, day);
-        if (Number.isNaN(expiry.getTime()) || expiry < today) {
-            // Hosted originals are preserved; expired flyers disappear from
-            // display. The old remote-expiry cleanup is still supported.
-            if (!file.hosted) {
-                await supabase_db.storage.from('flyers').remove([file.name]);
-            }
-            continue;
-        }
+        if (Number.isNaN(expiry.getTime()) || expiry < today) continue;
         const title = file.name.substring(7)
             .replace(/\.[^/.]+$/, '').replace(/_/g, ' ');
         const card = document.createElement('div');
@@ -1663,19 +1658,30 @@ async function sendMessage() {
                     alert("🔒 Access Denied: Only Station Admins (Level 2) can manage DJ images.");
                     return;
                 }
-
                 const uploading = text.startsWith('/upload ');
                 const targetName = text.substring(8).trim().substring(0, 50);
                 if (targetName) {
                     messageInput.value = '';
+                    // Same first-two-word mapping used by the on-air image and gallery.
                     const filename = resolveDjShowcaseLogoFile(targetName);
-                    const folder = 'https://github.com/BantonOrg/tellstream-site/tree/main/src/assets/djs';
-                    alert((uploading ? 'To ADD or REPLACE the DJ image:' : 'To REMOVE the DJ image:') +
-                        '\n1. Open ' + folder +
-                        (uploading ? '\n2. Select Add file → Upload files.' : '\n2. Select the file and delete it.') +
-                        '\n3. Filename: ' + filename +
-                        '\n4. Commit the change. Cloudflare will publish it.' +
-                        '\nDJ images are now hosted with TellStream, not Supabase.');
+                    if (!/^[a-z0-9_]{1,90}\.png$/.test(filename)) {
+                        alert('Invalid DJ name. Use the first two words of the DJ name.');
+                        return;
+                    }
+                    if (uploading) {
+                        pendingR2DjFilename = filename;
+                        const picker = document.getElementById('r2DjFilePicker');
+                        if (picker) picker.click();
+                        else alert('DJ image picker unavailable.');
+                    } else {
+                        if (!confirm('Remove the DJ image for ' + targetName + '?')) return;
+                        try {
+                            await window.TellStreamR2Media.remove('dj', { filename });
+                            window.TellStreamR2Media.invalidateDjs();
+                            await loadInitialStreamStatus();
+                            alert('DJ image removed from on-air rotation and Meet the DJs.');
+                        } catch (error) { alert('DJ image deletion failed: ' + error.message); }
+                    }
                     return;
                 }
             }
@@ -1687,21 +1693,36 @@ async function sendMessage() {
                     return;
                 }
                 const uploading = text.startsWith('/uploadflyer ');
-                const rawName = text.substring(13).trim().substring(0, 70);
-                const name = rawName.toLowerCase().replace(/\s+/g, '_');
+                const name = text.substring(13).trim().toLowerCase().replace(/\s+/g, '_').substring(0, 90);
                 if (name) {
                     messageInput.value = '';
-                    if (uploading && !/^\d{6}/.test(name)) {
-                        alert("Flyer names must start with DDMMYY (six digits).");
+                    if (uploading) {
+                        const stem = name.replace(/\.(png|jpg|jpeg|webp)$/i, '');
+                        if (!/^\d{6}_[a-z0-9_-]{1,90}$/.test(stem)) {
+                            alert("Flyer name must be DDMMYY_name, for example 010127_summer_event.");
+                            return;
+                        }
+                        pendingR2FlyerName = stem;
+                        const picker = document.getElementById('r2FlyerFilePicker');
+                        if (picker) picker.click();
+                        else alert('Flyer upload picker unavailable.');
                         return;
                     }
-                    const folder = 'https://github.com/BantonOrg/tellstream-site/tree/main/src/assets/flyers';
-                    alert((uploading ? 'To ADD or REPLACE an event flyer:' : 'To REMOVE an event flyer:') +
-                        '\n1. Open ' + folder +
-                        (uploading ? '\n2. Select Add file → Upload files.' : '\n2. Select the existing flyer and delete it.') +
-                        '\n3. Name begins with: ' + name +
-                        '\n4. Commit. The hosted flyer list is updated automatically.' +
-                        '\nThis keeps event flyers on TellStream hosting, not Supabase.');
+                    try {
+                        const archived = await window.TellStreamHostedMedia.listHosted('flyers');
+                        const live = await window.TellStreamR2Media.flyers();
+                        const all = [...new Set([...archived, ...(live.files || []).map(item => item.name)])];
+                        const matches = all.filter(item => item === name ||
+                            item.replace(/\.(png|jpg|jpeg|webp)$/i, '') === name);
+                        if (matches.length !== 1) {
+                            alert(matches.length ? 'More than one flyer matched. Specify the full filename.' :
+                                'Flyer not found. Check the exact filename.');
+                            return;
+                        }
+                        await window.TellStreamR2Media.remove('flyer', { name: matches[0] });
+                        await renderActiveFlyers();
+                        alert('Flyer removed from the event listings.');
+                    } catch (error) { alert('Flyer deletion failed: ' + error.message); }
                     return;
                 }
             }
@@ -2247,16 +2268,8 @@ async function saveProfileChanges() {
         try {
             const response = await fetch(preview.src);
             const blob = await response.blob();
-            const filename = `avatars_${currentUser}.png`;
-
-            const { error: uploadError } = await supabase_db.storage.from('flyers').upload(filename, blob, {
-                cacheControl: '3600',
-                upsert: true
-            });
-            if (uploadError) throw uploadError;
-
-            const { data } = supabase_db.storage.from('flyers').getPublicUrl(filename);
-            avatarUrl = data.publicUrl;
+            const uploaded = await window.TellStreamR2Media.upload('avatar', blob);
+            avatarUrl = uploaded.url;
         } catch (uploadErr) {
             alert("Failed to upload profile photo: " + uploadErr.message);
             return;
@@ -3032,6 +3045,51 @@ function updateWebVersionFooter() {
     setTimeout(initQuickEmojiCloud, 500);
 
 
+    const r2DjFilePicker = document.createElement('input');
+    r2DjFilePicker.type = 'file';
+    r2DjFilePicker.id = 'r2DjFilePicker';
+    r2DjFilePicker.accept = 'image/png';
+    r2DjFilePicker.hidden = true;
+    document.body.appendChild(r2DjFilePicker);
+    r2DjFilePicker.addEventListener('change', async event => {
+        const file = event.target.files[0];
+        if (!file || !pendingR2DjFilename) return;
+        try {
+            const uploaded = await window.TellStreamR2Media.upload('dj', file, {
+                filename: pendingR2DjFilename
+            });
+            window.TellStreamR2Media.invalidateDjs();
+            await loadInitialStreamStatus();
+            alert('DJ photograph uploaded: ' + uploaded.file_name +
+                '. It now appears automatically when this DJ is on air or in the schedule.');
+        } catch (error) {
+            alert('DJ photograph upload failed: ' + error.message);
+        } finally {
+            pendingR2DjFilename = '';
+            r2DjFilePicker.value = '';
+        }
+    });
+
+    const r2FlyerFilePicker = document.createElement('input');
+    r2FlyerFilePicker.type = 'file';
+    r2FlyerFilePicker.id = 'r2FlyerFilePicker';
+    r2FlyerFilePicker.accept = 'image/png,image/jpeg,image/webp';
+    r2FlyerFilePicker.hidden = true;
+    document.body.appendChild(r2FlyerFilePicker);
+    r2FlyerFilePicker.addEventListener('change', async event => {
+        const file = event.target.files[0];
+        if (!file || !pendingR2FlyerName) return;
+        try {
+            await window.TellStreamR2Media.upload('flyer', file, { name: pendingR2FlyerName });
+            await renderActiveFlyers();
+            alert('Event flyer uploaded to TellStream R2.');
+        } catch (error) { alert('Event flyer upload failed: ' + error.message); }
+        finally {
+            pendingR2FlyerName = '';
+            r2FlyerFilePicker.value = '';
+        }
+    });
+
     const currentUser = usernameInput.value.trim();
     syncDrawerName();
 
@@ -3187,46 +3245,8 @@ function updateWebVersionFooter() {
 
         try {
             const compressedBlob = await compressImageToJpeg(file, 1024, 0.8);
-            
-            const { data: existingPhotos, error: fetchErr } = await supabase_db
-                .from('member_photos')
-                .select('*')
-                .eq('username', currentUser)
-                .order('created_at', { ascending: true });
-                
-            if (fetchErr) throw fetchErr;
-            
-            if (existingPhotos && existingPhotos.length >= 9) {
-                const oldest = existingPhotos[0];
-                await supabase_db.storage.from('member-photos').remove([oldest.file_name]);
-                await supabase_db.from('member_photos').delete().eq('id', oldest.id);
-            }
-            
-            const timestamp = Date.now();
-            const fileName = `${currentUser}/img_${timestamp}.jpg`;
-            const { error: uploadError } = await supabase_db.storage
-                .from('member-photos')
-                .upload(fileName, compressedBlob, {
-                    contentType: 'image/jpeg',
-                    upsert: true
-                });
-                
-            if (uploadError) throw uploadError;
-            
-            const { data: publicUrlData } = supabase_db.storage
-                .from('member-photos')
-                .getPublicUrl(fileName);
-                
-            const publicUrl = publicUrlData.publicUrl;
-            
-            const { error: dbErr } = await supabase_db.from('member_photos').insert([{
-                username: currentUser,
-                file_name: fileName,
-                public_url: publicUrl
-            }]);
-            
-            if (dbErr) throw dbErr;
-            
+            await window.TellStreamR2Media.upload('member-photo', compressedBlob);
+
             alert("📸 Photo uploaded successfully to your webpage!");
         } catch (err) {
             alert("Upload failed: " + err.message);
