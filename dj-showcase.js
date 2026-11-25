@@ -1,12 +1,37 @@
+import { resolveScheduledDjLabel } from './dj-logo-filename-fix.js?v=20261125-djidentity1';
+
 // TellStream DJ showcase: scheduled presenters and existing on-air images only.
 // No hard-coded roster, generated portraits, or dependency on the poster asset.
+export function getScheduledPresenterNames(rows, resolveLogoFilename) {
+    const days = new Set(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']);
+    const names = new Map();
+    for (const row of rows || []) {
+        if (!days.has(String(row.day_of_week || '').trim().toLowerCase())) continue;
+        if (!String(row.start_time || '').trim()) continue;
+
+        const raw = String(row.dj_name || '').trim()
+            .replace(/_/g, ' ').replace(/([a-z0-9])([A-Z])/g, '$1 $2');
+        const words = resolveScheduledDjLabel(raw).split(/\s+/).filter(Boolean);
+        // Never create a single-name DJ. Only documented legacy records are repaired.
+        if (words.length < 2) continue;
+        const name = words.slice(0, 2).join(' ');
+        if (/^tellstream(?:\s+non)?$/i.test(name)) continue;
+
+        // Aliases must collapse to one entry sharing the same photograph.
+        const filename = resolveLogoFilename(name);
+        const key = (filename || name).toLocaleLowerCase('en-GB');
+        if (!names.has(key)) names.set(key, name);
+    }
+    return Array.from(names.values())
+        .sort((a, b) => a.localeCompare(b, 'en-GB', { sensitivity: 'base' }));
+}
+
 export function initDjsShowcase({ client, resolveLogoFilename }) {
     const button = document.getElementById('djShowcaseOpenButton');
     if (!button || button.dataset.djShowcaseReady === '1') return;
     if (!client || typeof resolveLogoFilename !== 'function') return;
 
     button.dataset.djShowcaseReady = '1';
-    const days = new Set(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']);
     const overlay = document.createElement('div');
     overlay.id = 'djShowcaseOverlay';
     overlay.className = 'dj-showcase-overlay';
@@ -121,28 +146,7 @@ export function initDjsShowcase({ client, resolveLogoFilename }) {
             if (request !== generation) return;
             if (response.error) throw response.error;
 
-            const names = new Map();
-            for (const row of response.data || []) {
-                if (!days.has(String(row.day_of_week || '').trim().toLowerCase())) continue;
-                if (!String(row.start_time || '').trim()) continue;
-
-                // A schedule entry may include a programme title. Only its
-                // first two words identify the DJ and their existing image.
-                const words = String(row.dj_name || '').trim()
-                    .replace(/_/g, ' ').replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-                    .split(/\s+/).filter(Boolean);
-                const name = words.slice(0, 2).join(' ');
-                if (!name || /^tellstream(?:\s+non)?$/i.test(name)) continue;
-
-                // Delete repeated DJ entries from the gallery, don't combine
-                // or display multiple cards for the same on-air image.
-                // Filename aliases (e.g. Cruss / DJ Cruss) resolve to one DJ.
-                const filename = resolveLogoFilename(name);
-                const key = (filename || name).toLocaleLowerCase('en-GB');
-                if (!names.has(key)) names.set(key, name);
-            }
-            presenters = Array.from(names.values())
-                .sort((a, b) => a.localeCompare(b, 'en-GB', { sensitivity: 'base' }));
+            presenters = getScheduledPresenterNames(response.data, resolveLogoFilename);
             hasLoaded = true;
             render(Date.now());
         } catch (error) {

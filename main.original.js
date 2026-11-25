@@ -1,5 +1,5 @@
-import { initDjsShowcase } from './dj-showcase.js?v=20261125-r2dj1';
-import { resolveDjShowcaseLogoFile } from './dj-logo-filename-fix.js?v=20261125-hosted1';
+import { initDjsShowcase } from './dj-showcase.js?v=20261125-djidentity1';
+import { resolveDjShowcaseLogoFile, resolveScheduledDjLabel } from './dj-logo-filename-fix.js?v=20261125-djidentity1';
 
 const SUPABASE_URL = "https://vegwferwmyuunwvfqpsf.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZ3dmZXJ3bXl1dW53dmZxcHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODU5NDQsImV4cCI6MjA5Nzk2MTk0NH0.7F3HUEY59BGE5phlD9AukhZzRa3Ied_ZT43j8YZeIy8";
@@ -177,7 +177,7 @@ async function renderStreamHeader(showName) {
     }
 
     if (showName) {
-        const cleanName = showName.trim();
+        const cleanName = resolveScheduledDjLabel(showName.trim());
 
         // Update display text immediately to prevent latency/refresh lag
         if (cleanName.toLowerCase() === 'tellstream') {
@@ -1936,7 +1936,7 @@ async function fetchAndRenderWeeklyTimetable() {
             }
             if (item.dj_name === "tellstream") return;
 
-            let currentDJ = formatPresenterName(item.dj_name);
+            let currentDJ = resolveScheduledDjLabel(formatPresenterName(item.dj_name));
             let noteLabel = "";
 
             if (tempOverrides) {
@@ -1946,7 +1946,7 @@ async function fetchAndRenderWeeklyTimetable() {
                         currentDJ = "tellstream";
                         noteLabel = `<span style="color:#ff3333; font-size:0.7rem; font-weight:bold; background:rgba(255,51,51,0.1); padding:2px 6px; border-radius:3px; margin-left:8px;">[CANCELLED]</span>`;
                     } else {
-                        currentDJ = formatPresenterName(matchOverride.dj_name);
+                        currentDJ = resolveScheduledDjLabel(formatPresenterName(matchOverride.dj_name));
                         noteLabel = `<span style="color:#ffdd1a; font-size:0.7rem; font-weight:bold; background:rgba(255,221,26,0.1); padding:2px 6px; border-radius:3px; margin-left:8px;">[COVER SET]</span>`;
                     }
                 }

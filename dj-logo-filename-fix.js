@@ -41,6 +41,21 @@ function normalizeFirstTwoDjWords(name) {
         .join('_');
 }
 
+// These are incomplete, one-word records left by the older schedule editor.
+// They are NOT valid DJ names. Repair them for display and image matching only;
+// do not rewrite the stored schedule, or accept new single-word DJ entries.
+const LEGACY_INCOMPLETE_DJ_NAMES = Object.freeze({
+    'milo': 'Milo Medina',
+    'squidly': 'Squidly Bashment',
+    'selector': 'Selector Frost'
+});
+
+export function resolveScheduledDjLabel(value) {
+    const original = String(value || '').trim();
+    if (!original || original.split(/\s+/).length !== 1) return original;
+    return LEGACY_INCOMPLETE_DJ_NAMES[original.toLowerCase()] || original;
+}
+
 // Shared DJ image filenames for both the live on-air banner and DJ gallery.
 // PNG files are original, unmodified images hosted under /src/assets/djs/.
 export function resolveDjShowcaseLogoFile(name) {
