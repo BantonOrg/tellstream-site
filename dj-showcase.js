@@ -1,3 +1,5 @@
+import { resolveScheduledDjLabel } from './dj-logo-filename-fix.js?v=20261125-djidentity1';
+
 // TellStream DJ showcase: scheduled presenters and existing on-air images only.
 // No hard-coded roster, generated portraits, or dependency on the poster asset.
 export function initDjsShowcase({ client, resolveLogoFilename }) {
@@ -128,11 +130,15 @@ export function initDjsShowcase({ client, resolveLogoFilename }) {
 
                 // A schedule entry may include a programme title. Only its
                 // first two words identify the DJ and their existing image.
-                const words = String(row.dj_name || '').trim()
-                    .replace(/_/g, ' ').replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+                const raw = String(row.dj_name || '').trim()
+                    .replace(/_/g, ' ').replace(/([a-z0-9])([A-Z])/g, '$1 $2');
+                const words = resolveScheduledDjLabel(raw)
                     .split(/\s+/).filter(Boolean);
+                // No DJs have one-word identities. Only the three documented
+                // incomplete legacy records above are repaired at read-time.
+                if (words.length < 2) continue;
                 const name = words.slice(0, 2).join(' ');
-                if (!name || /^tellstream(?:\s+non)?$/i.test(name)) continue;
+                if (/^tellstream(?:\s+non)?$/i.test(name)) continue;
 
                 // Delete repeated DJ entries from the gallery, don't combine
                 // or display multiple cards for the same on-air image.
