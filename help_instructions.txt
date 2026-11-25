@@ -119,11 +119,12 @@ DJ / Presenter, and Station Admin.
   Station Admins can post updates directly to the red "Boss Notices" column.
 
 * Presenter Logo Management:
-  - Type: /upload PresenterName   - Shows the correct local PNG filename and GitHub upload instructions.
-  - Type: /delete PresenterName   - Shows the filename and GitHub deletion instructions.
-  - Images are hosted in src/assets/djs/ (Cloudflare Pages), not Supabase.
-  - Upload PNG files through GitHub: Add file > Upload files, then commit.
-  - The image filename corresponds to the DJ's first two name words; existing aliases use the mapped filename.
+  - Type: /upload Firstname Surname - Opens a PNG image picker and uploads to Cloudflare R2.
+  - Example: /upload Squidly Bashment
+  - Type: /delete Firstname Surname - Hides and removes a DJ's image from R2.
+  - Only verified Station Admins (Level 2) may upload or delete DJ photographs.
+  - Images use the first two words and existing name mappings.
+  - Original hosted PNGs in src/assets/djs/ are kept as fallback images.
 
 * Event Flyer Management:
   - Type: /uploadflyer DDMMYY_name - Opens a file picker and uploads PNG/JPEG/WebP to R2.
