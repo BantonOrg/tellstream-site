@@ -108,7 +108,7 @@ function mpRenderPlayerStatus(row){
 function mpFitPlayerStatusNames(){
  const bar=$('playerStatusBar');if(!bar)return;
  const isNarrow=window.innerWidth<=700;
- const base=isNarrow?Math.min(30,Math.max(18,window.innerWidth*.054)):Math.min(38,Math.max(20,window.innerWidth*.021));
+ const base=0.75*(isNarrow?Math.min(30,Math.max(18,window.innerWidth*.054)):Math.min(38,Math.max(20,window.innerWidth*.021)));
  const measure=document.createElement('canvas').getContext('2d');
  bar.querySelectorAll('.player-status-name').forEach(label=>{
   label.style.fontSize=base+'px';
