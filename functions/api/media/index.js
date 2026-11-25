@@ -20,6 +20,10 @@ function sameOrigin(request) {
     const origin = request.headers.get('Origin');
     return !origin || origin === new URL(request.url).origin;
 }
+function liveHost(request) {
+    // Preview branches must never write to the production Supabase tables.
+    return new URL(request.url).hostname === 'tellstream.banton.org';
+}
 function credentials(context) {
     const key = context.env.SUPABASE_ANON_KEY;
     if (!key || !context.env.MEDIA) return null;
@@ -137,6 +141,7 @@ export async function onRequestGet(context) {
     } catch (_) { return fail('Cannot list event flyers', 503); }
 }
 export async function onRequestPost(context) {
+    if (!liveHost(context.request)) return fail('Uploads require the live TellStream domain', 403);
     if (!sameOrigin(context.request)) return fail('Invalid request origin', 403);
     const length = Number(context.request.headers.get('Content-Length') || 0);
     if (length > 9 * 1024 * 1024) return fail('Image too large', 413);
@@ -176,7 +181,7 @@ export async function onRequestPost(context) {
     try {
         if (kind === 'member-photo') {
             const rows = await database(connection,
-                query('member_photos', { username: identity.username }, 'id,file_name'));
+                query('member_photos', { username: identity.username }, 'id,file_name') + '&order=created_at.asc');
             if (!Array.isArray(rows)) return fail('Cannot check current photo gallery', 503);
             await putFile(context.env.MEDIA, key, bytes, ext);
             try {
@@ -222,10 +227,12 @@ export async function onRequestPost(context) {
     } catch (_) { return fail('Upload could not be saved', 503); }
 }
 export async function onRequestDelete(context) {
+    if (!liveHost(context.request)) return fail('Deletions require the live TellStream domain', 403);
     if (!sameOrigin(context.request)) return fail('Invalid request origin', 403);
     let body;
     try { body = await context.request.json(); }
     catch (_) { return fail('Invalid delete request'); }
+    if (!body || typeof body !== 'object') return fail('Invalid delete request');
     const auth = await authenticated(context, body.username, body.password);
     if (auth.error) return auth.error;
     const { connection, identity } = auth;
