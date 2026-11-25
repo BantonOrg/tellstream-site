@@ -114,12 +114,16 @@ function findProfileMatch(showName) {
         if (match) return match;
     }
 
-    // 2. Try matching by first word of both names (fallback for single-name DJs)
-    const targetOne = words[0];
-    const matchOne = Object.values(profilesCache).find(p => 
-        getFirstWords(p.username, 1) === targetOne
-    );
-    if (matchOne) return matchOne;
+    // 2. Only use a first-word profile match for an actual one-word DJ.
+    // For a two-word schedule entry, such a match can override the correct
+    // DJ image filename (e.g. Squidly Bashment becoming Squidly).
+    if (words.length === 1) {
+        const targetOne = words[0];
+        const matchOne = Object.values(profilesCache).find(p =>
+            getFirstWords(p.username, 1) === targetOne
+        );
+        if (matchOne) return matchOne;
+    }
 
     // 3. Fallback to exact match check
     const exactMatch = Object.values(profilesCache).find(p => 
@@ -1802,7 +1806,8 @@ async function processScheduleConsoleInjections(text, djUser) {
         const startTime = args[3];
         const endTime = args[4];
         const timeZone = args[5];
-        const targetDJ = formatPresenterName(args[6] || djUser);
+        // Exactly the first TWO name words, matching the on-air DJ image and gallery.
+        const targetDJ = formatPresenterName(args.slice(6, 8).join(' ') || djUser);
 
         if (!dayName || !startTime || !endTime || !timeZone) {
             alert("Format missing. Use: /schedule perm [Day] [Start Time] [End Time] [Time Zone] [optional: Presenter_Name]");
@@ -1819,14 +1824,20 @@ async function processScheduleConsoleInjections(text, djUser) {
             p_dj_name: targetDJ
         });
 
-        if (error) console.error("Database master schedule record failure:", error.message);
+        if (error) {
+            console.error("Database master schedule record failure:", error.message);
+            alert("Schedule update failed: " + error.message);
+        } else {
+            alert("Weekly slot saved for " + targetDJ + ". The gallery will use its first two words.");
+        }
     }
     else if (action === 'temp') {
         const dateBlock = args[2];
         const startTime = args[3];
         const endTime = args[4];
         const timeZone = args[5];
-        const targetDJ = formatPresenterName(args[6] || djUser);
+        // Exactly the first TWO name words, matching the on-air DJ image and gallery.
+        const targetDJ = formatPresenterName(args.slice(6, 8).join(' ') || djUser);
 
         if (!dateBlock || !startTime || !endTime || !timeZone || dateBlock.length !== 6) {
             alert("Format missing. Use: /schedule temp [ddmmyy] [Start Time] [End Time] [Time Zone] [optional: Presenter_Name]");
@@ -1843,6 +1854,12 @@ async function processScheduleConsoleInjections(text, djUser) {
             p_dj_name: targetDJ,
             p_is_cancelled: false
         });
+        if (error) {
+            console.error("Temporary schedule update failed:", error.message);
+            alert("Temporary show update failed: " + error.message);
+        } else {
+            alert("Temporary show saved for " + targetDJ + ".");
+        }
 
         if (error) console.error("Database temporary override record failure:", error.message);
     }
