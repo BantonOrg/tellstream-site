@@ -41,7 +41,6 @@ let bannedWordsCache = [];
 let bannedUsersCache = {};
 let isNoticeBoardActive = false;
 
-let pendingLogoTargetName = "";
 let pendingFlyerTargetName = "";
 
 let currentChatMode = 'lounge';
@@ -85,28 +84,12 @@ const adminHelpInstructions = [
     { title: "🗓️ Permanent Timetable Slot", text: "Type: /schedule perm DayOfWeek StartTime EndTime TimeZone DJName\nExample: /schedule perm Friday 2000 2200 BST Cruss\nWhat it does: Sets a repeating weekly show slot in the schedule." },
     { title: "❌ Cancelling a Scheduled Show", text: "Type: /schedule cancel Date StartTime\nExample: /schedule cancel 100726 2000\nWhat it does: Removes a permanent or temporary show from the schedule." },
     { title: "📋 Posting to the Boss Noticeboard", text: "Station Admins can post updates directly to the red \"Boss Notices\" column." },
-    { title: "🖼️ Presenter Logo Management", text: "Type: /upload PresenterName - Opens a window to upload a transparent PNG logo.\nType: /delete PresenterName - Removes a presenter's logo from storage." },
+    { title: "🖼️ Presenter Logo Management", text: "DJ photographs live in the website's src/assets/djs/ folder. Type: /upload PresenterName or /delete PresenterName to see the correct filename and GitHub upload/delete instructions. Only station admins can manage the files. Photos publish with the next Cloudflare deployment." },
     { title: "🔥 Event Flyer Management", text: "Type: /uploadflyer Date FlyerName - Opens a window to upload a flyer image. Note: The file name on your computer must begin with the 6-digit date followed by a space, e.g., 100726 SummerBash.jpg\nType: /deleteflyer Date FlyerName - Removes a flyer from storage." },
     { title: "👑 User Role Management", text: "Type: /setlevel username LevelNumber - Sets the access level (0 = Listener, 1 = DJ, 2 = Admin)." },
     { title: "🌟 VIP Status Management", text: "Type: /promote VIP DurationInMonths username (e.g., /promote VIP 3 username, or use the word perm for permanent)\nType: /demote VIP username - Removes VIP status." },
     { title: "🚫 Unbanning Users", text: "Type: /unban username\nWhat it does: Clears all strikes and restores chat/noticeboard access instantly for locked or banned users." }
 ];
-
-function getLogoFileName(baseName) {
-    if (!baseName) return "";
-    const clean = baseName.toLowerCase().trim().replace(/\s+/g, '_');
-    const specialMap = {
-        'fari_ras': 'farl_ras',
-        'fada_b': 'father_b',
-        'fire_ras': 'fyah_ras',
-        'wayne_irie': 'wayne_lrie',
-        'sandra_b': 'sandra_bee',
-        'stinger_blinger': 'stinger_binger',
-        'milo_medina': 'milo_medina_int'
-    };
-    const mapped = specialMap[clean] || clean;
-    return mapped + '.png';
-}
 
 function findProfileMatch(showName) {
     if (!showName) return null;
@@ -203,11 +186,8 @@ function renderStreamHeader(showName) {
         }
         const words = matchedName.trim().split(/\s+/);
         const nameToUse = (words.length >= 2) ? `${words[0]} ${words[1]}` : words[0];
-        const safeFileName = getLogoFileName(nameToUse);
-
-
-        const { data } = supabase_db.storage.from('dj-logos').getPublicUrl(safeFileName);
-        const imgCloudUrl = data.publicUrl + '?v=' + Date.now();
+        const safeFileName = resolveDjShowcaseLogoFile(nameToUse);
+        const imgCloudUrl = '/src/assets/djs/' + encodeURIComponent(safeFileName);
 
         const imageProbe = new Image();
 
@@ -1650,36 +1630,23 @@ async function sendMessage() {
             if (text.startsWith('/upload ') || text.startsWith('/delete ')) {
                 if (userPowerLevel < 2) {
                     messageInput.value = '';
-                    alert("🔒 Access Denied: Only Station Admins (Level 2) have authorization to manage cloud image assets.");
+                    alert("🔒 Access Denied: Only Station Admins (Level 2) can manage DJ images.");
                     return;
                 }
 
-                if (text.startsWith('/upload ')) {
-                    const uploadNameInput = text.substring(8).trim().substring(0, 50);
-                    if (uploadNameInput) {
-                        messageInput.value = '';
-                        pendingLogoTargetName = uploadNameInput.toLowerCase().replace(/\s+/g, '_');
-                        const hiddenUploader = document.getElementById('studioLogoHiddenFilePicker');
-                        if (hiddenUploader) hiddenUploader.click();
-                        return;
-                    }
-                }
-
-                if (text.startsWith('/delete ')) {
-                    const deleteNameInput = text.substring(8).trim().substring(0, 50);
-                    if (deleteNameInput) {
-                        messageInput.value = '';
-                        const targetFileName = getLogoFileName(deleteNameInput);
-                        try {
-                            const { error } = await supabase_db.storage.from('dj-logos').remove([targetFileName]);
-                            if (error) throw error;
-                            alert(`🗑️ Logo successfully deleted for: "${deleteNameInput}"`);
-                            await loadInitialStreamStatus();
-                        } catch (err) {
-                            alert("Cloud Deletion Failure: " + err.message);
-                        }
-                        return;
-                    }
+                const uploading = text.startsWith('/upload ');
+                const targetName = text.substring(uploading ? 8 : 8).trim().substring(0, 50);
+                if (targetName) {
+                    messageInput.value = '';
+                    const filename = resolveDjShowcaseLogoFile(targetName);
+                    const folder = 'https://github.com/BantonOrg/tellstream-site/tree/main/src/assets/djs';
+                    alert((uploading ? 'To ADD or REPLACE the DJ image:' : 'To REMOVE the DJ image:') +
+                        '\n1. Open ' + folder +
+                        (uploading ? '\n2. Select Add file → Upload files.' : '\n2. Select the file and delete it.') +
+                        '\n3. Filename: ' + filename +
+                        '\n4. Commit the change. Cloudflare will publish it.' +
+                        '\nDJ images are now hosted with TellStream, not Supabase.');
+                    return;
                 }
             }
 
@@ -3025,7 +2992,6 @@ function updateWebVersionFooter() {
     try {
         initDjsShowcase({
             client: supabase_db,
-            storageOrigin: SUPABASE_URL,
             resolveLogoFilename: resolveDjShowcaseLogoFile
         });
     } catch (error) {
@@ -3062,30 +3028,6 @@ function updateWebVersionFooter() {
 
     try { await renderActiveFlyers(); } catch (e) { }
     setTimeout(initQuickEmojiCloud, 500);
-
-    const hiddenInputFileTag = document.createElement('input');
-    hiddenInputFileTag.type = 'file';
-    hiddenInputFileTag.id = 'studioLogoHiddenFilePicker';
-    hiddenInputFileTag.accept = 'image/png';
-    hiddenInputFileTag.style.display = 'none';
-    document.body.appendChild(hiddenInputFileTag);
-
-    hiddenInputFileTag.addEventListener('change', async function (e) {
-        const file = e.target.files[0];
-        if (!file || !pendingLogoTargetName) return;
-        try {
-            const uploadFileName = getLogoFileName(pendingLogoTargetName);
-            const { error } = await supabase_db.storage.from('dj-logos').upload(uploadFileName, file, { upsert: true });
-            if (error) throw error;
-            alert(`✅ Success! Transparent logo saved for: "${pendingLogoTargetName.replace(/_/g, ' ')}"`);
-            await loadInitialStreamStatus();
-        } catch (err) {
-            alert("Cloud Upload Failure: " + err.message);
-        } finally {
-            hiddenInputFileTag.value = '';
-            pendingLogoTargetName = "";
-        }
-    });
 
     const hiddenFlyerInputFileTag = document.createElement('input');
     hiddenFlyerInputFileTag.type = 'file';
