@@ -66,7 +66,8 @@
             deleted: new Set(data.deleted || [])
         })).catch(error => {
             // A missing preview/Cloudflare function must not blank the old images.
-            invalidateDjs();
+            // Keep the fallback result briefly so a 20-DJ gallery doesn't
+            // make 20 redundant requests while the API is unavailable.
             console.warn('[TellStream DJ images] R2 lookup unavailable; using site assets:', error.message);
             return null;
         });
