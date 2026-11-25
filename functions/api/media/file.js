@@ -4,7 +4,7 @@ const types = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: '
 function validKey(key) {
     if (typeof key !== 'string' || key.length < 8 || key.length > 400 ||
         /[\x00-\x1f\\]/.test(key) || key.includes('..') || key.includes('//')) return false;
-    if (!/^(flyers|avatars|member-photos)\//.test(key)) return false;
+    if (!/^(flyers|avatars|member-photos|djs)\//.test(key)) return false;
     const ext = key.split('.').at(-1).toLowerCase();
     if (!types[ext]) return false;
     return key.split('/').every(part => part.length > 0);
