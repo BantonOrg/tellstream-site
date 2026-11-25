@@ -6,6 +6,7 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const supabase_db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let isCurrentUserVerified = false;
+let pendingR2FlyerName = '';
 
 const chatBox = document.getElementById('chatBox');
 const usernameInput = document.getElementById('usernameInput');
@@ -84,7 +85,7 @@ const adminHelpInstructions = [
     { title: "❌ Cancelling a Scheduled Show", text: "Type: /schedule cancel Date StartTime\nExample: /schedule cancel 100726 2000\nWhat it does: Removes a permanent or temporary show from the schedule." },
     { title: "📋 Posting to the Boss Noticeboard", text: "Station Admins can post updates directly to the red \"Boss Notices\" column." },
     { title: "🖼️ Presenter Logo Management", text: "DJ photographs live in the website's src/assets/djs/ folder. Type: /upload PresenterName or /delete PresenterName to see the correct filename and GitHub upload/delete instructions. Only station admins can manage the files. Photos publish with the next Cloudflare deployment." },
-    { title: "🔥 Event Flyer Management", text: "Event flyers are hosted in src/assets/flyers/. Type: /uploadflyer Date FlyerName or /deleteflyer Date FlyerName to get GitHub instructions. Filename must begin DDMMYY. Commit your change; the hosted flyer list updates automatically." },
+    { title: "🔥 Event Flyer Management", text: "Type /uploadflyer DDMMYY_name to choose and upload a JPG, PNG or WebP picture securely to TellStream R2. Type /deleteflyer DDMMYY_name to remove the flyer from the listings. Only verified Station Admins can perform these actions." },
     { title: "👑 User Role Management", text: "Type: /setlevel username LevelNumber - Sets the access level (0 = Listener, 1 = DJ, 2 = Admin)." },
     { title: "🌟 VIP Status Management", text: "Type: /promote VIP DurationInMonths username (e.g., /promote VIP 3 username, or use the word perm for permanent)\nType: /demote VIP username - Removes VIP status." },
     { title: "🚫 Unbanning Users", text: "Type: /unban username\nWhat it does: Clears all strikes and restores chat/noticeboard access instantly for locked or banned users." }
@@ -1675,21 +1676,36 @@ async function sendMessage() {
                     return;
                 }
                 const uploading = text.startsWith('/uploadflyer ');
-                const rawName = text.substring(13).trim().substring(0, 70);
-                const name = rawName.toLowerCase().replace(/\s+/g, '_');
+                const name = text.substring(13).trim().toLowerCase().replace(/\s+/g, '_').substring(0, 90);
                 if (name) {
                     messageInput.value = '';
-                    if (uploading && !/^\d{6}/.test(name)) {
-                        alert("Flyer names must start with DDMMYY (six digits).");
+                    if (uploading) {
+                        const stem = name.replace(/\.(png|jpg|jpeg|webp)$/i, '');
+                        if (!/^\d{6}_[a-z0-9_-]{1,90}$/.test(stem)) {
+                            alert("Flyer name must be DDMMYY_name, for example 010127_summer_event.");
+                            return;
+                        }
+                        pendingR2FlyerName = stem;
+                        const picker = document.getElementById('r2FlyerFilePicker');
+                        if (picker) picker.click();
+                        else alert('Flyer upload picker unavailable.');
                         return;
                     }
-                    const folder = 'https://github.com/BantonOrg/tellstream-site/tree/main/src/assets/flyers';
-                    alert((uploading ? 'To ADD or REPLACE an event flyer:' : 'To REMOVE an event flyer:') +
-                        '\n1. Open ' + folder +
-                        (uploading ? '\n2. Select Add file → Upload files.' : '\n2. Select the existing flyer and delete it.') +
-                        '\n3. Name begins with: ' + name +
-                        '\n4. Commit. The hosted flyer list is updated automatically.' +
-                        '\nThis keeps event flyers on TellStream hosting, not Supabase.');
+                    try {
+                        const archived = await window.TellStreamHostedMedia.listHosted('flyers');
+                        const live = await window.TellStreamR2Media.flyers();
+                        const all = [...new Set([...archived, ...(live.files || []).map(item => item.name)])];
+                        const matches = all.filter(item => item === name ||
+                            item.replace(/\.(png|jpg|jpeg|webp)$/i, '') === name);
+                        if (matches.length !== 1) {
+                            alert(matches.length ? 'More than one flyer matched. Specify the full filename.' :
+                                'Flyer not found. Check the exact filename.');
+                            return;
+                        }
+                        await window.TellStreamR2Media.remove('flyer', { name: matches[0] });
+                        await renderActiveFlyers();
+                        alert('Flyer removed from the event listings.');
+                    } catch (error) { alert('Flyer deletion failed: ' + error.message); }
                     return;
                 }
             }
@@ -3019,6 +3035,26 @@ function updateWebVersionFooter() {
     try { await renderActiveFlyers(); } catch (e) { }
     setTimeout(initQuickEmojiCloud, 500);
 
+
+    const r2FlyerFilePicker = document.createElement('input');
+    r2FlyerFilePicker.type = 'file';
+    r2FlyerFilePicker.id = 'r2FlyerFilePicker';
+    r2FlyerFilePicker.accept = 'image/png,image/jpeg,image/webp';
+    r2FlyerFilePicker.hidden = true;
+    document.body.appendChild(r2FlyerFilePicker);
+    r2FlyerFilePicker.addEventListener('change', async event => {
+        const file = event.target.files[0];
+        if (!file || !pendingR2FlyerName) return;
+        try {
+            await window.TellStreamR2Media.upload('flyer', file, { name: pendingR2FlyerName });
+            await renderActiveFlyers();
+            alert('Event flyer uploaded to TellStream R2.');
+        } catch (error) { alert('Event flyer upload failed: ' + error.message); }
+        finally {
+            pendingR2FlyerName = '';
+            r2FlyerFilePicker.value = '';
+        }
+    });
 
     const currentUser = usernameInput.value.trim();
     syncDrawerName();
