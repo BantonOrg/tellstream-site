@@ -1,11 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { onRequestGet, onRequestPost, onRequestDelete } from '../functions/api/media/index.js';
+import { onRequestGet as onFileGet } from '../functions/api/media/file.js';
 
 class FakeBucket {
   constructor() { this.items = new Map(); }
   async put(key, bytes, options) { this.items.set(key, { bytes, options }); }
   async delete(key) { this.items.delete(key); }
+  async get(key) {
+    const item = this.items.get(key);
+    return item ? { body: item.bytes, size: item.bytes.length } : null;
+  }
   async list({ prefix }) {
     return {
       objects: [...this.items.keys()].filter(key => key.startsWith(prefix)).map(key => ({ key })),
@@ -126,6 +131,66 @@ test('Owner can delete a member image but another user cannot', async () => {
     }));
     assert.equal(deleted.status, 200);
     assert.equal(ctx.photos.length, 0);
+  } finally { ctx.restore(); }
+});
+
+test('DJ images upload as original PNGs, override static assets and can be removed by admin', async () => {
+  const ctx = setup();
+  try {
+    const noPermission = await onRequestPost(context(ctx.bucket, 'POST', {
+      username: 'Vip', password: 'pass', kind: 'dj',
+      filename: 'squidly_bashment.png', file: png()
+    }));
+    assert.equal(noPermission.status, 403);
+
+    const notPng = await onRequestPost(context(ctx.bucket, 'POST', {
+      username: 'Admin', password: 'pass', kind: 'dj',
+      filename: 'squidly_bashment.png', file: jpeg()
+    }));
+    assert.equal(notPng.status, 400);
+
+    const uploaded = await onRequestPost(context(ctx.bucket, 'POST', {
+      username: 'Admin', password: 'pass', kind: 'dj',
+      filename: 'squidly_bashment.png', file: png()
+    }));
+    assert.equal(uploaded.status, 201);
+    const returned = await uploaded.json();
+    assert.equal(returned.file_name, 'squidly_bashment.png');
+    assert.equal(ctx.bucket.items.has('djs/squidly_bashment.png'), true);
+
+    const list = await (await onRequestGet(context(ctx.bucket, 'GET',
+      {}, 'https://tellstream.banton.org'))).json();
+    // The existing GET defaults to flyers, so request the DJ listing separately.
+    assert.deepEqual(list.files, []);
+    const djRequest = new Request('https://tellstream.banton.org/api/media?kind=djs');
+    const djContext = { request: djRequest, env: { MEDIA: ctx.bucket } };
+    const djs = await (await onRequestGet(djContext)).json();
+    assert.deepEqual(djs.files.map(x => x.name), ['squidly_bashment.png']);
+
+    const image = await onFileGet({
+      request: new Request('https://tellstream.banton.org/api/media/file?key=djs%2Fsquidly_bashment.png'),
+      env: { MEDIA: ctx.bucket }
+    });
+    assert.equal(image.status, 200);
+    assert.equal(image.headers.get('content-type'), 'image/png');
+
+    const deletion = await onRequestDelete(context(ctx.bucket, 'DELETE', {
+      username: 'Admin', password: 'pass', kind: 'dj',
+      filename: 'squidly_bashment.png'
+    }));
+    assert.equal(deletion.status, 200);
+    const hidden = await (await onRequestGet(djContext)).json();
+    assert.deepEqual(hidden.files, []);
+    assert.deepEqual(hidden.deleted, ['squidly_bashment.png']);
+
+    const restored = await onRequestPost(context(ctx.bucket, 'POST', {
+      username: 'Admin', password: 'pass', kind: 'dj',
+      filename: 'squidly_bashment.png', file: png()
+    }));
+    assert.equal(restored.status, 201);
+    const listAfterRestore = await (await onRequestGet(djContext)).json();
+    assert.deepEqual(listAfterRestore.deleted, []);
+    assert.deepEqual(listAfterRestore.files.map(x => x.name), ['squidly_bashment.png']);
   } finally { ctx.restore(); }
 });
 
