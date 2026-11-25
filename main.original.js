@@ -1635,7 +1635,7 @@ async function sendMessage() {
                 }
 
                 const uploading = text.startsWith('/upload ');
-                const targetName = text.substring(uploading ? 8 : 8).trim().substring(0, 50);
+                const targetName = text.substring(8).trim().substring(0, 50);
                 if (targetName) {
                     messageInput.value = '';
                     const filename = resolveDjShowcaseLogoFile(targetName);
