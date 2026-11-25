@@ -1,0 +1,26 @@
+{
+  "source": "public Supabase Storage flyers bucket",
+  "copied": 4,
+  "listed": 4,
+  "files": [
+    {
+      "path": "010127_welcome_to_tellstream.jpg",
+      "bytes": 992944
+    },
+    {
+      "path": "avatars_Banton.png",
+      "bytes": 36622
+    },
+    {
+      "path": "avatars_Big John.png",
+      "bytes": 46203
+    },
+    {
+      "path": "avatars_BigJohn.png",
+      "bytes": 46203
+    }
+  ],
+  "incomplete": false,
+  "skipped_count": 0,
+  "failed_count": 0
+}
