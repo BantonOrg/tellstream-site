@@ -2,7 +2,7 @@
 // Every write is verified server-side against TellStream's password RPC.
 // Never accept a claimed privilege, ownership, or R2 key from the browser.
 const PROJECT_URL = 'https://vegwferwmyuunwvfqpsf.supabase.co';
-const MAX_UPLOAD = { flyer: 8 * 1024 * 1024, avatar: 1024 * 1024, 'member-photo': 3 * 1024 * 1024 };
+const MAX_UPLOAD = { flyer: 8 * 1024 * 1024, avatar: 1024 * 1024, 'member-photo': 3 * 1024 * 1024, dj: 4 * 1024 * 1024 };
 const IMAGE_TYPES = { jpg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
 
 function reply(value, status) {
@@ -127,16 +127,19 @@ async function authenticated(context, username, password) {
 export async function onRequestGet(context) {
     if (!context.env.MEDIA) return fail('Media service not configured', 503);
     const url = new URL(context.request.url);
-    if (url.searchParams.get('kind') !== 'flyers') return fail('Unsupported media listing', 400);
+    const kind = url.searchParams.get('kind');
+    if (kind !== 'flyers' && kind !== 'djs') return fail('Unsupported media listing', 400);
     try {
+        const base = kind === 'djs' ? 'djs/' : 'flyers/';
+        const tombstones = kind === 'djs' ? 'deleted-djs/' : 'deleted-flyers/';
         const [keys, hidden] = await Promise.all([
-            allKeys(context.env.MEDIA, 'flyers/'),
-            allKeys(context.env.MEDIA, 'deleted-flyers/')
+            allKeys(context.env.MEDIA, base),
+            allKeys(context.env.MEDIA, tombstones)
         ]);
-        const deleted = new Set(hidden.map(key => key.slice('deleted-flyers/'.length)));
-        const files = keys.map(key => key.slice('flyers/'.length))
+        const deleted = new Set(hidden.map(key => key.slice(tombstones.length)));
+        const files = keys.map(key => key.slice(base.length))
             .filter(name => name && !name.includes('/') && !deleted.has(name))
-            .map(name => ({ name, url: publicUrl('flyers/' + name) }));
+            .map(name => ({ name, url: publicUrl(base + name) }));
         return reply({ files, deleted: Array.from(deleted) });
     } catch (_) { return fail('Cannot list event flyers', 503); }
 }
@@ -158,18 +161,24 @@ export async function onRequestPost(context) {
     const auth = await authenticated(context, form.get('username'), form.get('password'));
     if (auth.error) return auth.error;
     const { connection, identity } = auth;
-    if (kind === 'flyer' && identity.level < 2) return fail('Station Admin required', 403);
+    if ((kind === 'flyer' || kind === 'dj') && identity.level < 2) return fail('Station Admin required', 403);
     if (kind === 'member-photo' && !identity.isVip) return fail('VIP or DJ required', 403);
     const bytes = new Uint8Array(await file.arrayBuffer());
     const ext = imageKind(bytes);
     if (!ext) return fail('Only real PNG, JPEG or WebP images are accepted');
     if (kind === 'member-photo' && ext !== 'jpg') return fail('Member photographs must be JPEG');
+    if (kind === 'dj' && ext !== 'png') return fail('DJ photographs must be PNG');
     if (kind === 'avatar' && ext !== 'png') return fail('Avatar photographs must be PNG');
     let key, recordName;
     if (kind === 'flyer') {
         const name = safeFlyerName(form.get('name'));
         if (!name) return fail('Flyer name must be DDMMYY_name');
         key = 'flyers/' + name + '.' + ext;
+    } else if (kind === 'dj') {
+        // Same canonical name as the first-two-word on-air image resolver.
+        const filename = String(form.get('filename') || '').toLowerCase();
+        if (!/^[a-z0-9_]{1,90}\.png$/.test(filename)) return fail('Invalid DJ image filename');
+        key = 'djs/' + filename;
     } else if (kind === 'avatar') {
         key = 'avatars/' + encodedName(identity.username) + '/img_' + crypto.randomUUID() + '.png';
     } else {
@@ -219,11 +228,13 @@ export async function onRequestPost(context) {
                     await context.env.MEDIA.delete(key);
                     throw error;
                 }
-            } else {
+            } else if (kind === 'flyer') {
                 await context.env.MEDIA.delete('deleted-flyers/' + key.slice('flyers/'.length));
+            } else if (kind === 'dj') {
+                await context.env.MEDIA.delete('deleted-djs/' + key.slice('djs/'.length));
             }
         }
-        return reply({ ok: true, url, file_name: recordName || key.slice('flyers/'.length), kind }, 201);
+        return reply({ ok: true, url, file_name: recordName || key.split('/').slice(1).join('/'), kind }, 201);
     } catch (_) { return fail('Upload could not be saved', 503); }
 }
 export async function onRequestDelete(context) {
@@ -236,6 +247,18 @@ export async function onRequestDelete(context) {
     const auth = await authenticated(context, body.username, body.password);
     if (auth.error) return auth.error;
     const { connection, identity } = auth;
+    if (body.kind === 'dj') {
+        if (identity.level < 2) return fail('Station Admin required', 403);
+        const filename = String(body.filename || '').toLowerCase();
+        if (!/^[a-z0-9_]{1,90}\.png$/.test(filename)) return fail('Invalid DJ image filename');
+        try {
+            await context.env.MEDIA.delete('djs/' + filename);
+            await context.env.MEDIA.put('deleted-djs/' + filename, 'removed', {
+                httpMetadata: { contentType: 'text/plain' }
+            });
+            return reply({ ok: true, filename });
+        } catch (_) { return fail('Could not delete DJ photograph', 503); }
+    }
     if (body.kind === 'flyer') {
         if (identity.level < 2) return fail('Station Admin required', 403);
         const name = String(body.name || '');
