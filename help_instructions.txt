@@ -102,7 +102,7 @@ DJ / Presenter, and Station Admin.
 --------------------------------------------------------------------------------
 
 * Station Admin Control:
-  Station Admins have full control over the website. They can upload logos, 
+  Station Admins manage DJ photographs in the website's src/assets/djs/ folder,
   manage event flyers, promote users, edit the filter, and unban players.
 
 * Adding a Repeating Weekly Slot:
@@ -119,8 +119,11 @@ DJ / Presenter, and Station Admin.
   Station Admins can post updates directly to the red "Boss Notices" column.
 
 * Presenter Logo Management:
-  - Type: /upload PresenterName   - Opens a window to upload a transparent PNG logo.
-  - Type: /delete PresenterName   - Removes a presenter's logo from storage.
+  - Type: /upload PresenterName   - Shows the correct local PNG filename and GitHub upload instructions.
+  - Type: /delete PresenterName   - Shows the filename and GitHub deletion instructions.
+  - Images are hosted in src/assets/djs/ (Cloudflare Pages), not Supabase.
+  - Upload PNG files through GitHub: Add file > Upload files, then commit.
+  - The image filename corresponds to the DJ's first two name words; existing aliases use the mapped filename.
 
 * Event Flyer Management:
   - Type: /uploadflyer Date FlyerName - Opens a window to upload a flyer image. 
