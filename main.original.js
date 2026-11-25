@@ -41,7 +41,6 @@ let bannedWordsCache = [];
 let bannedUsersCache = {};
 let isNoticeBoardActive = false;
 
-let pendingFlyerTargetName = "";
 
 let currentChatMode = 'lounge';
 let activeDMTabs = [];
@@ -85,7 +84,7 @@ const adminHelpInstructions = [
     { title: "❌ Cancelling a Scheduled Show", text: "Type: /schedule cancel Date StartTime\nExample: /schedule cancel 100726 2000\nWhat it does: Removes a permanent or temporary show from the schedule." },
     { title: "📋 Posting to the Boss Noticeboard", text: "Station Admins can post updates directly to the red \"Boss Notices\" column." },
     { title: "🖼️ Presenter Logo Management", text: "DJ photographs live in the website's src/assets/djs/ folder. Type: /upload PresenterName or /delete PresenterName to see the correct filename and GitHub upload/delete instructions. Only station admins can manage the files. Photos publish with the next Cloudflare deployment." },
-    { title: "🔥 Event Flyer Management", text: "Type: /uploadflyer Date FlyerName - Opens a window to upload a flyer image. Note: The file name on your computer must begin with the 6-digit date followed by a space, e.g., 100726 SummerBash.jpg\nType: /deleteflyer Date FlyerName - Removes a flyer from storage." },
+    { title: "🔥 Event Flyer Management", text: "Event flyers are hosted in src/assets/flyers/. Type: /uploadflyer Date FlyerName or /deleteflyer Date FlyerName to get GitHub instructions. Filename must begin DDMMYY. Commit your change; the hosted flyer list updates automatically." },
     { title: "👑 User Role Management", text: "Type: /setlevel username LevelNumber - Sets the access level (0 = Listener, 1 = DJ, 2 = Admin)." },
     { title: "🌟 VIP Status Management", text: "Type: /promote VIP DurationInMonths username (e.g., /promote VIP 3 username, or use the word perm for permanent)\nType: /demote VIP username - Removes VIP status." },
     { title: "🚫 Unbanning Users", text: "Type: /unban username\nWhat it does: Clears all strikes and restores chat/noticeboard access instantly for locked or banned users." }
@@ -1684,54 +1683,26 @@ async function sendMessage() {
             if (text.startsWith('/uploadflyer ') || text.startsWith('/deleteflyer ')) {
                 if (userPowerLevel < 2) {
                     messageInput.value = '';
-                    alert("🔒 Access Denied: Only Station Admins (Level 2) have authorization to manage event flyer assets.");
+                    alert("🔒 Access Denied: Only Station Admins (Level 2) can manage event flyers.");
                     return;
                 }
-
-                if (text.startsWith('/uploadflyer ')) {
-                    const uploadNameInput = text.substring(13).trim().substring(0, 50);
-                    if (uploadNameInput) {
-                        const filenameClean = uploadNameInput.toLowerCase().replace(/\s+/g, '_');
-                        const datePrefix = filenameClean.substring(0, 6);
-                        if (!/^\d{6}$/.test(datePrefix)) {
-                            alert("Error Name format! Must start with 6 digits (DDMMYY).");
-                            return;
-                        }
-                        messageInput.value = '';
-                        pendingFlyerTargetName = filenameClean;
-                        const hiddenUploader = document.getElementById('studioFlyerHiddenFilePicker');
-                        if (hiddenUploader) hiddenUploader.click();
+                const uploading = text.startsWith('/uploadflyer ');
+                const rawName = text.substring(13).trim().substring(0, 70);
+                const name = rawName.toLowerCase().replace(/\s+/g, '_');
+                if (name) {
+                    messageInput.value = '';
+                    if (uploading && !/^\d{6}/.test(name)) {
+                        alert("Flyer names must start with DDMMYY (six digits).");
                         return;
                     }
-                }
-
-                if (text.startsWith('/deleteflyer ')) {
-                    const deleteNameInput = text.substring(13).trim().substring(0, 50);
-                    if (deleteNameInput) {
-                        const filenameClean = deleteNameInput.toLowerCase().replace(/\s+/g, '_');
-                        messageInput.value = '';
-                        try {
-                            const { data: files, error: listError } = await supabase_db.storage.from('flyers').list('', { limit: 100 });
-                            if (listError) throw listError;
-
-                            const targetFile = files.find(f => {
-                                const lowerName = f.name.toLowerCase();
-                                return lowerName === filenameClean || lowerName.startsWith(filenameClean + '.');
-                            });
-                            if (!targetFile) {
-                                alert(`❓ Flyer matching "${deleteNameInput}" not found in storage.`);
-                                return;
-                            }
-
-                            const { error } = await supabase_db.storage.from('flyers').remove([targetFile.name]);
-                            if (error) throw error;
-                            alert(`🗑️ Flyer successfully deleted: "${targetFile.name}"`);
-                            await renderActiveFlyers();
-                        } catch (err) {
-                            alert("Cloud Deletion Failure: " + err.message);
-                        }
-                        return;
-                    }
+                    const folder = 'https://github.com/BantonOrg/tellstream-site/tree/main/src/assets/flyers';
+                    alert((uploading ? 'To ADD or REPLACE an event flyer:' : 'To REMOVE an event flyer:') +
+                        '\n1. Open ' + folder +
+                        (uploading ? '\n2. Select Add file → Upload files.' : '\n2. Select the existing flyer and delete it.') +
+                        '\n3. Name begins with: ' + name +
+                        '\n4. Commit. The hosted flyer list is updated automatically.' +
+                        '\nThis keeps event flyers on TellStream hosting, not Supabase.');
+                    return;
                 }
             }
 
@@ -3060,33 +3031,6 @@ function updateWebVersionFooter() {
     try { await renderActiveFlyers(); } catch (e) { }
     setTimeout(initQuickEmojiCloud, 500);
 
-    const hiddenFlyerInputFileTag = document.createElement('input');
-    hiddenFlyerInputFileTag.type = 'file';
-    hiddenFlyerInputFileTag.id = 'studioFlyerHiddenFilePicker';
-    hiddenFlyerInputFileTag.accept = 'image/*';
-    hiddenFlyerInputFileTag.style.display = 'none';
-    document.body.appendChild(hiddenFlyerInputFileTag);
-
-    hiddenFlyerInputFileTag.addEventListener('change', async function (e) {
-        const file = e.target.files[0];
-        if (!file || !pendingFlyerTargetName) return;
-        try {
-            const originalName = file.name;
-            const extIndex = originalName.lastIndexOf('.');
-            const extension = extIndex !== -1 ? originalName.substring(extIndex + 1).toLowerCase() : 'jpg';
-
-            const uploadFileName = `${pendingFlyerTargetName}.${extension}`;
-            const { error } = await supabase_db.storage.from('flyers').upload(uploadFileName, file, { cacheControl: '3600', upsert: true });
-            if (error) throw error;
-            alert(`✅ Success! Flyer uploaded successfully: "${uploadFileName}"`);
-            await renderActiveFlyers();
-        } catch (err) {
-            alert("Cloud Upload Failure: " + err.message);
-        } finally {
-            hiddenFlyerInputFileTag.value = '';
-            pendingFlyerTargetName = "";
-        }
-    });
 
     const currentUser = usernameInput.value.trim();
     syncDrawerName();
