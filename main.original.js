@@ -187,7 +187,7 @@ function renderStreamHeader(showName) {
         const words = matchedName.trim().split(/\s+/);
         const nameToUse = (words.length >= 2) ? `${words[0]} ${words[1]}` : words[0];
         const safeFileName = resolveDjShowcaseLogoFile(nameToUse);
-        const imgCloudUrl = '/src/assets/djs/' + encodeURIComponent(safeFileName);
+        const imgHostedUrl = '/src/assets/djs/' + encodeURIComponent(safeFileName);
 
         const imageProbe = new Image();
 
@@ -201,7 +201,7 @@ function renderStreamHeader(showName) {
             cellLeft.style.position = 'relative';
             cellLeft.style.height = '';
 
-            logoImg.src = imgCloudUrl;
+            logoImg.src = imgHostedUrl;
             logoImg.style.position = 'absolute';
             logoImg.style.top = '0';
             logoImg.style.left = '0';
@@ -253,7 +253,7 @@ function renderStreamHeader(showName) {
             }
         };
 
-        imageProbe.src = imgCloudUrl; // Set source last to avoid race conditions
+        imageProbe.src = imgHostedUrl; // Set source last to avoid race conditions
     }
 }
 
