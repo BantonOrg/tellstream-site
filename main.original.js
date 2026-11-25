@@ -1667,6 +1667,10 @@ async function sendMessage() {
                 if (targetName) {
                     messageInput.value = '';
                     // Same first-two-word mapping used by the on-air image and gallery.
+                    if (targetName.trim().split(/\s+/).filter(Boolean).length < 2) {
+                        alert('Enter the first TWO words of the DJ name, e.g. Selector Frost or Squidly Bashment.');
+                        return;
+                    }
                     const filename = resolveDjShowcaseLogoFile(targetName);
                     if (!/^[a-z0-9_]{1,90}\.png$/.test(filename)) {
                         alert('Invalid DJ name. Use the first two words of the DJ name.');
@@ -1808,6 +1812,12 @@ async function processScheduleConsoleInjections(text, djUser) {
         const timeZone = args[5];
         // Exactly the first TWO name words, matching the on-air DJ image and gallery.
         const targetDJ = formatPresenterName(args.slice(6, 8).join(' ') || djUser);
+        // Strict station naming rule: every DJ identity is TWO words.
+        // A one-word schedule value cannot match the on-air/gallery image.
+        if (targetDJ.trim().split(/\s+/).length !== 2) {
+            alert("A DJ must have two name words, e.g. Selector Frost or Squidly Bashment.");
+            return;
+        }
 
         if (!dayName || !startTime || !endTime || !timeZone) {
             alert("Format missing. Use: /schedule perm [Day] [Start Time] [End Time] [Time Zone] [optional: Presenter_Name]");
@@ -1838,6 +1848,12 @@ async function processScheduleConsoleInjections(text, djUser) {
         const timeZone = args[5];
         // Exactly the first TWO name words, matching the on-air DJ image and gallery.
         const targetDJ = formatPresenterName(args.slice(6, 8).join(' ') || djUser);
+        // Strict station naming rule: every DJ identity is TWO words.
+        // A one-word schedule value cannot match the on-air/gallery image.
+        if (targetDJ.trim().split(/\s+/).length !== 2) {
+            alert("A DJ must have two name words, e.g. Selector Frost or Squidly Bashment.");
+            return;
+        }
 
         if (!dateBlock || !startTime || !endTime || !timeZone || dateBlock.length !== 6) {
             alert("Format missing. Use: /schedule temp [ddmmyy] [Start Time] [End Time] [Time Zone] [optional: Presenter_Name]");
