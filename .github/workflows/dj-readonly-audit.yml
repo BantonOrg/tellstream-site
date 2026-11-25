@@ -1,0 +1,48 @@
+name: Read-only DJ name and photo diagnostic
+on:
+  push:
+    branches: [diagnostic/dj-names-images-20261125]
+    paths: [.github/workflows/dj-readonly-audit.yml]
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compare live image filenames with names in schedule
+        run: |
+          python3 - <<'PY'
+          import urllib.request, urllib.parse, urllib.error, json, re, pathlib
+          base="https://tellstream.banton.org"
+          supa="https://vegwferwmyuunwvfqpsf.supabase.co"
+          m=re.search(r'const SUPABASE_KEY = "([^"]+)"',pathlib.Path("main.original.js").read_text())
+          if not m: raise SystemExit("No public website anon key")
+          key=m.group(1)
+          def api(path):
+              req=urllib.request.Request(supa+"/rest/v1/"+path,headers={"apikey":key,"Authorization":"Bearer "+key})
+              with urllib.request.urlopen(req,timeout=18) as rsp: return json.load(rsp)
+          try:
+              with urllib.request.urlopen(base+"/api/media?kind=djs",timeout=18) as rsp:
+                  data=json.load(rsp)
+              print("R2 filenames:",sorted(e.get("name") for e in data.get("files",[])))
+              print("R2 removed:",data.get("deleted",[]))
+          except Exception as e: print("R2 diagnostic failed",repr(e))
+          for p in ("squidly_bashment.png","selector_frost.png","dj_choice.png","squidly.png"):
+              for source,url in (("r2",base+"/api/media/file?key="+urllib.parse.quote("djs/"+p,safe="")),("static",base+"/src/assets/djs/"+p)):
+                  try:
+                      with urllib.request.urlopen(urllib.request.Request(url,method="HEAD"),timeout=12) as rsp:
+                          print("IMAGE",source,p,rsp.status,rsp.headers.get("content-type"))
+                  except urllib.error.HTTPError as e: print("IMAGE",source,p,e.code)
+                  except Exception as e: print("IMAGE",source,p,type(e).__name__)
+          for table in ("master_schedule","temporary_overrides"):
+              try:
+                  records=api(table+"?select=*&limit=250")
+                  matches=[{k:item.get(k) for k in ("dj_name","day_of_week","start_time","end_time","specific_date") if k in item} for item in records
+                           if any(q in str(item.get("dj_name","")).lower() for q in ("squidly","frost","choice"))]
+                  print("SCHEDULE",table,json.dumps(matches))
+              except Exception as e: print("SCHEDULE",table,"ERROR",type(e).__name__,str(e)[:90])
+          try: print("LIVE STREAM STATUS",api("stream_status?select=current_show&id=eq.1"))
+          except Exception as e: print("STREAM STATUS ERROR",type(e).__name__,str(e)[:90])
+          PY
