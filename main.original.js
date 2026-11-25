@@ -131,7 +131,9 @@ function findProfileMatch(showName) {
 
 
 // CELL-LEFT ISOLATED ENGINE (DYNAMIC BOUNDS & AUTOMATED MODE SWITCH)
-function renderStreamHeader(showName) {
+let djHeaderImageRevision = 0;
+async function renderStreamHeader(showName) {
+    const revision = ++djHeaderImageRevision;
     const cellLeft = document.querySelector('.cell-left');
     const wrapper = document.querySelector('.cell-left .tagline-wrapper');
     if (!cellLeft) return;
@@ -187,7 +189,9 @@ function renderStreamHeader(showName) {
         const words = matchedName.trim().split(/\s+/);
         const nameToUse = (words.length >= 2) ? `${words[0]} ${words[1]}` : words[0];
         const safeFileName = resolveDjShowcaseLogoFile(nameToUse);
-        const imgHostedUrl = '/src/assets/djs/' + encodeURIComponent(safeFileName);
+        // R2 replacements take precedence; hosted original PNGs remain as backup.
+        const imgHostedUrl = await window.TellStreamR2Media.djImage(safeFileName);
+        if (revision !== djHeaderImageRevision) return; // A different DJ is on air now.
 
         const imageProbe = new Image();
 
@@ -253,7 +257,8 @@ function renderStreamHeader(showName) {
             }
         };
 
-        imageProbe.src = imgHostedUrl; // Set source last to avoid race conditions
+        if (imgHostedUrl) imageProbe.src = imgHostedUrl; // Set source last to avoid race conditions
+        else imageProbe.onerror(); // A deleted DJ image falls back to the normal text banner.
     }
 }
 
