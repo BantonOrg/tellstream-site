@@ -369,22 +369,27 @@ body {
 
 
 /* TellStream game selection: editable, independent neon cards; only the chat-header tiles. */
-/* Original approved TellStream game-card artwork. Single sprite for fast loading.
-   To replace artwork later, update only game-cards-approved.webp. */
-.header-games-row{display:flex;gap:8px;align-items:stretch;width:100%;min-width:0}
+/* Keep each approved game image at its full natural 9:7 aspect ratio.
+   The sprite has three equal-width panels. Avoid forcing a fixed height, which
+   squashes the illustration and can clip the tile border on narrower screens. */
+.header-games-row{
+    display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:8px;align-items:center;width:100%;min-width:0;padding:5px 2px;
+}
 .game-header-btn{
-    flex:1 1 0;min-width:0;height:clamp(76px,7vw,123px);
-    display:block;position:relative;overflow:hidden;cursor:pointer;
-    border:0;border-radius:12px;padding:0;margin:0;
+    width:100%;height:auto;aspect-ratio:9 / 7;min-width:0;min-height:0;
+    display:block;position:relative;cursor:pointer;overflow:hidden;
+    border:0;border-radius:9px;padding:0;margin:0;
+    background-color:#090c0a;
     background-image:url('game-cards-approved.webp');
     background-repeat:no-repeat;
     background-size:300% 100%;
     box-shadow:0 1px 6px rgba(0,0,0,.5);
     transition:transform .18s ease,filter .18s ease,box-shadow .18s ease;
 }
-.game-header-btn.game-dominoes{background-position:left center}
-.game-header-btn.game-ludo{background-position:center center}
-.game-header-btn.game-snakes{background-position:right center}
+.game-header-btn.game-dominoes{background-position:0% 50%}
+.game-header-btn.game-ludo{background-position:50% 50%}
+.game-header-btn.game-snakes{background-position:100% 50%}
 .game-header-btn:hover{
     transform:translateY(-2px);filter:brightness(1.1);
     box-shadow:0 0 14px rgba(255,255,255,.21);
@@ -392,8 +397,8 @@ body {
 .game-header-btn:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .game-header-btn:active{transform:translateY(0) scale(.98)}
 @media(max-width:600px){
-    .header-games-row{gap:5px}
-    .game-header-btn{height:clamp(72px,25vw,106px);border-radius:9px}
+    .header-games-row{gap:5px;padding:4px 1px}
+    .game-header-btn{border-radius:7px}
 }
 #toggle-notice-btn {
     background: rgba(34, 229, 50, 0.15);
