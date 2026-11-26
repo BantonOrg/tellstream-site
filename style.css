@@ -369,65 +369,31 @@ body {
 
 
 /* TellStream game selection: editable, independent neon cards; only the chat-header tiles. */
+/* Original approved TellStream game-card artwork. Single sprite for fast loading.
+   To replace artwork later, update only game-cards-approved.webp. */
 .header-games-row{display:flex;gap:8px;align-items:stretch;width:100%;min-width:0}
 .game-header-btn{
-    --game-glow:rgba(46,221,94,.8);--game-edge:#39e986;
-    flex:1 1 0;min-width:0;height:107px;padding:5px 3px 6px;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
-    position:relative;overflow:hidden;isolation:isolate;cursor:pointer;
-    color:#fff;border:1.5px solid var(--game-edge);border-radius:13px;
-    background:radial-gradient(ellipse at 50% 8%,rgba(56,128,74,.50) 0%,transparent 67%),
-      linear-gradient(160deg,#09180c 0%,#092911 47%,#041008 100%);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 -8px 14px rgba(0,0,0,.55),
-      0 0 9px -2px var(--game-glow);
-    transition:transform .2s ease,box-shadow .2s ease,filter .2s ease;
+    flex:1 1 0;min-width:0;height:clamp(76px,7vw,123px);
+    display:block;position:relative;overflow:hidden;cursor:pointer;
+    border:0;border-radius:12px;padding:0;margin:0;
+    background-image:url('game-cards-approved.webp');
+    background-repeat:no-repeat;
+    background-size:300% 100%;
+    box-shadow:0 1px 6px rgba(0,0,0,.5);
+    transition:transform .18s ease,filter .18s ease,box-shadow .18s ease;
 }
-.game-header-btn::before{
-    content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
-    background:linear-gradient(115deg,transparent 18%,rgba(255,255,255,.08) 40%,transparent 59%),
-      repeating-linear-gradient(0deg,transparent 0 13px,rgba(255,255,255,.017) 14px 15px);
-}
-.game-header-btn:hover,.game-header-btn:focus-visible{
-    transform:translateY(-2px);filter:saturate(1.16);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.25),inset 0 -8px 14px rgba(0,0,0,.45),
-      0 0 15px 0 var(--game-glow);outline:none;
+.game-header-btn.game-dominoes{background-position:left center}
+.game-header-btn.game-ludo{background-position:center center}
+.game-header-btn.game-snakes{background-position:right center}
+.game-header-btn:hover{
+    transform:translateY(-2px);filter:brightness(1.1);
+    box-shadow:0 0 14px rgba(255,255,255,.21);
 }
 .game-header-btn:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .game-header-btn:active{transform:translateY(0) scale(.98)}
-.game-header-btn.game-ludo{
-    --game-glow:rgba(40,169,255,.8);--game-edge:#38b5ff;
-    background:radial-gradient(ellipse at 50% 8%,rgba(39,126,221,.55),transparent 68%),
-      linear-gradient(158deg,#07192e 0%,#0b3267 53%,#040e20 100%);
-}
-.game-header-btn.game-snakes{
-    --game-glow:rgba(255,157,39,.75);--game-edge:#edaa37;
-    background:radial-gradient(ellipse at 50% 7%,rgba(141,106,24,.5),transparent 65%),
-      linear-gradient(165deg,#1e1b0b 0%,#392410 47%,#100d07 100%);
-}
-.game-header-btn .game-icon{
-    width:100%;max-width:118px;height:61px;flex:0 0 61px;display:block;
-    object-fit:contain;pointer-events:none;filter:drop-shadow(0 2px 2px rgba(0,0,0,.55));
-    transition:transform .22s ease;
-}
-.game-header-btn:hover .game-icon{transform:translateY(-2px) scale(1.045)}
-.game-header-btn .game-title{
-    text-align:center;font:800 clamp(9px,.69vw,13px)/1.08 'Segoe UI',Arial,sans-serif;
-    text-transform:uppercase;letter-spacing:.25px;color:#fff;
-    text-shadow:0 1px 3px #000,0 0 10px var(--game-glow);pointer-events:none;
-}
-.game-header-btn.game-snakes .game-title{font-size:clamp(8px,.60vw,11px)}
-.game-header-btn .game-subtitle{
-    display:block;text-align:center;color:#fbd786;
-    font:italic 700 clamp(8px,.57vw,10px)/1.05 Georgia,serif;
-    letter-spacing:0;pointer-events:none;
-}
 @media(max-width:600px){
     .header-games-row{gap:5px}
-    .game-header-btn{height:97px;padding:4px 2px;border-radius:9px}
-    .game-header-btn .game-icon{height:50px;flex-basis:50px}
-    .game-header-btn .game-title{font-size:10px}
-    .game-header-btn.game-snakes .game-title{font-size:9px}
-    .game-header-btn .game-subtitle{font-size:8px}
+    .game-header-btn{height:clamp(72px,25vw,106px);border-radius:9px}
 }
 #toggle-notice-btn {
     background: rgba(34, 229, 50, 0.15);

@@ -15,7 +15,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=20261126-gamecards1">
+    <link rel="stylesheet" href="style.css?v=20261126-gamecards-approved2">
     <link rel="stylesheet" href="dj-showcase.css?v=20261123-flyeropensgallery2">
 <link rel="icon" type="image/png" sizes="180x180" href="/ico.png">
 </head>
@@ -112,55 +112,10 @@
     <div class="chat-sidebar">
         <div class="chat-header">
             <div class="header-games-row" id="headerGamesRow">
-                <button type="button" onclick="launchFullscreenGame('dominoes')" class="game-header-btn game-dominoes" aria-label="Play Dominoes">
-                    <svg class="game-icon" viewBox="0 0 160 100" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-  <defs><linearGradient id="domino-ivory" x1="0" x2=".18" y1="0" y2="1"><stop stop-color="#fffdf0"/><stop offset=".6" stop-color="#ded5ae"/><stop offset="1" stop-color="#a99d80"/></linearGradient>
-  <filter id="domino-shadow" x="-30%" y="-40%" width="170%" height="200%"><feGaussianBlur stdDeviation="4"/></filter></defs>
-  <ellipse cx="82" cy="89" rx="60" ry="8" fill="#000" opacity=".5" filter="url(#domino-shadow)"/>
-  <g transform="translate(64 6) rotate(13 38 34)"><rect x="2" y="6" width="86" height="59" rx="10" fill="#6b6048"/><rect width="86" height="59" rx="10" fill="url(#domino-ivory)" stroke="#fff8dc" stroke-width="2"/>
-  <path d="M43 5V55" stroke="#544c37" stroke-width="2.6"/>
-  <g fill="#191e1e"><circle cx="15" cy="15" r="4.5"/><circle cx="32" cy="15" r="4.5"/><circle cx="15" cy="30" r="4.5"/><circle cx="32" cy="45" r="4.5"/><circle cx="58" cy="15" r="4.5"/><circle cx="73" cy="15" r="4.5"/><circle cx="65" cy="30" r="4.5"/><circle cx="58" cy="45" r="4.5"/><circle cx="73" cy="45" r="4.5"/></g></g>
-  <g transform="translate(17 27) rotate(-13 40 29)"><rect x="2" y="6" width="91" height="59" rx="10" fill="#74694d"/><rect width="91" height="59" rx="10" fill="url(#domino-ivory)" stroke="#fff7d2" stroke-width="2"/>
-  <path d="M45 5V55" stroke="#4d4837" stroke-width="2.6"/><g fill="#171b1b"><circle cx="13" cy="13" r="4.5"/><circle cx="33" cy="13" r="4.5"/><circle cx="23" cy="28" r="4.5"/><circle cx="13" cy="44" r="4.5"/><circle cx="33" cy="44" r="4.5"/><circle cx="58" cy="13" r="4.5"/><circle cx="78" cy="13" r="4.5"/><circle cx="68" cy="29" r="4.5"/><circle cx="58" cy="44" r="4.5"/><circle cx="78" cy="44" r="4.5"/></g></g>
- </svg>
-                    <span class="game-title">Dominoes</span>
-                </button>
-                <button type="button" onclick="launchFullscreenGame('ludo')" class="game-header-btn game-ludo" aria-label="Play Ludo">
-                    <svg class="game-icon" viewBox="0 0 160 100" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-   <defs>
-    <linearGradient id="ludo-red" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#ffb5a6"/><stop offset=".38" stop-color="#f93f31"/><stop offset="1" stop-color="#970e19"/></linearGradient>
-    <linearGradient id="ludo-gold" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#fff8a4"/><stop offset=".45" stop-color="#ffda22"/><stop offset="1" stop-color="#d3860b"/></linearGradient>
-    <linearGradient id="ludo-green" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#a8ff9e"/><stop offset=".45" stop-color="#1ed547"/><stop offset="1" stop-color="#077a38"/></linearGradient>
-    <linearGradient id="ludo-blue" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#9be8ff"/><stop offset=".45" stop-color="#198cfa"/><stop offset="1" stop-color="#1339b1"/></linearGradient>
-   </defs>
-   <path d="M16 22L79 3L146 25L82 54Z" fill="#fff" opacity=".12" stroke="#ddd" stroke-width="1"/>
-   <path d="M16 22L82 54L82 87L16 55Z" fill="#c32735" opacity=".38"/><path d="M146 25L82 54L82 87L146 58Z" fill="#126ac0" opacity=".43"/>
-   <g transform="translate(22 31)" fill="url(#ludo-red)"><ellipse cx="18" cy="55" rx="21" ry="6" fill="#661416"/><path d="M8 12Q11 27 3 42L-1 48Q16 57 37 48L33 42Q25 27 28 12Z"/><circle cx="18" cy="10" r="13" stroke="#ffb9a4" stroke-width="1.5"/><ellipse cx="18" cy="50" rx="22" ry="6"/></g>
-   <g transform="translate(59 10)" fill="url(#ludo-gold)"><ellipse cx="18" cy="55" rx="21" ry="6" fill="#754808"/><path d="M8 12Q11 27 3 42L-1 48Q16 57 37 48L33 42Q25 27 28 12Z"/><circle cx="18" cy="10" r="13" stroke="#fff6bc" stroke-width="1.5"/><ellipse cx="18" cy="50" rx="22" ry="6"/></g>
-   <g transform="translate(97 28)" fill="url(#ludo-green)"><ellipse cx="18" cy="55" rx="21" ry="6" fill="#11572c"/><path d="M8 12Q11 27 3 42L-1 48Q16 57 37 48L33 42Q25 27 28 12Z"/><circle cx="18" cy="10" r="13" stroke="#c9ffbb" stroke-width="1.5"/><ellipse cx="18" cy="50" rx="22" ry="6"/></g>
-   <g transform="translate(70 46)" fill="url(#ludo-blue)"><ellipse cx="18" cy="43" rx="22" ry="6" fill="#18336d"/><path d="M8 7Q11 19 3 31L-1 36Q16 43 37 36L33 31Q25 19 28 7Z"/><circle cx="18" cy="7" r="11" stroke="#b9edff" stroke-width="1.5"/><ellipse cx="18" cy="36" rx="22" ry="6"/></g>
-  </svg>
-                    <span class="game-title">Ludo</span>
-                </button>
-                <button type="button" onclick="launchFullscreenGame('chutes')" class="game-header-btn game-snakes" aria-label="Play Snakes and Ladders: Doing it Differently">
-                    <svg class="game-icon" viewBox="0 0 160 100" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-  <defs><linearGradient id="snake-green" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#cbff77"/><stop offset=".4" stop-color="#52b62c"/><stop offset="1" stop-color="#174f16"/></linearGradient>
-   <linearGradient id="wood" x1="0" x2="1"><stop stop-color="#ffa442"/><stop offset=".5" stop-color="#d18532"/><stop offset="1" stop-color="#78431f"/></linearGradient>
-   <linearGradient id="ivory" x1="0" x2=".6" y1="0" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#bdc5c9"/></linearGradient>
-  </defs>
-  <path d="M102 6L80 91M132 6L110 91" stroke="#6d341b" stroke-width="10" stroke-linecap="round"/>
-  <path d="M102 6L80 91M132 6L110 91" stroke="url(#wood)" stroke-width="7" stroke-linecap="round"/>
-  <g stroke="url(#wood)" stroke-width="7" stroke-linecap="round"><path d="M100 18L129 18M94 34L123 34M90 50L119 50M85 66L115 66M80 82L111 82"/></g>
-  <path d="M18 68Q26 91 59 74Q91 57 55 40Q32 30 43 16" fill="none" stroke="#143713" stroke-width="20" stroke-linecap="round"/>
-  <path d="M18 68Q26 91 59 74Q91 57 55 40Q32 30 43 16" fill="none" stroke="url(#snake-green)" stroke-width="16" stroke-linecap="round"/>
-  <path d="M37 8Q43 2 56 10L63 21Q52 33 35 21Z" fill="url(#snake-green)" stroke="#1f5e15" stroke-width="2"/>
-  <circle cx="49" cy="13" r="3.2" fill="#eeb32e"/><circle cx="49" cy="13" r="1.4" fill="#141414"/>
-  <path d="M55 21L67 27L58 26" fill="#d4434b"/>
-  <g transform="translate(113 64) rotate(14)"><rect width="29" height="29" rx="5" fill="url(#ivory)" stroke="#f8e2b0" stroke-width="2"/><g fill="#1f2a28"><circle cx="8" cy="8" r="2.9"/><circle cx="21" cy="8" r="2.9"/><circle cx="14" cy="15" r="2.9"/><circle cx="8" cy="22" r="2.9"/><circle cx="21" cy="22" r="2.9"/></g></g>
- </svg>
-                    <span class="game-title">Snakes &amp; Ladders</span>
-                    <span class="game-subtitle">Doing it Differently</span>
-                </button>
+                <!-- Artwork sliced from the originally approved three-card TellStream preview. -->
+                <button type="button" onclick="launchFullscreenGame('dominoes')" class="game-header-btn game-dominoes" aria-label="Play Dominoes" title="Dominoes"></button>
+                <button type="button" onclick="launchFullscreenGame('ludo')" class="game-header-btn game-ludo" aria-label="Play Ludo" title="Ludo"></button>
+                <button type="button" onclick="launchFullscreenGame('chutes')" class="game-header-btn game-snakes" aria-label="Play Snakes and Ladders: Doing it Differently" title="Snakes &amp; Ladders — Doing it Differently"></button>
             </div>
         </div>
 
