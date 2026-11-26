@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 275" width="260" height="275">
+ <title>Dice result 4</title>
+ <defs>
+  <linearGradient id="top-stripes" x1="0%" y1="10%" x2="98%" y2="75%">
+   <stop offset="0%" stop-color="#a91617"/><stop offset="32%" stop-color="#da2623"/>
+   <stop offset="36%" stop-color="#e8a21a"/><stop offset="60%" stop-color="#f0c52a"/>
+   <stop offset="65%" stop-color="#299e48"/><stop offset="100%" stop-color="#0c783e"/>
+  </linearGradient>
+  <linearGradient id="red-face" x1="0%" y1="0%" x2="90%" y2="80%">
+   <stop offset="0%" stop-color="#a91612"/><stop offset="47%" stop-color="#a51e13"/>
+   <stop offset="53%" stop-color="#c58b1d"/><stop offset="100%" stop-color="#a57215"/>
+  </linearGradient>
+  <linearGradient id="green-face" x1="0%" y1="0%" x2="100%" y2="100%">
+   <stop offset="0%" stop-color="#308949"/><stop offset="55%" stop-color="#146c38"/><stop offset="100%" stop-color="#07401f"/>
+  </linearGradient>
+  <radialGradient id="pip-dark" cx="31%" cy="26%" r="77%">
+   <stop offset="0%" stop-color="#3c4140"/><stop offset="35%" stop-color="#131a18"/><stop offset="100%" stop-color="#030707"/>
+  </radialGradient>
+  <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="4"/></filter>
+  <filter id="wear" x="0" y="0" width="100%" height="100%">
+   <feTurbulence type="fractalNoise" baseFrequency=".16" numOctaves="2" seed="9" result="noise"/>
+   <feColorMatrix type="saturate" values="0"/>
+   <feComponentTransfer><feFuncA type="linear" slope=".12"/></feComponentTransfer>
+  </filter>
+  <clipPath id="cube"><path d="M126 12 Q133 11 140 15 L237 64 Q242 67 242 73 L242 194 Q242 200 236 204 L145 255 Q141 258 136 256 L19 203 Q12 199 12 191 L12 99 Q12 94 17 89 L119 16 Q122 13 126 12Z"/></clipPath>
+ </defs>
+ <ellipse cx="128" cy="257" rx="110" ry="12" fill="#000" opacity=".47" filter="url(#soft-shadow)"/>
+ <path d="M12 93L140 155L140 258L12 202Z" fill="url(#red-face)" stroke="#593716" stroke-width="4" stroke-linejoin="round"/>
+ <path d="M140 155L242 70L242 200L140 258Z" fill="url(#green-face)" stroke="#224b21" stroke-width="4" stroke-linejoin="round"/>
+ <path d="M126 12L242 70L140 155L12 93Z" fill="url(#top-stripes)" stroke="#bc8a3f" stroke-width="4" stroke-linejoin="round"/>
+ <g clip-path="url(#cube)"><rect x="12" y="12" width="235" height="247" filter="url(#wear)" opacity=".8"/></g>
+ <!-- Consistent orthogonal side faces, following a standard die with opposite faces 1/6, 2/5 and 3/4. -->
+ <g id="left-side" data-pips="2"><g transform="translate(43.36 134.00)">
+ <ellipse rx="13.1" ry="13.9" fill="#745326" opacity=".7"/>
+ <ellipse rx="10.6" ry="11.5" fill="url(#pip-dark)" stroke="#281d13" stroke-width="1.6"/>
+ <ellipse cx="-2.8" cy="-3.3" rx="3.3" ry="2.5" fill="#ced6d4" opacity=".46"/>
+ </g>
+<g transform="translate(108.64 219.21)">
+ <ellipse rx="13.1" ry="13.9" fill="#745326" opacity=".7"/>
+ <ellipse rx="10.6" ry="11.5" fill="url(#pip-dark)" stroke="#281d13" stroke-width="1.6"/>
+ <ellipse cx="-2.8" cy="-3.3" rx="3.3" ry="2.5" fill="#ced6d4" opacity=".46"/>
+ </g></g>
+ <g id="right-side" data-pips="1"><g transform="translate(191.00 170.75)">
+ <ellipse rx="13.1" ry="13.9" fill="#745326" opacity=".7"/>
+ <ellipse rx="10.6" ry="11.5" fill="url(#pip-dark)" stroke="#281d13" stroke-width="1.6"/>
+ <ellipse cx="-2.8" cy="-3.3" rx="3.3" ry="2.5" fill="#ced6d4" opacity=".46"/>
+ </g></g>
+ <g id="roll-result" data-pips="4"><g transform="translate(127.77 45.89)">
+ <ellipse rx="14.0" ry="10.9" fill="#745326" opacity=".7"/>
+ <ellipse rx="11.5" ry="8.5" fill="url(#pip-dark)" stroke="#281d13" stroke-width="1.6"/>
+ <ellipse cx="-3.0" cy="-2.5" rx="3.6" ry="1.9" fill="#ced6d4" opacity=".46"/>
+ </g>
+<g transform="translate(188.39 75.95)">
+ <ellipse rx="14.0" ry="10.9" fill="#745326" opacity=".7"/>
+ <ellipse rx="11.5" ry="8.5" fill="url(#pip-dark)" stroke="#281d13" stroke-width="1.6"/>
+ <ellipse cx="-3.0" cy="-2.5" rx="3.6" ry="1.9" fill="#ced6d4" opacity=".46"/>
+ </g>
+<g transform="translate(70.01 88.51)">
+ <ellipse rx="14.0" ry="10.9" fill="#745326" opacity=".7"/>
+ <ellipse rx="11.5" ry="8.5" fill="url(#pip-dark)" stroke="#281d13" stroke-width="1.6"/>
+ <ellipse cx="-3.0" cy="-2.5" rx="3.6" ry="1.9" fill="#ced6d4" opacity=".46"/>
+ </g>
+<g transform="translate(133.83 119.65)">
+ <ellipse rx="14.0" ry="10.9" fill="#745326" opacity=".7"/>
+ <ellipse rx="11.5" ry="8.5" fill="url(#pip-dark)" stroke="#281d13" stroke-width="1.6"/>
+ <ellipse cx="-3.0" cy="-2.5" rx="3.6" ry="1.9" fill="#ced6d4" opacity=".46"/>
+ </g></g>
+ <path d="M19 90L123 17Q126 15 130 17L235 68" fill="none" stroke="#fff1ba" stroke-width="3.5" opacity=".67" stroke-linecap="round"/>
+ <path d="M15 103L15 192Q15 195 21 199" fill="none" stroke="#e7b56a" stroke-width="3" opacity=".6"/>
+ <path d="M141 159L141 248L234 199" fill="none" stroke="#c0eb86" stroke-width="2.1" opacity=".53"/>
+ <path d="M237 78L237 192" fill="none" stroke="#c6fbb0" stroke-width="2.1" opacity=".42"/>
+</svg>
