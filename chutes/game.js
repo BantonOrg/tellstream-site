@@ -13,7 +13,7 @@ const ASSETS={
  tree3:{src:'imgs/3lvl_tree.png',w:288,h:585,levels:3,dxPx:5,dyPx:4},
  tree4:{src:'imgs/4lvl_tree.png',w:370,h:713,levels:4,dxPx:37,dyPx:-7},
  pieces:[{src:'imgs/green_piece.png',w:259,h:489},{src:'imgs/yellow_piece.png',w:265,h:485},{src:'imgs/red_piece.png',w:268,h:490},{src:'imgs/blue_piece.png',w:270,h:490}],
- dice:[{src:'imgs/die1.png',w:219,h:243},{src:'imgs/die2.png',w:224,h:244},{src:'imgs/die3.png',w:251,h:246},{src:'imgs/die4.png',w:220,h:245},{src:'imgs/die5.png',w:221,h:245},{src:'imgs/die6.png',w:229,h:255}],
+ dice:[{src:'imgs/dice-corrected/die1.svg',w:260,h:275},{src:'imgs/dice-corrected/die2.svg',w:260,h:275},{src:'imgs/dice-corrected/die3.svg',w:260,h:275},{src:'imgs/dice-corrected/die4.svg',w:260,h:275},{src:'imgs/dice-corrected/die5.svg',w:260,h:275},{src:'imgs/dice-corrected/die6.svg',w:260,h:275}],
  plaque:{src:'imgs/plaque.png',w:1207,h:662},
  startBG:{src:'imgs/_mainBG.jpg'}
 };
