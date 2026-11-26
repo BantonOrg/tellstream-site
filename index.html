@@ -15,7 +15,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=20261126-gamecropfix1">
+    <link rel="stylesheet" href="style.css?v=20261126-threecard-images1">
     <link rel="stylesheet" href="dj-showcase.css?v=20261123-flyeropensgallery2">
 <link rel="icon" type="image/png" sizes="180x180" href="/ico.png">
 </head>
@@ -112,10 +112,16 @@
     <div class="chat-sidebar">
         <div class="chat-header">
             <div class="header-games-row" id="headerGamesRow">
-                <!-- Artwork sliced from the originally approved three-card TellStream preview. -->
-                <button type="button" onclick="launchFullscreenGame('dominoes')" class="game-header-btn game-dominoes" aria-label="Play Dominoes" title="Dominoes"></button>
-                <button type="button" onclick="launchFullscreenGame('ludo')" class="game-header-btn game-ludo" aria-label="Play Ludo" title="Ludo"></button>
-                <button type="button" onclick="launchFullscreenGame('chutes')" class="game-header-btn game-snakes" aria-label="Play Snakes and Ladders: Doing it Differently" title="Snakes &amp; Ladders — Doing it Differently"></button>
+                <!-- Approved artwork: three individual assets, not one shared sprite. -->
+                <button type="button" onclick="launchFullscreenGame('dominoes')" class="game-header-btn game-dominoes" aria-label="Play Dominoes" title="Dominoes">
+                    <img src="game-card-dominoes.webp" alt="Dominoes" draggable="false" loading="eager" decoding="async">
+                </button>
+                <button type="button" onclick="launchFullscreenGame('ludo')" class="game-header-btn game-ludo" aria-label="Play Ludo" title="Ludo">
+                    <img src="game-card-ludo.webp" alt="Ludo" draggable="false" loading="eager" decoding="async">
+                </button>
+                <button type="button" onclick="launchFullscreenGame('chutes')" class="game-header-btn game-snakes" aria-label="Play Snakes & Ladders — Doing it Differently" title="Snakes & Ladders — Doing it Differently">
+                    <img src="game-card-snakes-ladders.webp" alt="Snakes & Ladders — Doing it Differently" draggable="false" loading="eager" decoding="async">
+                </button>
             </div>
         </div>
 
